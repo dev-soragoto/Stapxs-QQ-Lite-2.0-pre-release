@@ -10,6 +10,10 @@ PODS:
     - Capacitor
   - CapacitorOnebotConnctor (0.0.1):
     - Capacitor
+  - CapacitorStatusBar (6.0.2):
+    - Capacitor
+  - HugotomaziCapacitorNavigationBar (4.0.1):
+    - Capacitor
   - UntinyCapacitorSafeArea (1.0.3):
     - Capacitor
 
@@ -20,6 +24,8 @@ DEPENDENCIES:
   - "CapacitorKeyboard (from `../../../../node_modules/@capacitor/keyboard`)"
   - "CapacitorLocalNotifications (from `../../../../node_modules/@capacitor/local-notifications`)"
   - CapacitorOnebotConnctor (from `../../../../node_modules/capacitor-onebot-connctor`)
+  - "CapacitorStatusBar (from `../../../../node_modules/@capacitor/status-bar`)"
+  - "HugotomaziCapacitorNavigationBar (from `../../../../node_modules/@hugotomazi/capacitor-navigation-bar`)"
   - "UntinyCapacitorSafeArea (from `../../../../node_modules/@untiny/capacitor-safe-area`)"
 
 EXTERNAL SOURCES:
@@ -35,6 +41,10 @@ EXTERNAL SOURCES:
     :path: "../../../../node_modules/@capacitor/local-notifications"
   CapacitorOnebotConnctor:
     :path: "../../../../node_modules/capacitor-onebot-connctor"
+  CapacitorStatusBar:
+    :path: "../../../../node_modules/@capacitor/status-bar"
+  HugotomaziCapacitorNavigationBar:
+    :path: "../../../../node_modules/@hugotomazi/capacitor-navigation-bar"
   UntinyCapacitorSafeArea:
     :path: "../../../../node_modules/@untiny/capacitor-safe-area"
 
@@ -45,8 +55,10 @@ SPEC CHECKSUMS:
   CapacitorKeyboard: 460c6f9ec5e52c84f2742d5ce2e67bbc7ab0ebb0
   CapacitorLocalNotifications: 113dcab0b40781e8463bfdbbd6b54c6116361644
   CapacitorOnebotConnctor: 4b8b6ea764a19d57c4c14df6c9c628a803bb0131
+  CapacitorStatusBar: 3b9ac7d0684770522c532d1158a1434512ab1477
+  HugotomaziCapacitorNavigationBar: 57d7cd51c65ef5e40159bafb0095ee99fab432ba
   UntinyCapacitorSafeArea: 6354c662c37e272d587bb2a224cba030d902b2bd
 
-PODFILE CHECKSUM: 5c6ca666e00a923dc23f4b92a1deb2574ef51b0e
+PODFILE CHECKSUM: c65146071ed43150d5e23368cffe06dd48ed84df
 
 COCOAPODS: 1.16.2

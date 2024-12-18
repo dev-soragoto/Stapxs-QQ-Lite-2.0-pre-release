@@ -1,6 +1,6 @@
 {
     "name": "stapxs-qq-lite",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "private": false,
     "author": "Stapx Steve [林槐]",
     "description": "一个兼容 OneBot 的非官方网页版 QQ 客户端，使用 Vue 重制的全新版本。",
@@ -9,6 +9,7 @@
     "main": "./out/main/index.js",
     "type": "module",
     "scripts": {
+        "capacitor:copy:before": "capacitor-sync-version",
         "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
         "update:icon": "npx @capacitor/assets generate --assetPath 'src/mobile/_assets' --iosProject 'src/mobile/ios/App' --androidProject 'src/mobile/android' --android --ios",
         "dev": "vite dev",
@@ -53,6 +54,7 @@
         "@hugotomazi/capacitor-navigation-bar": "^4.0.1",
         "@modyfi/vite-plugin-yaml": "^1.1.0",
         "@rushstack/eslint-patch": "^1.10.3",
+        "@stapxs/capacitor-sync-version": "^1.0.10",
         "@stapxs/umami-logger-typescript": "^1.0.12",
         "@types/jsonpath": "^0.2.4",
         "@types/node": "^20.14.8",

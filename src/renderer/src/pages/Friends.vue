@@ -233,9 +233,11 @@
                     name = 'friend-search-small'
                 }
                 // 将焦点移动到搜索框
-                const search = document.getElementById(name)
-                if(search) {
-                    search.focus()
+                if(runtimeData.tags.isElectron) {
+                    const search = document.getElementById(name)
+                    if(search) {
+                        search.focus()
+                    }
                 }
             }
         },
