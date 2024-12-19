@@ -426,7 +426,7 @@ export default defineComponent({
                         list.push({
                             id: item.user_id ? item.user_id : item.group_id,
                             name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
-                            image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'http://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
+                            image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
                         })
                     })
                     runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
