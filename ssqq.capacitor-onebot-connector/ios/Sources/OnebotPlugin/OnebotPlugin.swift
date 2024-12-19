@@ -13,7 +13,9 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "connect", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "close", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "send", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "send", returnType: CAPPluginReturnPromise),
+
+        CAPPluginMethod(name: "findService", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Onebot()
     private let logger = Logger()
@@ -28,16 +30,16 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
         logger.info("Capacitor Onebot 基础连接器加载完成")
         logger.info("当前执行平台：iOS / iPadOS")
         logger.info("** 此插件 swift 版本代码 95% 由 Github Copilot 及 OpenAI ChatGPT 4o 生成 **")
-    }
 
-    @objc func connect(_ call: CAPPluginCall) {
         // 注册 implementation 的 onEvent 回调，需要判断下有没有注册过
         if implementation.onEvent == nil {
             implementation.onEvent = { type, data in
                 self.notifyListeners("onebot:event", data: [ "type": type, "data": data ])
             }
         }
+    }
 
+    @objc func connect(_ call: CAPPluginCall) {
         let url = call.getString("url") ?? ""
         call.resolve([
             "value": implementation.connect(url)
@@ -54,6 +56,12 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
         let data = call.getString("data") ?? ""
         call.resolve([
             "value": implementation.send(data)
+        ])
+    }
+
+    @objc func findService(_ call: CAPPluginCall) {
+        call.resolve([
+            "value": implementation.findService()
         ])
     }
 

@@ -2,6 +2,7 @@
  * 登录状态记录（地址、密钥、状态等）
  */
 export interface LoginCacheElem {
+    quickLogin: { address: string, port: number }[] | null
     address: string
     token: string
     status: boolean

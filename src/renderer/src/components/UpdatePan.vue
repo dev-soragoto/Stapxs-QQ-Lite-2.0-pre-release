@@ -1,44 +1,44 @@
 <template>
-  <div class="update-info">
-    <span>{{ updated ? $t('更新记录') : $t('新版本') }}</span>
-    <a>{{ version }}</a>
-    <div class="title">
-      <img :src="user.avatar">
-      <a :href="user.url">{{ user.name }}</a>
-      <span>
-        {{
-          Intl.DateTimeFormat(getTrueLang(), {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          }).format(new Date(date))
-        }}
-      </span>
-    </div>
-    <div class="info">
-      <span>{{ info.title }}</span>
-      <div>
-        <div
-          v-for="(item, index) in info.content"
-          :key="'changelog-' + index">
-          <span>{{ item.text }}</span>
-          <div
-            v-if="item.issue"
-            class="log-issue">
-            <span> -&gt; </span>
-            <div />
-            <a
-              @click="
-                openLink(
-                  `https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/${item.issue}`,
-                  true,
-                )
-              ">#{{ item.issue }}</a>
-          </div>
+    <div class="update-info">
+        <span>{{ updated ? $t('更新记录') : $t('新版本') }}</span>
+        <a>{{ version }}</a>
+        <div class="title">
+            <img :src="user.avatar">
+            <a :href="user.url">{{ user.name }}</a>
+            <span>
+                {{
+                    Intl.DateTimeFormat(getTrueLang(), {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    }).format(new Date(date))
+                }}
+            </span>
         </div>
-      </div>
+        <div class="info">
+            <span>{{ info.title }}</span>
+            <div>
+                <div
+                    v-for="(item, index) in info.content"
+                    :key="'changelog-' + index">
+                    <span>{{ item.text }}</span>
+                    <div
+                        v-if="item.issue"
+                        class="log-issue">
+                        <span> -&gt; </span>
+                        <div />
+                        <a
+                            @click="
+                                openLink(
+                                    `https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/${item.issue}`,
+                                    true,
+                                )
+                            ">#{{ item.issue }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 <script lang="ts">

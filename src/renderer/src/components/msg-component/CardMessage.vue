@@ -14,31 +14,31 @@
 -->
 
 <template>
-  <div>
-    <div
-      v-if="item.type == 'xml'"
-      @click="View.cardClick('xml-' + id)"
-      v-html="View.buildXML(item.data, item.id, id)" />
-    <div v-else>
-      <div
-        v-if="info?.type == 'default'"
-        @click="View.cardClick('json-' + id)"
-        v-html="buildJSON(info, id)" />
-      <div
-        v-else-if="info?.type == 'tencent.map'"
-        v-once
-        class="msg-comp-map"
-        @click="View.cardClick('map-' + id)">
-        <p>{{ info.app.title }}</p>
-        <span>{{ info.app.desc }}</span>
+    <div>
         <div
-          :id="'map-' + id"
-          class="map"
-          :data-url="createMap()"
-          data-urlOpenType="_self" />
-      </div>
+            v-if="item.type == 'xml'"
+            @click="View.cardClick('xml-' + id)"
+            v-html="View.buildXML(item.data, item.id, id)" />
+        <div v-else>
+            <div
+                v-if="info?.type == 'default'"
+                @click="View.cardClick('json-' + id)"
+                v-html="buildJSON(info, id)" />
+            <div
+                v-else-if="info?.type == 'tencent.map'"
+                v-once
+                class="msg-comp-map"
+                @click="View.cardClick('map-' + id)">
+                <p>{{ info.app.title }}</p>
+                <span>{{ info.app.desc }}</span>
+                <div
+                    :id="'map-' + id"
+                    class="map"
+                    :data-url="createMap()"
+                    data-urlOpenType="_self" />
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 <script lang="ts">
@@ -80,13 +80,11 @@
                         '" src="' +
                         info.preview +
                         '">' +
-                        (info.name
-                            ? '<div><img src="' +
+                        (info.name? '<div><img src="' +
                               info.icon +
                               '"><span>' +
                               info.name +
-                              '</span></div>'
-                            : '')
+                              '</span></div>': '')
 
                     div.className = 'msg-json'
                     div.id = 'json-' + id

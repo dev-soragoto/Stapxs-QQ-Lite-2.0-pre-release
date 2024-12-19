@@ -7,116 +7,116 @@
 -->
 
 <template>
-  <div
-    id="chat-pan"
-    :class="
-      'chat-pan sys-not-pan' +
-        (runtimeData.tags.openSideBar ? ' open' : '') +
-        (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-    ">
-    <div>
-      <font-awesome-icon
-        :icon="['fas', 'angle-left']"
-        @click="exit" />
-      <span>{{ $t('系统消息') }}</span>
-    </div>
-    <div class="sys-not-list">
-      <template
-        v-for="(notice, index) in runtimeData.systemNoticesList"
-        :key="'sysNot-' + index">
-        <div v-if="notice.request_type == 'friend'">
-          <div>
-            <img
-              :src="
-                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                  notice.user_id
-              ">
-            <div>
-              <span>{{ notice.user_id }}
-                {{ $t('请求加为好友') }}</span>
-              <a>{{
-                Intl.DateTimeFormat(trueLang, {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: 'numeric',
-                }).format(new Date(notice.time * 1000))
-              }}</a>
-              <a>{{ $t('留言') + notice.comment }}</a>
-            </div>
-          </div>
-          <div>
-            <button
-              class="ss-button"
-              @click="dealFriend(notice, false)">
-              {{ $t('拒绝') }}
-            </button>
-            <button
-              class="ss-button"
-              @click="dealFriend(notice, true)">
-              {{ $t('同意') }}
-            </button>
-          </div>
+    <div
+        id="chat-pan"
+        :class="
+            'chat-pan sys-not-pan' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
+        ">
+        <div>
+            <font-awesome-icon
+                :icon="['fas', 'angle-left']"
+                @click="exit" />
+            <span>{{ $t('系统消息') }}</span>
         </div>
-        <div v-else-if="notice.request_type == 'group'">
-          <div>
-            <img
-              :src="
-                'https://p.qlogo.cn/gh/' +
-                  notice.group_id +
-                  '/' +
-                  notice.group_id +
-                  '/0'
-              ">
-            <div>
-              <span>{{ getName(notice.user_id) }}
-                {{ $t('邀请你加入群聊') }}
-                {{ notice.group_id }}</span>
-              <a>{{
-                Intl.DateTimeFormat(trueLang, {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: 'numeric',
-                }).format(new Date(notice.time * 1000))
-              }}</a>
-              <a>{{ $t('留言') + notice.comment }}</a>
-            </div>
-          </div>
-          <div>
-            <button
-              class="ss-button"
-              @click="dealGroupAdd(notice, false)">
-              {{ $t('拒绝') }}
-            </button>
-            <button
-              class="ss-button"
-              @click="dealGroupAdd(notice, true)">
-              {{ $t('同意') }}
-            </button>
-          </div>
-        </div>
-        <div
-          v-else
-          v-show="dev">
-          <div>
-            <img>
-            <div>
-              <span>{{ $t('sys_notice_unknow') }}</span>
-              <a
-                style="
+        <div class="sys-not-list">
+            <template
+                v-for="(notice, index) in runtimeData.systemNoticesList"
+                :key="'sysNot-' + index">
+                <div v-if="notice.request_type == 'friend'">
+                    <div>
+                        <img
+                            :src="
+                                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
+                                    notice.user_id
+                            ">
+                        <div>
+                            <span>{{ notice.user_id }}
+                                {{ $t('请求加为好友') }}</span>
+                            <a>{{
+                                Intl.DateTimeFormat(trueLang, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                }).format(new Date(notice.time * 1000))
+                            }}</a>
+                            <a>{{ $t('留言') + notice.comment }}</a>
+                        </div>
+                    </div>
+                    <div>
+                        <button
+                            class="ss-button"
+                            @click="dealFriend(notice, false)">
+                            {{ $t('拒绝') }}
+                        </button>
+                        <button
+                            class="ss-button"
+                            @click="dealFriend(notice, true)">
+                            {{ $t('同意') }}
+                        </button>
+                    </div>
+                </div>
+                <div v-else-if="notice.request_type == 'group'">
+                    <div>
+                        <img
+                            :src="
+                                'https://p.qlogo.cn/gh/' +
+                                    notice.group_id +
+                                    '/' +
+                                    notice.group_id +
+                                    '/0'
+                            ">
+                        <div>
+                            <span>{{ getName(notice.user_id) }}
+                                {{ $t('邀请你加入群聊') }}
+                                {{ notice.group_id }}</span>
+                            <a>{{
+                                Intl.DateTimeFormat(trueLang, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                }).format(new Date(notice.time * 1000))
+                            }}</a>
+                            <a>{{ $t('留言') + notice.comment }}</a>
+                        </div>
+                    </div>
+                    <div>
+                        <button
+                            class="ss-button"
+                            @click="dealGroupAdd(notice, false)">
+                            {{ $t('拒绝') }}
+                        </button>
+                        <button
+                            class="ss-button"
+                            @click="dealGroupAdd(notice, true)">
+                            {{ $t('同意') }}
+                        </button>
+                    </div>
+                </div>
+                <div
+                    v-else
+                    v-show="dev">
+                    <div>
+                        <img>
+                        <div>
+                            <span>{{ $t('sys_notice_unknow') }}</span>
+                            <a
+                                style="
                                     color: var(--color-font-2);
                                     word-wrap: anywhere;
                                 ">request: {{ notice.request_type }}; sub:
-                {{ notice.sub_type }}</a>
-            </div>
-          </div>
+                                {{ notice.sub_type }}</a>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
-      </template>
     </div>
-  </div>
 </template>
 
 <script lang="ts">

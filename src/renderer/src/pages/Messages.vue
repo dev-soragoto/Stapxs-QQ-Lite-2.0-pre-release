@@ -10,120 +10,120 @@
 -->
 
 <template>
-  <div class="friend-view">
-    <div
-      id="message-list"
-      :class="
-        'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')
-      ">
-      <div>
-        <div class="base only">
-          <span>{{ $t('消息') }}</span>
-          <div style="flex: 1" />
-          <font-awesome-icon
-            :icon="['fas', 'trash-can']"
-            @click="cleanList" />
+    <div class="friend-view">
+        <div
+            id="message-list"
+            :class="
+                'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')
+            ">
+            <div>
+                <div class="base only">
+                    <span>{{ $t('消息') }}</span>
+                    <div style="flex: 1" />
+                    <font-awesome-icon
+                        :icon="['fas', 'trash-can']"
+                        @click="cleanList" />
+                </div>
+                <div class="small">
+                    <span>{{
+                        $t('消息')
+                    }}</span>
+                    <div @click="openLeftBar">
+                        <font-awesome-icon :icon="['fas', 'bars-staggered']" />
+                    </div>
+                </div>
+            </div>
+            <BcMenu
+                :data="listMenu"
+                name="messages-menu"
+                @close="listMenuClose">
+                <ul>
+                    <li
+                        id="top"
+                        icon="fa-solid fa-thumbtack">
+                        {{ $t('置顶') }}
+                    </li>
+                    <li
+                        id="canceltop"
+                        icon="fa-solid fa-grip-lines">
+                        {{ $t('取消置顶') }}
+                    </li>
+                    <li
+                        id="remove"
+                        icon="fa-solid fa-trash-can">
+                        {{ $t('删除') }}
+                    </li>
+                    <li
+                        id="readed"
+                        icon="fa-solid fa-check-to-slot">
+                        {{ $t('标记已读') }}
+                    </li>
+                    <li
+                        id="notice_open"
+                        icon="fa-solid fa-volume-high">
+                        {{ $t('开启通知') }}
+                    </li>
+                    <li
+                        id="notice_close"
+                        icon="fa-solid fa-volume-xmark">
+                        {{ $t('关闭通知') }}
+                    </li>
+                </ul>
+            </BcMenu>
+            <TransitionGroup
+                id="message-list-body"
+                name="onmsg"
+                tag="div"
+                :class="runtimeData.tags.openSideBar ? ' open' : ''"
+                style="overflow-x: hidden">
+                <!-- 系统信息 -->
+                <FriendBody
+                    v-if="
+                        runtimeData.systemNoticesList &&
+                            Object.keys(runtimeData.systemNoticesList).length > 0
+                    "
+                    key="inMessage--10000"
+                    :select="chat.show.id === -10000"
+                    :data="{
+                        user_id: -10000,
+                        always_top: true,
+                        nickname: $t('系统通知'),
+                        remark: $t('系统通知'),
+                    }"
+                    @click="systemNoticeClick" />
+                <!-- 其他消息 -->
+                <FriendBody
+                    v-for="item in runtimeData.onMsgList"
+                    :key="
+                        'inMessage-' +
+                            (item.user_id ? item.user_id : item.group_id)
+                    "
+                    :select="
+                        chat.show.id === item.user_id ||
+                            (chat.show.id === item.group_id &&
+                                chat.group_name != '')
+                    "
+                    :menu="menu.select && menu.select == item"
+                    :data="item"
+                    from="message"
+                    @contextmenu.prevent="listMenuShow($event, item)"
+                    @click="userClick(item)"
+                    @touchstart="showMenuStart($event, item)"
+                    @touchend="showMenuEnd" />
+            </TransitionGroup>
         </div>
-        <div class="small">
-          <span>{{
-            $t('消息')
-          }}</span>
-          <div @click="openLeftBar">
-            <font-awesome-icon :icon="['fas', 'bars-staggered']" />
-          </div>
+        <div
+            v-show="!loginInfo.status || runtimeData.chatInfo.show.id == 0"
+            :class="
+                'friend-list-space' +
+                    (runtimeData.tags.openSideBar ? ' open' : '')
+            ">
+            <div class="ss-card">
+                <font-awesome-icon :icon="['fas', 'inbox']" />
+                <span>{{ $t('选择联系人开始聊天') }}</span>
+            </div>
         </div>
-      </div>
-      <BcMenu
-        :data="listMenu"
-        name="messages-menu"
-        @close="listMenuClose">
-        <ul>
-          <li
-            id="top"
-            icon="fa-solid fa-thumbtack">
-            {{ $t('置顶') }}
-          </li>
-          <li
-            id="canceltop"
-            icon="fa-solid fa-grip-lines">
-            {{ $t('取消置顶') }}
-          </li>
-          <li
-            id="remove"
-            icon="fa-solid fa-trash-can">
-            {{ $t('删除') }}
-          </li>
-          <li
-            id="readed"
-            icon="fa-solid fa-check-to-slot">
-            {{ $t('标记已读') }}
-          </li>
-          <li
-            id="notice_open"
-            icon="fa-solid fa-volume-high">
-            {{ $t('开启通知') }}
-          </li>
-          <li
-            id="notice_close"
-            icon="fa-solid fa-volume-xmark">
-            {{ $t('关闭通知') }}
-          </li>
-        </ul>
-      </BcMenu>
-      <TransitionGroup
-        id="message-list-body"
-        name="onmsg"
-        tag="div"
-        :class="runtimeData.tags.openSideBar ? ' open' : ''"
-        style="overflow-y: scroll">
-        <!-- 系统信息 -->
-        <FriendBody
-          v-if="
-            runtimeData.systemNoticesList &&
-              Object.keys(runtimeData.systemNoticesList).length > 0
-          "
-          key="inMessage--10000"
-          :select="chat.show.id === -10000"
-          :data="{
-            user_id: -10000,
-            always_top: true,
-            nickname: $t('系统通知'),
-            remark: $t('系统通知'),
-          }"
-          @click="systemNoticeClick" />
-        <!-- 其他消息 -->
-        <FriendBody
-          v-for="item in runtimeData.onMsgList"
-          :key="
-            'inMessage-' +
-              (item.user_id ? item.user_id : item.group_id)
-          "
-          :select="
-            chat.show.id === item.user_id ||
-              (chat.show.id === item.group_id &&
-                chat.group_name != '')
-          "
-          :menu="menu.select && menu.select == item"
-          :data="item"
-          from="message"
-          @contextmenu.prevent="listMenuShow($event, item)"
-          @click="userClick(item)"
-          @touchstart="showMenuStart($event, item)"
-          @touchend="showMenuEnd" />
-      </TransitionGroup>
     </div>
-    <div
-      v-show="!loginInfo.status || runtimeData.chatInfo.show.id == 0"
-      :class="
-        'friend-list-space' +
-          (runtimeData.tags.openSideBar ? ' open' : '')
-      ">
-      <div class="ss-card">
-        <font-awesome-icon :icon="['fas', 'inbox']" />
-        <span>{{ $t('选择联系人开始聊天') }}</span>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script lang="ts">
@@ -192,15 +192,9 @@
                         temp: data.group_name == '' ? data.group_id : undefined,
                         type: data.user_id ? 'user' : 'group',
                         id: data.user_id ? data.user_id : data.group_id,
-                        name: data.group_name
-                            ? data.group_name
-                            : data.remark === data.nickname
-                              ? data.nickname
-                              : data.remark + '（' + data.nickname + '）',
-                        avatar: data.user_id
-                            ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                              data.user_id
-                            : 'https://p.qlogo.cn/gh/' +
+                        name: data.group_name? data.group_name: data.remark === data.nickname? data.nickname: data.remark + '（' + data.nickname + '）',
+                        avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
+                              data.user_id: 'https://p.qlogo.cn/gh/' +
                               data.group_id +
                               '/' +
                               data.group_id +

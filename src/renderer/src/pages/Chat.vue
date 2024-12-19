@@ -10,855 +10,855 @@
 -->
 
 <template>
-  <div
-    id="chat-pan"
-    :class="
-      'chat-pan' +
-        (runtimeData.tags.openSideBar ? ' open' : '') +
-        (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-    "
-    :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
-    @touchmove="ChatOnMove"
-    @touchend="chatMoveEnd">
-    <!-- 聊天基本信息 -->
-    <div class="info">
-      <font-awesome-icon
-        :icon="['fas', 'bars-staggered']"
-        @click="openLeftBar" /><img :src="chat.show.avatar">
-      <div class="info">
-        <p>
-          {{ chat.show.name
-          }}<template
-            v-if="runtimeData.chatInfo.show.type == 'group'">
-            ({{
-              runtimeData.chatInfo.info.group_members.length
-            }})
-          </template>
-        </p>
-        <span v-if="chat.show.temp">
-          {{ $t('来自群聊：{group}', { group: chat.show.temp }) }}
-        </span>
-        <span v-else>
-          {{
-            list[list.length - 1]
-              ? $t('上次消息 - {time}', {
-                time: Intl.DateTimeFormat(trueLang, {
-                  hour: 'numeric',
-                  minute: 'numeric',
-                  second: 'numeric',
-                }).format(
-                  new Date(
-                    list[list.length - 1].time * 1000,
-                  ),
-                ),
-              })
-              : $t('暂无消息')
-          }}
-        </span>
-      </div>
-      <div class="space" />
-      <div class="more">
-        <font-awesome-icon
-          :icon="['fas', 'ellipsis-vertical']"
-          @click="openChatInfoPan" />
-      </div>
-    </div>
-    <!-- 加载中指示器 -->
     <div
-      :class="
-        'loading' +
-          (tags.nowGetHistroy && runtimeData.tags.canLoadHistory
-            ? ' show'
-            : '')
-      ">
-      <font-awesome-icon :icon="['fas', 'spinner']" />
-      <span>{{ $t('加载中') }}</span>
-    </div>
-    <!-- 消息显示区 -->
-    <div
-      v-if="!details[3].open"
-      id="msgPan"
-      class="chat"
-      style="scroll-behavior: smooth"
-      @scroll="chatScroll">
-      <div
-        v-if="!runtimeData.tags.canLoadHistory"
-        class="note note-nomsg">
-        <hr>
-        <a>{{ $t('没有更多消息了') }}</a>
-      </div>
-      <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
-      <NoticeBody
-        v-if="tags.nowGetHistroy && list.length > 0"
-        :data="{ sub_type: 'time', time: list[0].time }" />
-      <TransitionGroup
-        name="msglist"
-        tag="div">
-        <template v-for="(msgIndex, index) in list">
-          <!-- 时间戳 -->
-          <NoticeBody
-            v-if="
-              isShowTime(
-                list[index - 1]
-                  ? list[index - 1].time
-                  : undefined,
-                msgIndex.time,
-              )
-            "
-            :key="'notice-time-' + index"
-            :data="{ sub_type: 'time', time: msgIndex.time }" />
-          <!-- 消息体 -->
-          <MsgBody
-            v-if="
-              (msgIndex.post_type === 'message' ||
-                msgIndex.post_type === 'message_sent') &&
-                msgIndex.message.length > 0
-            "
-            :key="msgIndex.message_id"
-            :selected="
-              multipleSelectList.includes(msgIndex.message_id) ||
-                tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id
-            "
-            :data="msgIndex"
-            @click="msgClick($event, msgIndex)"
-            @scroll-to-msg="scrollToMsg"
-            @scroll-buttom="imgLoadedScroll"
-            @contextmenu.prevent="showMsgMeun($event, msgIndex)"
-            @touchstart="msgStartMove($event, msgIndex)"
-            @touchmove="msgOnMove"
-            @touchend="msgMoveEnd($event, msgIndex)"
-            @send-poke="sendPoke" />
-          <!-- 其他通知消息 -->
-          <NoticeBody
-            v-if="msgIndex.post_type === 'notice'"
-            :id="uuid()"
-            :key="'notice-' + index"
-            :data="msgIndex" />
-        </template>
-      </TransitionGroup>
-    </div>
-    <div
-      v-else
-      id="msgPan"
-      class="chat"
-      style="scroll-behavior: smooth">
-      <!-- 搜索消息结果显示 -->
-      <TransitionGroup
-        name="msglist"
-        tag="div">
-        <template v-for="(msgIndex, index) in tags.search.list">
-          <!-- 时间戳 -->
-          <NoticeBody
-            v-if="
-              isShowTime(
-                list[index - 1]
-                  ? list[index - 1].time
-                  : undefined,
-                msgIndex.time,
-              )
-            "
-            :key="'notice-time-' + index"
-            :data="{ sub_type: 'time', time: msgIndex.time }" />
-          <!-- 消息体 -->
-          <MsgBody
-            v-if="
-              (msgIndex.post_type === 'message' ||
-                msgIndex.post_type === 'message_sent') &&
-                msgIndex.message.length > 0
-            "
-            :key="msgIndex.message_id"
-            :selected="
-              multipleSelectList.includes(msgIndex.message_id) ||
-                tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id
-            "
-            :data="msgIndex"
-            @scroll-to-msg="scrollToMsg"
-            @scroll-buttom="imgLoadedScroll"
-            @contextmenu.prevent="showMsgMeun($event, msgIndex)"
-            @touchstart="msgStartMove($event, msgIndex)"
-            @touchmove="msgOnMove"
-            @touchend="msgMoveEnd($event, msgIndex)" />
-          <!-- 其他通知消息 -->
-          <NoticeBody
-            v-if="msgIndex.post_type === 'notice'"
-            :id="uuid()"
-            :key="'notice-' + index"
-            :data="msgIndex" />
-        </template>
-      </TransitionGroup>
-    </div>
-    <!-- 滚动到底部悬浮标志 -->
-    <div
-      v-show="tags.showBottomButton"
-      class="new-msg"
-      @click="scrollBottom(true)">
-      <div class="ss-card">
-        <font-awesome-icon :icon="['fas', 'comment']" />
-        <span v-if="NewMsgNum > 0">{{ NewMsgNum }}</span>
-      </div>
-    </div>
-    <!-- 底部区域 -->
-    <div
-      id="send-more"
-      class="more">
-      <!-- 功能附加 -->
-      <div>
-        <div>
-          <!-- 表情面板 -->
-          <Transition name="pan">
-            <FacePan
-              v-show="details[1].open"
-              @add-special-msg="addSpecialMsg" />
-          </Transition>
-          <!-- 精华消息 -->
-          <Transition name="pan">
-            <div
-              v-show="
-                details[2].open &&
-                  runtimeData.chatInfo.info.jin_info.list.length >
-                  0
-              "
-              class="ss-card jin-pan">
-              <div>
-                <font-awesome-icon :icon="['fas', 'message']" />
-                <span>{{ $t('精华消息') }}</span>
-                <font-awesome-icon
-                  :icon="['fas', 'xmark']"
-                  @click="details[2].open = !details[2].open" />
-              </div>
-              <div
-                class="jin-pan-body"
-                @scroll="jinScroll">
-                <div
-                  v-for="(item, index) in runtimeData.chatInfo
-                    .info.jin_info.list"
-                  :key="'jin-' + index">
-                  <div>
-                    <img
-                      :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
-                    <div>
-                      <a>{{ item.sender_nick }}</a>
-                      <span>{{
-                              Intl.DateTimeFormat(
-                                trueLang,
-                                {
-                                  hour: 'numeric',
-                                  minute: 'numeric',
-                                },
-                              ).format(
-                                new Date(
-                                  item.sender_time *
-                                    1000,
-                                ),
-                              )
-                            }}
-                        {{ $t('发送') }}</span>
-                    </div>
-                    <span>{{
-                      $t('{time}，由 {name} 设置', {
-                        time: Intl.DateTimeFormat(
-                          trueLang,
-                          {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                          },
-                        ).format(
-                          new Date(
-                            item.add_digest_time *
-                              1000,
-                          ),
-                        ),
-                        name: item.add_digest_nick,
-                      })
-                    }}</span>
-                  </div>
-                  <div class="context">
-                    <template
-                      v-for="(
-                        context, indexc
-                      ) in item.msg_content"
-                      :key="
-                        'jinc-' + index + '-' + indexc
-                      ">
-                      <span
-                        v-if="context.msg_type === 1">{{ context.text }}</span>
-                      <img
-                        v-if="context.msg_type === 2"
-                        class="face"
-                        :src="getFace(context.face_index)">
-                      <img
-                        v-if="context.msg_type === 3"
-                        :src="context.image_url">
-                    </template>
-                  </div>
-                </div>
-                <div
-                  v-show="tags.isJinLoading"
-                  class="jin-pan-load">
-                  <font-awesome-icon
-                    :icon="['fas', 'spinner']" />
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-        <!-- 多选指示器 -->
-        <div
-          :class="
-            multipleSelectList.length > 0
-              ? 'select-tag show'
-              : 'select-tag'
-          ">
-          <div>
-            <font-awesome-icon
-              :icon="['fas', 'share']"
-              @click="showForWard" />
-            <span>{{ $t('合并转发') }}</span>
-          </div>
-          <div>
-            <font-awesome-icon :icon="['fas', 'scissors']" />
-            <span>{{ $t('截图') }}</span>
-          </div>
-          <div>
-            <font-awesome-icon
-              :icon="['fas', 'trash-can']"
-              @click="delMsgs" />
-            <span>{{ $t('删除') }}</span>
-          </div>
-          <div>
-            <font-awesome-icon
-              :icon="['fas', 'copy']"
-              @click="copyMsgs" />
-            <span>{{ $t('复制') }}</span>
-          </div>
-          <div>
-            <span @click="multipleSelectList = []">{{
-              multipleSelectList.length
-            }}</span>
-            <span>{{ $t('取消') }}</span>
-          </div>
-        </div>
-        <!-- 搜索指示器 -->
-        <div
-          :class="details[3].open ? 'search-tag show' : 'search-tag'">
-          <font-awesome-icon :icon="['fas', 'search']" />
-          <span>{{ $t('搜索已加载的消息') }}</span>
-          <div @click="closeSearch">
-            <font-awesome-icon :icon="['fas', 'xmark']" />
-          </div>
-        </div>
-        <!-- 回复指示器 -->
-        <div :class="tags.isReply ? 'replay-tag show' : 'replay-tag'">
-          <font-awesome-icon :icon="['fas', 'reply']" />
-          <span>{{
-            selectedMsg === null
-              ? ''
-              : selectedMsg.sender.nickname +
-                ': ' +
-                fun.getMsgRawTxt(selectedMsg)
-          }}</span>
-          <div @click="cancelReply">
-            <font-awesome-icon :icon="['fas', 'xmark']" />
-          </div>
-        </div>
-        <!-- At 指示器 -->
-        <div
-          :class="atFindList != null ? 'at-tag show' : 'at-tag'"
-          contenteditable="true"
-          @blur="choiceAt(undefined)">
-          <div
-            v-for="item in atFindList != null ? atFindList : []"
-            :key="'atFind-' + item.user_id"
-            @click="choiceAt(item.user_id)">
-            <img
-              :src="
-                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                  item.user_id
-              ">
-            <span>{{
-              item.card != '' && item.card != null
-                ? item.card
-                : item.nickname
-            }}</span>
-            <a>{{ item.user_id }}</a>
-          </div>
-          <div
-            v-if="atFindList?.length == 0"
-            class="emp">
-            <span>{{ $t('没有找到匹配的群成员') }}</span>
-          </div>
-        </div>
-        <!-- 更多功能 -->
-        <div
-          :class="
-            tags.showMoreDetail ? 'more-detail show' : 'more-detail'
-          ">
-          <div
-            :title="$t('图片')"
-            @click="runSelectImg">
-            <font-awesome-icon :icon="['fas', 'image']" />
-            <input
-              id="choice-pic"
-              type="file"
-              style="display: none"
-              @change="selectImg">
-          </div>
-          <div
-            :title="$t('文件')"
-            @click="runSelectFile">
-            <font-awesome-icon :icon="['fas', 'folder']" />
-            <input
-              id="choice-file"
-              type="file"
-              style="display: none"
-              @change="selectFile">
-          </div>
-          <div
-            :title="$t('表情')"
-            @click="
-              (details[1].open = !details[1].open),
-              (tags.showMoreDetail = false)
-            ">
-            <font-awesome-icon :icon="['fas', 'face-laugh']" />
-          </div>
-          <div
-            v-if="chat.show.type === 'user'"
-            :title="$t('戳一戳')"
-            @click="sendPoke(chat.show.id)">
-            <font-awesome-icon
-              :icon="['fas', 'fa-hand-point-up']" />
-          </div>
-          <div
-            v-if="chat.show.type === 'group'"
-            :title="$t('精华消息')"
-            @click="showJin">
-            <font-awesome-icon :icon="['fas', 'star']" />
-          </div>
-          <div class="space" />
-          <div
-            :title="$t('搜索消息')"
-            @click="openSearch">
-            <font-awesome-icon :icon="['fas', 'search']" />
-          </div>
-        </div>
-      </div>
-      <!-- 消息发送框 -->
-      <div>
-        <div @click="moreFunClick">
-          <font-awesome-icon :icon="['fas', 'plus']" />
-        </div>
-        <div>
-          <form @submit.prevent="mainSubmit">
-            <input
-              v-if="!Option.get('use_breakline')"
-              id="main-input"
-              v-model="msg"
-              type="text"
-              autocomplete="off"
-              :disabled="
-                runtimeData.tags.openSideBar ||
-                  chat.info.me_info.shut_up_timestamp > 0
-              "
-              :placeholder="
-                chat.info.me_info.shut_up_timestamp > 0
-                  ? $t('已被禁言至：{time}', {
-                    time: Intl.DateTimeFormat(
-                      trueLang,
-                      getTimeConfig(
-                        new Date(
-                          chat.info.me_info
-                            .shut_up_timestamp *
-                            1000,
-                        ),
-                      ),
-                    ).format(
-                      new Date(
-                        chat.info.me_info
-                          .shut_up_timestamp * 1000,
-                      ),
-                    ),
-                  })
-                  : ''
-              "
-              @paste="addImg"
-              @keyup="mainKeyUp"
-              @click="selectSQIn()"
-              @input="searchMessage">
-            <textarea
-              v-else
-              id="main-input"
-              v-model="msg"
-              type="text"
-              :disabled="runtimeData.tags.openSideBar"
-              @paste="addImg"
-              @keydown="mainKey"
-              @keyup="mainKeyUp"
-              @click="selectSQIn()"
-              @input="searchMessage" />
-          </form>
-          <div @click="sendMsg">
-            <font-awesome-icon
-              v-if="details[3].open"
-              :icon="['fas', 'search']" />
-            <font-awesome-icon
-              v-else
-              :icon="['fas', 'angle-right']" />
-          </div>
-        </div>
-      </div>
-      <div />
-    </div>
-    <!-- 合并转发消息预览器 -->
-    <div :class="mergeList != undefined ? 'merge-pan show' : 'merge-pan'">
-      <div @click="closeMergeMsg" />
-      <div class="ss-card">
-        <div>
-          <font-awesome-icon
-            style="margin-top: 5px"
-            :icon="['fas', 'message']" />
-          <span>{{ $t('合并消息') }}</span>
-          <font-awesome-icon
-            :icon="['fas', 'xmark']"
-            @click="closeMergeMsg" />
-        </div>
-        <div
-          :class="
-            'loading' +
-              (mergeList && mergeList.length == 0 ? ' show' : '')
-          ">
-          <font-awesome-icon :icon="['fas', 'spinner']" />
-          <span>{{ $t('加载中') }}</span>
-        </div>
-        <div>
-          <template
-            v-for="(msgIndex, index) in mergeList"
-            :key="'merge-' + index">
-            <NoticeBody
-              v-if="
-                isShowTime(
-                  mergeList[index - 1]
-                    ? mergeList[index - 1].time
-                    : undefined,
-                  msgIndex.time,
-                  index == 0,
-                )
-              "
-              :id="uuid()"
-              :key="'notice-time-' + index"
-              :data="{ sub_type: 'time', time: msgIndex.time }" />
-            <!-- 合并转发消息忽略是不是自己的判定 -->
-            <MsgBody
-              :data="msgIndex"
-              :type="'merge'" />
-          </template>
-        </div>
-      </div>
-    </div>
-    <!-- At 信息悬浮窗 -->
-    <div class="mumber-info">
-      <div
-        v-if="
-          Object.keys(mumberInfo).length > 0 &&
-            mumberInfo.error === undefined
-        "
-        class="ss-card"
-        :style="getPopPost()">
-        <img
-          :src="
-            'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-              mumberInfo.user_id
-          ">
-        <div>
-          <span name="id">{{ mumberInfo.user_id }}</span>
-          <div>
-            <a>{{
-              mumberInfo.card == ''
-                ? mumberInfo.nickname
-                : mumberInfo.card
-            }}</a>
-            <div>
-              <span v-if="mumberInfo.role !== 'member'">
-                {{ $t('成员类型_' + mumberInfo.role) }}
-              </span>
-              <span>Lv {{ mumberInfo.level }}</span>
-            </div>
-          </div>
-          <span v-if="mumberInfo.join_time">
-            {{
-              $t('{time} 加入群聊', {
-                time: Intl.DateTimeFormat(trueLang, {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                }).format(
-                  new Date(mumberInfo.join_time * 1000),
-                ),
-              })
-            }}
-          </span>
-        </div>
-      </div>
-    </div>
-    <!-- 消息右击菜单 -->
-    <div
-      :class="
-        'msg-menu' +
-          (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-      ">
-      <div
-        v-show="tags.showMsgMenu"
-        class="msg-menu-bg"
-        @click="closeMsgMenu" />
-      <div
-        id="msgMenu"
+        id="chat-pan"
         :class="
-          tags.showMsgMenu
-            ? 'ss-card msg-menu-body show'
-            : 'ss-card msg-menu-body'
-        ">
-        <div
-          v-if="runtimeData.chatInfo.show.type == 'group'"
-          v-show="tags.menuDisplay.showRespond"
-          :class="
-            'ss-card respond' +
-              (tags.menuDisplay.respond ? ' open' : '')
-          ">
-          <template
-            v-for="(num, index) in respondIds"
-            :key="'respond-' + num">
-            <img
-              v-if="getFace(num) != ''"
-              loading="lazy"
-              :src="getFace(num) as any"
-              @click="sendRespond(num)">
+            'chat-pan' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
+        "
+        :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
+        @touchmove="ChatOnMove"
+        @touchend="chatMoveEnd">
+        <!-- 聊天基本信息 -->
+        <div class="info">
             <font-awesome-icon
-              v-if="index == 4"
-              :icon="['fas', 'angle-up']"
-              @click="tags.menuDisplay.respond = true" />
-          </template>
-        </div>
-        <div
-          v-show="tags.menuDisplay.add"
-          @click="forwardSelf()">
-          <div><font-awesome-icon :icon="['fas', 'plus']" /></div>
-          <a>{{ $t('+ 1') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.relpy"
-          @click="replyMsg(true)">
-          <div><font-awesome-icon :icon="['fas', 'message']" /></div>
-          <a>{{ $t('回复') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.forward"
-          @click="showForWard()">
-          <div><font-awesome-icon :icon="['fas', 'share']" /></div>
-          <a>{{ $t('转发') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.select"
-          @click="intoMultipleSelect()">
-          <div>
-            <font-awesome-icon :icon="['fas', 'circle-check']" />
-          </div>
-          <a>{{ $t('多选') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.copy"
-          @click="copyMsg">
-          <div>
-            <font-awesome-icon :icon="['fas', 'clipboard']" />
-          </div>
-          <a>{{ $t('复制') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.copySelect"
-          @click="copySelectMsg">
-          <div><font-awesome-icon :icon="['fas', 'code']" /></div>
-          <a>{{ $t('复制选中文本') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.downloadImg != false"
-          @click="downloadImg">
-          <div>
-            <font-awesome-icon :icon="['fas', 'floppy-disk']" />
-          </div>
-          <a>{{ $t('下载图片') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.revoke"
-          @click="revokeMsg">
-          <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
-          <a>{{ $t('撤回') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.at"
-          @click="
-            selectedMsg
-              ? addSpecialMsg({
-                msgObj: { type: 'at', qq: selectedMsg.sender.user_id },
-                addText: true,
-              }): '';
-            toMainInput();
-            closeMsgMenu()
-          ">
-          <div><font-awesome-icon :icon="['fas', 'at']" /></div>
-          <a>{{ $t('提及') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.poke"
-          @click="
-            sendPoke(
-              selectedMsg
-                ? selectedMsg.sender.user_id
-                : undefined,
-            )
-          ">
-          <div>
-            <font-awesome-icon
-              :icon="['fas', 'fa-hand-point-up']" />
-          </div>
-          <a>{{ $t('戳一戳') }}</a>
-        </div>
-        <div
-          v-show="tags.menuDisplay.remove"
-          @click="removeUser">
-          <div>
-            <font-awesome-icon :icon="['fas', 'trash-can']" />
-          </div>
-          <a>{{ $t('移出群聊') }}</a>
-        </div>
-      </div>
-    </div>
-    <!-- 群 / 好友信息弹窗 -->
-    <Transition>
-      <Info
-        :chat="chat"
-        :tags="tags"
-        @close="openChatInfoPan"
-        @load-file="fileLoad" />
-    </Transition>
-    <!-- 图片发送器 -->
-    <Transition>
-      <div
-        v-show="imgCache.length > 0"
-        class="img-sender">
-        <div class="card ss-card">
-          <div class="hander">
-            <span>{{ $t('发送图片') }}</span>
-            <button
-              class="ss-button"
-              @click="sendMsg">
-              {{ $t('发送') }}
-            </button>
-          </div>
-          <div class="imgs">
-            <div
-              v-for="(img64, index) in imgCache"
-              :key="'sendImg-' + index">
-              <div @click="deleteImg(index)">
-                <font-awesome-icon :icon="['fas', 'xmark']" />
-              </div>
-              <img :src="img64">
-            </div>
-          </div>
-          <div class="sender">
-            <font-awesome-icon
-              :icon="['fas', 'image']"
-              @click="runSelectImg" />
-            <input
-              v-model="msg"
-              type="text"
-              :disabled="runtimeData.tags.openSideBar"
-              @paste="addImg"
-              @click="toMainInput">
-          </div>
-        </div>
-        <div
-          class="bg"
-          @click="imgCache = []" />
-      </div>
-    </Transition>
-    <!-- 转发面板 -->
-    <Transition>
-      <div
-        v-if="tags.showForwardPan"
-        class="forward-pan">
-        <div class="ss-card card">
-          <header>
-            <span>{{ $t('转发消息') }}</span>
-            <font-awesome-icon
-              :icon="['fas', 'xmark']"
-              @click="cancelForward" />
-          </header>
-          <input
-            :placeholder="$t('搜索 ……')"
-            @input="searchForward">
-          <div>
-            <div
-              v-for="data in forwardList"
-              :key="
-                'forwardList-' + data.user_id
-                  ? data.user_id
-                  : data.group_id
-              "
-              @click="forwardMsg(data)">
-              <img
-                loading="lazy"
-                :title="
-                  data.group_name
-                    ? data.group_name
-                    : data.remark === data.nickname
-                      ? data.nickname
-                      : data.remark +
-                        '（' +
-                        data.nickname +
-                        '）'
-                "
-                :src="
-                  data.user_id
-                    ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                      data.user_id
-                    : 'https://p.qlogo.cn/gh/' +
-                      data.group_id +
-                      '/' +
-                      data.group_id +
-                      '/0'
-                ">
-              <div>
+                :icon="['fas', 'bars-staggered']"
+                @click="openLeftBar" /><img :src="chat.show.avatar">
+            <div class="info">
                 <p>
-                  {{
-                    data.group_name
-                      ? data.group_name
-                      : data.remark === data.nickname
-                        ? data.nickname
-                        : data.remark +
-                          '（' +
-                          data.nickname +
-                          '）'
-                  }}
+                    {{ chat.show.name
+                    }}<template
+                        v-if="runtimeData.chatInfo.show.type == 'group'">
+                        ({{
+                            runtimeData.chatInfo.info.group_members.length
+                        }})
+                    </template>
                 </p>
-                <span>{{
-                  data.group_id ? $t('群组') : $t('好友')
-                }}</span>
-              </div>
+                <span v-if="chat.show.temp">
+                    {{ $t('来自群聊：{group}', { group: chat.show.temp }) }}
+                </span>
+                <span v-else>
+                    {{
+                        list[list.length - 1]
+                            ? $t('上次消息 - {time}', {
+                                time: Intl.DateTimeFormat(trueLang, {
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    second: 'numeric',
+                                }).format(
+                                    new Date(
+                                        list[list.length - 1].time * 1000,
+                                    ),
+                                ),
+                            })
+                            : $t('暂无消息')
+                    }}
+                </span>
             </div>
-          </div>
+            <div class="space" />
+            <div class="more">
+                <font-awesome-icon
+                    :icon="['fas', 'ellipsis-vertical']"
+                    @click="openChatInfoPan" />
+            </div>
+        </div>
+        <!-- 加载中指示器 -->
+        <div
+            :class="
+                'loading' +
+                    (tags.nowGetHistroy && runtimeData.tags.canLoadHistory
+                        ? ' show'
+                        : '')
+            ">
+            <font-awesome-icon :icon="['fas', 'spinner']" />
+            <span>{{ $t('加载中') }}</span>
+        </div>
+        <!-- 消息显示区 -->
+        <div
+            v-if="!details[3].open"
+            id="msgPan"
+            class="chat"
+            style="scroll-behavior: smooth"
+            @scroll="chatScroll">
+            <div
+                v-if="!runtimeData.tags.canLoadHistory"
+                class="note note-nomsg">
+                <hr>
+                <a>{{ $t('没有更多消息了') }}</a>
+            </div>
+            <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
+            <NoticeBody
+                v-if="tags.nowGetHistroy && list.length > 0"
+                :data="{ sub_type: 'time', time: list[0].time }" />
+            <TransitionGroup
+                name="msglist"
+                tag="div">
+                <template v-for="(msgIndex, index) in list">
+                    <!-- 时间戳 -->
+                    <NoticeBody
+                        v-if="
+                            isShowTime(
+                                list[index - 1]
+                                    ? list[index - 1].time
+                                    : undefined,
+                                msgIndex.time,
+                            )
+                        "
+                        :key="'notice-time-' + index"
+                        :data="{ sub_type: 'time', time: msgIndex.time }" />
+                    <!-- 消息体 -->
+                    <MsgBody
+                        v-if="
+                            (msgIndex.post_type === 'message' ||
+                                msgIndex.post_type === 'message_sent') &&
+                                msgIndex.message.length > 0
+                        "
+                        :key="msgIndex.message_id"
+                        :selected="
+                            multipleSelectList.includes(msgIndex.message_id) ||
+                                tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id
+                        "
+                        :data="msgIndex"
+                        @click="msgClick($event, msgIndex)"
+                        @scroll-to-msg="scrollToMsg"
+                        @scroll-buttom="imgLoadedScroll"
+                        @contextmenu.prevent="showMsgMeun($event, msgIndex)"
+                        @touchstart="msgStartMove($event, msgIndex)"
+                        @touchmove="msgOnMove"
+                        @touchend="msgMoveEnd($event, msgIndex)"
+                        @send-poke="sendPoke" />
+                    <!-- 其他通知消息 -->
+                    <NoticeBody
+                        v-if="msgIndex.post_type === 'notice'"
+                        :id="uuid()"
+                        :key="'notice-' + index"
+                        :data="msgIndex" />
+                </template>
+            </TransitionGroup>
         </div>
         <div
-          class="bg"
-          @click="cancelForward" />
-      </div>
-    </Transition>
-    <div
-      class="bg"
-      :style="
-        runtimeData.sysConfig.option_view_background
-          ? `backdrop-filter: blur(${runtimeData.sysConfig
-            .chat_background_blur}px);`
-          : ''
-      " />
-  </div>
+            v-else
+            id="msgPan"
+            class="chat"
+            style="scroll-behavior: smooth">
+            <!-- 搜索消息结果显示 -->
+            <TransitionGroup
+                name="msglist"
+                tag="div">
+                <template v-for="(msgIndex, index) in tags.search.list">
+                    <!-- 时间戳 -->
+                    <NoticeBody
+                        v-if="
+                            isShowTime(
+                                list[index - 1]
+                                    ? list[index - 1].time
+                                    : undefined,
+                                msgIndex.time,
+                            )
+                        "
+                        :key="'notice-time-' + index"
+                        :data="{ sub_type: 'time', time: msgIndex.time }" />
+                    <!-- 消息体 -->
+                    <MsgBody
+                        v-if="
+                            (msgIndex.post_type === 'message' ||
+                                msgIndex.post_type === 'message_sent') &&
+                                msgIndex.message.length > 0
+                        "
+                        :key="msgIndex.message_id"
+                        :selected="
+                            multipleSelectList.includes(msgIndex.message_id) ||
+                                tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id
+                        "
+                        :data="msgIndex"
+                        @scroll-to-msg="scrollToMsg"
+                        @scroll-buttom="imgLoadedScroll"
+                        @contextmenu.prevent="showMsgMeun($event, msgIndex)"
+                        @touchstart="msgStartMove($event, msgIndex)"
+                        @touchmove="msgOnMove"
+                        @touchend="msgMoveEnd($event, msgIndex)" />
+                    <!-- 其他通知消息 -->
+                    <NoticeBody
+                        v-if="msgIndex.post_type === 'notice'"
+                        :id="uuid()"
+                        :key="'notice-' + index"
+                        :data="msgIndex" />
+                </template>
+            </TransitionGroup>
+        </div>
+        <!-- 滚动到底部悬浮标志 -->
+        <div
+            v-show="tags.showBottomButton"
+            class="new-msg"
+            @click="scrollBottom(true)">
+            <div class="ss-card">
+                <font-awesome-icon :icon="['fas', 'comment']" />
+                <span v-if="NewMsgNum > 0">{{ NewMsgNum }}</span>
+            </div>
+        </div>
+        <!-- 底部区域 -->
+        <div
+            id="send-more"
+            class="more">
+            <!-- 功能附加 -->
+            <div>
+                <div>
+                    <!-- 表情面板 -->
+                    <Transition name="pan">
+                        <FacePan
+                            v-show="details[1].open"
+                            @add-special-msg="addSpecialMsg" />
+                    </Transition>
+                    <!-- 精华消息 -->
+                    <Transition name="pan">
+                        <div
+                            v-show="
+                                details[2].open &&
+                                    runtimeData.chatInfo.info.jin_info.list.length >
+                                    0
+                            "
+                            class="ss-card jin-pan">
+                            <div>
+                                <font-awesome-icon :icon="['fas', 'message']" />
+                                <span>{{ $t('精华消息') }}</span>
+                                <font-awesome-icon
+                                    :icon="['fas', 'xmark']"
+                                    @click="details[2].open = !details[2].open" />
+                            </div>
+                            <div
+                                class="jin-pan-body"
+                                @scroll="jinScroll">
+                                <div
+                                    v-for="(item, index) in runtimeData.chatInfo
+                                        .info.jin_info.list"
+                                    :key="'jin-' + index">
+                                    <div>
+                                        <img
+                                            :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
+                                        <div>
+                                            <a>{{ item.sender_nick }}</a>
+                                            <span>{{
+                                                      Intl.DateTimeFormat(
+                                                          trueLang,
+                                                          {
+                                                              hour: 'numeric',
+                                                              minute: 'numeric',
+                                                          },
+                                                      ).format(
+                                                          new Date(
+                                                              item.sender_time *
+                                                                  1000,
+                                                          ),
+                                                      )
+                                                  }}
+                                                {{ $t('发送') }}</span>
+                                        </div>
+                                        <span>{{
+                                            $t('{time}，由 {name} 设置', {
+                                                time: Intl.DateTimeFormat(
+                                                    trueLang,
+                                                    {
+                                                        hour: 'numeric',
+                                                        minute: 'numeric',
+                                                    },
+                                                ).format(
+                                                    new Date(
+                                                        item.add_digest_time *
+                                                            1000,
+                                                    ),
+                                                ),
+                                                name: item.add_digest_nick,
+                                            })
+                                        }}</span>
+                                    </div>
+                                    <div class="context">
+                                        <template
+                                            v-for="(
+                                                context, indexc
+                                            ) in item.msg_content"
+                                            :key="
+                                                'jinc-' + index + '-' + indexc
+                                            ">
+                                            <span
+                                                v-if="context.msg_type === 1">{{ context.text }}</span>
+                                            <img
+                                                v-if="context.msg_type === 2"
+                                                class="face"
+                                                :src="getFace(context.face_index)">
+                                            <img
+                                                v-if="context.msg_type === 3"
+                                                :src="context.image_url">
+                                        </template>
+                                    </div>
+                                </div>
+                                <div
+                                    v-show="tags.isJinLoading"
+                                    class="jin-pan-load">
+                                    <font-awesome-icon
+                                        :icon="['fas', 'spinner']" />
+                                </div>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
+                <!-- 多选指示器 -->
+                <div
+                    :class="
+                        multipleSelectList.length > 0
+                            ? 'select-tag show'
+                            : 'select-tag'
+                    ">
+                    <div>
+                        <font-awesome-icon
+                            :icon="['fas', 'share']"
+                            @click="showForWard" />
+                        <span>{{ $t('合并转发') }}</span>
+                    </div>
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'scissors']" />
+                        <span>{{ $t('截图') }}</span>
+                    </div>
+                    <div>
+                        <font-awesome-icon
+                            :icon="['fas', 'trash-can']"
+                            @click="delMsgs" />
+                        <span>{{ $t('删除') }}</span>
+                    </div>
+                    <div>
+                        <font-awesome-icon
+                            :icon="['fas', 'copy']"
+                            @click="copyMsgs" />
+                        <span>{{ $t('复制') }}</span>
+                    </div>
+                    <div>
+                        <span @click="multipleSelectList = []">{{
+                            multipleSelectList.length
+                        }}</span>
+                        <span>{{ $t('取消') }}</span>
+                    </div>
+                </div>
+                <!-- 搜索指示器 -->
+                <div
+                    :class="details[3].open ? 'search-tag show' : 'search-tag'">
+                    <font-awesome-icon :icon="['fas', 'search']" />
+                    <span>{{ $t('搜索已加载的消息') }}</span>
+                    <div @click="closeSearch">
+                        <font-awesome-icon :icon="['fas', 'xmark']" />
+                    </div>
+                </div>
+                <!-- 回复指示器 -->
+                <div :class="tags.isReply ? 'replay-tag show' : 'replay-tag'">
+                    <font-awesome-icon :icon="['fas', 'reply']" />
+                    <span>{{
+                        selectedMsg === null
+                            ? ''
+                            : selectedMsg.sender.nickname +
+                                ': ' +
+                                fun.getMsgRawTxt(selectedMsg)
+                    }}</span>
+                    <div @click="cancelReply">
+                        <font-awesome-icon :icon="['fas', 'xmark']" />
+                    </div>
+                </div>
+                <!-- At 指示器 -->
+                <div
+                    :class="atFindList != null ? 'at-tag show' : 'at-tag'"
+                    contenteditable="true"
+                    @blur="choiceAt(undefined)">
+                    <div
+                        v-for="item in atFindList != null ? atFindList : []"
+                        :key="'atFind-' + item.user_id"
+                        @click="choiceAt(item.user_id)">
+                        <img
+                            :src="
+                                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
+                                    item.user_id
+                            ">
+                        <span>{{
+                            item.card != '' && item.card != null
+                                ? item.card
+                                : item.nickname
+                        }}</span>
+                        <a>{{ item.user_id }}</a>
+                    </div>
+                    <div
+                        v-if="atFindList?.length == 0"
+                        class="emp">
+                        <span>{{ $t('没有找到匹配的群成员') }}</span>
+                    </div>
+                </div>
+                <!-- 更多功能 -->
+                <div
+                    :class="
+                        tags.showMoreDetail ? 'more-detail show' : 'more-detail'
+                    ">
+                    <div
+                        :title="$t('图片')"
+                        @click="runSelectImg">
+                        <font-awesome-icon :icon="['fas', 'image']" />
+                        <input
+                            id="choice-pic"
+                            type="file"
+                            style="display: none"
+                            @change="selectImg">
+                    </div>
+                    <div
+                        :title="$t('文件')"
+                        @click="runSelectFile">
+                        <font-awesome-icon :icon="['fas', 'folder']" />
+                        <input
+                            id="choice-file"
+                            type="file"
+                            style="display: none"
+                            @change="selectFile">
+                    </div>
+                    <div
+                        :title="$t('表情')"
+                        @click="
+                            (details[1].open = !details[1].open),
+                            (tags.showMoreDetail = false)
+                        ">
+                        <font-awesome-icon :icon="['fas', 'face-laugh']" />
+                    </div>
+                    <div
+                        v-if="chat.show.type === 'user'"
+                        :title="$t('戳一戳')"
+                        @click="sendPoke(chat.show.id)">
+                        <font-awesome-icon
+                            :icon="['fas', 'fa-hand-point-up']" />
+                    </div>
+                    <div
+                        v-if="chat.show.type === 'group'"
+                        :title="$t('精华消息')"
+                        @click="showJin">
+                        <font-awesome-icon :icon="['fas', 'star']" />
+                    </div>
+                    <div class="space" />
+                    <div
+                        :title="$t('搜索消息')"
+                        @click="openSearch">
+                        <font-awesome-icon :icon="['fas', 'search']" />
+                    </div>
+                </div>
+            </div>
+            <!-- 消息发送框 -->
+            <div>
+                <div @click="moreFunClick">
+                    <font-awesome-icon :icon="['fas', 'plus']" />
+                </div>
+                <div>
+                    <form @submit.prevent="mainSubmit">
+                        <input
+                            v-if="!Option.get('use_breakline')"
+                            id="main-input"
+                            v-model="msg"
+                            type="text"
+                            autocomplete="off"
+                            :disabled="
+                                runtimeData.tags.openSideBar ||
+                                    chat.info.me_info.shut_up_timestamp > 0
+                            "
+                            :placeholder="
+                                chat.info.me_info.shut_up_timestamp > 0
+                                    ? $t('已被禁言至：{time}', {
+                                        time: Intl.DateTimeFormat(
+                                            trueLang,
+                                            getTimeConfig(
+                                                new Date(
+                                                    chat.info.me_info
+                                                        .shut_up_timestamp *
+                                                        1000,
+                                                ),
+                                            ),
+                                        ).format(
+                                            new Date(
+                                                chat.info.me_info
+                                                    .shut_up_timestamp * 1000,
+                                            ),
+                                        ),
+                                    })
+                                    : ''
+                            "
+                            @paste="addImg"
+                            @keyup="mainKeyUp"
+                            @click="selectSQIn()"
+                            @input="searchMessage">
+                        <textarea
+                            v-else
+                            id="main-input"
+                            v-model="msg"
+                            type="text"
+                            :disabled="runtimeData.tags.openSideBar"
+                            @paste="addImg"
+                            @keydown="mainKey"
+                            @keyup="mainKeyUp"
+                            @click="selectSQIn()"
+                            @input="searchMessage" />
+                    </form>
+                    <div @click="sendMsg">
+                        <font-awesome-icon
+                            v-if="details[3].open"
+                            :icon="['fas', 'search']" />
+                        <font-awesome-icon
+                            v-else
+                            :icon="['fas', 'angle-right']" />
+                    </div>
+                </div>
+            </div>
+            <div />
+        </div>
+        <!-- 合并转发消息预览器 -->
+        <div :class="mergeList != undefined ? 'merge-pan show' : 'merge-pan'">
+            <div @click="closeMergeMsg" />
+            <div class="ss-card">
+                <div>
+                    <font-awesome-icon
+                        style="margin-top: 5px"
+                        :icon="['fas', 'message']" />
+                    <span>{{ $t('合并消息') }}</span>
+                    <font-awesome-icon
+                        :icon="['fas', 'xmark']"
+                        @click="closeMergeMsg" />
+                </div>
+                <div
+                    :class="
+                        'loading' +
+                            (mergeList && mergeList.length == 0 ? ' show' : '')
+                    ">
+                    <font-awesome-icon :icon="['fas', 'spinner']" />
+                    <span>{{ $t('加载中') }}</span>
+                </div>
+                <div>
+                    <template
+                        v-for="(msgIndex, index) in mergeList"
+                        :key="'merge-' + index">
+                        <NoticeBody
+                            v-if="
+                                isShowTime(
+                                    mergeList[index - 1]
+                                        ? mergeList[index - 1].time
+                                        : undefined,
+                                    msgIndex.time,
+                                    index == 0,
+                                )
+                            "
+                            :id="uuid()"
+                            :key="'notice-time-' + index"
+                            :data="{ sub_type: 'time', time: msgIndex.time }" />
+                        <!-- 合并转发消息忽略是不是自己的判定 -->
+                        <MsgBody
+                            :data="msgIndex"
+                            :type="'merge'" />
+                    </template>
+                </div>
+            </div>
+        </div>
+        <!-- At 信息悬浮窗 -->
+        <div class="mumber-info">
+            <div
+                v-if="
+                    Object.keys(mumberInfo).length > 0 &&
+                        mumberInfo.error === undefined
+                "
+                class="ss-card"
+                :style="getPopPost()">
+                <img
+                    :src="
+                        'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
+                            mumberInfo.user_id
+                    ">
+                <div>
+                    <span name="id">{{ mumberInfo.user_id }}</span>
+                    <div>
+                        <a>{{
+                            mumberInfo.card == ''
+                                ? mumberInfo.nickname
+                                : mumberInfo.card
+                        }}</a>
+                        <div>
+                            <span v-if="mumberInfo.role !== 'member'">
+                                {{ $t('成员类型_' + mumberInfo.role) }}
+                            </span>
+                            <span>Lv {{ mumberInfo.level }}</span>
+                        </div>
+                    </div>
+                    <span v-if="mumberInfo.join_time">
+                        {{
+                            $t('{time} 加入群聊', {
+                                time: Intl.DateTimeFormat(trueLang, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                }).format(
+                                    new Date(mumberInfo.join_time * 1000),
+                                ),
+                            })
+                        }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- 消息右击菜单 -->
+        <div
+            :class="
+                'msg-menu' +
+                    (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
+            ">
+            <div
+                v-show="tags.showMsgMenu"
+                class="msg-menu-bg"
+                @click="closeMsgMenu" />
+            <div
+                id="msgMenu"
+                :class="
+                    tags.showMsgMenu
+                        ? 'ss-card msg-menu-body show'
+                        : 'ss-card msg-menu-body'
+                ">
+                <div
+                    v-if="runtimeData.chatInfo.show.type == 'group'"
+                    v-show="tags.menuDisplay.showRespond"
+                    :class="
+                        'ss-card respond' +
+                            (tags.menuDisplay.respond ? ' open' : '')
+                    ">
+                    <template
+                        v-for="(num, index) in respondIds"
+                        :key="'respond-' + num">
+                        <img
+                            v-if="getFace(num) != ''"
+                            loading="lazy"
+                            :src="getFace(num) as any"
+                            @click="sendRespond(num)">
+                        <font-awesome-icon
+                            v-if="index == 4"
+                            :icon="['fas', 'angle-up']"
+                            @click="tags.menuDisplay.respond = true" />
+                    </template>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.add"
+                    @click="forwardSelf()">
+                    <div><font-awesome-icon :icon="['fas', 'plus']" /></div>
+                    <a>{{ $t('+ 1') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.relpy"
+                    @click="replyMsg(true)">
+                    <div><font-awesome-icon :icon="['fas', 'message']" /></div>
+                    <a>{{ $t('回复') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.forward"
+                    @click="showForWard()">
+                    <div><font-awesome-icon :icon="['fas', 'share']" /></div>
+                    <a>{{ $t('转发') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.select"
+                    @click="intoMultipleSelect()">
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'circle-check']" />
+                    </div>
+                    <a>{{ $t('多选') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.copy"
+                    @click="copyMsg">
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'clipboard']" />
+                    </div>
+                    <a>{{ $t('复制') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.copySelect"
+                    @click="copySelectMsg">
+                    <div><font-awesome-icon :icon="['fas', 'code']" /></div>
+                    <a>{{ $t('复制选中文本') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.downloadImg != false"
+                    @click="downloadImg">
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'floppy-disk']" />
+                    </div>
+                    <a>{{ $t('下载图片') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.revoke"
+                    @click="revokeMsg">
+                    <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
+                    <a>{{ $t('撤回') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.at"
+                    @click="
+                        selectedMsg
+                            ? addSpecialMsg({
+                                msgObj: { type: 'at', qq: selectedMsg.sender.user_id },
+                                addText: true,
+                            }): '';
+                        toMainInput();
+                        closeMsgMenu()
+                    ">
+                    <div><font-awesome-icon :icon="['fas', 'at']" /></div>
+                    <a>{{ $t('提及') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.poke"
+                    @click="
+                        sendPoke(
+                            selectedMsg
+                                ? selectedMsg.sender.user_id
+                                : undefined,
+                        )
+                    ">
+                    <div>
+                        <font-awesome-icon
+                            :icon="['fas', 'fa-hand-point-up']" />
+                    </div>
+                    <a>{{ $t('戳一戳') }}</a>
+                </div>
+                <div
+                    v-show="tags.menuDisplay.remove"
+                    @click="removeUser">
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'trash-can']" />
+                    </div>
+                    <a>{{ $t('移出群聊') }}</a>
+                </div>
+            </div>
+        </div>
+        <!-- 群 / 好友信息弹窗 -->
+        <Transition>
+            <Info
+                :chat="chat"
+                :tags="tags"
+                @close="openChatInfoPan"
+                @load-file="fileLoad" />
+        </Transition>
+        <!-- 图片发送器 -->
+        <Transition>
+            <div
+                v-show="imgCache.length > 0"
+                class="img-sender">
+                <div class="card ss-card">
+                    <div class="hander">
+                        <span>{{ $t('发送图片') }}</span>
+                        <button
+                            class="ss-button"
+                            @click="sendMsg">
+                            {{ $t('发送') }}
+                        </button>
+                    </div>
+                    <div class="imgs">
+                        <div
+                            v-for="(img64, index) in imgCache"
+                            :key="'sendImg-' + index">
+                            <div @click="deleteImg(index)">
+                                <font-awesome-icon :icon="['fas', 'xmark']" />
+                            </div>
+                            <img :src="img64">
+                        </div>
+                    </div>
+                    <div class="sender">
+                        <font-awesome-icon
+                            :icon="['fas', 'image']"
+                            @click="runSelectImg" />
+                        <input
+                            v-model="msg"
+                            type="text"
+                            :disabled="runtimeData.tags.openSideBar"
+                            @paste="addImg"
+                            @click="toMainInput">
+                    </div>
+                </div>
+                <div
+                    class="bg"
+                    @click="imgCache = []" />
+            </div>
+        </Transition>
+        <!-- 转发面板 -->
+        <Transition>
+            <div
+                v-if="tags.showForwardPan"
+                class="forward-pan">
+                <div class="ss-card card">
+                    <header>
+                        <span>{{ $t('转发消息') }}</span>
+                        <font-awesome-icon
+                            :icon="['fas', 'xmark']"
+                            @click="cancelForward" />
+                    </header>
+                    <input
+                        :placeholder="$t('搜索 ……')"
+                        @input="searchForward">
+                    <div>
+                        <div
+                            v-for="data in forwardList"
+                            :key="
+                                'forwardList-' + data.user_id
+                                    ? data.user_id
+                                    : data.group_id
+                            "
+                            @click="forwardMsg(data)">
+                            <img
+                                loading="lazy"
+                                :title="
+                                    data.group_name
+                                        ? data.group_name
+                                        : data.remark === data.nickname
+                                            ? data.nickname
+                                            : data.remark +
+                                                '（' +
+                                                data.nickname +
+                                                '）'
+                                "
+                                :src="
+                                    data.user_id
+                                        ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
+                                            data.user_id
+                                        : 'https://p.qlogo.cn/gh/' +
+                                            data.group_id +
+                                            '/' +
+                                            data.group_id +
+                                            '/0'
+                                ">
+                            <div>
+                                <p>
+                                    {{
+                                        data.group_name
+                                            ? data.group_name
+                                            : data.remark === data.nickname
+                                                ? data.nickname
+                                                : data.remark +
+                                                    '（' +
+                                                    data.nickname +
+                                                    '）'
+                                    }}
+                                </p>
+                                <span>{{
+                                    data.group_id ? $t('群组') : $t('好友')
+                                }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg"
+                    @click="cancelForward" />
+            </div>
+        </Transition>
+        <div
+            class="bg"
+            :style="
+                runtimeData.sysConfig.option_view_background
+                    ? `backdrop-filter: blur(${runtimeData.sysConfig
+                        .chat_background_blur}px);`
+                    : ''
+            " />
+    </div>
 </template>
 
 <script lang="ts">
@@ -1028,6 +1028,15 @@
                     }
                 },
             )
+            // Capacitor：系统返回操作（Android）
+            if(runtimeData.tags.isCapacitor && runtimeData.tags.platform === 'android') {
+                const BaseAPI = runtimeData.plantform.capacitor.Plugins.App
+                BaseAPI.addListener('backButton', () => {
+                    // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
+                    this.tags.chatTouch.openSuccess = true
+                    this.chatMoveEnd()
+                })
+            }
         },
         methods: {
             /**
@@ -1116,9 +1125,7 @@
                             group_id: type == 'group' ? id : undefined,
                             user_id: type != 'group' ? id : undefined,
                             message_id: firstMsgId,
-                            count: fullPage
-                                ? runtimeData.messageList.length + 20
-                                : 20,
+                            count: fullPage? runtimeData.messageList.length + 20: 20,
                         },
                         'getChatHistory',
                     )
@@ -1557,9 +1564,7 @@
                 this.forwardList = runtimeData.userList.filter(
                     (item: UserFriendElem & UserGroupElem) => {
                         const name = (
-                            item.user_id
-                                ? item.nickname + item.remark
-                                : item.group_name
+                            item.user_id? item.nickname + item.remark: item.group_name
                         ).toLowerCase()
                         const id = item.user_id ? item.user_id : item.group_id
                         return (
@@ -1630,9 +1635,7 @@
                                     ...msgList.slice(0, 3).map((item) => {
                                         const name =
                                             item.sender.card &&
-                                            item.sender.card != ''
-                                                ? item.sender.card
-                                                : item.sender.nickname
+                                            item.sender.card != ''? item.sender.card: item.sender.nickname
                                         return {
                                             text:
                                                 name +
@@ -2098,9 +2101,7 @@
                             }
                         }
 
-                        const ssl = runtimeData.tags.connectSsl
-                            ? 'https://'
-                            : 'http://'
+                        const ssl = runtimeData.tags.connectSsl? 'https://': 'http://'
 
                         const url = ssl + loginInfo.address + '/upload_file'
                         const xhr = new XMLHttpRequest()
@@ -2290,8 +2291,10 @@
                             'setMessageRead',
                         )
                     }
-                    // 将焦点移动到发送框
-                    this.toMainInput()
+                    if(runtimeData.tags.isElectron) {
+                        // 将焦点移动到发送框
+                        this.toMainInput()
+                    }
                 }
 
                 // =================== 刷新统计数据 ===================

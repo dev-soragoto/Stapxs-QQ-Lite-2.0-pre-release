@@ -13,154 +13,154 @@
  -->
 
 <template>
-  <div
-    id="chat-pan"
-    :class="
-      'chat-pan' +
-        (runtimeData.tags.openSideBar ? ' open' : '') +
-        (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-    ">
     <div
-      id="shell-pan"
-      class="shell-pan">
-      <div>
-        <template
-          v-for="(msgItem, index) in runtimeData.messageList"
-          :key="msgItem.message_id">
-          <div
-            v-if="msgItem.post_type == 'message'
-              || msgItem.post_type == 'message_sent'"
-            :class="
-              'shell-msg' +
-                (msgItem.revoke ? ' revoke' : '') +
-                (tags.replyId == msgItem.message_id ? ' reply' : '')
-            "
-            style="cursor: pointer">
-            <span
-              :class="
-                'sname s' +
-                  msgItem.sender.role +
-                  (runtimeData.loginInfo.uin == msgItem.sender.user_id
-                    ? ' smine'
-                    : '')
-              "
-              @click="copy(msgItem.sender.user_id)">
-              {{
-                msgItem.sender.card
-                  ? msgItem.sender.card
-                  : msgItem.sender.nickname
-              }}{{ hasReply(msg) ?? ''
-              }}{{
-                msgItem.sub_type == 'friend'
-                  ? runtimeData.loginInfo.uin ==
-                    msgItem.sender.user_id
-                    ? runtimeData.loginInfo.nickname
-                    : runtimeData.chatInfo.show.name
-                  : ''
-              }}{{ msgItem.sender.user_id == 0 ? '' : ': ' }}
-            </span>
-            <span
-              class="smsg"
-              @click="copy(msgItem.message_id)">{{
-                getMsgRawTxt(msg)
-              }}</span>
-            <br>
-          </div>
-          <div v-else-if="msgItem.post_type == 'notice'">
-            <span
-              v-if="msgItem.sub_type == 'recall'"
-              style="color: yellow">::
-              <span style="color: yellow; opacity: 0.7">{{
-                getRecallName(msgItem.operator_id)
-              }}</span>
-              recalled a message.</span>
-          </div>
-          <div v-else-if="msgItem.commandLine">
-            <div
-              v-if="index == 2"
-              class="line-head">
-              <div>
-                <span>
-                  <font-awesome-icon
-                    :icon="['fas', 'folder-open']" />
-                  {{ runtimeData.chatInfo.show.name }}
-                </span>
-                <span style="color: var(--color-main-0)">
-                  <font-awesome-icon
-                    :icon="['fas', 'plug']" />
-                  {{ runtimeData.sysConfig.address }}
-                </span>
-              </div>
-              <div style="flex: 1" />
-              <div>
-                <span style="color: var(--color-main-1)">
-                  {{ packageInfo.version
-                  }}<font-awesome-icon
-                    :icon="['fas', 'code-branch']" />
-                </span>
-                <span>
-                  {{ msgItem.time.time
-                  }}<font-awesome-icon
-                    :icon="['fas', 'clock']" />
-                </span>
-              </div>
+        id="chat-pan"
+        :class="
+            'chat-pan' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
+        ">
+        <div
+            id="shell-pan"
+            class="shell-pan">
+            <div>
+                <template
+                    v-for="(msgItem, index) in runtimeData.messageList"
+                    :key="msgItem.message_id">
+                    <div
+                        v-if="msgItem.post_type == 'message'
+                            || msgItem.post_type == 'message_sent'"
+                        :class="
+                            'shell-msg' +
+                                (msgItem.revoke ? ' revoke' : '') +
+                                (tags.replyId == msgItem.message_id ? ' reply' : '')
+                        "
+                        style="cursor: pointer">
+                        <span
+                            :class="
+                                'sname s' +
+                                    msgItem.sender.role +
+                                    (runtimeData.loginInfo.uin == msgItem.sender.user_id
+                                        ? ' smine'
+                                        : '')
+                            "
+                            @click="copy(msgItem.sender.user_id)">
+                            {{
+                                msgItem.sender.card
+                                    ? msgItem.sender.card
+                                    : msgItem.sender.nickname
+                            }}{{ hasReply(msg) ?? ''
+                            }}{{
+                                msgItem.sub_type == 'friend'
+                                    ? runtimeData.loginInfo.uin ==
+                                        msgItem.sender.user_id
+                                        ? runtimeData.loginInfo.nickname
+                                        : runtimeData.chatInfo.show.name
+                                    : ''
+                            }}{{ msgItem.sender.user_id == 0 ? '' : ': ' }}
+                        </span>
+                        <span
+                            class="smsg"
+                            @click="copy(msgItem.message_id)">{{
+                            getMsgRawTxt(msgItem)
+                        }}</span>
+                        <br>
+                    </div>
+                    <div v-else-if="msgItem.post_type == 'notice'">
+                        <span
+                            v-if="msgItem.sub_type == 'recall'"
+                            style="color: yellow">::
+                            <span style="color: yellow; opacity: 0.7">{{
+                                getRecallName(msgItem.operator_id)
+                            }}</span>
+                            recalled a message.</span>
+                    </div>
+                    <div v-else-if="msgItem.commandLine">
+                        <div
+                            v-if="index == 2"
+                            class="line-head">
+                            <div>
+                                <span>
+                                    <font-awesome-icon
+                                        :icon="['fas', 'folder-open']" />
+                                    {{ runtimeData.chatInfo.show.name }}
+                                </span>
+                                <span style="color: var(--color-main-0)">
+                                    <font-awesome-icon
+                                        :icon="['fas', 'plug']" />
+                                    {{ runtimeData.sysConfig.address }}
+                                </span>
+                            </div>
+                            <div style="flex: 1" />
+                            <div>
+                                <span style="color: var(--color-main-1)">
+                                    {{ packageInfo.version
+                                    }}<font-awesome-icon
+                                        :icon="['fas', 'code-branch']" />
+                                </span>
+                                <span>
+                                    {{ msgItem.time.time
+                                    }}<font-awesome-icon
+                                        :icon="['fas', 'clock']" />
+                                </span>
+                            </div>
+                        </div>
+                        <a class="command-start">• </a>
+                        <span>{{ msgItem.str }}</span>
+                    </div>
+                    <div v-else-if="msgItem.commandOut">
+                        <div
+                            v-if="msgItem.html"
+                            v-html="msgItem.html" />
+                        <span
+                            v-else
+                            :style="'color:' + msgItem.color">{{ msgItem.str }}</span>
+                    </div>
+                </template>
             </div>
-            <a class="command-start">• </a>
-            <span>{{ msgItem.str }}</span>
-          </div>
-          <div v-else-if="msgItem.commandOut">
-            <div
-              v-if="msgItem.html"
-              v-html="msgItem.html" />
-            <span
-              v-else
-              :style="'color:' + msgItem.color">{{ msgItem.str }}</span>
-          </div>
-        </template>
-      </div>
-      <div class="shell-input">
-        <div class="line-head">
-          <div>
-            <span>
-              <font-awesome-icon
-                :icon="['fas', 'folder-open']" />
-              {{ runtimeData.chatInfo.show.name }}
-              {{ tags.replyName ? ' -> ' + tags.replyName : '' }}
-            </span>
-            <span style="color: var(--color-main-0)">
-              <font-awesome-icon :icon="['fas', 'plug']" />{{
-                runtimeData.sysConfig.address
-              }}
-            </span>
-          </div>
-          <div style="flex: 1" />
-          <div>
-            <span
-              v-if="tags.newMsg > 0"
-              style="color: var(--color-main-2)">
-              {{ tags.newMsg
-              }}<font-awesome-icon :icon="['fas', 'envelope']" />
-            </span>
-            <span style="color: var(--color-main-1)">
-              {{ packageInfo.version
-              }}<font-awesome-icon
-                :icon="['fas', 'code-branch']" />
-            </span>
-            <span>
-              {{ timeShow
-              }}<font-awesome-icon :icon="['fas', 'clock']" />
-            </span>
-          </div>
+            <div class="shell-input">
+                <div class="line-head">
+                    <div>
+                        <span>
+                            <font-awesome-icon
+                                :icon="['fas', 'folder-open']" />
+                            {{ runtimeData.chatInfo.show.name }}
+                            {{ tags.replyName ? ' -> ' + tags.replyName : '' }}
+                        </span>
+                        <span style="color: var(--color-main-0)">
+                            <font-awesome-icon :icon="['fas', 'plug']" />{{
+                                runtimeData.sysConfig.address
+                            }}
+                        </span>
+                    </div>
+                    <div style="flex: 1" />
+                    <div>
+                        <span
+                            v-if="tags.newMsg > 0"
+                            style="color: var(--color-main-2)">
+                            {{ tags.newMsg
+                            }}<font-awesome-icon :icon="['fas', 'envelope']" />
+                        </span>
+                        <span style="color: var(--color-main-1)">
+                            {{ packageInfo.version
+                            }}<font-awesome-icon
+                                :icon="['fas', 'code-branch']" />
+                        </span>
+                        <span>
+                            {{ timeShow
+                            }}<font-awesome-icon :icon="['fas', 'clock']" />
+                        </span>
+                    </div>
+                </div>
+                <a class="command-start">• </a>
+                <input
+                    id="msgInput"
+                    v-model="msg"
+                    @keyup="sendMsg"
+                    @paste="addImg">
+            </div>
         </div>
-        <a class="command-start">• </a>
-        <input
-          id="msgInput"
-          v-model="msg"
-          @keyup="sendMsg"
-          @paste="addImg">
-      </div>
     </div>
-  </div>
 </template>
 
 <script lang="ts">
@@ -266,9 +266,7 @@
                                 (item.group_id ? item.group_id : item.user_id) +
                                 '     '
                             str +=
-                                (item.group_name
-                                    ? item.group_name
-                                    : item.nickname) + '     '
+                                (item.group_name? item.group_name: item.nickname) + '     '
                             str += '\n'
                         })
                         if (hasMsg)
@@ -323,14 +321,10 @@
                                                 UserGroupElem,
                                         ) => {
                                             const name = (
-                                                item.user_id
-                                                    ? item.nickname +
-                                                      item.remark
-                                                    : item.group_name
+                                                item.user_id? item.nickname +
+                                                      item.remark: item.group_name
                                             ).toLowerCase()
-                                            const id = item.user_id
-                                                ? item.user_id
-                                                : item.group_id
+                                            const id = item.user_id? item.user_id: item.group_id
                                             return (
                                                 name.indexOf(
                                                     value.toLowerCase(),
@@ -346,13 +340,9 @@
                                 this.searchListCache.forEach((item, index) => {
                                     str += index.toString() + '     '
                                     str +=
-                                        (item.group_id
-                                            ? item.group_id
-                                            : item.user_id) + '     '
+                                        (item.group_id? item.group_id: item.user_id) + '     '
                                     str +=
-                                        (item.group_name
-                                            ? item.group_name
-                                            : item.nickname) + '     '
+                                        (item.group_name? item.group_name: item.nickname) + '     '
                                     str += '\n'
                                 })
                                 this.addCommandOut(str)
@@ -375,9 +365,7 @@
                                     )
                                     this.tags.replyId = item[2]
                                     if (msg[0]) {
-                                        this.tags.replyName = msg[0].sender.card
-                                            ? msg[0].sender.card
-                                            : msg[0].sender.nickname
+                                        this.tags.replyName = msg[0].sender.card? msg[0].sender.card: msg[0].sender.nickname
                                     }
                                     this.addSpecialMsg({
                                         msgObj: { type: 'reply', id: item[2] },
@@ -440,10 +428,8 @@
                                         user_id:
                                             type != 'group' ? id : undefined,
                                         message_id: firstMsgId,
-                                        count: fullPage
-                                            ? runtimeData.messageList.length +
-                                              20
-                                            : 20,
+                                        count: fullPage? runtimeData.messageList.length +
+                                              20: 20,
                                     },
                                     'getChatHistory',
                                 )
@@ -523,9 +509,7 @@
                             this.searchListCache.length == 1
                         ) {
                             id = (
-                                this.searchListCache[0].user_id
-                                    ? this.searchListCache[0].user_id
-                                    : this.searchListCache[0].group_id
+                                this.searchListCache[0].user_id? this.searchListCache[0].user_id: this.searchListCache[0].group_id
                             ).toString()
                         } else {
                             id = itemInfo[1]
@@ -542,10 +526,8 @@
                                 const index = Number(itemInfo[1].substring(1))
                                 if (this.searchListCache[index]) {
                                     id = (
-                                        this.searchListCache[index].user_id
-                                            ? this.searchListCache[index]
-                                                  .user_id
-                                            : this.searchListCache[index]
+                                        this.searchListCache[index].user_id? this.searchListCache[index]
+                                                  .user_id: this.searchListCache[index]
                                                   .group_id
                                     ).toString()
                                 } else {
@@ -561,9 +543,7 @@
                         for (let i = 0; i < runtimeData.userList.length; i++) {
                             const item = runtimeData.userList[i]
                             const gid =
-                                item.user_id !== undefined
-                                    ? item.user_id
-                                    : item.group_id
+                                item.user_id !== undefined? item.user_id: item.group_id
                             if (String(gid) === id) {
                                 // 检查显示列表里有没有它
                                 if (!document.getElementById('user-' + id)) {
@@ -629,9 +609,7 @@
                         if (repMsg[0]) {
                             return (
                                 '->' +
-                                (repMsg[0].sender.card
-                                    ? repMsg[0].sender.card
-                                    : repMsg[0].sender.nickname)
+                                (repMsg[0].sender.card? repMsg[0].sender.card: repMsg[0].sender.nickname)
                             )
                         }
                     }
@@ -850,9 +828,7 @@
                             )
                         if (back.length === 1) {
                             backName =
-                                back[0].card === ''
-                                    ? back[0].nickname
-                                    : back[0].card
+                                back[0].card === ''? back[0].nickname: back[0].card
                         }
                     }
                 } else {

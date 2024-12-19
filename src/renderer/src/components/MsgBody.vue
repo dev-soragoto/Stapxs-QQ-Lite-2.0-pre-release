@@ -10,349 +10,349 @@
  -->
 
 <template>
-  <div
-    :id="'chat-' + data.message_id"
-    :class="
-      'message' +
-        (type ? ' ' + type : '') +
-        (data.revoke ? ' revoke' : '') +
-        (isMe ? ' me' : '') +
-        (selected ? ' selected' : '')
-    "
-    :data-raw="getMsgRawTxt(data)"
-    :data-sender="data.sender.user_id"
-    :data-time="data.time"
-    @mouseleave="hiddenUserInfo">
-    <img
-      v-show="!isMe || type == 'merge'"
-      name="avatar"
-      :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
-      @dblclick="sendPoke">
     <div
-      v-if="isMe && type != 'merge'"
-      class="message-space" />
-    <div
-      :class="
-        isMe
-          ? type == 'merge'
-            ? 'message-body'
-            : 'message-body me'
-          : 'message-body'
-      ">
-      <template
-        v-if="
-          runtimeData.chatInfo.show.type == 'group' &&
-            !isMe &&
-            senderInfo?.title &&
-            senderInfo?.title != ''
-        ">
-        <span>{{ senderInfo?.title }}</span>
-      </template>
-      <a
-        v-if="data.sender.card || data.sender.nickname"
-        v-show="!isMe || type == 'merge'">
-        {{ data.sender.card ? data.sender.card : data.sender.nickname }}
-      </a>
-      <a
-        v-else
-        v-show="!isMe || type == 'merge'">
-        {{
-          isMe
-            ? runtimeData.loginInfo.nickname
-            : runtimeData.chatInfo.show.name
-        }}
-      </a>
-      <div>
-        <!-- 消息体 -->
-        <template v-if="!hasCard()">
-          <div
-            v-for="(item, index) in data.message"
-            :key="data.message_id + '-m-' + index"
-            :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
-            <div v-if="item.type === undefined" />
-            <span
-              v-else-if="isDebugMsg"
-              class="msg-text">{{
-                item
-              }}</span>
-            <span
-              v-else-if="item.type == 'text'"
-              v-show="item.text !== ''"
-              class="msg-text"
-              @click="textClick"
-              v-html="parseText(item.text)" />
-            <img
-              v-else-if="
-                item.type == 'image' &&
-                  item.file == 'marketface'
-              "
-              :class="
-                imgStyle(
-                  data.message.length,
-                  index,
-                  item.asface,
-                ) + ' msg-mface'
-              "
-              :src="item.url"
-              @load="scrollButtom"
-              @error="imgLoadFail">
-            <img
-              v-else-if="item.type == 'image'"
-              :title="$t('预览图片')"
-              :alt="$t('图片')"
-              :class="
-                imgStyle(
-                  data.message.length,
-                  index,
-                  item.asface,
-                )
-              "
-              :src="item.url"
-              @load="scrollButtom"
-              @error="imgLoadFail"
-              @click="imgClick(data.message_id)">
-            <template v-else-if="item.type == 'face'">
-              <img
-                v-if="getFace(item.id)"
-                :alt="item.text"
-                class="msg-face"
-                :src="getFace(item.id)"
-                :title="item.text">
-              <span
-                v-else-if="item.id == 394"
-                class="msg-face-long"><span
-                  v-for="i in 15"
-                  :key="data.message_id + '-l-' + i">🐲</span></span>
-              <font-awesome-icon
-                v-else
-                :class="'msg-face-svg' + (isMe ? ' me' : '')"
-                :icon="['fas', 'face-grin-wide']" />
-            </template>
-            <span
-              v-else-if="item.type == 'bface'"
-              style="font-style: italic; opacity: 0.7">
-              [ {{ $t('图片') }}：{{ item.text }} ]
-            </span>
-            <div
-              v-else-if="item.type == 'at'"
-              :class="getAtClass(item.qq)">
-              <a
-                :data-id="item.qq"
-                :data-group="data.group_id"
-                @mouseenter="showUserInfo">{{ getAtName(item) }}</a>
-            </div>
-            <div
-              v-else-if="item.type == 'file'"
-              :class="'msg-file' + (isMe ? ' me' : '')">
-              <font-awesome-icon :icon="['fas', 'file']" />
-              <div>
-                <div>
-                  <p>
-                    {{
-                      loadFileBase(
-                        item,
-                        item.name,
-                        data.message_id,
-                      )
-                    }}
-                  </p>
-                  <a>（{{ getSizeFromBytes(item.size) }}）</a>
-                </div>
-                <i>{{ item.md5 }}</i>
-              </div>
-              <div>
-                <font-awesome-icon
-                  v-if="
-                    item.downloadingPercentage === undefined
-                  "
-                  :icon="['fas', 'angle-down']"
-                  @click="downloadFile(item, data.message_id)" />
-                <svg
-                  v-if="
-                    item.downloadingPercentage !== undefined
-                  "
-                  class="download-bar"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <circle
-                    cx="50%"
-                    cy="50%"
-                    r="40%"
-                    stroke-width="15%"
-                    fill="none"
-                    stroke-linecap="round" />
-                  <circle
-                    cx="50%"
-                    cy="50%"
-                    r="40%"
-                    stroke-width="15%"
-                    fill="none"
-                    :stroke-dasharray="
-                      item.downloadingPercentage ===
-                        undefined
-                        ? '0,10000'
-                        : `${(Math.floor(2 * Math.PI * 25) *
-                          item.downloadingPercentage) / 100},10000`
-                    " />
-                </svg>
-              </div>
-              <div
-                v-if="
-                  data.fileView &&
-                    Object.keys(data.fileView).length > 0
-                "
-                class="file-view">
-                <img
-                  v-if="
-                    [
-                      'jpg',
-                      'jpeg',
-                      'png',
-                      'gif',
-                      'bmp',
-                      'webp',
-                    ].includes(data.fileView.ext)
-                  "
-                  :src="data.fileView.url">
-                <video
-                  v-if="
-                    ['mp4', 'avi', 'mkv', 'flv'].includes(
-                      data.fileView.ext,
-                    )
-                  "
-                  playsinline
-                  controls
-                  muted
-                  autoplay>
-                  <source
-                    :src="data.fileView.url"
-                    :type="'video/' + data.fileView.ext">
-                  现在还有不支持 video tag 的浏览器吗？
-                </video>
-                <span
-                  v-if="
-                    ['txt', 'md'].includes(
-                      data.fileView.ext,
-                    ) && item.size < 2000000
-                  "
-                  class="txt">
-                  <a>&gt; {{ item.name }} -
-                    {{ $t('文件预览') }}</a>
-                  {{
-                    getTxtUrl(
-                      data.fileView.url,
-                      data.message_id,
-                    )
-                  }}{{ data.fileView.txt }}
-                </span>
-              </div>
-            </div>
-            <div
-              v-else-if="item.type == 'video'"
-              class="msg-video">
-              <video
-                playsinline
-                controls
-                muted
-                autoplay>
-                <source
-                  :src="item.url"
-                  type="video/mp4">
-                现在还有不支持 video tag 的浏览器吗？
-              </video>
-            </div>
-            <span
-              v-else-if="item.type == 'forward'"
-              class="msg-unknown"
-              style="cursor: pointer"
-              @click="View.getForwardMsg(item.id)">
-              {{ $t('（点击查看合并转发消息）') }}
-            </span>
-            <div
-              v-else-if="item.type == 'reply'"
-              :class="
+        :id="'chat-' + data.message_id"
+        :class="
+            'message' +
+                (type ? ' ' + type : '') +
+                (data.revoke ? ' revoke' : '') +
+                (isMe ? ' me' : '') +
+                (selected ? ' selected' : '')
+        "
+        :data-raw="getMsgRawTxt(data)"
+        :data-sender="data.sender.user_id"
+        :data-time="data.time"
+        @mouseleave="hiddenUserInfo">
+        <img
+            v-show="!isMe || type == 'merge'"
+            name="avatar"
+            :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
+            @dblclick="sendPoke">
+        <div
+            v-if="isMe && type != 'merge'"
+            class="message-space" />
+        <div
+            :class="
                 isMe
-                  ? type == 'merge'
-                    ? 'msg-replay'
-                    : 'msg-replay me'
-                  : 'msg-replay'
-              "
-              @click="scrollToMsg(item.id)">
-              <font-awesome-icon :icon="['fas', 'reply']" />
-              <a
-                :class="getRepMsg(item.id) ? '' : 'msg-unknown'"
-                style="cursor: pointer">
+                    ? type == 'merge'
+                        ? 'message-body'
+                        : 'message-body me'
+                    : 'message-body'
+            ">
+            <template
+                v-if="
+                    runtimeData.chatInfo.show.type == 'group' &&
+                        !isMe &&
+                        senderInfo?.title &&
+                        senderInfo?.title != ''
+                ">
+                <span>{{ senderInfo?.title }}</span>
+            </template>
+            <a
+                v-if="data.sender.card || data.sender.nickname"
+                v-show="!isMe || type == 'merge'">
+                {{ data.sender.card ? data.sender.card : data.sender.nickname }}
+            </a>
+            <a
+                v-else
+                v-show="!isMe || type == 'merge'">
                 {{
-                  getRepMsg(item.id) ?? $t('（查看回复消息）')
+                    isMe
+                        ? runtimeData.loginInfo.nickname
+                        : runtimeData.chatInfo.show.name
                 }}
-              </a>
-            </div>
+            </a>
+            <div>
+                <!-- 消息体 -->
+                <template v-if="!hasCard()">
+                    <div
+                        v-for="(item, index) in data.message"
+                        :key="data.message_id + '-m-' + index"
+                        :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
+                        <div v-if="item.type === undefined" />
+                        <span
+                            v-else-if="isDebugMsg"
+                            class="msg-text">{{
+                            item
+                        }}</span>
+                        <span
+                            v-else-if="item.type == 'text'"
+                            v-show="item.text !== ''"
+                            class="msg-text"
+                            @click="textClick"
+                            v-html="parseText(item.text)" />
+                        <img
+                            v-else-if="
+                                item.type == 'image' &&
+                                    item.file == 'marketface'
+                            "
+                            :class="
+                                imgStyle(
+                                    data.message.length,
+                                    index,
+                                    item.asface,
+                                ) + ' msg-mface'
+                            "
+                            :src="item.url"
+                            @load="scrollButtom"
+                            @error="imgLoadFail">
+                        <img
+                            v-else-if="item.type == 'image'"
+                            :title="$t('预览图片')"
+                            :alt="$t('图片')"
+                            :class="
+                                imgStyle(
+                                    data.message.length,
+                                    index,
+                                    item.asface,
+                                )
+                            "
+                            :src="item.url"
+                            @load="scrollButtom"
+                            @error="imgLoadFail"
+                            @click="imgClick(data.message_id)">
+                        <template v-else-if="item.type == 'face'">
+                            <img
+                                v-if="getFace(item.id)"
+                                :alt="item.text"
+                                class="msg-face"
+                                :src="getFace(item.id)"
+                                :title="item.text">
+                            <span
+                                v-else-if="item.id == 394"
+                                class="msg-face-long"><span
+                                v-for="i in 15"
+                                :key="data.message_id + '-l-' + i">🐲</span></span>
+                            <font-awesome-icon
+                                v-else
+                                :class="'msg-face-svg' + (isMe ? ' me' : '')"
+                                :icon="['fas', 'face-grin-wide']" />
+                        </template>
+                        <span
+                            v-else-if="item.type == 'bface'"
+                            style="font-style: italic; opacity: 0.7">
+                            [ {{ $t('图片') }}：{{ item.text }} ]
+                        </span>
+                        <div
+                            v-else-if="item.type == 'at'"
+                            :class="getAtClass(item.qq)">
+                            <a
+                                :data-id="item.qq"
+                                :data-group="data.group_id"
+                                @mouseenter="showUserInfo">{{ getAtName(item) }}</a>
+                        </div>
+                        <div
+                            v-else-if="item.type == 'file'"
+                            :class="'msg-file' + (isMe ? ' me' : '')">
+                            <font-awesome-icon :icon="['fas', 'file']" />
+                            <div>
+                                <div>
+                                    <p>
+                                        {{
+                                            loadFileBase(
+                                                item,
+                                                item.name,
+                                                data.message_id,
+                                            )
+                                        }}
+                                    </p>
+                                    <a>（{{ getSizeFromBytes(item.size) }}）</a>
+                                </div>
+                                <i>{{ item.md5 }}</i>
+                            </div>
+                            <div>
+                                <font-awesome-icon
+                                    v-if="
+                                        item.downloadingPercentage === undefined
+                                    "
+                                    :icon="['fas', 'angle-down']"
+                                    @click="downloadFile(item, data.message_id)" />
+                                <svg
+                                    v-if="
+                                        item.downloadingPercentage !== undefined
+                                    "
+                                    class="download-bar"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <circle
+                                        cx="50%"
+                                        cy="50%"
+                                        r="40%"
+                                        stroke-width="15%"
+                                        fill="none"
+                                        stroke-linecap="round" />
+                                    <circle
+                                        cx="50%"
+                                        cy="50%"
+                                        r="40%"
+                                        stroke-width="15%"
+                                        fill="none"
+                                        :stroke-dasharray="
+                                            item.downloadingPercentage ===
+                                                undefined
+                                                ? '0,10000'
+                                                : `${(Math.floor(2 * Math.PI * 25) *
+                                                    item.downloadingPercentage) / 100},10000`
+                                        " />
+                                </svg>
+                            </div>
+                            <div
+                                v-if="
+                                    data.fileView &&
+                                        Object.keys(data.fileView).length > 0
+                                "
+                                class="file-view">
+                                <img
+                                    v-if="
+                                        [
+                                            'jpg',
+                                            'jpeg',
+                                            'png',
+                                            'gif',
+                                            'bmp',
+                                            'webp',
+                                        ].includes(data.fileView.ext)
+                                    "
+                                    :src="data.fileView.url">
+                                <video
+                                    v-if="
+                                        ['mp4', 'avi', 'mkv', 'flv'].includes(
+                                            data.fileView.ext,
+                                        )
+                                    "
+                                    playsinline
+                                    controls
+                                    muted
+                                    autoplay>
+                                    <source
+                                        :src="data.fileView.url"
+                                        :type="'video/' + data.fileView.ext">
+                                    现在还有不支持 video tag 的浏览器吗？
+                                </video>
+                                <span
+                                    v-if="
+                                        ['txt', 'md'].includes(
+                                            data.fileView.ext,
+                                        ) && item.size < 2000000
+                                    "
+                                    class="txt">
+                                    <a>&gt; {{ item.name }} -
+                                        {{ $t('文件预览') }}</a>
+                                    {{
+                                        getTxtUrl(
+                                            data.fileView.url,
+                                            data.message_id,
+                                        )
+                                    }}{{ data.fileView.txt }}
+                                </span>
+                            </div>
+                        </div>
+                        <div
+                            v-else-if="item.type == 'video'"
+                            class="msg-video">
+                            <video
+                                playsinline
+                                controls
+                                muted
+                                autoplay>
+                                <source
+                                    :src="item.url"
+                                    type="video/mp4">
+                                现在还有不支持 video tag 的浏览器吗？
+                            </video>
+                        </div>
+                        <span
+                            v-else-if="item.type == 'forward'"
+                            class="msg-unknown"
+                            style="cursor: pointer"
+                            @click="View.getForwardMsg(item.id)">
+                            {{ $t('（点击查看合并转发消息）') }}
+                        </span>
+                        <div
+                            v-else-if="item.type == 'reply'"
+                            :class="
+                                isMe
+                                    ? type == 'merge'
+                                        ? 'msg-replay'
+                                        : 'msg-replay me'
+                                    : 'msg-replay'
+                            "
+                            @click="scrollToMsg(item.id)">
+                            <font-awesome-icon :icon="['fas', 'reply']" />
+                            <a
+                                :class="getRepMsg(item.id) ? '' : 'msg-unknown'"
+                                style="cursor: pointer">
+                                {{
+                                    getRepMsg(item.id) ?? $t('（查看回复消息）')
+                                }}
+                            </a>
+                        </div>
 
-            <span
-              v-else
-              class="msg-unknown">{{
-                '( ' + $t('不支持的消息') + ': ' + item.type + ' )'
-              }}</span>
-          </div>
-        </template>
-        <template v-else>
-          <template
-            v-for="(item, index) in data.message"
-            :key="data.message_id + '-m-' + index">
-            <CardMessage
-              v-if="item.type == 'xml' || item.type == 'json'"
-              :id="data.message_id"
-              :item="item" />
-          </template>
-        </template>
-        <!-- 链接预览框 -->
-        <div
-          v-if="
-            pageViewInfo !== undefined &&
-              Object.keys(pageViewInfo).length > 0
-          "
-          :class="'msg-link-view ' + linkViewStyle">
-          <div :class="'bar' + (isMe ? ' me' : '')" />
-          <div>
-            <img
-              v-if="pageViewInfo.img !== undefined"
-              :id="data.message_id + '-linkview-img'"
-              alt="预览图片"
-              title="查看图片"
-              :src="pageViewInfo.img"
-              @load="linkViewPicFin">
-            <div class="body">
-              <p>{{ pageViewInfo.site }}</p>
-              <span :href="pageViewInfo.url">{{
-                pageViewInfo.title
-              }}</span>
-              <span>{{ pageViewInfo.desc }}</span>
+                        <span
+                            v-else
+                            class="msg-unknown">{{
+                            '( ' + $t('不支持的消息') + ': ' + item.type + ' )'
+                        }}</span>
+                    </div>
+                </template>
+                <template v-else>
+                    <template
+                        v-for="(item, index) in data.message"
+                        :key="data.message_id + '-m-' + index">
+                        <CardMessage
+                            v-if="item.type == 'xml' || item.type == 'json'"
+                            :id="data.message_id"
+                            :item="item" />
+                    </template>
+                </template>
+                <!-- 链接预览框 -->
+                <div
+                    v-if="
+                        pageViewInfo !== undefined &&
+                            Object.keys(pageViewInfo).length > 0
+                    "
+                    :class="'msg-link-view ' + linkViewStyle">
+                    <div :class="'bar' + (isMe ? ' me' : '')" />
+                    <div>
+                        <img
+                            v-if="pageViewInfo.img !== undefined"
+                            :id="data.message_id + '-linkview-img'"
+                            alt="预览图片"
+                            title="查看图片"
+                            :src="pageViewInfo.img"
+                            @load="linkViewPicFin">
+                        <div class="body">
+                            <p>{{ pageViewInfo.site }}</p>
+                            <span :href="pageViewInfo.url">{{
+                                pageViewInfo.title
+                            }}</span>
+                            <span>{{ pageViewInfo.desc }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-    <div
-      v-if="data.fake_msg == true"
-      class="sending">
-      <font-awesome-icon :icon="['fas', 'spinner']" />
-    </div>
-    <div
-      v-if="data.emoji_like"
-      :class="'emoji-like' + (isMe ? ' me' : '')">
-      <div class="emoji-like-body">
         <div
-          v-for="info in data.emoji_like"
-          v-show="getFace(info.emoji_id) != ''"
-          :key="'respond-' + data.message_id + '-' + info.emoji_id">
-          <img
-            loading="lazy"
-            :src="getFace(info.emoji_id) as any">
-          <span>{{ info.count }}</span>
+            v-if="data.fake_msg == true"
+            class="sending">
+            <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
-      </div>
+        <div
+            v-if="data.emoji_like"
+            :class="'emoji-like' + (isMe ? ' me' : '')">
+            <div class="emoji-like-body">
+                <div
+                    v-for="info in data.emoji_like"
+                    v-show="getFace(info.emoji_id) != ''"
+                    :key="'respond-' + data.message_id + '-' + info.emoji_id">
+                    <img
+                        loading="lazy"
+                        :src="getFace(info.emoji_id) as any">
+                    <span>{{ info.count }}</span>
+                </div>
+            </div>
+        </div>
+        <code style="display: none">{{ data.raw_message }}</code>
     </div>
-    <code style="display: none">{{ data.raw_message }}</code>
-  </div>
 </template>
 
 <script lang="ts">
@@ -461,9 +461,7 @@
                         if (user.user_id == Number(item.qq)) {
                             return (
                                 '@' +
-                                (user.card != '' && user.card != null
-                                    ? user.card
-                                    : user.nickname)
+                                (user.card != '' && user.card != null? user.card: user.nickname)
                             )
                         }
                     }
@@ -627,17 +625,11 @@
                                 )
                                 const pageData = {
                                     site:
-                                        res['og:site_name'] === undefined
-                                            ? ''
-                                            : res['og:site_name'],
+                                        res['og:site_name'] === undefined? '': res['og:site_name'],
                                     title:
-                                        res['og:title'] === undefined
-                                            ? ''
-                                            : res['og:title'],
+                                        res['og:title'] === undefined? '': res['og:title'],
                                     desc:
-                                        res['og:description'] === undefined
-                                            ? ''
-                                            : res['og:description'],
+                                        res['og:description'] === undefined? '': res['og:description'],
                                     img: res['og:image'],
                                     link: res['og:url'],
                                 }
@@ -880,9 +872,7 @@
                                 // 只取前 300 字，超出部分加上 ……
                                 const txt = reader.result as string
                                 runtimeData.messageList[msgIndex].fileView.txt =
-                                    txt.length > 300
-                                        ? txt.slice(0, 300) + '…'
-                                        : txt
+                                    txt.length > 300? txt.slice(0, 300) + '…': txt
                             }
                         }
                     })

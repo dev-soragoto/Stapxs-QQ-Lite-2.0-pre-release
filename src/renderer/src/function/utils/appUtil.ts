@@ -9,6 +9,15 @@ import AboutPan from '@renderer/components/AboutPan.vue'
 import UpdatePan from '@renderer/components/UpdatePan.vue'
 import WelPan from '@renderer/components/WelPan.vue'
 
+
+import {
+    LocalNotificationsPlugin,
+    LocalNotificationSchema,
+    ActionType
+} from '@capacitor/local-notifications'
+import {
+    KeyboardInfo
+} from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
@@ -360,6 +369,9 @@ export function updateMenu(config: { id: string; action: string; value: any }) {
 
 export function createIpc() {
     if (runtimeData.plantform.reader) {
+        runtimeData.plantform.reader.on('sys:serviceFound', (_, data) => {
+            setQuickLogin(data.address, data.port)
+        })
         runtimeData.plantform.reader.on('bot:flushUser', () => {
             reloadUsers()
             popInfo.add(
@@ -447,20 +459,14 @@ export async function loadAppendStyle() {
             .catch(() => {
                 logger.info('未找到对应平台的附加样式')
             })
-        if(platform == 'ios') {
-            const safeArea = await runtimeData.plantform.
-                pulgins.SafeArea?.getSafeArea()
-            if (safeArea) {
-                const app = document.getElementById('app')
-                if (app) {
-                    app.style.paddingTop = safeArea.top + 'px'
-                    app.style.height = 'calc(100% - ' + safeArea.top + 'px)'
-                }
-            }
-            runtimeData.sysConfig.fs_adaptation = safeArea.bottom - 10
-        }
     }
 
+    // 移动平台附加样式
+    if(runtimeData.tags.isCapacitor) {
+        import('@renderer/assets/css/append/append_mobile.css').then(() => {
+            logger.info('移动平台附加样式加载完成')
+        })
+    }
     // UI 2.0 附加样式
     if (runtimeData.tags.isElectron) {
         import('@renderer/assets/css/append/append_new.css').then(() => {
@@ -500,6 +506,137 @@ export async function loadAppendStyle() {
                 }
             })
         }
+    }
+}
+
+function setQuickLogin(address: string, port: number) {
+    if(login.quickLogin != null)
+        login.quickLogin.push({ address: address, port: port })
+}
+
+export async function loadMobile() {
+    const $t = app.config.globalProperties.$t
+    // Capacitor：相关初始化
+    if(runtimeData.tags.isCapacitor) {
+        const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
+        const Notice = runtimeData.plantform.capacitor.Plugins
+            .LocalNotifications as LocalNotificationsPlugin
+        const Keyboard = runtimeData.plantform.capacitor.Plugins.Keyboard
+        const StatusBar = runtimeData.plantform.capacitor.Plugins.StatusBar
+        const NavigationBar = runtimeData.plantform.capacitor.Plugins.NavigationBar
+        // 注册回调监听
+        Onebot.addListener('onebot:event', (data) => {
+            const msg = JSON.parse(data.data)
+            switch(data.type) {
+                case 'onopen': Connector.onopen(login.address, login.token); break
+                case 'onmessage': Connector.onmessage(data.data); break
+                case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
+                case 'onerror': popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false); break
+                case 'onServiceFound': setQuickLogin(msg.address, msg.port); break
+                default: break
+            }
+        })
+        // initial-scale 缩放固定为 0.9
+        const viewport = document.getElementById('viewport')
+        if (viewport) {
+            (viewport as any).content =
+                'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
+        }
+        // 通知
+        const permission = await Notice.checkPermissions()
+        if(permission.display.indexOf('prompt') != -1) {
+            await Notice.requestPermissions()
+        } else if(permission.display.indexOf('denied') != -1) {
+            logger.error(null, '通知权限已被拒绝')
+        } else {
+            logger.debug('通知权限已开启')
+            // 注册通知类型
+            Notice.registerActionTypes({
+                types:[{
+                    id: 'msgQuickReply',
+                    actions: [{
+                        id: 'REPLY_ACTION',
+                        title: '快速回复',
+                        requiresAuthentication: true,
+                        input: true,
+                        inputButtonTitle: '发送',
+                        inputPlaceholder: '输入回复内容……'
+                    }]
+                }] as ActionType[]
+            })
+            // 注册相关事件
+            Notice.addListener('localNotificationActionPerformed', (info) => {
+                const notification =
+                    info.notification as LocalNotificationSchema
+                if(info.actionId == 'tap') {
+                    // PS：通知被点击后会自动被关闭，所以这里不需要处理
+                    jumpToChat(notification.extra.userId,
+                        notification.extra.msgId)
+                } else if(info.actionId == 'REPLY_ACTION') {
+                    // 快速回复
+                    sendMsgRaw(
+                        notification.extra.userId,
+                        notification.extra.chatType,
+                        parseMsg(
+                            info.inputValue ?? '',
+                            [{ type: 'reply', id: String(notification.extra.msgId) }],
+                            [],
+                        ),
+                        true
+                    )
+                    // 去消息列表内寻找，去除新消息标记
+                    for (let i = 0; i <
+                        runtimeData.onMsgList.length; i++) {
+                        if (
+                            runtimeData.onMsgList[i].group_id
+                                == notification.extra.userId ||
+                            runtimeData.onMsgList[i].user_id
+                                == notification.extra.userId
+                        ) {
+                            runtimeData.onMsgList[i].new_msg = false
+                            break
+                        }
+                    }
+                }
+            })
+        }
+        // 键盘
+        Keyboard.setAccessoryBarVisible({ isVisible: false })
+        Keyboard.addListener('keyboardWillShow', async (info: KeyboardInfo) => {
+            const keyboardHeight = info.keyboardHeight
+
+            const mainBody = document.getElementsByClassName('main-body')[0] as HTMLElement
+            if(mainBody) {
+                // 调整下菜单高度
+                const tabBar = document.getElementsByTagName('ul')[0]
+                if(tabBar) {
+                    tabBar.style.setProperty('padding-bottom', '10px', 'important')
+                }
+            }
+            // 调整整个 HTML 的高度
+            // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
+            const html = document.getElementsByTagName('html')[0]
+            if(html && runtimeData.tags.platform == 'android') {
+                const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+                html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
+            }
+        })
+        Keyboard.addListener('keyboardWillHide', () => {
+            const tabBar = document.getElementsByTagName('ul')[0]
+            if(tabBar) {
+                tabBar.style.paddingBottom = ''
+            }
+            // 调整整个 HTML 的高度
+            // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
+            const html = document.getElementsByTagName('html')[0]
+            if(html && runtimeData.tags.platform == 'android') {
+                html.style.height = 'calc(100%)'
+            }
+        })
+        // 状态栏（Android）
+        NavigationBar.setTransparency({ isTransparent: true })
+        StatusBar.setOverlaysWebView({ overlay: true })
+        StatusBar.setBackgroundColor({ color: '#ffffff00' })
     }
 }
 
@@ -566,8 +703,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         message: msg,
         updated: isUpdated,
     }
-    const buttonGoUpdate = runtimeData.tags.isElectron
-        ? [
+    const buttonGoUpdate = runtimeData.tags.isElectron? [
               {
                   text: $t('知道了'),
                   fun: () => runtimeData.popBoxList.shift(),
@@ -577,8 +713,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
                   master: true,
                   fun: () => openLink(data.html_url, true),
               },
-          ]
-        : [
+          ]: [
               {
                   text: $t('查看…'),
                   fun: () => openLink(data.html_url),
@@ -592,8 +727,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
     const popInfo = {
         template: UpdatePan,
         templateValue: toRaw(info),
-        button: isUpdated
-            ? [
+        button: isUpdated? [
                   {
                       text: $t('查看…'),
                       fun: () => openLink(data.html_url, true),
@@ -605,8 +739,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
                           runtimeData.popBoxList.shift()
                       },
                   },
-              ]
-            : buttonGoUpdate,
+              ]: buttonGoUpdate,
     }
     runtimeData.popBoxList.push(popInfo)
 }
@@ -722,11 +855,9 @@ export function checkNotice() {
                                 {
                                     text:
                                         notice.pops.length > 1 &&
-                                        i != notice.pops.length - 1
-                                            ? app.config.globalProperties.$t(
+                                        i != notice.pops.length - 1? app.config.globalProperties.$t(
                                                   '继续',
-                                              )
-                                            : app.config.globalProperties.$t(
+                                              ): app.config.globalProperties.$t(
                                                   '确定',
                                               ),
                                     master: true,

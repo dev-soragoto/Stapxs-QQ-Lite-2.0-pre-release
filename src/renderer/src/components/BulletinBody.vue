@@ -6,46 +6,46 @@
 -->
 
 <template>
-  <div
-    class="base"
-    @click="showAll = !showAll">
-    <header>
-      <font-awesome-icon :icon="['fas', 'bookmark']" />
-      <span>{{ $t('公告') }}</span>
-      <div style="flex: 1" />
-      <span>{{
-        Intl.DateTimeFormat(trueLang, {
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric',
-        }).format(data.time)
-      }}</span>
-    </header>
     <div
-      :id="'bulletins-msg-' + index"
-      :class="'body' + (!showAll ? '' : ' all')">
-      <span
-        @click="textClick"
-        v-html="parseText(data.content[0])" />
+        class="base"
+        @click="showAll = !showAll">
+        <header>
+            <font-awesome-icon :icon="['fas', 'bookmark']" />
+            <span>{{ $t('公告') }}</span>
+            <div style="flex: 1" />
+            <span>{{
+                Intl.DateTimeFormat(trueLang, {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                }).format(data.time)
+            }}</span>
+        </header>
+        <div
+            :id="'bulletins-msg-' + index"
+            :class="'body' + (!showAll ? '' : ' all')">
+            <span
+                @click="textClick"
+                v-html="parseText(data.content[0])" />
+        </div>
+        <span v-show="needShow && !showAll">{{ $t('点击展开') }}</span>
+        <div class="info">
+            <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender">
+            <a>{{
+                runtimeData.chatInfo.info.group_members.filter((item) => {
+                    return Number(item.user_id) === Number(data.sender)
+                })[0].nickname
+            }}</a>
+            <div />
+            <span v-if="data.is_read">{{
+                $t('{readNum} 人已读 | {isRead}', {
+                    isRead: data.is_read ? $t('已读') : $t('未读'),
+                    readNum: data.read_num,
+                })
+            }}</span>
+        </div>
     </div>
-    <span v-show="needShow && !showAll">{{ $t('点击展开') }}</span>
-    <div class="info">
-      <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender">
-      <a>{{
-        runtimeData.chatInfo.info.group_members.filter((item) => {
-          return Number(item.user_id) === Number(data.sender)
-        })[0].nickname
-      }}</a>
-      <div />
-      <span v-if="data.is_read">{{
-        $t('{readNum} 人已读 | {isRead}', {
-          isRead: data.is_read ? $t('已读') : $t('未读'),
-          readNum: data.read_num,
-        })
-      }}</span>
-    </div>
-  </div>
 </template>
 
 <script lang="ts">

@@ -132,7 +132,7 @@ export class Notify {
      * 关闭用户的所有通知
      * @param userId 用户 ID
      */
-    public closeAll(userId: string) {
+    public async closeAll(userId: string) {
         const isElectron = runtimeData.tags.isElectron
         const isCapacitor = runtimeData.tags.isCapacitor
         if (isElectron) {
@@ -142,13 +142,15 @@ export class Notify {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
             if(Notice) {
-                const list = Notice.getDeliveredNotifications() as
+                const list = await Notice.getDeliveredNotifications() as
                     unknown as DeliveredNotifications
-                list.notifications.forEach((item) => {
-                    if (item.extra.userId === userId) {
-                        Notice.cancel({ notifications: [{ id: item.id }] })
-                    }
-                })
+                if(list.notifications) {
+                    list.notifications.forEach((item) => {
+                        if (item.extra.userId === userId) {
+                            Notice.cancel({ notifications: [{ id: item.id }] })
+                        }
+                    })
+                }
             }
         } else {
             const keys = Object.keys(Notify.notifyList)
@@ -218,8 +220,8 @@ export class Notify {
             }
             this.close(tag)
             // MacOS：刷新 touchbar
-            if (runtimeData.tags.isElectron && runtimeData.reader) {
-                runtimeData.reader.send('sys:newMessage')
+            if (runtimeData.tags.isElectron) {
+                runtimeData.plantform.reader?.send('sys:newMessage')
             }
         }
     }

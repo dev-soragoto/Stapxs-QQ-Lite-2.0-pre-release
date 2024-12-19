@@ -40,9 +40,6 @@ body {
     .chat-pan > div.info {
         margin-top: 35px;
     }
-    .chat-pan > div.info > svg {
-        display: block;
-    }
     .chat-pan.open > div.info > svg {
         display: none;
     }

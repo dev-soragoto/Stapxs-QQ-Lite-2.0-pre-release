@@ -6,187 +6,187 @@
 -->
 
 <template>
-  <div
-    v-if="tags.openChatInfo"
-    class="chat-info-pan">
-    <div class="ss-card chat-info">
-      <header>
-        <span v-if="chat.show.type === 'group'">{{
-          $t('群资料')
-        }}</span>
-        <span v-if="chat.show.type === 'user'">{{ $t('好友') }}</span>
-        <font-awesome-icon
-          :icon="['fas', 'xmark']"
-          @click="closeChatInfoPan" />
-      </header>
-      <div :class="'chat-info-base ' + chat.show.type">
-        <div>
-          <img :src="chat.show.avatar">
-          <div>
-            <a>{{ chat.show.name }}</a>
-            <span>{{ chat.show.id }}</span>
-          </div>
-        </div>
-        <div
-          v-if="chat.show.type === 'group'"
-          v-show="Object.keys(chat.info.group_info).length > 0">
-          <header>
-            <span>{{ $t('介绍') }}</span>
-          </header>
-          <span
-            v-html="
-              chat.info.group_info.gIntro === undefined ||
-                chat.info.group_info.gIntro === ''
-                ? $t('群主很懒，还没有群介绍哦～')
-                : chat.info.group_info.gIntro
-            " />
-          <div class="tags">
-            <div
-              v-for="item in chat.info.group_info.tags"
-              :key="item.md">
-              {{ item.tag }}
-            </div>
-          </div>
-        </div>
-        <div v-else-if="chat.show.type === 'user'">
-          <header>
-            <span>{{ $t('签名') }}</span>
-          </header>
-          <span
-            v-html="
-              chat.info.user_info.lnick === undefined ||
-                chat.info.user_info.lnick === ''
-                ? $t('签名')
-                : chat.info.user_info.lnick
-            " />
-          <header>
-            <span>{{ $t('其他信息') }}</span>
-          </header>
-          <div class="outher">
-            <span>{{ $t('生日') }}:
-              <span>
-                {{
-                  chat.info.user === undefined
-                    ? ''
-                    : Intl.DateTimeFormat(trueLang, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    }).format(
-                      new Date(
-                        `${chat.info.user_info.birthday.year}-${
-                          chat.info.user_info.birthday.month}-${
-                          chat.info.user_info.birthday.day}`,
-                      ),
-                    ) +
-                      ` (${
-                        $t('生肖').split('&')[
-                          chat.info.user_info
-                            .shengxiao - 1
-                        ]
-                      })`
-                }}
-              </span>
-            </span>
-            <span>{{ $t('地区') }}:
-              <span>
-                {{
-                  `${chat.info.user_info.country}-${
-                    chat.info.user_info.province}-${
-                    chat.info.user_info.city}`
-                }}
-              </span>
-            </span>
-          </div>
-          <template v-if="!chat.show.temp">
-            <!-- 临时会话没有这个板块 -->
+    <div
+        v-if="tags.openChatInfo"
+        class="chat-info-pan">
+        <div class="ss-card chat-info">
             <header>
-              <span>{{ $t('设置') }}</span>
+                <span v-if="chat.show.type === 'group'">{{
+                    $t('群资料')
+                }}</span>
+                <span v-if="chat.show.type === 'user'">{{ $t('好友') }}</span>
+                <font-awesome-icon
+                    :icon="['fas', 'xmark']"
+                    @click="closeChatInfoPan" />
             </header>
-            <OptInfo
-              :type="'number'"
-              :chat="chat" />
-          </template>
-        </div>
-      </div>
-      <BcTab
-        v-if="chat.show.type === 'group'"
-        class="chat-info-tab">
-        <div :name="$t('成员')">
-          <div class="chat-info-tab-member">
-            <div class="search-view">
-              <input
-                :placeholder="$t('搜索 ……')"
-                @input="searchList">
+            <div :class="'chat-info-base ' + chat.show.type">
+                <div>
+                    <img :src="chat.show.avatar">
+                    <div>
+                        <a>{{ chat.show.name }}</a>
+                        <span>{{ chat.show.id }}</span>
+                    </div>
+                </div>
+                <div
+                    v-if="chat.show.type === 'group'"
+                    v-show="Object.keys(chat.info.group_info).length > 0">
+                    <header>
+                        <span>{{ $t('介绍') }}</span>
+                    </header>
+                    <span
+                        v-html="
+                            chat.info.group_info.gIntro === undefined ||
+                                chat.info.group_info.gIntro === ''
+                                ? $t('群主很懒，还没有群介绍哦～')
+                                : chat.info.group_info.gIntro
+                        " />
+                    <div class="tags">
+                        <div
+                            v-for="item in chat.info.group_info.tags"
+                            :key="item.md">
+                            {{ item.tag }}
+                        </div>
+                    </div>
+                </div>
+                <div v-else-if="chat.show.type === 'user'">
+                    <header>
+                        <span>{{ $t('签名') }}</span>
+                    </header>
+                    <span
+                        v-html="
+                            chat.info.user_info.lnick === undefined ||
+                                chat.info.user_info.lnick === ''
+                                ? $t('签名')
+                                : chat.info.user_info.lnick
+                        " />
+                    <header>
+                        <span>{{ $t('其他信息') }}</span>
+                    </header>
+                    <div class="outher">
+                        <span>{{ $t('生日') }}:
+                            <span>
+                                {{
+                                    chat.info.user === undefined
+                                        ? ''
+                                        : Intl.DateTimeFormat(trueLang, {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                        }).format(
+                                            new Date(
+                                                `${chat.info.user_info.birthday.year}-${
+                                                    chat.info.user_info.birthday.month}-${
+                                                    chat.info.user_info.birthday.day}`,
+                                            ),
+                                        ) +
+                                            ` (${
+                                                $t('生肖').split('&')[
+                                                    chat.info.user_info
+                                                        .shengxiao - 1
+                                                ]
+                                            })`
+                                }}
+                            </span>
+                        </span>
+                        <span>{{ $t('地区') }}:
+                            <span>
+                                {{
+                                    `${chat.info.user_info.country}-${
+                                        chat.info.user_info.province}-${
+                                        chat.info.user_info.city}`
+                                }}
+                            </span>
+                        </span>
+                    </div>
+                    <template v-if="!chat.show.temp">
+                        <!-- 临时会话没有这个板块 -->
+                        <header>
+                            <span>{{ $t('设置') }}</span>
+                        </header>
+                        <OptInfo
+                            :type="'number'"
+                            :chat="chat" />
+                    </template>
+                </div>
             </div>
-            <div
-              v-for="item in number_cache.length > 0
-                ? number_cache
-                : chat.info.group_members"
-              :key="'chatinfomlist-' + item.user_id"
-              @click="startChat(item)">
-              <img
-                loading="lazy"
-                :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
-              <div>
-                <a>{{
-                  item.card ? item.card : item.nickname
-                }}</a>
-                <font-awesome-icon
-                  v-if="item.role === 'owner'"
-                  :icon="['fas', 'crown']" />
-                <font-awesome-icon
-                  v-if="item.role === 'admin'"
-                  :icon="['fas', 'star']" />
-              </div>
-              <span>{{ item.user_id }}</span>
-            </div>
-          </div>
+            <BcTab
+                v-if="chat.show.type === 'group'"
+                class="chat-info-tab">
+                <div :name="$t('成员')">
+                    <div class="chat-info-tab-member">
+                        <div class="search-view">
+                            <input
+                                :placeholder="$t('搜索 ……')"
+                                @input="searchList">
+                        </div>
+                        <div
+                            v-for="item in number_cache.length > 0
+                                ? number_cache
+                                : chat.info.group_members"
+                            :key="'chatinfomlist-' + item.user_id"
+                            @click="startChat(item)">
+                            <img
+                                loading="lazy"
+                                :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
+                            <div>
+                                <a>{{
+                                    item.card ? item.card : item.nickname
+                                }}</a>
+                                <font-awesome-icon
+                                    v-if="item.role === 'owner'"
+                                    :icon="['fas', 'crown']" />
+                                <font-awesome-icon
+                                    v-if="item.role === 'admin'"
+                                    :icon="['fas', 'star']" />
+                            </div>
+                            <span>{{ item.user_id }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div :name="$t('公告')">
+                    <div class="bulletins">
+                        <BulletinBody
+                            v-for="(item, index) in chat.info.group_notices ??
+                                []"
+                            :key="'bulletins-' + index"
+                            :data="item"
+                            :index="index" />
+                    </div>
+                </div>
+                <div :name="$t('文件')">
+                    <div
+                        class="group-files"
+                        @scroll="fileLoad">
+                        <div
+                            v-for="item in chat.info.group_files.file_list"
+                            :key="'file-' + item.id">
+                            <FileBody
+                                :chat="chat"
+                                :item="item" />
+                        </div>
+                        <div
+                            v-show="
+                                chat.info.group_files !== undefined &&
+                                    chat.info.group_files.next_index !==
+                                    undefined &&
+                                    chat.info.group_files.next_index !== 0
+                            "
+                            class="group-files-loader">
+                            <font-awesome-icon :icon="['fas', 'ellipsis']" />
+                        </div>
+                    </div>
+                </div>
+                <div :name="$t('设置')">
+                    <div style="padding: 0 20px">
+                        <OptInfo
+                            :type="'group'"
+                            :chat="chat" />
+                    </div>
+                </div>
+            </BcTab>
         </div>
-        <div :name="$t('公告')">
-          <div class="bulletins">
-            <BulletinBody
-              v-for="(item, index) in chat.info.group_notices ??
-                []"
-              :key="'bulletins-' + index"
-              :data="item"
-              :index="index" />
-          </div>
-        </div>
-        <div :name="$t('文件')">
-          <div
-            class="group-files"
-            @scroll="fileLoad">
-            <div
-              v-for="item in chat.info.group_files.file_list"
-              :key="'file-' + item.id">
-              <FileBody
-                :chat="chat"
-                :item="item" />
-            </div>
-            <div
-              v-show="
-                chat.info.group_files !== undefined &&
-                  chat.info.group_files.next_index !==
-                  undefined &&
-                  chat.info.group_files.next_index !== 0
-              "
-              class="group-files-loader">
-              <font-awesome-icon :icon="['fas', 'ellipsis']" />
-            </div>
-          </div>
-        </div>
-        <div :name="$t('设置')">
-          <div style="padding: 0 20px">
-            <OptInfo
-              :type="'group'"
-              :chat="chat" />
-          </div>
-        </div>
-      </BcTab>
+        <div class="card-info-pan-bg" />
     </div>
-    <div class="card-info-pan-bg" />
-  </div>
 </template>
 
 <script lang="ts">

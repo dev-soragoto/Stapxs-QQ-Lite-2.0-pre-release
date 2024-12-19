@@ -260,9 +260,7 @@ export function getMsgRawTxt(data: any): string {
                             if (user) {
                                 back +=
                                     '@' +
-                                    (user.card && user.card != ''
-                                        ? user.card
-                                        : user.nickname)
+                                    (user.card && user.card != ''? user.card: user.nickname)
                                 break
                             }
                         }
@@ -282,9 +280,7 @@ export function getMsgRawTxt(data: any): string {
                     break
                 case 'image':
                     back +=
-                        message[i].summary || message[i].summary == ''
-                            ? '[' + $t('图片') + ']'
-                            : message[i].summary
+                        message[i].summary || message[i].summary == ''? '[' + $t('图片') + ']': message[i].summary
                     break
                 case 'record':
                     back += '[' + $t('语音') + ']'

@@ -6,87 +6,87 @@
 -->
 
 <template>
-  <div
-    :class="
-      (item.type === 2 ? ' folder' : '') +
-        (item.sub_list && item.sub_list.length > 0 ? ' open' : '')
-    "
-    @click="loadFileDir(item.id, item.type)">
-    <font-awesome-icon
-      v-if="item.type === 2"
-      :icon="['fas', 'folder']" />
-    <font-awesome-icon
-      v-if="item.type === 1"
-      :icon="['fas', 'file']" />
-    <div class="main">
-      <span>{{ toHtml(item.name) }}</span>
-      <div>
-        <span :data-id="item.owner_uin">{{
-          toHtml(item.owner_name)
-        }}</span>
-        <span>{{
-          item.create_time === 0
-            ? '-'
-            : Intl.DateTimeFormat(trueLang, {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            }).format(new Date(item.create_time * 1000))
-        }}</span>
-        <span v-if="!item.dead_time && item.dead_time">{{
-          item.dead_time - item.create_time / 86400 - 1 + $t('天后')
-        }}</span>
-        <span v-if="item.type === 2">{{
-          $t('共 {num} 个文件', { num: item.size })
-        }}</span>
-        <span v-if="item.type === 1">{{ getSize(item.size) }}</span>
-      </div>
-    </div>
     <div
-      v-if="item.type === 1 && item.downloadingPercentage === undefined"
-      class="download"
-      @click="getFile(item)">
-      <font-awesome-icon :icon="['fas', 'angle-down']" />
+        :class="
+            (item.type === 2 ? ' folder' : '') +
+                (item.sub_list && item.sub_list.length > 0 ? ' open' : '')
+        "
+        @click="loadFileDir(item.id, item.type)">
+        <font-awesome-icon
+            v-if="item.type === 2"
+            :icon="['fas', 'folder']" />
+        <font-awesome-icon
+            v-if="item.type === 1"
+            :icon="['fas', 'file']" />
+        <div class="main">
+            <span>{{ toHtml(item.name) }}</span>
+            <div>
+                <span :data-id="item.owner_uin">{{
+                    toHtml(item.owner_name)
+                }}</span>
+                <span>{{
+                    item.create_time === 0
+                        ? '-'
+                        : Intl.DateTimeFormat(trueLang, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                        }).format(new Date(item.create_time * 1000))
+                }}</span>
+                <span v-if="!item.dead_time && item.dead_time">{{
+                    item.dead_time - item.create_time / 86400 - 1 + $t('天后')
+                }}</span>
+                <span v-if="item.type === 2">{{
+                    $t('共 {num} 个文件', { num: item.size })
+                }}</span>
+                <span v-if="item.type === 1">{{ getSize(item.size) }}</span>
+            </div>
+        </div>
+        <div
+            v-if="item.type === 1 && item.downloadingPercentage === undefined"
+            class="download"
+            @click="getFile(item)">
+            <font-awesome-icon :icon="['fas', 'angle-down']" />
+        </div>
+        <svg
+            v-if="item.downloadingPercentage !== undefined"
+            class="download-bar"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle
+                cx="50%"
+                cy="50%"
+                r="40%"
+                stroke-width="15%"
+                fill="none"
+                stroke-linecap="round" />
+            <circle
+                cx="50%"
+                cy="50%"
+                r="40%"
+                stroke-width="15%"
+                fill="none"
+                :stroke-dasharray="
+                    item.downloadingPercentage === undefined
+                        ? '0,10000'
+                        : `${(Math.floor(2 * Math.PI * 25) *
+                            item.downloadingPercentage) / 100},10000`
+                " />
+        </svg>
+        <div
+            v-show="item.sub_item_show !== false && item.sub_list !== undefined"
+            :class="
+                (item.sub_list !== undefined ? 'sub_file ' : '') + 'group-files'
+            ">
+            <div
+                v-for="sub_item in item.sub_list"
+                :key="'sub_file-' + sub_item.id">
+                <FileBody
+                    :chat="chat"
+                    :item="sub_item"
+                    :parent="item.id" />
+            </div>
+        </div>
     </div>
-    <svg
-      v-if="item.downloadingPercentage !== undefined"
-      class="download-bar"
-      xmlns="http://www.w3.org/2000/svg">
-      <circle
-        cx="50%"
-        cy="50%"
-        r="40%"
-        stroke-width="15%"
-        fill="none"
-        stroke-linecap="round" />
-      <circle
-        cx="50%"
-        cy="50%"
-        r="40%"
-        stroke-width="15%"
-        fill="none"
-        :stroke-dasharray="
-          item.downloadingPercentage === undefined
-            ? '0,10000'
-            : `${(Math.floor(2 * Math.PI * 25) *
-              item.downloadingPercentage) / 100},10000`
-        " />
-    </svg>
-    <div
-      v-show="item.sub_item_show !== false && item.sub_list !== undefined"
-      :class="
-        (item.sub_list !== undefined ? 'sub_file ' : '') + 'group-files'
-      ">
-      <div
-        v-for="sub_item in item.sub_list"
-        :key="'sub_file-' + sub_item.id">
-        <FileBody
-          :chat="chat"
-          :item="sub_item"
-          :parent="item.id" />
-      </div>
-    </div>
-  </div>
 </template>
 
 <script lang="ts">

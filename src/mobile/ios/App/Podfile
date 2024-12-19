@@ -12,7 +12,10 @@ def capacitor_pods
   pod 'Capacitor', :path => '../../../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../../../node_modules/@capacitor/ios'
   pod 'CapacitorApp', :path => '../../../../node_modules/@capacitor/app'
+  pod 'CapacitorKeyboard', :path => '../../../../node_modules/@capacitor/keyboard'
   pod 'CapacitorLocalNotifications', :path => '../../../../node_modules/@capacitor/local-notifications'
+  pod 'CapacitorStatusBar', :path => '../../../../node_modules/@capacitor/status-bar'
+  pod 'HugotomaziCapacitorNavigationBar', :path => '../../../../node_modules/@hugotomazi/capacitor-navigation-bar'
   pod 'UntinyCapacitorSafeArea', :path => '../../../../node_modules/@untiny/capacitor-safe-area'
   pod 'CapacitorOnebotConnctor', :path => '../../../../node_modules/capacitor-onebot-connctor'
 end

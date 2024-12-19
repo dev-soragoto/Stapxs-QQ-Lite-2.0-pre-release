@@ -6,57 +6,57 @@
 -->
 
 <template>
-  <div
-    class="info-pan-set"
-    style="padding: 0">
-    <!-- 公用设置 -->
-    <!-- 群设置 -->
-    <template v-if="type == 'group'">
-      <div
-        v-if="
-          (chat.info.group_info.gOwner &&
-            chat.info.group_info.gOwner ===
-            runtimeData.loginInfo.uin) ||
-            (chat.info.group_info.gAdmins &&
-              chat.info.group_info.gAdmins.indexOf(
-                runtimeData.loginInfo.uin,
-              ) >= 0)
-        "
-        class="opt-item">
-        <font-awesome-icon :icon="['fas', 'pen']" />
-        <div>
-          <span>{{ $t('群聊名称') }}</span>
-          <span>{{ $t('“你们真是害人不浅呐你们这个群”') }}</span>
-        </div>
-        <input
-          v-model="runtimeData.chatInfo.show.name"
-          class="ss-input"
-          style="width: 150px"
-          type="text"
-          @keyup="setGroupName">
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'note-sticky']" />
-        <div>
-          <span>{{ $t('我的本群昵称') }}</span>
-          <span>{{ $t('￡爺↘僞ηι慹著彡') }}</span>
-        </div>
-        <input
-          v-model="runtimeData.chatInfo.info.me_info.card"
-          class="ss-input"
-          style="width: 150px"
-          type="text"
-          @keyup="setGroupCard">
-      </div>
+    <div
+        class="info-pan-set"
+        style="padding: 0">
+        <!-- 公用设置 -->
+        <!-- 群设置 -->
+        <template v-if="type == 'group'">
+            <div
+                v-if="
+                    (chat.info.group_info.gOwner &&
+                        chat.info.group_info.gOwner ===
+                        runtimeData.loginInfo.uin) ||
+                        (chat.info.group_info.gAdmins &&
+                            chat.info.group_info.gAdmins.indexOf(
+                                runtimeData.loginInfo.uin,
+                            ) >= 0)
+                "
+                class="opt-item">
+                <font-awesome-icon :icon="['fas', 'pen']" />
+                <div>
+                    <span>{{ $t('群聊名称') }}</span>
+                    <span>{{ $t('“你们真是害人不浅呐你们这个群”') }}</span>
+                </div>
+                <input
+                    v-model="runtimeData.chatInfo.show.name"
+                    class="ss-input"
+                    style="width: 150px"
+                    type="text"
+                    @keyup="setGroupName">
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'note-sticky']" />
+                <div>
+                    <span>{{ $t('我的本群昵称') }}</span>
+                    <span>{{ $t('￡爺↘僞ηι慹著彡') }}</span>
+                </div>
+                <input
+                    v-model="runtimeData.chatInfo.info.me_info.card"
+                    class="ss-input"
+                    style="width: 150px"
+                    type="text"
+                    @keyup="setGroupCard">
+            </div>
 
-      <button
-        class="ss-button"
-        style="width: calc(100% - 60px); margin: 30px 30px 0 30px"
-        @click="leaveGroup()">
-        {{ $t('退出群聊') }}
-      </button>
-    </template>
-  </div>
+            <button
+                class="ss-button"
+                style="width: calc(100% - 60px); margin: 30px 30px 0 30px"
+                @click="leaveGroup()">
+                {{ $t('退出群聊') }}
+            </button>
+        </template>
+    </div>
 </template>
 
 <script lang="ts">

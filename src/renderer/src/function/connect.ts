@@ -54,17 +54,6 @@ export class Connector {
             const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
             if(Onebot) {
                 Onebot.connect({ url: `${address}?access_token=${token}` })
-                // 注册回调监听
-                Onebot.addListener('onebot:event', (data) => {
-                    const msg = JSON.parse(data.data)
-                    switch(data.type) {
-                        case 'onopen': Connector.onopen(address, token); break
-                        case 'onmessage': Connector.onmessage(data.data); break
-                        case 'onclose': Connector.onclose(msg.code, msg.message, address, token); break
-                        case 'onerror': popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false); break
-                        default: break
-                    }
-                })
             }
             return
         }
@@ -265,6 +254,7 @@ export class Connector {
 }
 
 export const login: LoginCacheElem = reactive({
+    quickLogin: [],
     status: false,
     address: '',
     token: '',

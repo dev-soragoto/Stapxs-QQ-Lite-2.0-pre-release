@@ -16,6 +16,7 @@ import { runCommand } from './util.ts'
 import { win, touchBarInstance } from '../index.ts'
 import { Connector } from './connector.ts'
 import { logLevel } from '../index.ts'
+import ScanNetwork from './scannetwork.ts'
 
 let connector = undefined as Connector | undefined
 const store = new Store()
@@ -315,6 +316,11 @@ export function regIpcListener() {
             return { success: false, message: (ex as Error).message }
         }
     })
+    // 启用服务发现
+    ipcMain.on('sys:scanNetwork', () => {
+        if(win)
+            new ScanNetwork(win).scanNetwork()
+    })
 
     // Windows：闪烁状态栏图标
     ipcMain.on('win:flashWindow', () => {
@@ -494,9 +500,7 @@ export function regIpcListener() {
             }
             if (menuIndex > -1) {
                 const item =
-                    itemIndex > -1
-                        ? template[menuIndex].submenu[itemIndex]
-                        : template[menuIndex]
+                    itemIndex > -1? template[menuIndex].submenu[itemIndex]: template[menuIndex]
                 switch (action) {
                     case 'label':
                         item.label = value

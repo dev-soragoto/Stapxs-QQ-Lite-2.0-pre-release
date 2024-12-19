@@ -6,247 +6,230 @@
 -->
 
 <template>
-  <div class="opt-page">
-    <div class="ss-card">
-      <header>{{ $t('兼容选项') }}</header>
-      <div class="tip">
-        {{
-          $t(
-            '这儿是兼容性相关的高级选项，包括 bot 附加功能、热插拔组件等。',
-          )
-        }}
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'heart']" />
-        <div>
-          <span>{{ $t('发送心跳包') }}</span>
-          <span>{{ $t('没救了，拖出去吧') }}</span>
+    <div class="opt-page">
+        <div class="ss-card">
+            <header>{{ $t('兼容选项') }}</header>
+            <div class="tip">
+                {{
+                    $t(
+                        '这儿是兼容性相关的高级选项，包括 bot 附加功能、热插拔组件等。',
+                    )
+                }}
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'clipboard-list']" />
+                <div>
+                    <span>{{ $t('消息类型') }}</span>
+                    <span>{{
+                        $t(
+                            '[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测',
+                        )
+                    }}</span>
+                </div>
+                <select
+                    v-model="runtimeData.sysConfig.msgType"
+                    name="msg_type"
+                    title="msg_type"
+                    @change="save">
+                    <option
+                        v-for="item in Object.values(BotMsgType)
+                            .filter(value => typeof value === 'number')"
+                        :key="item"
+                        :value="item">
+                        {{ getBotTypeName(item) }}
+                    </option>
+                </select>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'gear']" />
+                <div>
+                    <span>{{ $t('解析配置') }}</span>
+                    <span>{{
+                        $t('不同框架之间的化学反应我们将其称之为达利园效应')
+                    }}</span>
+                </div>
+                <select
+                    v-model="jsonMapName"
+                    @change="changeJsonMap">
+                    <option
+                        v-if="jsonMapName == ''"
+                        value="">
+                        {{ $t('未连接') }}
+                    </option>
+                    <option
+                        v-for="item in getPathMapList()"
+                        :key="item"
+                        :value="item">
+                        {{ item.replace('Chat', '') }}
+                    </option>
+                </select>
+            </div>
         </div>
-        <label class="ss-switch">
-          <input
-            v-model="runtimeData.sysConfig.connect_beat"
-            type="checkbox"
-            name="connect_beat"
-            @change="save">
-          <div>
-            <div />
-          </div>
-        </label>
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'clipboard-list']" />
-        <div>
-          <span>{{ $t('消息类型') }}</span>
-          <span>{{
-            $t(
-              '[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测',
-            )
-          }}</span>
-        </div>
-        <select
-          v-model="runtimeData.sysConfig.msgType"
-          name="msg_type"
-          title="msg_type"
-          @change="save">
-          <option
-            v-for="item in BotMsgType"
-            v-show="typeof item == 'number'"
-            :key="item"
-            :value="item">
-            {{ getBotTypeName(item) }}
-          </option>
-        </select>
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'gear']" />
-        <div>
-          <span>{{ $t('解析配置') }}</span>
-          <span>{{
-            $t('不同框架之间的化学反应我们将其称之为达利园效应')
-          }}</span>
-        </div>
-        <select
-          v-model="jsonMapName"
-          @change="changeJsonMap">
-          <option
-            v-if="jsonMapName == ''"
-            value="">
-            {{ $t('未连接') }}
-          </option>
-          <option
-            v-for="item in getPathMapList()"
-            :key="item"
-            :value="item">
-            {{ item.replace('Chat', '') }}
-          </option>
-        </select>
-      </div>
-    </div>
 
-    <div class="ss-card">
-      <header>{{ $t('开发者选项') }}</header>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'book']" />
-        <div>
-          <span>{{ $t('日志等级') }}</span>
-          <span>{{ $t('ReferenceError: moYu is not defined') }}</span>
+        <div class="ss-card">
+            <header>{{ $t('开发者选项') }}</header>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'book']" />
+                <div>
+                    <span>{{ $t('日志等级') }}</span>
+                    <span>{{ $t('ReferenceError: moYu is not defined') }}</span>
+                </div>
+                <select
+                    v-model="runtimeData.sysConfig.log_level"
+                    name="log_level"
+                    title="log_level"
+                    @change="save">
+                    <option value="err">
+                        {{ $t('错误') }}
+                    </option>
+                    <option value="debug">
+                        {{ $t('调试') }}
+                    </option>
+                    <option value="info">
+                        {{ $t('基本') }}
+                    </option>
+                    <option value="all">
+                        {{ $t('全部') }}
+                    </option>
+                </select>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'robot']" />
+                <div>
+                    <span>{{ $t('禁用消息渲染') }}</span>
+                    <span><a
+                        style="cursor: pointer"
+                        @click="sendAbab">{{
+                        $t('点击进行 CAPTCHA 验证')
+                    }}</a></span>
+                </div>
+                <label class="ss-switch">
+                    <input
+                        v-model="runtimeData.sysConfig.debug_msg"
+                        type="checkbox"
+                        name="debug_msg"
+                        @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
         </div>
-        <select
-          v-model="runtimeData.sysConfig.log_level"
-          name="log_level"
-          title="log_level"
-          @change="save">
-          <option value="err">
-            {{ $t('错误') }}
-          </option>
-          <option value="debug">
-            {{ $t('调试') }}
-          </option>
-          <option value="info">
-            {{ $t('基本') }}
-          </option>
-          <option value="all">
-            {{ $t('全部') }}
-          </option>
-        </select>
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'robot']" />
-        <div>
-          <span>{{ $t('禁用消息渲染') }}</span>
-          <span><a
-            style="cursor: pointer"
-            @click="sendAbab">{{
-              $t('点击进行 CAPTCHA 验证')
-            }}</a></span>
+        <div class="ss-card">
+            <header>{{ $t('调试') }}</header>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'paper-plane']" />
+                <div>
+                    <span>{{ $t('发送原始消息') }}</span>
+                    <span>{{ $t('咻 ——') }}</span>
+                </div>
+                <input
+                    v-model="ws_text"
+                    class="ss-input"
+                    style="width: 150px"
+                    type="text"
+                    @keyup="sendTestWs">
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'envelope']" />
+                <div>
+                    <span>{{ $t('应用消息测试') }}</span>
+                    <span>{{ $t('#$&*#$= ……') }}</span>
+                </div>
+                <input
+                    v-model="appmsg_text"
+                    class="ss-input"
+                    style="width: 150px"
+                    type="text"
+                    @keyup="sendTestAppmsg">
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'file-invoice']" />
+                <div>
+                    <span>{{ $t('输出运行时') }}</span>
+                    <span>{{ $t('全都吐出来！') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="printRuntime">
+                    {{ $t('执行') }}
+                </button>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'screwdriver-wrench']" />
+                <div>
+                    <span>{{ $t('输出调试信息') }}</span>
+                    <span>{{ $t('到底用的什么版本呢 ……') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="printVersionInfo">
+                    {{ $t('执行') }}
+                </button>
+            </div>
+            <template v-if="runtimeData.tags.isElectron">
+                <div class="opt-item">
+                    <font-awesome-icon :icon="['fas', 'power-off']" />
+                    <div>
+                        <span>{{ $t('重启应用') }}</span>
+                        <span>{{ $t('99% 的特性都能通过重启解决！') }}</span>
+                    </div>
+                    <button
+                        style="width: 100px; font-size: 0.8rem"
+                        class="ss-button"
+                        @click="restartapp">
+                        {{ $t('执行') }}
+                    </button>
+                </div>
+            </template>
         </div>
-        <label class="ss-switch">
-          <input
-            v-model="runtimeData.sysConfig.debug_msg"
-            type="checkbox"
-            name="debug_msg"
-            @change="save">
-          <div>
-            <div />
-          </div>
-        </label>
-      </div>
+        <div class="ss-card">
+            <header>{{ $t('维护与备份') }}</header>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'download']" />
+                <div>
+                    <span>{{ $t('导出设置项') }}</span>
+                    <span>{{
+                        $t('tar zcvf config.tar.gz /localStorage')
+                    }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="printSetUpInfo">
+                    {{ $t('执行') }}
+                </button>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'upload']" />
+                <div>
+                    <span>{{ $t('导入设置项') }}</span>
+                    <span>{{ $t('tar zxvf cache.tar.gz /localStorage') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="importSetUpInfo">
+                    {{ $t('执行') }}
+                </button>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'trash-arrow-up']" />
+                <div>
+                    <span>{{ $t('重置应用') }}</span>
+                    <span>{{ $t('sudo rm -rf /localStorage') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="resetApp">
+                    {{ $t('执行') }}
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="ss-card">
-      <header>{{ $t('调试') }}</header>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'paper-plane']" />
-        <div>
-          <span>{{ $t('发送原始消息') }}</span>
-          <span>{{ $t('咻 ——') }}</span>
-        </div>
-        <input
-          v-model="ws_text"
-          class="ss-input"
-          style="width: 150px"
-          type="text"
-          @keyup="sendTestWs">
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'envelope']" />
-        <div>
-          <span>{{ $t('应用消息测试') }}</span>
-          <span>{{ $t('#$&*#$= ……') }}</span>
-        </div>
-        <input
-          v-model="appmsg_text"
-          class="ss-input"
-          style="width: 150px"
-          type="text"
-          @keyup="sendTestAppmsg">
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'file-invoice']" />
-        <div>
-          <span>{{ $t('输出运行时') }}</span>
-          <span>{{ $t('全都吐出来！') }}</span>
-        </div>
-        <button
-          style="width: 100px; font-size: 0.8rem"
-          class="ss-button"
-          @click="printRuntime">
-          {{ $t('执行') }}
-        </button>
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'screwdriver-wrench']" />
-        <div>
-          <span>{{ $t('输出调试信息') }}</span>
-          <span>{{ $t('到底用的什么版本呢 ……') }}</span>
-        </div>
-        <button
-          style="width: 100px; font-size: 0.8rem"
-          class="ss-button"
-          @click="printVersionInfo">
-          {{ $t('执行') }}
-        </button>
-      </div>
-      <template v-if="runtimeData.tags.isElectron">
-        <div class="opt-item">
-          <font-awesome-icon :icon="['fas', 'power-off']" />
-          <div>
-            <span>{{ $t('重启应用') }}</span>
-            <span>{{ $t('99% 的特性都能通过重启解决！') }}</span>
-          </div>
-          <button
-            style="width: 100px; font-size: 0.8rem"
-            class="ss-button"
-            @click="restartapp">
-            {{ $t('执行') }}
-          </button>
-        </div>
-      </template>
-    </div>
-    <div class="ss-card">
-      <header>{{ $t('维护与备份') }}</header>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'download']" />
-        <div>
-          <span>{{ $t('导出设置项') }}</span>
-          <span>{{
-            $t('tar zcvf config.tar.gz /localStorage')
-          }}</span>
-        </div>
-        <button
-          style="width: 100px; font-size: 0.8rem"
-          class="ss-button"
-          @click="printSetUpInfo">
-          {{ $t('执行') }}
-        </button>
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'upload']" />
-        <div>
-          <span>{{ $t('导入设置项') }}</span>
-          <span>{{ $t('tar zxvf cache.tar.gz /localStorage') }}</span>
-        </div>
-        <button
-          style="width: 100px; font-size: 0.8rem"
-          class="ss-button"
-          @click="importSetUpInfo">
-          {{ $t('执行') }}
-        </button>
-      </div>
-      <div class="opt-item">
-        <font-awesome-icon :icon="['fas', 'trash-arrow-up']" />
-        <div>
-          <span>{{ $t('重置应用') }}</span>
-          <span>{{ $t('sudo rm -rf /localStorage') }}</span>
-        </div>
-        <button
-          style="width: 100px; font-size: 0.8rem"
-          class="ss-button"
-          @click="resetApp">
-          {{ $t('执行') }}
-        </button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script lang="ts">

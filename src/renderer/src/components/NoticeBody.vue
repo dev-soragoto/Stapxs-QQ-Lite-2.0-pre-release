@@ -6,53 +6,53 @@
 -->
 
 <template>
-  <div
-    :id="'notice-' + id"
-    class="note">
     <div
-      v-if="data.notice_type && data.notice_type.indexOf('recall') >= 0"
-      class="note-recall note-base">
-      <a>{{ info.name }}</a>
-      <span>{{ $t('撤回了一条消息') }}</span>
-      <div />
+        :id="'notice-' + id"
+        class="note">
+        <div
+            v-if="data.notice_type && data.notice_type.indexOf('recall') >= 0"
+            class="note-recall note-base">
+            <a>{{ info.name }}</a>
+            <span>{{ $t('撤回了一条消息') }}</span>
+            <div />
+        </div>
+        <div
+            v-if="data.notice_type == 'group_ban'"
+            class="note-ban note-base">
+            <template v-if="data.sub_type === 'ban'">
+                <template v-if="isMe(data.user_id)">
+                    <span>{{ $t('成员类型_admin') }}</span>
+                    <a>&nbsp;{{ getName(data.operator_id) }}&nbsp;</a>
+                    <span>{{ $t('禁言了你') }}</span>
+                    <span>&nbsp;{{ fTime(data.duration) }}</span>
+                </template>
+                <template v-else>
+                    <span>{{ $t('管理员禁言了') }}</span>
+                    <a>&nbsp;{{ getName(data.user_id) }}&nbsp;</a>
+                    <span>{{ fTime(data.duration) }}</span>
+                </template>
+            </template>
+            <span v-else>{{
+                $t('管理员解除了 {name} 的禁言', {
+                    name: isMe(data.user_id) ? $t('你') : getName(data.user_id),
+                })
+            }}</span>
+        </div>
+        <div
+            v-if="data.sub_type === 'poke'"
+            class="note-notify note-base"
+            v-html="data.str + '<div class=\'space\'</div>'" />
+        <div
+            v-if="data.sub_type === 'time'"
+            class="note-time note-base">
+            <a>{{
+                Intl.DateTimeFormat(
+                    trueLang,
+                    getTimeConfig(new Date(data.time * 1000)),
+                ).format(new Date(data.time * 1000))
+            }}</a>
+        </div>
     </div>
-    <div
-      v-if="data.notice_type == 'group_ban'"
-      class="note-ban note-base">
-      <template v-if="data.sub_type === 'ban'">
-        <template v-if="isMe(data.user_id)">
-          <span>{{ $t('成员类型_admin') }}</span>
-          <a>&nbsp;{{ getName(data.operator_id) }}&nbsp;</a>
-          <span>{{ $t('禁言了你') }}</span>
-          <span>&nbsp;{{ fTime(data.duration) }}</span>
-        </template>
-        <template v-else>
-          <span>{{ $t('管理员禁言了') }}</span>
-          <a>&nbsp;{{ getName(data.user_id) }}&nbsp;</a>
-          <span>{{ fTime(data.duration) }}</span>
-        </template>
-      </template>
-      <span v-else>{{
-        $t('管理员解除了 {name} 的禁言', {
-          name: isMe(data.user_id) ? $t('你') : getName(data.user_id),
-        })
-      }}</span>
-    </div>
-    <div
-      v-if="data.sub_type === 'poke'"
-      class="note-notify note-base"
-      v-html="data.str + '<div class=\'space\'</div>'" />
-    <div
-      v-if="data.sub_type === 'time'"
-      class="note-time note-base">
-      <a>{{
-        Intl.DateTimeFormat(
-          trueLang,
-          getTimeConfig(new Date(data.time * 1000)),
-        ).format(new Date(data.time * 1000))
-      }}</a>
-    </div>
-  </div>
 </template>
 
 <script lang="ts">
@@ -105,9 +105,7 @@
                             )
                         if (back.length === 1) {
                             this.info.name =
-                                back[0].card === '' || back[0].card == null
-                                    ? back[0].nickname
-                                    : back[0].card
+                                back[0].card === '' || back[0].card == null? back[0].nickname: back[0].card
                         } else {
                             this.info.name = id
                         }
@@ -213,9 +211,7 @@
                     },
                 )
                 if (back.length === 1) {
-                    return back[0].card === '' || back[0].card == null
-                        ? back[0].nickname
-                        : back[0].card
+                    return back[0].card === '' || back[0].card == null? back[0].nickname: back[0].card
                 }
                 return id
             },

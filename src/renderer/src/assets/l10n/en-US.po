@@ -309,10 +309,6 @@ msgstr ""
 msgid "兼容选项"
 msgstr "Compatibility Options"
 
-#: src/pages/options/OptDev.vue:35
-msgid "发送心跳包"
-msgstr "Send keepalive packets"
-
 #: src/pages/options/OptDev.vue:36
 msgid "没救了，拖出去吧"
 msgstr "Sometimes a CPR would help :)"
@@ -406,7 +402,7 @@ msgid "我们使用 Umami 对应用的使用情况进行分析，它将不会上
 msgstr "We utilize Umami to analyze the usage of the app. All the data are solely for usage analyses only and don't include identifiable infomation (unless you explicitly enable it). You can opt in or out of it from here."
 
 #: src/pages/options/OptFunction.vue:126
-msgid "访问统计信息" 
+msgid "访问统计信息"
 msgstr ""
 
 #: src/pages/options/OptFunction.vue:112

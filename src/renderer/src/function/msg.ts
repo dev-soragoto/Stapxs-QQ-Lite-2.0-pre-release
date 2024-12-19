@@ -1577,9 +1577,7 @@ function newMsg(_: string, data: any) {
                 runtimeData.onMsgList[index].message_id = data.message_id
                 if (data.message_type === 'group') {
                     const name =
-                        data.sender.card && data.sender.card !== ''
-                            ? data.sender.card
-                            : data.sender.nickname
+                        data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
                     runtimeData.onMsgList[index].raw_msg =
                         name + ': ' + getMsgRawTxt(data)
                 } else {
@@ -1629,6 +1627,12 @@ function newMsg(_: string, data: any) {
                 isGroupNotice ||
                 Option.get('notice_all') === true)
         ) {
+            logger.add(LogType.DEBUG, '通知判定：', {
+                notShow: id !== showId,
+                notFocus: !document.hasFocus(),
+                hidden: document.hidden,
+                isImportant: isImportant
+            })
             // (发送者没有被打开 || 窗口没有焦点 || 窗口被最小化 || 在特别关心列表里) 这些情况需要进行消息通知
             if (
                 id !== showId ||
@@ -1653,14 +1657,10 @@ function newMsg(_: string, data: any) {
 
                     title: data.group_name ?? data.sender.nickname,
                     body:
-                        data.message_type === 'group'
-                            ? data.sender.nickname + ':' + raw
-                            : raw,
+                        data.message_type === 'group'? data.sender.nickname + ':' + raw: raw,
                     tag: `${id}/${data.message_id}`,
                     icon:
-                        data.message_type === 'group'
-                            ? `https://p.qlogo.cn/gh/${id}/${id}/0`
-                            : `https://q1.qlogo.cn/g?b=qq&s=0&nk=${id}`,
+                        data.message_type === 'group'? `https://p.qlogo.cn/gh/${id}/${id}/0`: `https://q1.qlogo.cn/g?b=qq&s=0&nk=${id}`,
                     image: undefined as any,
                     type: data.group_id ? 'group' : 'user',
                     is_important: isImportant,

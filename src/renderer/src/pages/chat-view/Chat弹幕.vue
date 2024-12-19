@@ -8,319 +8,319 @@
  <!-- eslint-disable max-len -->
 
 <template>
-  <div
-    id="chat-pan"
-    :class="
-      'chat-pan' +
-        (runtimeData.tags.openSideBar ? ' open' : '') +
-        (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-    ">
-    <div class="danmu-pan">
-      <vue-danmaku
-        ref="danmakuRef"
-        style="height: calc(100vh - 40px); width: 100%"
-        :channels="0"
-        :danmus="danmus"
-        :speeds="opt.speeds"
-        random-channel
-        :top="2"
-        :loop="opt.loop"
-        use-slot>
-        <div class="controller">
-          <div
-            class="back"
-            @click="openLeftBar">
-            <font-awesome-icon :icon="['fas', 'angle-left']" />
-          </div>
-          <div
-            class="back"
-            @click="opera">
-            <font-awesome-icon
-              v-if="parseIndex == -1"
-              :icon="['fas', 'pause']" />
-            <font-awesome-icon
-              v-else
-              :icon="['fas', 'play']" />
-          </div>
-          <div class="loop">
-            <font-awesome-icon :icon="['fas', 'arrows-rotate']" />
-            <label class="ss-switch">
-              <input
-                v-model="opt.loop"
-                type="checkbox"
-                checked>
-              <div>
-                <div />
-              </div>
-            </label>
-          </div>
-          <div class="space" />
-          <div class="ss-range">
-            <font-awesome-icon
-              :class="opt.speeds < 120 ? 'w' : ''"
-              :icon="['fas', 'gauge-high']" />
-            <input
-              v-model="opt.speeds"
-              :style="`background-size: ${opt.speeds / 8}% 100%;`"
-              type="range"
-              min="20"
-              max="800"
-              step="20">
-            <span
-              :style="`color: var(--color-font${opt.speeds / 8 > 50 ? '-r' : ''})`">{{ opt.speeds }} px/s</span>
-          </div>
+    <div
+        id="chat-pan"
+        :class="
+            'chat-pan' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
+        ">
+        <div class="danmu-pan">
+            <vue-danmaku
+                ref="danmakuRef"
+                style="height: calc(100vh - 40px); width: 100%"
+                :channels="0"
+                :danmus="danmus"
+                :speeds="opt.speeds"
+                random-channel
+                :top="2"
+                :loop="opt.loop"
+                use-slot>
+                <div class="controller">
+                    <div
+                        class="back"
+                        @click="openLeftBar">
+                        <font-awesome-icon :icon="['fas', 'angle-left']" />
+                    </div>
+                    <div
+                        class="back"
+                        @click="opera">
+                        <font-awesome-icon
+                            v-if="parseIndex == -1"
+                            :icon="['fas', 'pause']" />
+                        <font-awesome-icon
+                            v-else
+                            :icon="['fas', 'play']" />
+                    </div>
+                    <div class="loop">
+                        <font-awesome-icon :icon="['fas', 'arrows-rotate']" />
+                        <label class="ss-switch">
+                            <input
+                                v-model="opt.loop"
+                                type="checkbox"
+                                checked>
+                            <div>
+                                <div />
+                            </div>
+                        </label>
+                    </div>
+                    <div class="space" />
+                    <div class="ss-range">
+                        <font-awesome-icon
+                            :class="opt.speeds < 120 ? 'w' : ''"
+                            :icon="['fas', 'gauge-high']" />
+                        <input
+                            v-model="opt.speeds"
+                            :style="`background-size: ${opt.speeds / 8}% 100%;`"
+                            type="range"
+                            min="20"
+                            max="800"
+                            step="20">
+                        <span
+                            :style="`color: var(--color-font${opt.speeds / 8 > 50 ? '-r' : ''})`">{{ opt.speeds }} px/s</span>
+                    </div>
+                </div>
+                <div class="controller input">
+                    <input
+                        id="msgInput"
+                        v-model="msg"
+                        class="msgInput"
+                        @keyup="sendMsg"
+                        @paste="addImg">
+                </div>
+                <template #dm="{ index, danmu }">
+                    <div
+                        :data-id="index"
+                        :class="
+                            'danmu' +
+                                (index == 0 ? ' new' : '') +
+                                (runtimeData.loginInfo.uin == danmu.id
+                                    ? ' me'
+                                    : '') +
+                                (parseIndex != index && parseIndex != -1
+                                    ? ' opacity'
+                                    : '')
+                        "
+                        @mouseenter="pause(index)"
+                        @mouseleave="play"
+                        @touchstart="pause(index)"
+                        @touchend="play">
+                        <img
+                            name="avatar"
+                            :src="
+                                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + danmu.id
+                            ">
+                        <a>{{ danmus.length - index + 1 }}</a>
+                        <span>{{ danmu.text }}</span>
+                    </div>
+                </template>
+                <div :class="'danmu-bg' + (parseIndex != -1 ? ' hidden' : '')">
+                    <svg
+                        class="bg"
+                        width="930"
+                        height="414"
+                        viewBox="0 0 930 414"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <g clip-path="url(#clip0_810_16)">
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 455.05 67.6182)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M402.229 113.088L407.629 103L413.029 113.088L421 117.867L413.029 122.646L407.629 133L403.514 122.646L394 117.867L402.229 113.088Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 516.05 146.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M463.229 192.406L468.629 182.318L474.029 192.406L482 197.185L474.029 201.964L468.629 212.318L464.514 201.964L455 197.185L463.229 192.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 330.05 197.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M277.229 243.406L282.629 233.318L288.029 243.406L296 248.185L288.029 252.964L282.629 263.318L278.514 252.964L269 248.185L277.229 243.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 468.05 290.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M415.229 336.406L420.629 326.318L426.029 336.406L434 341.185L426.029 345.964L420.629 356.318L416.514 345.964L407 341.185L415.229 336.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 656.05 224.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M603.229 270.406L608.629 260.318L614.029 270.406L622 275.185L614.029 279.964L608.629 290.318L604.514 279.964L595 275.185L603.229 270.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 803.05 70.9359)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M750.229 116.406L755.629 106.318L761.029 116.406L769 121.185L761.029 125.964L755.629 136.318L751.514 125.964L742 121.185L750.229 116.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 864.05 276.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M811.229 322.406L816.629 312.318L822.029 322.406L830 327.185L822.029 331.964L816.629 342.318L812.514 331.964L803 327.185L811.229 322.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 144.05 183.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M91.2286 229.406L96.6286 219.318L102.029 229.406L110 234.185L102.029 238.964L96.6286 249.318L92.5143 238.964L83 234.185L91.2286 229.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 171.05 34.9359)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 256.699 175.936)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 701.699 132.936)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="92.07"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 302.699 16.9359)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="92.07"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 344.4 326.936)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="92.07"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 657.4 337.936)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="92.07"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 847.4 167.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M118.229 80.4062L123.629 70.3177L129.029 80.4062L137 85.185L129.029 89.9638L123.629 100.318L119.514 89.9638L110 85.185L118.229 80.4062Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 205.05 372.936)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M152.229 418.406L157.629 408.318L163.029 418.406L171 423.185L163.029 427.964L157.629 438.318L153.514 427.964L144 423.185L152.229 418.406Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 756.05 408.936)"
+                                fill="var(--color-main)" />
+                            <rect
+                                width="1.40442"
+                                height="49"
+                                rx="0.70221"
+                                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 686.05 5.93591)"
+                                fill="var(--color-main)" />
+                            <path
+                                d="M633.229 51.4062L638.629 41.3177L644.029 51.4062L652 56.185L644.029 60.9638L638.629 71.3177L634.514 60.9638L625 56.185L633.229 51.4062Z"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <circle
+                                cx="291.5"
+                                cy="122.5"
+                                r="13"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <circle
+                                cx="846.5"
+                                cy="407.5"
+                                r="13"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                            <circle
+                                cx="910.5"
+                                cy="64.5"
+                                r="13"
+                                stroke="var(--color-main)"
+                                stroke-linecap="round" />
+                        </g>
+                        <defs>
+                            <clipPath id="clip0_810_16">
+                                <rect
+                                    width="930"
+                                    height="414"
+                                    rx="7"
+                                    fill="white" />
+                            </clipPath>
+                        </defs>
+                    </svg>
+                    <span class="name">{{
+                        runtimeData.chatInfo.show.name
+                    }}</span>
+                    <div class="info">
+                        <span class="time">
+                            {{
+                                list[list.length - 1]
+                                    ? $t('上次消息 - {time}', {
+                                        time: Intl.DateTimeFormat(trueLang, {
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                        }).format(
+                                            new Date(
+                                                list[list.length - 1].time *
+                                                    1000,
+                                            ),
+                                        ),
+                                    })
+                                    : $t('暂无消息')
+                            }}
+                        </span>
+                    </div>
+                </div>
+            </vue-danmaku>
         </div>
-        <div class="controller input">
-          <input
-            id="msgInput"
-            v-model="msg"
-            class="msgInput"
-            @keyup="sendMsg"
-            @paste="addImg">
-        </div>
-        <template #dm="{ index, danmu }">
-          <div
-            :data-id="index"
-            :class="
-              'danmu' +
-                (index == 0 ? ' new' : '') +
-                (runtimeData.loginInfo.uin == danmu.id
-                  ? ' me'
-                  : '') +
-                (parseIndex != index && parseIndex != -1
-                  ? ' opacity'
-                  : '')
-            "
-            @mouseenter="pause(index)"
-            @mouseleave="play"
-            @touchstart="pause(index)"
-            @touchend="play">
-            <img
-              name="avatar"
-              :src="
-                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + danmu.id
-              ">
-            <a>{{ danmus.length - index + 1 }}</a>
-            <span>{{ danmu.text }}</span>
-          </div>
-        </template>
-        <div :class="'danmu-bg' + (parseIndex != -1 ? ' hidden' : '')">
-          <svg
-            class="bg"
-            width="930"
-            height="414"
-            viewBox="0 0 930 414"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <g clip-path="url(#clip0_810_16)">
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 455.05 67.6182)"
-                fill="var(--color-main)" />
-              <path
-                d="M402.229 113.088L407.629 103L413.029 113.088L421 117.867L413.029 122.646L407.629 133L403.514 122.646L394 117.867L402.229 113.088Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 516.05 146.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M463.229 192.406L468.629 182.318L474.029 192.406L482 197.185L474.029 201.964L468.629 212.318L464.514 201.964L455 197.185L463.229 192.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 330.05 197.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M277.229 243.406L282.629 233.318L288.029 243.406L296 248.185L288.029 252.964L282.629 263.318L278.514 252.964L269 248.185L277.229 243.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 468.05 290.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M415.229 336.406L420.629 326.318L426.029 336.406L434 341.185L426.029 345.964L420.629 356.318L416.514 345.964L407 341.185L415.229 336.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 656.05 224.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M603.229 270.406L608.629 260.318L614.029 270.406L622 275.185L614.029 279.964L608.629 290.318L604.514 279.964L595 275.185L603.229 270.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 803.05 70.9359)"
-                fill="var(--color-main)" />
-              <path
-                d="M750.229 116.406L755.629 106.318L761.029 116.406L769 121.185L761.029 125.964L755.629 136.318L751.514 125.964L742 121.185L750.229 116.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 864.05 276.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M811.229 322.406L816.629 312.318L822.029 322.406L830 327.185L822.029 331.964L816.629 342.318L812.514 331.964L803 327.185L811.229 322.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 144.05 183.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M91.2286 229.406L96.6286 219.318L102.029 229.406L110 234.185L102.029 238.964L96.6286 249.318L92.5143 238.964L83 234.185L91.2286 229.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 171.05 34.9359)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 256.699 175.936)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 701.699 132.936)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="92.07"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 302.699 16.9359)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="92.07"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 344.4 326.936)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="92.07"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 657.4 337.936)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="92.07"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 847.4 167.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M118.229 80.4062L123.629 70.3177L129.029 80.4062L137 85.185L129.029 89.9638L123.629 100.318L119.514 89.9638L110 85.185L118.229 80.4062Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 205.05 372.936)"
-                fill="var(--color-main)" />
-              <path
-                d="M152.229 418.406L157.629 408.318L163.029 418.406L171 423.185L163.029 427.964L157.629 438.318L153.514 427.964L144 423.185L152.229 418.406Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 756.05 408.936)"
-                fill="var(--color-main)" />
-              <rect
-                width="1.40442"
-                height="49"
-                rx="0.70221"
-                transform="matrix(-0.745625 -0.666366 -0.666366 0.745625 686.05 5.93591)"
-                fill="var(--color-main)" />
-              <path
-                d="M633.229 51.4062L638.629 41.3177L644.029 51.4062L652 56.185L644.029 60.9638L638.629 71.3177L634.514 60.9638L625 56.185L633.229 51.4062Z"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <circle
-                cx="291.5"
-                cy="122.5"
-                r="13"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <circle
-                cx="846.5"
-                cy="407.5"
-                r="13"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-              <circle
-                cx="910.5"
-                cy="64.5"
-                r="13"
-                stroke="var(--color-main)"
-                stroke-linecap="round" />
-            </g>
-            <defs>
-              <clipPath id="clip0_810_16">
-                <rect
-                  width="930"
-                  height="414"
-                  rx="7"
-                  fill="white" />
-              </clipPath>
-            </defs>
-          </svg>
-          <span class="name">{{
-            runtimeData.chatInfo.show.name
-          }}</span>
-          <div class="info">
-            <span class="time">
-              {{
-                list[list.length - 1]
-                  ? $t('上次消息 - {time}', {
-                    time: Intl.DateTimeFormat(trueLang, {
-                      hour: 'numeric',
-                      minute: 'numeric',
-                      second: 'numeric',
-                    }).format(
-                      new Date(
-                        list[list.length - 1].time *
-                          1000,
-                      ),
-                    ),
-                  })
-                  : $t('暂无消息')
-              }}
-            </span>
-          </div>
-        </div>
-      </vue-danmaku>
     </div>
-  </div>
 </template>
 
 <script lang="ts">
@@ -520,9 +520,7 @@
                                 group_id: type == 'group' ? id : undefined,
                                 user_id: type != 'group' ? id : undefined,
                                 message_id: firstMsgId,
-                                count: fullPage
-                                    ? runtimeData.messageList.length + 10
-                                    : 10,
+                                count: fullPage? runtimeData.messageList.length + 10: 10,
                             },
                             'getChatHistory',
                         )

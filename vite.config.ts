@@ -10,8 +10,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 /** @type {import('vite').UserConfig} */
 export default defineConfig({
     root: './src/renderer',
-    base: process.env.BUILD_ENV == 'github-actions'
-        ? '/Stapxs-QQ-Lite-2.0/' : undefined,
+    base: process.env.BUILD_ENV == 'github-actions'? '/Stapxs-QQ-Lite-2.0/' : undefined,
     server: {
         port: 8080
     },

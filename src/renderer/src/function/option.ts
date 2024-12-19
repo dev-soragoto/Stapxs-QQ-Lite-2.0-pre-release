@@ -261,6 +261,11 @@ function changeColorMode(mode: string) {
     }
     // 记录
     runtimeData.tags.darkMode = mode === 'dark'
+    // Capacitor: 状态栏颜色（Android）
+    if(runtimeData.tags.isCapacitor) {
+        const StatusBar = runtimeData.plantform.capacitor.Plugins.StatusBar
+        StatusBar.setStyle({ style: mode.toUpperCase() })
+    }
 }
 
 /**
@@ -448,9 +453,7 @@ export function saveAll(config = {} as { [key: string]: any }) {
         const saveConfig = config
         Object.keys(config).forEach((key) => {
             const isObject = typeof config[key] == 'object'
-            saveConfig[key] = isObject
-                ? JSON.stringify(config[key])
-                : config[key]
+            saveConfig[key] = isObject? JSON.stringify(config[key]): config[key]
         })
         runtimeData.plantform.reader.send('opt:saveAll', saveConfig)
     }

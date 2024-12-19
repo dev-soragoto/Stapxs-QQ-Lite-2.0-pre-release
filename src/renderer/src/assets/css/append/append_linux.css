@@ -101,7 +101,7 @@
         width: 60px !important;
     }
     .friend-list > div:first-child {
-        margin: 55px 15px 0 8px !important;
+        margin: 15px 15px 0 8px !important;
         margin-left: 0 !important;
     }
     .friend-list > div:first-child > div.small > div {
@@ -122,6 +122,6 @@
 
 @media (max-width: 500px) {
     .friend-list > div:first-child {
-        margin: 80px 15px 0 0 !important;
+        margin: 15px 15px 0 0 !important;
     }
 }

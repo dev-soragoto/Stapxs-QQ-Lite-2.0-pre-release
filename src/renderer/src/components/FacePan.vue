@@ -6,46 +6,46 @@
 -->
 
 <template>
-  <div class="ss-card face-pan">
-    <BcTab>
-      <div icon="fa-solid fa-face-laugh-squint">
-        <div class="base-face">
-          <div
-            v-for="num in baseFaceMax"
-            v-show="getFace(num) != ''"
-            :key="'base-face-' + num"
-            :data-id="num"
-            @click="addBaseFace(num)">
-            <img
-              loading="lazy"
-              :src="getFace(num) as any">
-          </div>
-        </div>
-      </div>
-      <div icon="fa-solid fa-heart">
-        <div
-          class="face-stickers"
-          @scroll="stickersScroll">
-          <img
-            v-for="(url, index) in runtimeData.stickerCache"
-            v-show="url != 'end'"
-            :key="'stickers-' + index"
-            loading="lazy"
-            :src="url"
-            @click="addImgFace(url)">
-          <div
-            v-show="
-              runtimeData.stickerCache &&
-                runtimeData.stickerCache.length <= 0
-            "
-            class="ss-card">
-            <font-awesome-icon :icon="['fas', 'face-dizzy']" />
-            <span>{{ $t('一无所有') }}</span>
-          </div>
-        </div>
-      </div>
-    </BcTab>
-  </div>
+    <div class="ss-card face-pan">
+        <BcTab>
+            <div icon="fa-solid fa-face-laugh-squint">
+                <div class="base-face">
+                    <div
+                        v-for="num in baseFaceMax"
+                        v-show="getFace(num) != ''"
+                        :key="'base-face-' + num"
+                        :data-id="num"
+                        @click="addBaseFace(num)">
+                        <img
+                            loading="lazy"
+                            :src="getFace(num) as any">
+                    </div>
+                </div>
+            </div>
+            <div icon="fa-solid fa-heart">
+                <div
+                    class="face-stickers"
+                    @scroll="stickersScroll">
+                    <img
+                        v-for="(url, index) in runtimeData.stickerCache"
+                        v-show="url != 'end'"
+                        :key="'stickers-' + index"
+                        loading="lazy"
+                        :src="url"
+                        @click="addImgFace(url)">
+                    <div
+                        v-show="
+                            runtimeData.stickerCache &&
+                                runtimeData.stickerCache.length <= 0
+                        "
+                        class="ss-card">
+                        <font-awesome-icon :icon="['fas', 'face-dizzy']" />
+                        <span>{{ $t('一无所有') }}</span>
+                    </div>
+                </div>
+            </div>
+        </BcTab>
+    </div>
 </template>
 
 <script lang="ts">

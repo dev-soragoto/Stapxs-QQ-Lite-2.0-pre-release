@@ -310,10 +310,6 @@ msgstr ""
 msgid "兼容选项"
 msgstr "相容性設定"
 
-#: src/pages/options/OptDev.vue:35
-msgid "发送心跳包"
-msgstr "傳送心跳封包"
-
 #: src/pages/options/OptDev.vue:36
 msgid "没救了，拖出去吧"
 msgstr "「這個嘛，我想是這樣子啦：他真的沒救了。」"
@@ -407,7 +403,7 @@ msgid "我们使用 Umami 对应用的使用情况进行分析，它将不会上
 msgstr "我們使用 Umami 對應用程式的使用情形進行分析。所有分析資訊均不會包含精確到使用者的資料，並僅限用於使用情形的分析。你可以在這裡控制分析功能及額外分析項目的啟用狀況。"
 
 #: src/pages/options/OptFunction.vue:126
-msgid "访问统计信息" 
+msgid "访问统计信息"
 msgstr ""
 
 #: src/pages/options/OptFunction.vue:112

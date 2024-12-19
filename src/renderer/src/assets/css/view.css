@@ -2,6 +2,7 @@ html,
 body {
     font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif;
     background: var(--color-main);
+    position: relative;
     user-select: none;
     overflow: hidden;
     height: 100%;
@@ -98,8 +99,6 @@ textarea:focus {
 
 #app,
 #base-app {
-    --safe-area-bottom: 0;
-
     overflow: hidden;
     height: 100%;
 }
@@ -130,7 +129,7 @@ textarea:focus {
     height: 100%;
     border: none;
     min-width: 75px;
-    padding: 0;
+    padding: 0 0 calc(var(--safe-area-bottom) + 10px) 0;
     margin: 0;
 }
 .side-bar-space {
@@ -194,6 +193,67 @@ textarea:focus {
     display: flex;
     height: 100%;
     width: 100%;
+}
+
+.quick-login {
+    background: var(--color-card-1);
+    box-shadow: unset !important;
+    padding: 15px;
+}
+.quick-login > div.title {
+    align-items: center;
+    margin-bottom: 15px;
+    display: flex;
+}
+.quick-login > div.title > span {
+    flex: 1;
+    text-align: left;
+    color: var(--color-font-1);
+    margin-left: 10px;
+    font-size: 0.9rem;
+    display: block;
+}
+.quick-login > div.title > a {
+    background: var(--color-main);
+    margin: 0;
+    color: var(--color-font-r);
+    border-radius: 7px;
+    padding: 3px 10px;
+    cursor: pointer;
+}
+.quick-login > div.list {
+    max-height: calc(calc(1rem + 30px) * 2);
+    overflow-y: scroll;
+}
+.quick-login > div.list > div {
+    background: var(--color-card-2);
+    margin-top: 5px;
+    padding: 10px 15px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+}
+.quick-login > div.list > div > span {
+    flex: 1;
+    text-align: left;
+    color: var(--color-font-1);
+}
+.quick-login > div.list > div > div {
+    width: 1rem;
+    height: 1rem;
+    background: var(--color-card-1);
+    border-radius: 100%;
+    margin-top: 0.2rem;
+}
+.quick-login > div.list > div > div > div {
+    background: var(--color-card-1);
+    width: calc(100% - 0.4rem);
+    height: calc(100% - 0.4rem);
+    border: 0.2rem solid var(--color-card-1);
+    border-radius: 100%;
+}
+.quick-login > div.list > div.select > div > div {
+    background: var(--color-main);
 }
 
 .login-pan-card {
@@ -337,7 +397,7 @@ textarea:focus {
     border-radius: 7px 7px 0 0;
     align-items: center;
     font-size: 1rem;
-    padding: 10px 10px 0 10px;
+    padding: 10px;
     display: flex;
     color: var(--color-font);
 }
@@ -354,7 +414,6 @@ textarea:focus {
     background: var(--color-main);
     color: var(--color-font-r);
     align-items: center;
-    margin-right: 10px;
     border-radius: 7px;
     text-wrap: nowrap;
     padding: 0 20px;
@@ -954,8 +1013,7 @@ textarea:focus {
 }
 
 .hiden-home {
-    margin-top: calc(-100% + 15px) !important;
-    transform: translateY(-100%) !important;
+    display: none !important;
 }
 
 .qq-err-card {
@@ -1083,11 +1141,6 @@ textarea:focus {
         min-width: 100% !important;
         z-index: 20;
     }
-    .hiden-home {
-        margin-top: calc(100% + 5px) !important;
-        transform: translateY(0) !important;
-        margin-left: -70px;
-    }
     .main-body > ul > li {
         margin-top: 0;
         margin-bottom: 0 !important;
@@ -1143,6 +1196,10 @@ textarea:focus {
     }
     .friend-list.open > div:first-child > div.small > label {
         display: flex !important;
+    }
+
+    .friend-list.open > div:first-child > div.small > div:last-child {
+        margin-left: 10px;
     }
     .friend-list > div:first-child > div.small > div > svg {
         color: var(--color-font-r);
@@ -1224,6 +1281,7 @@ textarea:focus {
 @media (max-width: 500px) {
     /* 全局通用弹窗 */
     .pop-box-body {
+        min-width: unset;
         width: calc(100% - 80px);
         transform: unset !important;
         margin: 20px;
@@ -1250,9 +1308,6 @@ textarea:focus {
         padding: 10px !important;
         margin: 10px !important;
     }
-    .friend-list > div:first-child > div.small > div {
-        display: none;
-    }
     .friend-list > div:first-child > div.small > span {
         display: flex !important;
         margin-right: 0;
@@ -1260,6 +1315,9 @@ textarea:focus {
     .friend-list > div:first-child > div.small > div.reload,
     .friend-list > div:first-child > div.small > label {
         display: flex !important;
+    }
+    .friend-list > div:first-child > div.small > div:last-child {
+        margin-left: 10px;
     }
     .friend-list-space {
         overflow: hidden;
