@@ -123,14 +123,13 @@ textarea:focus {
 .main-body > ul {
     cursor: pointer;
     list-style-type: none;
-    padding-bottom: calc(var(--safe-area-bottom) + 10px) !important;
     background: var(--color-card-2);
     flex-direction: column;
     display: flex;
     height: 100%;
     border: none;
     min-width: 75px;
-    padding: 0;
+    padding: 0 0 calc(var(--safe-area-bottom) + 10px) 0;
     margin: 0;
 }
 .side-bar-space {
@@ -1014,8 +1013,7 @@ textarea:focus {
 }
 
 .hiden-home {
-    margin-top: calc(-100% + 15px) !important;
-    transform: translateY(-100%) !important;
+    display: none !important;
 }
 
 .qq-err-card {
@@ -1142,11 +1140,6 @@ textarea:focus {
         flex-direction: row;
         min-width: 100% !important;
         z-index: 20;
-    }
-    .hiden-home {
-        margin-top: calc(100% + 5px) !important;
-        transform: translateY(0) !important;
-        margin-left: -70px;
     }
     .main-body > ul > li {
         margin-top: 0;

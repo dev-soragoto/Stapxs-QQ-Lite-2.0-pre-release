@@ -8,24 +8,16 @@ html {
 .tab-bar>li svg {
     font-size: 1.2rem !important;
 }
+.tab-bar>span {
+    display: none;
+}
 
 #app {
-    background: var(--color-card-1);
+    background: var(--color-card);
 }
 .main-body > ul {
     background: rgba(var(--color-card-rgb), 0.7);
     backdrop-filter: blur(35px);
-}
-
-.main-body > div {
-    margin-top: var(--safe-area-top);
-    height: calc(100% - 75px - var(--safe-area-top) - var(--safe-area-bottom));
-}
-
-.opt-main-tab,
-.main-body > div > div[name="主页"] {
-    height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom)) !important;
-    margin-top: calc(1px - var(--safe-area-top) - var(--safe-area-bottom)) !important;
 }
 
 .login-pan-card {
@@ -39,80 +31,74 @@ html {
     display: none;
 }
 
-/* 联系人列表 */
-.friend-list .small {
-    display: none !important;
-}
-.friend-list .base {
-    display: flex !important;
-}
-.friend-list .base > span {
-    font-size: 1.5rem;
-}
-.friend-list .base > svg {
-    height: 1.3rem !important;
-}
-.friend-list > div:first-child label {
-    height: calc(1rem + 25px);
-    margin-top: 10px;
+/* 一级侧栏 */
+.main-body > ul {
+    justify-content: space-evenly;
+    padding-bottom: var(--safe-area-bottom);
+    position: absolute;
+    z-index: 20;
     display: flex;
+    flex-direction: row;
+    width: 365px;
+    height: 75px;
+    left: 0;
+    bottom: 0;
 }
-.friend-list > div:first-child label > input {
-    font-size: 1rem;
+.side-bar-space {
+    display: none;
 }
-.friend-body > div:nth-child(1) {
-    transform: scaleY(0) !important;
-    height: unset !important;
-    width: 6px !important;
-    border-radius: 6px !important;
-    position: unset !important;
+.friend-list {
+    background: var(--color-card);
+    width: 365px;
 }
-.friend-body > div:nth-child(1).new {
-    transform: scaleY(0.5) !important;
+.chat-pan {
+    left: 365px;
 }
-.exp-header:not(.open) {
-    display: flex !important;
+.friend-body img {
+    height: 45px;
+    width: 45px;
+}
+
+.home-body {
+    background: var(--color-card);
+    width: calc(100% - 365px);
+    margin-left: 365px;
+    border-left: 1px solid var(--color-card-2);
 }
 
 /* 聊天面板 */
 .viewer-footer > div {
     margin-top: calc(var(--safe-area--viewer-top) + 15px);
 }
-
 .chat-pan > div.info > svg {
     display: none;
-}
-
-.main-body > ul {
-    justify-content: space-evenly;
 }
 .main-body > ul > li > span {
     display: block !important;
 }
-.hiden-home {
-    margin-left: -140px;
-}
 .main-body > ul > li:first-child {
-    margin-top: 0;
+    margin-top: 20px;
 }
 .main-body > ul > li.active > span,
 .main-body > ul > li.active > svg {
     background-color: transparent;
     color: var(--color-main);
 }
-
 .chat-pan {
     z-index: 21;
-    box-shadow: 0 0 5px var(--color-shader);
     height: calc(100% + 35px - var(--safe-area-bottom));
+    border-left: 1px solid var(--color-card-2);
 }
 .chat-pan > div.info {
     margin: 0 0 15px 0;
     width: calc(100% - 50px);
     padding: 15px 25px;
     padding-top: calc(var(--safe-area-top) + 15px);
-    background: rgba(var(--color-card-1-rgb), 0.7);
+    background: rgba(var(--color-card-rgb), 0.7);
     backdrop-filter: blur(35px);
+    box-shadow: unset;
+    border-bottom: 1px solid var(--color-card-2);
+    border-radius: 0;
 }
 .merge-pan {
     box-shadow: 0 0 5px var(--color-shader);
@@ -142,11 +128,15 @@ html {
 .chat-pan > div.chat > div:first-child > div:last-child {
     padding-bottom: 70px;
 }
+.chat-pan > div.more {
+    padding-bottom: var(--safe-area-bottom);
+    border-top: 1px solid var(--color-card-2);
+}
 .chat-pan > div.more > div:first-child {
     background: var(--color-card-1);
 }
 .chat-pan > div.more > div:nth-child(2) {
-    background: rgba(var(--color-card-1-rgb), 0.7);
+    background: rgba(var(--color-card-rgb), 0.7);
     backdrop-filter: blur(35px);
 }
 .chat-pan > div.more > div:nth-child(2) > div:first-child {
@@ -161,7 +151,6 @@ html {
 .chat-pan > div.more > div:nth-child(2) > div:nth-child(2) > div {
     display: none;
 }
-
 .msg-menu-body {
     max-width: 35%;
     width: 35%;
@@ -169,25 +158,6 @@ html {
 .chat-pan > div.new-msg {
     margin: -50px 20px 20px auto;
 }
-
-.chat-info > header {
-    margin-top: calc(var(--safe-area-top));
-    flex-direction: row-reverse;
-    overflow: hidden;
-    transform: translateX(20px);
-}
-.chat-info>header>span {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-.chat-info>header>svg {
-    width: 2.2rem;
-    height: 2.2rem;
-    transform: translateX(calc(-50% + 0.5px));
-    margin-right: -10px;
-}
-
 .more-detail {
     background: var(--color-card-1);
 }
@@ -207,7 +177,6 @@ html {
 .base-face, .face-stickers {
     height: 300px;
 }
-
 .img-sender {
     height: calc(100% - var(--safe-area-top) - calc(var(--safe-area-bottom) + 15px));
     margin: calc(var(--safe-area-top) + 15px) 20px 0 20px;
@@ -217,7 +186,6 @@ html {
     box-shadow: 0 0 5px var(--color-shader) !important;
     border-radius: 7px !important;
 }
-
 /* 消息 */
 .message-body > div {
     border-radius: 20px;
@@ -226,17 +194,15 @@ html {
 }
 .msg-img {
     border-radius: 20px;
-    max-height: 20vh;
+    max-height: 40vh;
 }
 .msg-img.alone {
     max-width: calc(100% + 30px);
     margin: -10px -15px;
 }
-
 /* 设置面板 */
 .opt-tab {
     height: calc(100% - 145px);
-    margin-top: 30px;
 }
 .opt-tab > div:first-child {
     box-shadow: unset !important;
@@ -276,4 +242,102 @@ html {
 .opt-tab .tab-body {
     margin-top: -60px;
     padding-top: 70px;
+}
+.opt-tab .tab-body > div {
+    padding: 0 10%;
+}
+.friend-list-space {
+    border-left: 1px solid var(--color-card-2);
+    background: var(--color-card);
+}
+
+.opt-main {
+    padding-top: 0;
+}
+.opt-main>div:first-child {
+    padding-top: var(--safe-area-top);
+}
+
+@media (max-width: 600px) {
+    .main-body > div {
+        height: calc(100% - 75px - var(--safe-area-top) - var(--safe-area-bottom));
+        padding-bottom: calc(75px + var(--safe-area-bottom));
+        margin-top: var(--safe-area-top);
+    }
+
+    .opt-main-tab,
+    .main-body > div > div[name="主页"] {
+        margin-top: calc(1px - var(--safe-area-bottom))!important;
+        height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom)) !important;
+    }
+
+    .chat-pan {
+        box-shadow: 0 0 5px var(--color-shader);
+    }
+
+    /* 联系人列表 */
+    .friend-list .small {
+        display: none !important;
+    }
+    .friend-list .base {
+        display: flex !important;
+    }
+    .friend-list .base > span {
+        font-size: 1.5rem;
+    }
+    .friend-list .base > svg {
+        height: 1.3rem !important;
+    }
+    .friend-list > div:first-child label {
+        height: calc(1rem + 25px);
+        margin-top: 10px;
+        display: flex;
+    }
+    .friend-list > div:first-child label > input {
+        font-size: 1rem;
+    }
+    .friend-body > div:nth-child(1) {
+        transform: scaleY(0) !important;
+        height: unset !important;
+        width: 6px !important;
+        border-radius: 6px !important;
+        position: unset !important;
+    }
+    .friend-body > div:nth-child(1).new {
+        transform: scaleY(0.5) !important;
+    }
+    .exp-header:not(.open) {
+        display: flex !important;
+    }
+
+    .chat-info > header {
+        margin-top: calc(var(--safe-area-top));
+        flex-direction: row-reverse;
+        overflow: hidden;
+        transform: translateX(20px);
+    }
+    .chat-info>header>span {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .chat-info>header>svg {
+        width: 2.2rem;
+        height: 2.2rem;
+        transform: translateX(calc(-50% + 0.5px));
+        margin-right: -10px;
+    }
+
+    .msg-img {
+        max-height: 20vh;
+    }
+
+    .home-body {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .opt-tab .tab-body > div {
+        padding: 0;
+    }
 }
