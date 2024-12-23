@@ -76,8 +76,9 @@ html {
 .main-body > ul > li > span {
     display: block !important;
 }
-.main-body > ul > li:first-child {
-    margin-top: 20px;
+.main-body > ul > li {
+    margin-top: 20px !important;
+    margin-bottom: 0 !important;
 }
 .main-body > ul > li.active > span,
 .main-body > ul > li.active > svg {
@@ -130,7 +131,6 @@ html {
 }
 .chat-pan > div.more {
     padding-bottom: var(--safe-area-bottom);
-    border-top: 1px solid var(--color-card-2);
 }
 .chat-pan > div.more > div:first-child {
     background: var(--color-card-1);
@@ -141,12 +141,20 @@ html {
 }
 .chat-pan > div.more > div:nth-child(2) > div:first-child {
     border-radius: 999px;
+    height: 40px;
+    width: 40px;
+}
+.chat-pan > div.more > div:nth-child(2) > div:first-child > svg {
+    margin: 8px 13px;
+    height: 25px;
+    width: 15px;
 }
 .chat-pan > div.more > div:nth-child(2) > div:nth-child(2) {
     background: transparent;
     border: 1px solid var(--color-font-2);
     opacity: 0.7;
     border-radius: 999px;
+    height: 40px;
 }
 .chat-pan > div.more > div:nth-child(2) > div:nth-child(2) > div {
     display: none;
@@ -187,13 +195,7 @@ html {
     border-radius: 7px !important;
 }
 /* 消息 */
-.message-body > div {
-    border-radius: 20px;
-    padding: 7px 15px;
-    margin-top: 10px;
-}
 .msg-img {
-    border-radius: 20px;
     max-height: 40vh;
 }
 .msg-img.alone {
@@ -258,6 +260,15 @@ html {
     padding-top: var(--safe-area-top);
 }
 
+.chat-pan > div.more > div:nth-child(2) > div > form > input,
+.chat-pan > div.more > div:nth-child(2) > div > form > textarea {
+    font-weight: normal;
+}
+
+.friend-list > div:first-child {
+    padding-top: var(--safe-area-top);
+}
+
 @media (max-width: 600px) {
     .main-body > div {
         height: calc(100% - 75px - var(--safe-area-top) - var(--safe-area-bottom));
@@ -287,6 +298,9 @@ html {
     }
     .friend-list .base > svg {
         height: 1.3rem !important;
+    }
+    .friend-list > div:first-child {
+        padding-top: 0;
     }
     .friend-list > div:first-child label {
         height: calc(1rem + 25px);
