@@ -344,7 +344,7 @@ function loadOptData(data: { [key: string]: any }) {
             try {
                 options[key] = JSON.parse(options[key])
             } catch (e: unknown) {
-                //
+                // ignore
             }
         } else {
             options[key] = value
@@ -395,15 +395,18 @@ export function get(name: string): any {
 }
 
 /**
- * 从 cookie 中获取原始设置项值
+ * 获取原始设置项值
  * @param name 设置项名称
  * @returns 设置项值（如果没有则为 null）
+ * @description <strong>注意：</strong>
+ * 此方法获取原始设置项值，不会对值进行 T/F 转换、JSON 解析、URL 解码等操作；
+ * 在 Web 端和 Capacitor 端使用时由于存储在 WebStorage 中，需要特别注意预防上述未转换导致的错误。
  */
 export function getRaw(name: string) {
     if (runtimeData.plantform.reader) {
         return runtimeData.plantform.reader.sendSync('opt:get', name)
     } else {
-        // 解析拆分 cookie 并执行各个设置项的初始化方法
+        // 解析拆分并执行各个设置项的初始化方法
         const str = localStorage.getItem('options')
         if (str != null) {
             const list = str.split('&')

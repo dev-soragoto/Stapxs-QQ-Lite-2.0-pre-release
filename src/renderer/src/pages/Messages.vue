@@ -182,7 +182,8 @@
              * @param data 联系人对象
              */
             userClick(data: UserFriendElem & UserGroupElem) {
-                if (!this.trRead) {
+                const id = data.user_id ? data.user_id : data.group_id
+                if (!this.trRead && id != this.chat.show.id) {
                     if (this.runtimeData.tags.openSideBar) {
                         this.openLeftBar()
                     }
@@ -191,7 +192,7 @@
                         // 临时会话标志
                         temp: data.group_name == '' ? data.group_id : undefined,
                         type: data.user_id ? 'user' : 'group',
-                        id: data.user_id ? data.user_id : data.group_id,
+                        id: id,
                         name: data.group_name? data.group_name: data.remark === data.nickname? data.nickname: data.remark + '（' + data.nickname + '）',
                         avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
                               data.user_id: 'https://p.qlogo.cn/gh/' +
@@ -210,11 +211,11 @@
                         if (
                             runtimeData.sysConfig.chatview_name != '' &&
                             runtimeData.sysConfig.chatview_name !=
-                                getOpt('chatview_name')
+                                decodeURIComponent(getOpt('chatview_name') ?? '')
                         ) {
                             runtimeData.sysConfig.chatview_name =
-                                getOpt('chatview_name')
-                            runOpt('chatview_name', getOpt('chatview_name'))
+                                decodeURIComponent(getOpt('chatview_name') ?? '')
+                            runOpt('chatview_name', decodeURIComponent(getOpt('chatview_name') ?? ''))
                         }
                     }
                     // 清除新消息标记

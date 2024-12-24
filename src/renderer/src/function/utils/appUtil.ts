@@ -448,6 +448,10 @@ export function createIpc() {
     }
 }
 
+
+import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
+import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
+// import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
 export async function loadAppendStyle() {
     const platform = runtimeData.tags.platform
     logger.info('正在装载补充样式……')
@@ -461,12 +465,53 @@ export async function loadAppendStyle() {
             })
     }
 
-    // 移动平台附加样式
+    // 添加手机端样式
+    const updateCss = (appendCss = '') => {
+        const cssStype = document.getElementById('mobile-css')
+
+        const width = window.innerWidth
+        const height = window.innerHeight
+        if(width > 600 && cssStype) {
+            cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss +verticalCss)) + appendCss
+        }
+
+        if(runtimeData.tags.isElectron) {
+            runtimeData.plantform.reader?.send('win:maximize')
+            const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
+            if(topBar) {
+                topBar.style.display = 'none'
+            }
+        }
+    }
     if(runtimeData.tags.isCapacitor) {
-        import('@renderer/assets/css/append/append_mobile.css').then(() => {
-            logger.info('移动平台附加样式加载完成')
+        const styleTag = document.createElement('style')
+        styleTag.id = 'mobile-css'
+        document.head.appendChild(styleTag)
+        updateCss()
+        // 屏幕旋转事件处理
+        window.addEventListener('resize', () => {
+            updateCss()
         })
     }
+    // if((runtimeData.tags.isElectron && runtimeData.tags.platform == 'win32')) {
+    //     runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
+    //         if(isTabletMode) {
+    //             const styleTag = document.createElement('style')
+    //             styleTag.id = 'mobile-css'
+    //             document.head.appendChild(styleTag)
+    //             updateCss(windowsCss)
+    //         }
+    //     })
+    //     // 屏幕旋转事件处理
+    //     window.addEventListener('resize', () => {
+    //         runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
+    //             if(isTabletMode) {
+    //                 updateCss(windowsCss)
+    //             }
+    //         })
+    //     })
+    // }
+
     // UI 2.0 附加样式
     if (runtimeData.tags.isElectron) {
         import('@renderer/assets/css/append/append_new.css').then(() => {

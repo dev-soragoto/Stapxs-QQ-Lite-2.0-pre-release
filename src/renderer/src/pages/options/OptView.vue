@@ -123,28 +123,6 @@
                 </template>
             </template>
             <template
-                v-if="runtimeData.tags.isElectron && browser.os == 'Linux'">
-                <div class="opt-item">
-                    <font-awesome-icon :icon="['fas', 'window-restore']" />
-                    <div>
-                        <span>{{ $t('自动跟随 GTK 主题') }}</span>
-                        <span>{{
-                            $t('（实验性）自动从 GTK 配置获取主题配色')
-                        }}</span>
-                    </div>
-                    <label class="ss-switch">
-                        <input
-                            v-model="runtimeData.sysConfig.opt_auto_gtk"
-                            type="checkbox"
-                            name="opt_auto_gtk"
-                            @change="save">
-                        <div>
-                            <div />
-                        </div>
-                    </label>
-                </div>
-            </template>
-            <template
                 v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
                 <div class="opt-item">
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
@@ -171,7 +149,7 @@
                     <span>{{ $t('一些好玩的主题！') }}</span>
                 </div>
                 <select
-                    v-model="chatview_name"
+                    v-model="runtimeData.sysConfig.chatview_name"
                     name="chatview_name"
                     title="chatview_name"
                     @change="save($event);gaChatView($event)">
@@ -346,8 +324,7 @@
                 ],
                 browser: detect() as BrowserInfo,
                 initialScaleShow: 0.5,
-                fsAdaptationShow: 0,
-                chatview_name: '',
+                fsAdaptationShow: 0
             }
         },
         mounted() {
@@ -362,12 +339,6 @@
                         runtimeData.sysConfig.fs_adaptation,
                     )
                     watch()
-                },
-            )
-            this.$watch(
-                () => runtimeData.sysConfig.chatview_name,
-                () => {
-                    this.chatview_name = runtimeData.sysConfig.chatview_name
                 },
             )
         },
