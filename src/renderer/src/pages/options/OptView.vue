@@ -357,11 +357,11 @@
             // 获取当前使用的图标
             const Onebot = window.Capacitor?.Plugins?.Onebot
             if (Onebot) {
-                Onebot.getUsedIcon()
                 Onebot.addListener('onebot:icon', (data: any) => {
                     debugger
                     this.usedIcon = data.name.replace('AppIcon', '')
                 })
+                Onebot.getUsedIcon()
             }
         },
         methods: {
@@ -477,7 +477,7 @@
                         if(!runtimeData.tags.darkMode && !name.endsWith('Dark')) {
                             iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
                         } else if(runtimeData.tags.darkMode && name.endsWith('Dark')) {
-                            iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
+                            iconListInfo.push({ name: name.replace('Dark', ''), icon: (iconList[key] as any).default })
                         }
                     }
                 })

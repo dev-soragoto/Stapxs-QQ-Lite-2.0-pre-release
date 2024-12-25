@@ -21,6 +21,12 @@ public class OnebotPlugin extends Plugin {
         this.notifyListeners("onebot:event", ret);
     }
 
+    public void sendIcon(String name) {
+        JSObject ret = new JSObject();
+        ret.put("name", name);
+        this.notifyListeners("onebot:icon", ret);
+    }
+
     @Override
     public void load() {
         super.load();
@@ -40,7 +46,7 @@ public class OnebotPlugin extends Plugin {
 
         JSObject ret = new JSObject();
         webSocketClient = implementation.connect(this, webSocketClient, value);
-        ret.put("value", true);
+        ret.put("success", true);
         call.resolve(ret);
     }
 
@@ -49,21 +55,37 @@ public class OnebotPlugin extends Plugin {
         String value = call.getString("data");
 
         JSObject ret = new JSObject();
-        ret.put("value", implementation.send(webSocketClient, value));
+        ret.put("success", implementation.send(webSocketClient, value));
         call.resolve(ret);
     }
 
     @PluginMethod
     public void close(PluginCall call) {
         JSObject ret = new JSObject();
-        ret.put("value", implementation.close(webSocketClient));
+        ret.put("success", implementation.close(webSocketClient));
         call.resolve(ret);
     }
 
     @PluginMethod
     public void findService(PluginCall call) {
         JSObject ret = new JSObject();
-        ret.put("value", implementation.findService(this));
+        ret.put("success", implementation.findService(this));
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void changeIcon(PluginCall call) {
+        String name = call.getString("name");
+
+        JSObject ret = new JSObject();
+        ret.put("success", implementation.changeIcon(this, name));
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void getUsedIcon(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("success", implementation.getUsedIcon(this));
         call.resolve(ret);
     }
 }
