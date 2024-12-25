@@ -13,6 +13,8 @@ body:
               - Stapxs QQ Lite（All）
               - Stapxs QQ Lite（Web）
               - Stapxs QQ Lite（Electron）
+              - Stapxs QQ Lite (Android)
+              - Stapxs QQ Lite (iOS/iPadOS)
               - 其他
     - type: textarea
       attributes:
