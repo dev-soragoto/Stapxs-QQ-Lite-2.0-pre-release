@@ -43,6 +43,18 @@
             </div>
         </div>
         <div class="ss-card">
+            <header>{{ $t('图标') }}</header>
+            <div v-if="runtimeData.tags.isCapacitor" class="icon-list">
+                <div v-for="item in getIconList()"
+                    :key="item.name"
+                    :class="item.name === usedIcon ? 'selected' : ''"
+                    @click="changeIcon(item.name)">
+                    <img :src="item.icon">
+                    <span>{{ $t(item.name != '' ? item.name : '默认') }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="ss-card">
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
                 <div
@@ -324,7 +336,8 @@
                 ],
                 browser: detect() as BrowserInfo,
                 initialScaleShow: 0.5,
-                fsAdaptationShow: 0
+                fsAdaptationShow: 0,
+                usedIcon: ''
             }
         },
         mounted() {
@@ -341,6 +354,15 @@
                     watch()
                 },
             )
+            // 获取当前使用的图标
+            const Onebot = window.Capacitor?.Plugins?.Onebot
+            if (Onebot) {
+                Onebot.getUsedIcon()
+                Onebot.addListener('onebot:icon', (data: any) => {
+                    debugger
+                    this.usedIcon = data.name.replace('AppIcon', '')
+                })
+            }
         },
         methods: {
             gaLanguage(event: Event) {
@@ -444,6 +466,30 @@
                     }
                 })
                 return chatViewList
+            },
+
+            getIconList() {
+                const iconList = import.meta.glob('@renderer/assets/img/icons/*.png', { eager: true })
+                const iconListInfo = [] as { name: string, icon: any }[]
+                Object.keys(iconList).forEach((key: string) => {
+                    const name = key.split('/').pop()?.split('.')[0].replace('AppIcon', '')
+                    if(name || name === '') {
+                        if(!runtimeData.tags.darkMode && !name.endsWith('Dark')) {
+                            iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
+                        } else if(runtimeData.tags.darkMode && name.endsWith('Dark')) {
+                            iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
+                        }
+                    }
+                })
+                return iconListInfo
+            },
+
+            changeIcon(name: string) {
+                const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
+                if(Onebot) {
+                    Onebot.changeIcon({ name: name != '' ? (name + 'AppIcon') : name })
+                    this.usedIcon = name
+                }
             },
         },
     })

@@ -268,3 +268,27 @@ html {
 .friend-list > div:first-child {
     padding-top: var(--safe-area-top);
 }
+
+.icon-list {
+    display: flex;
+}
+.icon-list > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+}
+.icon-list > div.selected > img {
+    border: 3px solid var(--color-main);
+}
+.icon-list img {
+    width: 55px;
+    transition: border .3s;
+    border: 3px solid var(--color-card-2);
+    border-radius: 15px;
+}
+.icon-list span {
+    font-size: 0.85rem;
+    color: var(--color-font-1);
+    margin-top: 5px;
+}

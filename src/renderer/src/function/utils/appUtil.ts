@@ -471,8 +471,11 @@ export async function loadAppendStyle() {
 
         const width = window.innerWidth
         const height = window.innerHeight
-        if(width > 600 && cssStype) {
-            cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss +verticalCss)) + appendCss
+        if(cssStype) {
+            if(width > 600)
+                cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
+            else
+                cssStype.innerHTML = horizontalCss + verticalCss + appendCss
         }
 
         if(runtimeData.tags.isElectron) {

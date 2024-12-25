@@ -15,7 +15,9 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "close", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "send", returnType: CAPPluginReturnPromise),
 
-        CAPPluginMethod(name: "findService", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "findService", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "changeIcon", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Onebot()
     private let logger = Logger()
@@ -42,27 +44,41 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func connect(_ call: CAPPluginCall) {
         let url = call.getString("url") ?? ""
         call.resolve([
-            "value": implementation.connect(url)
+            "success": implementation.connect(url)
         ])
     }
 
     @objc func close(_ call: CAPPluginCall) {
         call.resolve([
-            "value": implementation.close()
+            "success": implementation.close()
         ])
     }
 
     @objc func send(_ call: CAPPluginCall) {
         let data = call.getString("data") ?? ""
         call.resolve([
-            "value": implementation.send(data)
+            "success": implementation.send(data)
         ])
     }
 
     @objc func findService(_ call: CAPPluginCall) {
         call.resolve([
-            "value": implementation.findService()
+            "success": implementation.findService()
         ])
     }
 
+    @objc func changeIcon(_ call: CAPPluginCall) {
+        let name = call.getString("name") ?? ""
+        call.resolve([
+            "success": implementation.changeIcon(name)
+        ])
+    }
+
+    @objc func getUsedIcon(_ call: CAPPluginCall) {
+        call.resolve([
+            "success": implementation.getUsedIcon({ name in
+                self.notifyListeners("onebot:icon", data: [ "name": name ])
+            })
+        ])
+    }
 }
