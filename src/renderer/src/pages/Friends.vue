@@ -303,8 +303,7 @@
                             const id = item.user_id? item.user_id: item.group_id
                             return (
                                 id.toString() === value ||
-                                (value.length > 4 &&
-                                    py.indexOf(value.toLowerCase()) != -1) ||
+                                py.indexOf(value.toLowerCase()) != -1 ||
                                 name.indexOf(value.toLowerCase()) != -1
                             )
                         },

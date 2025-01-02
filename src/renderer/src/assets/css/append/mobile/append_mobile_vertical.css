@@ -6,8 +6,8 @@
 
 .opt-main-tab,
 .main-body > div > div[name="主页"] {
-    margin-top: calc(1px - var(--safe-area-bottom))!important;
-    height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom)) !important;
+    margin-top: calc(1px - var(--safe-area-top)) !important;
+    height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom) - 20px) !important;
 }
 
 .chat-pan {

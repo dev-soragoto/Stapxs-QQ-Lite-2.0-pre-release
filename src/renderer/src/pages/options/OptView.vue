@@ -42,9 +42,9 @@
                 </select>
             </div>
         </div>
-        <div class="ss-card">
+        <div v-if="runtimeData.tags.isCapacitor" class="ss-card">
             <header>{{ $t('图标') }}</header>
-            <div v-if="runtimeData.tags.isCapacitor" class="icon-list">
+            <div class="icon-list">
                 <div v-for="item in getIconList()"
                     :key="item.name"
                     :class="item.name === usedIcon ? 'selected' : ''"
