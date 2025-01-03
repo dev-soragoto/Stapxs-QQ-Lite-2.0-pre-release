@@ -472,10 +472,11 @@ export async function loadAppendStyle() {
         const width = window.innerWidth
         const height = window.innerHeight
         if(cssStype) {
-            if(width > 600)
+            if(width > 600) {
                 cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
-            else
+            } else {
                 cssStype.innerHTML = horizontalCss + verticalCss + appendCss
+            }
         }
 
         if(runtimeData.tags.isElectron) {
@@ -676,11 +677,9 @@ export async function loadMobile() {
                 if(safeArea && tabBar) {
                     tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
                 }
-            } else {
+            } else if (tabBar) {
                 // 调整菜单高度
-                if(tabBar) {
-                    tabBar.style.setProperty('padding-bottom', '10px', 'important')
-                }
+                tabBar.style.setProperty('padding-bottom', '10px', 'important')
             }
 
             // 调整整个 HTML 的高度

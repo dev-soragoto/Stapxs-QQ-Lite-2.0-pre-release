@@ -358,7 +358,6 @@
             const Onebot = window.Capacitor?.Plugins?.Onebot
             if (Onebot) {
                 Onebot.addListener('onebot:icon', (data: any) => {
-                    debugger
                     this.usedIcon = data.name.replace('AppIcon', '')
                 })
                 Onebot.getUsedIcon()
