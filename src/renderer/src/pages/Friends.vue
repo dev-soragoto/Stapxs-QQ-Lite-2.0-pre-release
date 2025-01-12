@@ -180,15 +180,15 @@
                 </div>
             </div>
         </div>
-        <div
-            v-show="!loginInfo.status || runtimeData.chatInfo.show.id == 0"
-            :class="
-                'friend-list-space' +
-                    (runtimeData.tags.openSideBar ? ' open' : '')
-            ">
-            <div class="ss-card">
+        <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
+            <div v-if="!loginInfo.status || runtimeData.chatInfo.show.id == 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
+            </div>
+            <div v-else class="ss-card">
+                <font-awesome-icon :icon="['fas', 'angles-right']" />
+                <span>(っ≧ω≦)っ</span>
+                <span>{{ $t('别划了别划了被看见了啦') }}</span>
             </div>
         </div>
     </div>
@@ -303,8 +303,7 @@
                             const id = item.user_id? item.user_id: item.group_id
                             return (
                                 id.toString() === value ||
-                                (value.length > 4 &&
-                                    py.indexOf(value.toLowerCase()) != -1) ||
+                                py.indexOf(value.toLowerCase()) != -1 ||
                                 name.indexOf(value.toLowerCase()) != -1
                             )
                         },

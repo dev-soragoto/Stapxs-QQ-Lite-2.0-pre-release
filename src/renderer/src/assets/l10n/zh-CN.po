@@ -315,7 +315,7 @@ msgid "没救了，拖出去吧"
 msgstr ""
 
 #: src/pages/options/OptDev.vue:30
-msgid "这儿是兼容性相关的高级选项，包括 bot 附加功能、热插拔组件等。"
+msgid "这儿是兼容性相关的高级选项，这些选项通常会自动识别，如果出现了不正确的情况你也可以手动调整。"
 msgstr ""
 
 #: src/pages/options/OptDev.vue:87

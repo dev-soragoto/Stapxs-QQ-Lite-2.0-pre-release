@@ -112,15 +112,15 @@
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
-        <div
-            v-show="!loginInfo.status || runtimeData.chatInfo.show.id == 0"
-            :class="
-                'friend-list-space' +
-                    (runtimeData.tags.openSideBar ? ' open' : '')
-            ">
-            <div class="ss-card">
+        <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
+            <div v-if="!loginInfo.status || runtimeData.chatInfo.show.id == 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
+            </div>
+            <div v-else class="ss-card">
+                <font-awesome-icon :icon="['fas', 'angles-right']" />
+                <span>(っ≧ω≦)っ</span>
+                <span>{{ $t('别划了别划了被看见了啦') }}</span>
             </div>
         </div>
     </div>
@@ -182,7 +182,8 @@
              * @param data 联系人对象
              */
             userClick(data: UserFriendElem & UserGroupElem) {
-                if (!this.trRead) {
+                const id = data.user_id ? data.user_id : data.group_id
+                if (!this.trRead && id != this.chat.show.id) {
                     if (this.runtimeData.tags.openSideBar) {
                         this.openLeftBar()
                     }
@@ -191,7 +192,7 @@
                         // 临时会话标志
                         temp: data.group_name == '' ? data.group_id : undefined,
                         type: data.user_id ? 'user' : 'group',
-                        id: data.user_id ? data.user_id : data.group_id,
+                        id: id,
                         name: data.group_name? data.group_name: data.remark === data.nickname? data.nickname: data.remark + '（' + data.nickname + '）',
                         avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
                               data.user_id: 'https://p.qlogo.cn/gh/' +
@@ -210,11 +211,11 @@
                         if (
                             runtimeData.sysConfig.chatview_name != '' &&
                             runtimeData.sysConfig.chatview_name !=
-                                getOpt('chatview_name')
+                                decodeURIComponent(getOpt('chatview_name') ?? '')
                         ) {
                             runtimeData.sysConfig.chatview_name =
-                                getOpt('chatview_name')
-                            runOpt('chatview_name', getOpt('chatview_name'))
+                                decodeURIComponent(getOpt('chatview_name') ?? '')
+                            runOpt('chatview_name', decodeURIComponent(getOpt('chatview_name') ?? ''))
                         }
                     }
                     // 清除新消息标记

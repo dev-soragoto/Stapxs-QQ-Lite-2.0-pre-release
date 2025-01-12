@@ -42,6 +42,18 @@
                 </select>
             </div>
         </div>
+        <div v-if="runtimeData.tags.isCapacitor" class="ss-card">
+            <header>{{ $t('图标') }}</header>
+            <div class="icon-list">
+                <div v-for="item in getIconList()"
+                    :key="item.name"
+                    :class="item.name === usedIcon ? 'selected' : ''"
+                    @click="changeIcon(item.name)">
+                    <img :src="item.icon">
+                    <span>{{ $t(item.name != '' ? item.name : '默认') }}</span>
+                </div>
+            </div>
+        </div>
         <div class="ss-card">
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
@@ -123,28 +135,6 @@
                 </template>
             </template>
             <template
-                v-if="runtimeData.tags.isElectron && browser.os == 'Linux'">
-                <div class="opt-item">
-                    <font-awesome-icon :icon="['fas', 'window-restore']" />
-                    <div>
-                        <span>{{ $t('自动跟随 GTK 主题') }}</span>
-                        <span>{{
-                            $t('（实验性）自动从 GTK 配置获取主题配色')
-                        }}</span>
-                    </div>
-                    <label class="ss-switch">
-                        <input
-                            v-model="runtimeData.sysConfig.opt_auto_gtk"
-                            type="checkbox"
-                            name="opt_auto_gtk"
-                            @change="save">
-                        <div>
-                            <div />
-                        </div>
-                    </label>
-                </div>
-            </template>
-            <template
                 v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
                 <div class="opt-item">
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
@@ -171,7 +161,7 @@
                     <span>{{ $t('一些好玩的主题！') }}</span>
                 </div>
                 <select
-                    v-model="chatview_name"
+                    v-model="runtimeData.sysConfig.chatview_name"
                     name="chatview_name"
                     title="chatview_name"
                     @change="save($event);gaChatView($event)">
@@ -347,7 +337,7 @@
                 browser: detect() as BrowserInfo,
                 initialScaleShow: 0.5,
                 fsAdaptationShow: 0,
-                chatview_name: '',
+                usedIcon: ''
             }
         },
         mounted() {
@@ -364,12 +354,14 @@
                     watch()
                 },
             )
-            this.$watch(
-                () => runtimeData.sysConfig.chatview_name,
-                () => {
-                    this.chatview_name = runtimeData.sysConfig.chatview_name
-                },
-            )
+            // 获取当前使用的图标
+            const Onebot = window.Capacitor?.Plugins?.Onebot
+            if (Onebot) {
+                Onebot.addListener('onebot:icon', (data: any) => {
+                    this.usedIcon = data.name.replace('AppIcon', '')
+                })
+                Onebot.getUsedIcon()
+            }
         },
         methods: {
             gaLanguage(event: Event) {
@@ -473,6 +465,30 @@
                     }
                 })
                 return chatViewList
+            },
+
+            getIconList() {
+                const iconList = import.meta.glob('@renderer/assets/img/icons/*.png', { eager: true })
+                const iconListInfo = [] as { name: string, icon: any }[]
+                Object.keys(iconList).forEach((key: string) => {
+                    const name = key.split('/').pop()?.split('.')[0].replace('AppIcon', '')
+                    if(name || name === '') {
+                        if(!runtimeData.tags.darkMode && !name.endsWith('Dark')) {
+                            iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
+                        } else if(runtimeData.tags.darkMode && name.endsWith('Dark')) {
+                            iconListInfo.push({ name: name.replace('Dark', ''), icon: (iconList[key] as any).default })
+                        }
+                    }
+                })
+                return iconListInfo
+            },
+
+            changeIcon(name: string) {
+                const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
+                if(Onebot) {
+                    Onebot.changeIcon({ name: name != '' ? (name + 'AppIcon') : name })
+                    this.usedIcon = name
+                }
             },
         },
     })

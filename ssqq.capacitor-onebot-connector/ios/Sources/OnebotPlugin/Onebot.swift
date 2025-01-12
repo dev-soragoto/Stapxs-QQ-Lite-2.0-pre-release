@@ -7,6 +7,7 @@ import os
 
     // 需要返回 type 和 data 两个字段
     var onEvent: ((String, String) -> Void)?
+    var onOptionEvent: ((String, String) -> Void)?
 
     private var client: WebSocketClient?
 
@@ -47,6 +48,26 @@ import os
             })
                 await lanScanner.scanCurrentLAN()
             }
+        }
+    }
+
+    @objc public func changeIcon(_ name: String) {
+        DispatchQueue.main.async {
+            let logger = Logger()
+            logger.debug("更新图标名：\(name)")
+            if UIApplication.shared.supportsAlternateIcons {
+                UIApplication.shared.setAlternateIconName(name.isEmpty ? nil : name) { error in
+                    if let error = error {
+                        logger.error("更新图标失败：\(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+    }
+
+    @objc public func getUsedIcon(_ send: @escaping ((String) -> Void)) {
+        DispatchQueue.main.async {
+            send(UIApplication.shared.alternateIconName ?? "")
         }
     }
 }

@@ -288,8 +288,8 @@ body {
 .contributors-card > div > div {
     min-width: 25px;
     min-height: 25px;
-    margin-top: 0;
-    margin-bottom: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 .contributors-card {
     width: calc(100% - 20px);

@@ -1067,7 +1067,7 @@
                     this.loadMoreHistory()
                 }
                 // 底部
-                if (body.scrollTop + body.clientHeight >= body.scrollHeight) {
+                if ((body.scrollTop + body.clientHeight + 10) >= body.scrollHeight) {
                     this.NewMsgNum = 0
                     this.tags.showBottomButton = false
                     // 去除阴影

@@ -157,6 +157,8 @@
 .contributors-card > div {
     flex-wrap: wrap;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 .contributors-card > div > div {
     background-size: 100%;

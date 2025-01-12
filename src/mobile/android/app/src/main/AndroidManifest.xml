@@ -20,6 +20,34 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_capacitor"
+            android:name=".MainActivityCapacitor"
+            android:roundIcon="@mipmap/ic_launcher_capacitor_round"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_napcat"
+            android:name=".MainActivityNapcat"
+            android:roundIcon="@mipmap/ic_launcher_napcat_round"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"

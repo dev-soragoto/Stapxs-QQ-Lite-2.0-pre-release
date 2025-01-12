@@ -448,6 +448,10 @@ export function createIpc() {
     }
 }
 
+
+import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
+import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
+// import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
 export async function loadAppendStyle() {
     const platform = runtimeData.tags.platform
     logger.info('正在装载补充样式……')
@@ -461,12 +465,57 @@ export async function loadAppendStyle() {
             })
     }
 
-    // 移动平台附加样式
+    // 添加手机端样式
+    const updateCss = (appendCss = '') => {
+        const cssStype = document.getElementById('mobile-css')
+
+        const width = window.innerWidth
+        const height = window.innerHeight
+        if(cssStype) {
+            if(width > 600) {
+                cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
+            } else {
+                cssStype.innerHTML = horizontalCss + verticalCss + appendCss
+            }
+        }
+
+        if(runtimeData.tags.isElectron) {
+            runtimeData.plantform.reader?.send('win:maximize')
+            const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
+            if(topBar) {
+                topBar.style.display = 'none'
+            }
+        }
+    }
     if(runtimeData.tags.isCapacitor) {
-        import('@renderer/assets/css/append/append_mobile.css').then(() => {
-            logger.info('移动平台附加样式加载完成')
+        const styleTag = document.createElement('style')
+        styleTag.id = 'mobile-css'
+        document.head.appendChild(styleTag)
+        updateCss()
+        // 屏幕旋转事件处理
+        window.addEventListener('resize', () => {
+            updateCss()
         })
     }
+    // if((runtimeData.tags.isElectron && runtimeData.tags.platform == 'win32')) {
+    //     runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
+    //         if(isTabletMode) {
+    //             const styleTag = document.createElement('style')
+    //             styleTag.id = 'mobile-css'
+    //             document.head.appendChild(styleTag)
+    //             updateCss(windowsCss)
+    //         }
+    //     })
+    //     // 屏幕旋转事件处理
+    //     window.addEventListener('resize', () => {
+    //         runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
+    //             if(isTabletMode) {
+    //                 updateCss(windowsCss)
+    //             }
+    //         })
+    //     })
+    // }
+
     // UI 2.0 附加样式
     if (runtimeData.tags.isElectron) {
         import('@renderer/assets/css/append/append_new.css').then(() => {
@@ -605,14 +654,34 @@ export async function loadMobile() {
         Keyboard.addListener('keyboardWillShow', async (info: KeyboardInfo) => {
             const keyboardHeight = info.keyboardHeight
 
-            const mainBody = document.getElementsByClassName('main-body')[0] as HTMLElement
-            if(mainBody) {
-                // 调整下菜单高度
-                const tabBar = document.getElementsByTagName('ul')[0]
-                if(tabBar) {
-                    tabBar.style.setProperty('padding-bottom', '10px', 'important')
-                }
+            // 调整输入框高度
+            const sendMore = document.getElementById('send-more')
+            if(sendMore && keyboardHeight > window.innerHeight / 3) {
+                sendMore.style.paddingBottom = '10px'
             }
+
+            const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+            const tabBar = document.getElementsByTagName('ul')[0]
+            // 如果键盘高度低于高度的 1/3 且说 iOS 设备
+            // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
+            //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
+            if(runtimeData.tags.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
+                // 修改 ResizeMode
+                Keyboard.setResizeMode({ mode: 'none' })
+                // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
+                const baseApp = document.getElementById('base-app')
+                if (safeArea && baseApp) {
+                    baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 10) + 'px')
+                }
+                // 调整菜单高度
+                if(safeArea && tabBar) {
+                    tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
+                }
+            } else if (tabBar) {
+                // 调整菜单高度
+                tabBar.style.setProperty('padding-bottom', '10px', 'important')
+            }
+
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
             const html = document.getElementsByTagName('html')[0]
@@ -621,10 +690,21 @@ export async function loadMobile() {
                 html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
             }
         })
-        Keyboard.addListener('keyboardWillHide', () => {
+        Keyboard.addListener('keyboardWillHide', async () => {
+            Keyboard.setResizeMode({ mode: 'native' })
+            const baseApp = document.getElementById('base-app')
+            const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+            if (safeArea && baseApp) {
+                baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+            }
+
             const tabBar = document.getElementsByTagName('ul')[0]
             if(tabBar) {
                 tabBar.style.paddingBottom = ''
+            }
+            const sendMore = document.getElementById('send-more')
+            if(sendMore) {
+                sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
             }
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
@@ -703,7 +783,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         message: msg,
         updated: isUpdated,
     }
-    const buttonGoUpdate = runtimeData.tags.isElectron? [
+    const buttonGoUpdate = (runtimeData.tags.isElectron || runtimeData.tags.isCapacitor) ? [
               {
                   text: $t('知道了'),
                   fun: () => runtimeData.popBoxList.shift(),

@@ -411,6 +411,10 @@ export function sendMsgRaw(
     msg: string | any[] | undefined,
     preShow = false,
 ) {
+    // 如果消息为空则不发送
+    if(msg == undefined || msg == '' || (Array.isArray(msg) && msg.length == 0)) {
+        return
+    }
     // 将消息构建为完整消息体先显示出去
     const msgUUID = uuid()
     if (preShow) {

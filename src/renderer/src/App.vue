@@ -212,6 +212,7 @@
                 <img v-for="info in scope.images" :key="'imgView-' + info.index" :src="info.img_url">
             </template>
         </viewer>
+        <div id="mobile-css" />
     </div>
 </template>
 
@@ -226,13 +227,13 @@ import { Connector, login as loginInfo } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
+import { Notify } from './function/notify'
 import * as App from './function/utils/appUtil'
 
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
-import { Notify } from './function/notify'
 
 export default defineComponent({
     name: 'App',
@@ -240,7 +241,7 @@ export default defineComponent({
         Options,
         Friends,
         Messages,
-        Chat,
+        Chat
     },
     data() {
         return {

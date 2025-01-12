@@ -1209,7 +1209,7 @@ function saveUser(msg: { [key: string]: any }, type: string) {
                     pinyin.convertToPinyin(item.remark)
             }
             if (list && list[index]) {
-                list[index].py_name = py_name
+                list[index].py_name = py_name.toLowerCase()
                 list[index].py_start = py_name.substring(0, 1).toUpperCase()
             }
             // 构建分类
