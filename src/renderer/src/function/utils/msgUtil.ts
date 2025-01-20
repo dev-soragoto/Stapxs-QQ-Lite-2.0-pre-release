@@ -429,7 +429,7 @@ export function sendMsgRaw(
                 user_id: runtimeData.loginInfo.uin,
                 nickname: runtimeData.loginInfo.nickname,
             },
-            message: JSON.parse(JSON.stringify(msg)),
+            message: msg,
             raw_message: app.config.globalProperties.$t('发送中'),
         } as { [key: string]: any }
         if (showMsg.message_type == 'group') {

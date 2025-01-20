@@ -80,9 +80,19 @@ const mimeTypes = {
 }
 // 创建服务
 const server = http.createServer((req, res) => {
-    let filePath = `./dist${req.url}`
+    let filePath = path.normalize(`./dist${req.url}`)
     if (req.url === '/') {
         filePath = './dist/index.html'
+    }
+
+    // 检查路径是否在 dist 文件夹中
+    const resolvedPath = path.resolve(filePath)
+    const distDir = path.resolve('./dist')
+    if (!resolvedPath.startsWith(distDir)) {
+        res.statusCode = 403
+        res.setHeader('Content-Type', 'text/plain')
+        res.end('Forbidden')
+        return
     }
 
     const ext = path.extname(filePath)

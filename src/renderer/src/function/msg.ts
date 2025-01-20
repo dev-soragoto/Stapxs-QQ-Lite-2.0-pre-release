@@ -631,8 +631,12 @@ const msgFunctons = {
      * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
     getMoreUserInfo: (_: string, msg: { [key: string]: any }) => {
-        runtimeData.chatInfo.info.user_info =
-            msg.data.data.result.buddy.info_list[0]
+        // runtimeData.chatInfo.info.user_info =
+        //     msg.data.data.result.buddy.info_list[0]
+        const data = getMsgData('friend_info', msg, msgPath.friend_info)[0]
+        if(data) {
+            runtimeData.chatInfo.info.user_info = data
+        }
     },
 
     /**
