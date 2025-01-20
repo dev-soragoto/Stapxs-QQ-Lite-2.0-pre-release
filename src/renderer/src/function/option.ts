@@ -57,6 +57,24 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_auto_win_color: updateWinColorOpt,
     opt_revolve: viewRevolve,
     opt_always_top: viewAlwaysTop,
+    opt_fast_animation: updateFarstAnimation,
+}
+
+function updateFarstAnimation(value: boolean) {
+    if(value) {
+        // 创建 <style> 元素
+        const style = document.createElement('style')
+        style.textContent = `* {
+            transition: .1s !important;
+        }`
+        style.id = 'disable-transitions'
+        document.head.appendChild(style)
+    } else {
+        const style = document.getElementById('disable-transitions')
+        if(style) {
+            document.head.removeChild(style)
+        }
+    }
 }
 
 function viewAlwaysTop(value: boolean) {

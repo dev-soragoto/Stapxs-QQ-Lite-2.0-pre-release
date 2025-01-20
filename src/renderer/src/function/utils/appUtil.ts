@@ -1024,7 +1024,7 @@ export function loadJsonMap(name: string) {
 
 // UM：统计事件统一上传方法
 export function sendStatEvent(event: string, data: any) {
-    if (!option.get('close_ga') && import.meta.env.DEV) {
+    if (!option.get('close_ga') && !import.meta.env.DEV) {
         Umami.trackEvent(event, data)
     }
 }

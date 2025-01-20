@@ -396,11 +396,11 @@ export default defineComponent({
             // =============================================================
             // 初始化完成
             // UM：加载 Umami 统计功能
-            if (!Option.get('close_ga') && this.dev) {
+            if (!Option.get('close_ga') && !this.dev) {
                 // 给页面添加一个来源域名方便在 electron 中获取
                 const config = {
-                    baseUrl: import.meta.env.VITE_UMAMI_URL,
-                    websiteId: import.meta.env.VITE_UMAMI_ID,
+                    baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
+                    websiteId: import.meta.env.VITE_APP_MU_ID,
                 } as any
                 if (runtimeData.tags.isElectron) {
                     config.hostName = 'electron.stapxs.cn'
@@ -476,7 +476,7 @@ export default defineComponent({
             // UM：发送页面路由分析
             if (
                 !Option.get('close_ga') &&
-                this.dev
+                !this.dev
             ) {
                 Umami.trackPageView('/' + view)
             }

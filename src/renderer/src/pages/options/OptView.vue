@@ -155,28 +155,6 @@
                 </div>
             </template>
             <div class="opt-item">
-                <font-awesome-icon :icon="['fas', 'table-columns']" />
-                <div>
-                    <span>{{ $t('消息页面主题') }}</span>
-                    <span>{{ $t('一些好玩的主题！') }}</span>
-                </div>
-                <select
-                    v-model="runtimeData.sysConfig.chatview_name"
-                    name="chatview_name"
-                    title="chatview_name"
-                    @change="save($event);gaChatView($event)">
-                    <option value="">
-                        {{ $t('默认') }}
-                    </option>
-                    <option
-                        v-for="item in getAppendChatView()"
-                        :key="item"
-                        :value="item">
-                        {{ item.replace('Chat', '') }}
-                    </option>
-                </select>
-            </div>
-            <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'image']" />
                 <div>
                     <span>{{ $t('背景图片') }}</span>
@@ -214,6 +192,45 @@
         </div>
         <div class="ss-card">
             <header>{{ $t('页面') }}</header>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'table-columns']" />
+                <div>
+                    <span>{{ $t('消息页面主题') }}</span>
+                    <span>{{ $t('一些好玩的主题！') }}</span>
+                </div>
+                <select
+                    v-model="runtimeData.sysConfig.chatview_name"
+                    name="chatview_name"
+                    title="chatview_name"
+                    @change="save($event);gaChatView($event)">
+                    <option value="">
+                        {{ $t('默认') }}
+                    </option>
+                    <option
+                        v-for="item in getAppendChatView()"
+                        :key="item"
+                        :value="item">
+                        {{ item.replace('Chat', '') }}
+                    </option>
+                </select>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'car-side']" />
+                <div>
+                    <span>{{ $t('更快的动画速度') }}</span>
+                    <span>{{ $t('咻咻！此选项将使动画加速到 100ms 并去除部分浪费时间的组动画') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input
+                        v-model="runtimeData.sysConfig.opt_fast_animation"
+                        type="checkbox"
+                        name="opt_fast_animation"
+                        @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
             <div
                 v-if="isMobile() && !runtimeData.tags.isCapacitor"
                 class="opt-item">

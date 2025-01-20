@@ -92,7 +92,7 @@
                 v-if="tags.nowGetHistroy && list.length > 0"
                 :data="{ sub_type: 'time', time: list[0].time }" />
             <TransitionGroup
-                name="msglist"
+                :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
                 tag="div">
                 <template v-for="(msgIndex, index) in list">
                     <!-- 时间戳 -->
@@ -144,7 +144,7 @@
             style="scroll-behavior: smooth">
             <!-- 搜索消息结果显示 -->
             <TransitionGroup
-                name="msglist"
+                :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
                 tag="div">
                 <template v-for="(msgIndex, index) in tags.search.list">
                     <!-- 时间戳 -->
