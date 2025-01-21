@@ -62,7 +62,7 @@ export const linkView = {
             logger.info(`[linkView] 获取到 bilibili 链接：${bvid}`)
             try {
                 const response = await axios.get(previewAPI + bvid)
-                const data = response.data
+                const { data } = response
                 if (data.code === 0) {
                     logger.info(`[linkView] 预览 bilibili 链接成功：${data.data.title}`)
                     return {
@@ -85,9 +85,20 @@ export const linkView = {
         return null
     },
 
-    async getFinalRedirectUrl(initialUrl) {
+    async getFinalRedirectUrl(initialUrl: string) {
         try {
-            const response = await axios.get(initialUrl, { maxRedirects: 10 })
+            const url = new URL(initialUrl);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                return null;
+            }
+            if (initialUrl.length > 2000) {
+                return null;
+            }
+            const MAX_REDIRECTS = 10;
+            const response = await axios.get(url.toString(), {
+                maxRedirects: MAX_REDIRECTS,
+                validateStatus: (status) => status < 400
+            })
             return response.request.res.responseUrl
         } catch (error) {
             return null

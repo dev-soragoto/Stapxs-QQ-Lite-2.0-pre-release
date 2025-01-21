@@ -565,7 +565,7 @@ function setQuickLogin(address: string, port: number) {
 }
 
 export async function loadMobile() {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     // Capacitor：相关初始化
     if(runtimeData.tags.isCapacitor) {
         const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
@@ -758,7 +758,7 @@ function showUpadteLog(data: any) {
 }
 
 function showReleaseLog(data: any, isUpdated: boolean) {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     let msg = data.body
     // 处理 title，取开头到下一个 “\r\n” 之间的内容
     const title = msg.split('\r\n')[0].substring(1)
@@ -827,7 +827,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
 }
 
 export function checkOpenTimes() {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     const times = localStorage.getItem('times')
     if (times != null) {
         const getTimes = Number(times) + 1

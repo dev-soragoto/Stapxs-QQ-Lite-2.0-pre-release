@@ -683,17 +683,8 @@
                     if (res.type == undefined) {
                         if(Object.keys(res).length > 0) {
                             let imgUrl = res['og:image']
-                            // 如果这个 url 不完整，比如说是 / 开头、不是 http 开头并且也不是 www 开头
-                            if (
-                                imgUrl !== undefined &&
-                                !imgUrl.startsWith('http') &&
-                                !imgUrl.startsWith('www')
-                            ) {
-                                if (imgUrl.startsWith('/')) {
-                                    imgUrl = domain + imgUrl
-                                } else {
-                                    imgUrl = domain + '/' + imgUrl
-                                }
+                            if (imgUrl && !imgUrl.startsWith('http') && !imgUrl.startsWith('www')) {
+                                imgUrl = new URL(imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl, domain).toString()
                             }
                             const pageData = {
                                 site:

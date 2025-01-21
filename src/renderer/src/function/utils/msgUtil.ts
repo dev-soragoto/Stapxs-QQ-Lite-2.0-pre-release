@@ -237,7 +237,7 @@ export function parseMsgList(
  * @returns 字符串
  */
 export function getMsgRawTxt(data: any): string {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
 
     const message = data.message as [{ [key: string]: any }]
     const fromId = data.group_id ?? data.user_id

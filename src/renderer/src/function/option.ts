@@ -533,7 +533,7 @@ export function runASWEvent(event: Event) {
     }
     // 有些设置项需要重启/刷新
     if (sender.dataset.reload == 'true') {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
         const html =
             '<span>' +
             $t('此操作将在重启应用后生效，现在就要重启吗？') +

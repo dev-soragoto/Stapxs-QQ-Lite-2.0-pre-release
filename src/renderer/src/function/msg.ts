@@ -243,7 +243,7 @@ const noticeFunctions = {
      * 群戳一戳
      */
     notify: (_: string, msg: { [key: string]: any }) => {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
 
         const groupId = msg.group_id
         const userIds = [msg.user_id, msg.target_id]
@@ -1471,7 +1471,7 @@ function revokeMsg(_: string, msg: any) {
 
 let qed_try_times = 0
 function newMsg(_: string, data: any) {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     // 没有对频道的支持计划
     if (data.detail_type == 'guild') {
         return
@@ -1721,24 +1721,14 @@ function newMsg(_: string, data: any) {
                     })
                     if (getList.length === 1) {
                         const showUser = getList[0]
-                        showUser.message_id = data.message_id
-                        if (data.message_type === 'group') {
-                            const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
-                            showUser.raw_msg = name + ': ' + getMsgRawTxt(data)
-                        } else {
-                            showUser.raw_msg = getMsgRawTxt(data)
-                        }
-                        showUser.time = getViewTime(Number(data.time))
+                        const formatted = formatMessageData(data, data.message_type === 'group')
+                        Object.assign(showUser, formatted)
+
+                        if(data.atme) showUser.highlight = $t('[有人@你]')
+                        if(data.atall) showUser.highlight = $t('[@全體]')
+                        if(isImportant) showUser.highlight = $t('[特別關心]')
+
                         runtimeData.onMsgList.push(showUser)
-                        if(data.atme) {
-                            showUser.highlight = $t('[有人@你]')
-                        }
-                        if(data.atall) {
-                            showUser.highlight = $t('[@全体]')
-                        }
-                        if(isImportant) {
-                            showUser.highlight = $t('[特别关心]')
-                        }
                     }
                 }
             }
@@ -1756,14 +1746,11 @@ function newMsg(_: string, data: any) {
             const getList = runtimeData.userList.filter((item) => {
                 return item.group_id === id
             })
-            if (getList.length === 1) {
+            if(getList.length === 1) {
                 const showGroup = getList[0]
                 if(!showGroup.always_top) {
-                    showGroup.message_id = data.message_id
-                    const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
-                    showGroup.raw_msg = name + ': ' + getMsgRawTxt(data)
-                    showGroup.raw_msg_base = getMsgRawTxt(data)
-                    showGroup.time = getViewTime(Number(data.time))
+                    const formatted = formatMessageData(data, true)
+                    Object.assign(showGroup, formatted)
                     runtimeData.groupAssistList.push(showGroup)
                 }
             }
@@ -1792,6 +1779,17 @@ function updateSysInfo(
 }
 
 // ==============================================================
+
+function formatMessageData(data: any, isGroup: boolean) {
+    const name = data.sender.card && data.sender.card !== '' ? data.sender.card: data.sender.nickname
+
+    return {
+      message_id: data.message_id,
+      raw_msg: isGroup ? `${name}: ${getMsgRawTxt(data)}` : getMsgRawTxt(data),
+      time: getViewTime(Number(data.time)),
+      raw_msg_base: getMsgRawTxt(data)
+    }
+  }
 
 const baseRuntime = {
     plantform: {} as any,
