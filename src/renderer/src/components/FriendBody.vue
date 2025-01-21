@@ -16,6 +16,9 @@
         <font-awesome-icon
             v-if="data.user_id == -10000"
             :icon="['fas', 'bell']" />
+        <font-awesome-icon
+            v-else-if="data.user_id == -10001"
+            :icon="['fas', 'user-group']" />
         <img
             v-else
             loading="lazy"
@@ -33,9 +36,7 @@
             <div>
                 <p>{{ getShowName() }}</p>
                 <div style="flex: 1" />
-                <a
-                    v-if="from == 'message'"
-                    class="time">{{
+                <a class="time">{{
                     data.time !== undefined
                         ? Intl.DateTimeFormat(trueLang, {
                             hour: 'numeric',
@@ -45,6 +46,9 @@
                 }}</a>
             </div>
             <div>
+                <a v-if="data.highlight" class="highlight">
+                    {{ data.highlight }}
+                </a>
                 <a :class="from == 'friend' ? 'nick' : ''">{{
                     from == 'friend' ? (data.longNick ?? '') : data.raw_msg
                 }}</a>

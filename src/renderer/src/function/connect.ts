@@ -34,7 +34,7 @@ export class Connector {
         token?: string,
         wss: boolean | undefined = undefined,
     ) {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
 
         // Electron 默认使用后端连接模式
         if (runtimeData.tags.isElectron) {
@@ -143,7 +143,7 @@ export class Connector {
         address: string,
         token: string | undefined,
     ) {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
 
         websocket = undefined
         updateMenu({

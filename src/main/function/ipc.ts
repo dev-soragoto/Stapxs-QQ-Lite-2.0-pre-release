@@ -2,6 +2,7 @@ import Store from 'electron-store'
 import path from 'path'
 import os from 'os'
 import log4js from 'log4js'
+import axios from 'axios'
 
 import {
     ipcMain,
@@ -12,7 +13,7 @@ import {
     MenuItemConstructorOptions,
     Notification as ELNotification,
 } from 'electron'
-import { runCommand } from './util.ts'
+import { linkView, runCommand } from './util.ts'
 import { win, touchBarInstance } from '../index.ts'
 import { Connector } from './connector.ts'
 import { logLevel } from '../index.ts'
@@ -40,6 +41,39 @@ export function regIpcListener() {
     })
     ipcMain.handle('sys:getRelease', () => {
         return os.release()
+    })
+    // 本地链接预览
+    ipcMain.handle('sys:previewLink', async (_, link: string) => {
+        const linkList = {
+            bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
+        }
+
+        // 判断是不是特殊解析的链接
+        for (const key in linkList) {
+            if (linkList[key].some((item: string) => link.includes(item))) {
+                return await linkView[key](link)
+            }
+        }
+        // 通用解析，注意排除非 html 的请求防止下载大文件
+        const res = await axios.get(link, {
+            headers: { Accept: 'text/html' }
+        })
+        const contentType = res.headers['content-type']
+        if(contentType && contentType.includes('text/html')) {
+            // 获取 html
+            let html = res.data
+            const headEnd = html.indexOf('</head>')
+            html = html.slice(0, headEnd)
+            // 获取所有的 og meta 标签
+            const ogRegex = /<meta\s+property="og:([^"]+)"\s+content="([^"]+)"\s*\/?>/g
+            const ogTags = {} as {[key: string]: string}
+            let match: string[] | null
+            while ((match = ogRegex.exec(html)) !== null) {
+                ogTags[`og:${match[1]}`] = match[2]
+            }
+            return ogTags
+        }
+        return null
     })
     // 代理请求 HTTP
     // ipcMain.on('sys:requestHttp', (event, args) => {

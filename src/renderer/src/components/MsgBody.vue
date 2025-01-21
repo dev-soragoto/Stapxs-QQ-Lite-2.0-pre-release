@@ -306,28 +306,59 @@
                 </template>
                 <!-- 链接预览框 -->
                 <div
-                    v-if="
-                        pageViewInfo !== undefined &&
-                            Object.keys(pageViewInfo).length > 0
-                    "
+                    v-if="pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"
                     :class="'msg-link-view ' + linkViewStyle">
-                    <div :class="'bar' + (isMe ? ' me' : '')" />
-                    <div>
-                        <img
-                            v-if="pageViewInfo.img !== undefined"
-                            :id="data.message_id + '-linkview-img'"
-                            alt="预览图片"
-                            title="查看图片"
-                            :src="pageViewInfo.img"
-                            @load="linkViewPicFin">
-                        <div class="body">
-                            <p>{{ pageViewInfo.site }}</p>
-                            <span :href="pageViewInfo.url">{{
-                                pageViewInfo.title
-                            }}</span>
-                            <span>{{ pageViewInfo.desc }}</span>
+                    <template v-if="pageViewInfo.type == undefined">
+                        <div :class="'bar' + (isMe ? ' me' : '')" />
+                        <div>
+                            <img
+                                v-if="pageViewInfo.img !== undefined"
+                                :id="data.message_id + '-linkview-img'"
+                                alt="预览图片"
+                                title="查看图片"
+                                :src="pageViewInfo.img"
+                                @load="linkViewPicFin"
+                                @error="linkViewPicErr">
+                            <div class="body">
+                                <p v-show="pageViewInfo.site">
+                                    {{ pageViewInfo.site }}
+                                </p>
+                                <span :href="pageViewInfo.url">{{
+                                    pageViewInfo.title
+                                }}</span>
+                                <span>{{ pageViewInfo.desc }}</span>
+                            </div>
                         </div>
-                    </div>
+                    </template>
+                    <template v-else>
+                        <!-- 特殊 URL 的预览 -->
+                        <div v-if="pageViewInfo.type == 'bilibili'" class="link-view-bilibili">
+                            <div class="user">
+                                <img :src="pageViewInfo.data.owner.face">
+                                <span>{{ pageViewInfo.data.owner.name }}</span>
+                                <a>{{ Intl.DateTimeFormat(trueLang, {
+                                    year: 'numeric',
+                                    month: 'numeric',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric'
+                                }).format(pageViewInfo.data.public * 1000) }}</a>
+                            </div>
+                            <img :src="pageViewInfo.data.pic">
+                            <span>{{ pageViewInfo.data.title }}</span>
+                            <a>{{ pageViewInfo.data.desc }}</a>
+                            <div class="data">
+                                <font-awesome-icon :icon="['fas', 'play']" />
+                                {{ pageViewInfo.data.stat.view }}
+                                <font-awesome-icon :icon="['fas', 'coins']" />
+                                {{ pageViewInfo.data.stat.coin }}
+                                <font-awesome-icon :icon="['fas', 'star']" />
+                                {{ pageViewInfo.data.stat.favorite }}
+                                <font-awesome-icon :icon="['fas', 'thumbs-up']" />
+                                {{ pageViewInfo.data.stat.like }}
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -364,7 +395,7 @@
     import { defineComponent } from 'vue'
     import { Connector } from '@renderer/function/connect'
     import { runtimeData } from '@renderer/function/msg'
-    import { Logger, PopInfo, PopType } from '@renderer/function/base'
+    import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
     import { StringifyOptions } from 'querystring'
     import { getFace, getMsgRawTxt } from '@renderer/function/utils/msgUtil'
     import {
@@ -372,7 +403,7 @@
         downloadFile,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
-    import { getSizeFromBytes } from '@renderer/function/utils/systemUtil'
+    import { getSizeFromBytes, getTrueLang } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -392,6 +423,7 @@
                 gotLink: false,
                 getVideo: false,
                 senderInfo: null as any,
+                trueLang: getTrueLang(),
             }
         },
         mounted() {
@@ -609,70 +641,67 @@
                 if (linkList !== null && !this.gotLink) {
                     this.gotLink = true
                     const fistLink = linkList[0]
-                    // 获取链接预览
-                    fetch(
-                        import.meta.env.VITE_APP_LINK_VIEW +
-                            encodeURIComponent(fistLink),
-                    )
-                        .then((res) => res.json())
-                        .then((res) => {
-                            if (
-                                res.status === undefined &&
-                                Object.keys(res).length > 0
-                            ) {
-                                logger.debug(
-                                    '获取链接预览成功: ' + res['og:title'],
-                                )
-                                const pageData = {
-                                    site:
-                                        res['og:site_name'] === undefined? '': res['og:site_name'],
-                                    title:
-                                        res['og:title'] === undefined? '': res['og:title'],
-                                    desc:
-                                        res['og:description'] === undefined? '': res['og:description'],
-                                    img: res['og:image'],
-                                    link: res['og:url'],
+                    let protocol = ''
+                    let domain = ''
+                    try {
+                        protocol = new URL(fistLink).protocol + '//'
+                        domain = new URL(fistLink).hostname
+                    } catch (ignore) {
+                        // ignore
+                    }
+                    sendStatEvent('link_view', { domain: domain })
+                    if (runtimeData.tags.isElectron) {
+                        runtimeData.plantform.reader?.invoke('sys:previewLink', fistLink)
+                            .then((res) => {
+                                logger.add(LogType.DEBUG, 'Electron Link View: ', res)
+                                this.loadLinkPreview(protocol + domain, res)
+                            })
+                    } else {
+                        // 获取链接预览
+                        fetch(import.meta.env.VITE_APP_LINK_VIEW + encodeURIComponent(fistLink))
+                            .then((res) => res.json())
+                            .then((res) => {
+                                if (res.status === undefined && Object.keys(res).length > 0) {
+                                    this.loadLinkPreview(protocol + domain, res)
                                 }
-                                this.pageViewInfo = pageData
-                            }
-                            const reg1 = /\/\/(.*?)\//g
-                            const getDom = fistLink.match(reg1)
-                            if (getDom !== null) {
-                                sendStatEvent('link_view', {
-                                    domain: RegExp.$1,
-                                    statue: true,
-                                })
-                            } else {
-                                sendStatEvent('link_view', {
-                                    domain: '',
-                                    statue: true,
-                                })
-                            }
-                        })
-                        .catch((error) => {
-                            if (error) {
-                                logger.error(
-                                    error as Error,
-                                    '获取链接预览失败: ' + fistLink,
-                                )
-                                const reg1 = /\/\/(.*?)\//g
-                                const getDom = fistLink.match(reg1)
-                                if (getDom !== null) {
-                                    sendStatEvent('link_view', {
-                                        domain: RegExp.$1,
-                                        statue: false,
-                                    })
-                                } else {
-                                    sendStatEvent('link_view', {
-                                        domain: '',
-                                        statue: false,
-                                    })
+                            })
+                            .catch((error) => {
+                                if (error) {
+                                    logger.error(error as Error, '获取链接预览失败: ' + fistLink)
                                 }
-                            }
-                        })
+                            })
+                    }
                 }
                 // 返回
                 return text
+            },
+
+            loadLinkPreview(domain: string, res: any) {
+                const logger = new Logger()
+                logger.debug('获取链接预览成功: ' + res['og:title'])
+                if(res != undefined) {
+                    if (res.type == undefined) {
+                        if(Object.keys(res).length > 0) {
+                            let imgUrl = res['og:image']
+                            if (imgUrl && !imgUrl.startsWith('http') && !imgUrl.startsWith('www')) {
+                                imgUrl = new URL(imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl, domain).toString()
+                            }
+                            const pageData = {
+                                site:
+                                    res['og:site_name'] === undefined ? '' : res['og:site_name'],
+                                title:
+                                    res['og:title'] === undefined ? '' : res['og:title'],
+                                desc:
+                                    res['og:description'] === undefined ? '' : res['og:description'],
+                                img: imgUrl,
+                                link: res['og:url'],
+                            }
+                            this.pageViewInfo = pageData
+                        }
+                    } else {
+                        this.pageViewInfo = res
+                    }
+                }
             },
 
             /**
@@ -689,6 +718,10 @@
                         this.linkViewStyle = 'large'
                     }
                 }
+            },
+            linkViewPicErr() {
+                if(this.pageViewInfo)
+                    this.pageViewInfo.img = undefined
             },
 
             /**
@@ -934,5 +967,56 @@
             flex-direction: row-reverse;
             margin-right: -5px;
         }
+    }
+
+    .link-view-bilibili {
+        flex-direction: column;
+        width: 100%;
+    }
+    .link-view-bilibili > div.user {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .link-view-bilibili > div.user > img {
+        width: 20px;
+        border-radius: 100%;
+        border: 2px solid transparent;
+        outline: 2px solid var(--color-card);
+    }
+    .link-view-bilibili > div.user > span {
+        flex: 1;
+        margin-left: 10px;
+        margin-right: 40px;
+    }
+    .link-view-bilibili > div.user > a {
+        color: var(--color-font-2);
+        font-size: 0.8rem;
+    }
+    .link-view-bilibili > img {
+        margin-bottom: 10px;
+        max-width: 100% !important;
+        width: fit-content;
+    }
+    .link-view-bilibili > span {
+        font-size: 1rem;
+    }
+    .link-view-bilibili > a {
+        color: var(--color-font-2) !important;
+        font-size: 0.9rem;
+        max-height: 4rem;
+        overflow-y: scroll;
+    }
+    .link-view-bilibili > a::-webkit-scrollbar {
+        background: transparent;
+    }
+    .link-view-bilibili > div.data {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        font-size: 0.8rem;
+        margin-top: 10px;
+        justify-content: space-around;
+        opacity: 0.7;
     }
 </style>

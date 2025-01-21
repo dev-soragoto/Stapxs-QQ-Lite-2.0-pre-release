@@ -19,7 +19,7 @@ export class Notify {
      * @param info 通知信息
      */
     public notify(info: NotifyInfo) {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
         const isElectron = runtimeData.tags.isElectron
         const isCapacitor = runtimeData.tags.isCapacitor
         // 判断当前 userId 是否已存在通知

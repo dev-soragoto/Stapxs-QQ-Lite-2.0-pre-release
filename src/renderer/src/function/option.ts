@@ -57,6 +57,24 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_auto_win_color: updateWinColorOpt,
     opt_revolve: viewRevolve,
     opt_always_top: viewAlwaysTop,
+    opt_fast_animation: updateFarstAnimation,
+}
+
+function updateFarstAnimation(value: boolean) {
+    if(value) {
+        // 创建 <style> 元素
+        const style = document.createElement('style')
+        style.textContent = `* {
+            transition: .1s !important;
+        }`
+        style.id = 'disable-transitions'
+        document.head.appendChild(style)
+    } else {
+        const style = document.getElementById('disable-transitions')
+        if(style) {
+            document.head.removeChild(style)
+        }
+    }
 }
 
 function viewAlwaysTop(value: boolean) {
@@ -515,7 +533,7 @@ export function runASWEvent(event: Event) {
     }
     // 有些设置项需要重启/刷新
     if (sender.dataset.reload == 'true') {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
         const html =
             '<span>' +
             $t('此操作将在重启应用后生效，现在就要重启吗？') +

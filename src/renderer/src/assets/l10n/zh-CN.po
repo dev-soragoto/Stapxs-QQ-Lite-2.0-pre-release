@@ -8,1366 +8,984 @@ msgstr ""
 "PO-Revision-Date: 2024-09-19\n"
 "Language-Team: Stapx Steve (stapxs)\n"
 
-#: src/components/AboutPan.vue:22
-#: src/components/WelPan.vue:13
-#: src/function/utils/appUtil.ts:389
-#: src/function/utils/appUtil.ts:391
-#: src/function/utils/appUtil.ts:392
-#: src/function/utils/appUtil.ts:394
-#: src/function/utils/appUtil.ts:397
-#: src/function/utils/appUtil.ts:459
-#: src/pages/options/OptFunction.vue:139
 msgid "Stapxs QQ Lite"
 msgstr ""
 
-#: src/components/WelPan.vue:31
-#: src/pages/options/OptView.vue:16
 # 这是当前语言的作者，请自行修改
 msgid "Stapx Steve"
 msgstr ""
 
-#: src/pages/options/OptView.vue:17
 # 这是当前语言的介绍，请自行发挥
 msgid "你好世界！这是 Stapxs QQ Lite 的默认简体中文。"
 msgstr ""
 
-#: src/pages/options/OptView.vue:15
 # 这是当前语言的名字，请自行修改
 msgid "简体中文"
 msgstr ""
 
-#: src/pages/Friends.vue:23
-#: src/pages/Friends.vue:32
-#: src/pages/Chat.vue:388
-#: src/pages/Info.vue:85
 msgid "搜索 ……"
 msgstr ""
 
-#: src/pages/Info.vue:64
 msgid "地区"
 msgstr ""
 
-#: src/pages/Info.vue:53
 msgid "生日"
 msgstr ""
 
-#: src/pages/Info.vue:59
 msgid "鼠&牛&虎&兔&龙&蛇&马&羊&猴&鸡&狗&猪"
 msgstr ""
 
-#: src/pages/Info.vue:75
-#: src/pages/Info.vue:120
-#: src/pages/Options.vue:12
 msgid "设置"
 msgstr ""
 
-#: src/components/FileBody.vue:22
 msgid "天后"
 msgstr ""
 
-#: src/pages/Info.vue:108
-#: src/pages/Chat.vue:183
-#: src/function/utils/msgUtil.ts:232
 msgid "文件"
 msgstr ""
 
-#: src/components/FileBody.vue:24
 msgid "共 {num} 个文件"
 msgstr ""
 
-#: src/pages/Info.vue:12
 msgid "群资料"
 msgstr ""
 
-#: src/pages/Info.vue:26
 msgid "介绍"
 msgstr ""
 
-#: src/pages/Info.vue:45
-#: src/pages/Info.vue:48
 msgid "签名"
 msgstr ""
 
-#: src/pages/Info.vue:82
 msgid "成员"
 msgstr ""
 
-#: src/pages/Info.vue:29
 msgid "群主很懒，还没有群介绍哦～"
 msgstr ""
 
-#: src/pages/Info.vue:50
 msgid "其他信息"
 msgstr ""
 
-#: src/pages/Info.vue:13
 msgid "好友"
 msgstr ""
 
-#: src/components/FacePan.vue:27
 # 这儿的空间比较小，请尽量使用更短的句子（或者是词）
 msgid "一无所有"
 msgstr ""
 
-#: src/pages/Chat.vue:187
-#: src/function/utils/msgUtil.ts:226
 msgid "表情"
 msgstr ""
 
-#: src/components/MsgBody.vue:35
-#: src/pages/Chat.vue:179
-#: src/function/utils/msgUtil.ts:229
 msgid "图片"
 msgstr ""
 
-#: src/pages/Chat.vue:285
 msgid "{time} 加入群聊"
 msgstr ""
 
-#: src/pages/Chat.vue:26
-#: src/pages/chat-view/Chat弹幕.vue:152
 msgid "上次消息 - {time}"
 msgstr ""
 
-#: src/components/NoticeBody.vue:18
-#: src/pages/Info.vue:36
-#: src/pages/Chat.vue:280
 msgid "成员类型_admin"
 msgstr "管理员"
 
-#: src/pages/Chat.vue:280
 msgid "成员类型_owner"
 msgstr "群主"
 
-#: src/pages/Chat.vue:247
 msgid "合并消息"
 msgstr ""
 
-#: src/pages/Chat.vue:324
-#: src/pages/options/OptDev.vue:347
-#: src/pages/options/OptDev.vue:370
-#: src/function/utils/appUtil.ts:403
 msgid "复制"
 msgstr ""
 
-#: src/pages/Chat.vue:328
 msgid "复制选中文本"
 msgstr ""
 
-#: src/pages/Chat.vue:316
 msgid "转发"
 msgstr ""
 
-#: src/pages/Chat.vue:320
 msgid "多选"
 msgstr ""
 
-#: src/pages/Chat.vue:312
 msgid "回复"
 msgstr ""
 
-#: src/pages/Chat.vue:340
 msgid "撤回"
 msgstr ""
 
-#: src/pages/Chat.vue:48
 msgid "没有更多消息了"
 msgstr ""
 
-#: src/pages/Chat.vue:30
-#: src/pages/chat-view/Chat弹幕.vue:157
 msgid "暂无消息"
 msgstr ""
 
-#: src/pages/Chat.vue:128
-#: src/pages/Chat.vue:362
 msgid "发送"
 msgstr ""
 
-#: src/pages/Chat.vue:361
 msgid "发送图片"
 msgstr ""
 
-#: src/pages/Friends.vue:84
-#: src/pages/Messages.vue:61
 msgid "选择联系人开始聊天"
 msgstr ""
 
-#: src/components/MsgBody.vue:86
 msgid "不支持的消息"
 msgstr ""
 
-#: src/components/MsgBody.vue:35
-#: src/components/MsgBody.vue:305
 msgid "预览图片"
 msgstr ""
 
-#: src/components/AboutPan.vue:25
 msgid "一个兼容 OneBot 的非官方网页版 QQ 客户端"
 msgstr ""
 
-#: src/pages/Friends.vue:17
 msgid "联系人"
 msgstr ""
 
-#: src/App.vue:46
 msgid "连接地址"
 msgstr ""
 
-#: src/App.vue:62
 msgid "自动连接"
 msgstr ""
 
-#: src/App.vue:65
 msgid "连接"
 msgstr ""
 
-#: src/App.vue:69
 msgid "如何连接"
 msgstr ""
 
-#: src/App.vue:51
 msgid "连接密钥"
 msgstr ""
 
-#: src/App.vue:57
 msgid "记住密码"
 msgstr ""
 
-#: src/App.vue:42
 msgid "连接到 OneBot"
 msgstr ""
 
-#: src/App.vue:38
 msgid "主页"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:54
 msgid "后端信息"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:61
 msgid "这是你连接的 QQ Bot 的相关信息"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:27
 msgid "账号设置"
 msgstr ""
 
-#: src/pages/Options.vue:13
 msgid "账号"
 msgstr ""
 
-#: src/pages/Options.vue:16
 msgid "高级"
 msgstr ""
 
-#: src/pages/Options.vue:15
 msgid "功能"
 msgstr ""
 
-#: src/pages/Options.vue:14
 msgid "界面"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:111
 msgid "应用消息测试"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:112
 msgid "#$&*#$= ……"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:58
 msgid "消息防撤回"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:59
 msgid "说出去的话就像泼出去的水 ……"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:59
 msgid "说了不做这功能就是不做"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:71
 msgid "禁用图片发送框"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:72
 msgid "你也向往自由吗？"
 msgstr ""
 
-#: src/pages/options/OptView.vue:116
 msgid "消息页面主题"
 msgstr ""
 
-#: src/pages/options/OptView.vue:117
 msgid "一些好玩的主题！"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:28
 msgid "兼容选项"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:36
 msgid "没救了，拖出去吧"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:30
 msgid "这儿是兼容性相关的高级选项，这些选项通常会自动识别，如果出现了不正确的情况你也可以手动调整。"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:87
 msgid "禁用消息渲染"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:88
 msgid "点击进行 CAPTCHA 验证"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:70
 msgid "开发者选项"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:74
 msgid "日志等级"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:81
 msgid "全部"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:79
 msgid "调试"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:78
 msgid "错误"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:80
 msgid "基本"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:75
 msgid "ReferenceError: moYu is not defined"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:29
 msgid "通知所有新消息"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:30
 msgid "让暴风雨来得更猛烈些吧！"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:15
 msgid "禁用通知"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:16
 msgid "好嘛 …… 不烦你 ……"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:99
 msgid "调试"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:103
 msgid "发送原始消息"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:104
 msgid "咻 ——"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:41
 msgid "聊天选项"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:107
 msgid "分析信息"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:132
 msgid "后端类型分析"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:133
 msgid "在连接后上传所使用的 bot 的类型分析"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:123
 msgid "我们使用 Umami 对应用的使用情况进行分析，它将不会上传精确到用户的信息；你也可以在这儿控制分析功能的开关和额外分析项。同时我们的统计信息公开展示在此处以便查阅："
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:126
 msgid "访问统计信息"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:112
 msgid "关闭分析"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:113
 msgid "真的不让看吗（小声"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:11
 msgid "通知选项"
 msgstr ""
 
-#: src/components/AboutPan.vue:29
 msgid "访问 GitHub 仓库"
 msgstr ""
 
-#: src/pages/options/OptView.vue:51
 msgid "自动深色模式"
 msgstr ""
 
-#: src/pages/options/OptView.vue:51
 msgid "Biubiu ——，自动变黑！"
 msgstr ""
 
-#: src/pages/options/OptView.vue:38
 msgid "深色模式"
 msgstr ""
 
-#: src/pages/options/OptView.vue:39
 msgid "是五彩斑斓的黑色！"
 msgstr ""
 
-#: src/pages/options/OptView.vue:11
 msgid "本土化"
 msgstr ""
 
-#: src/pages/options/OptView.vue:23
 msgid "语言（Language）"
 msgstr ""
 
-#: src/pages/options/OptView.vue:24
 msgid "喵喵喵喵？"
 msgstr ""
 
-#: src/pages/options/OptView.vue:33
 msgid "主题与颜色"
 msgstr ""
 
-#: src/pages/options/OptView.vue:66
 msgid "主题色"
 msgstr ""
 
-#: src/pages/options/OptView.vue:67
 msgid "换个心情 🎵 ~"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:119
 msgid "输出运行时"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:120
 msgid "全都吐出来！"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:123
-#: src/pages/options/OptDev.vue:133
-#: src/pages/options/OptDev.vue:157
-#: src/pages/options/OptDev.vue:171
-#: src/pages/options/OptDev.vue:181
-#: src/pages/options/OptDev.vue:191
 msgid "执行"
 msgstr ""
 
-#: src/components/NoticeBody.vue:12
 msgid "撤回了一条消息"
 msgstr ""
 
-#: src/components/BulletinBody.vue:30
 msgid "已读"
 msgstr ""
 
-#: src/components/BulletinBody.vue:30
 msgid "未读"
 msgstr ""
 
-#: src/components/BulletinBody.vue:29
 msgid "{readNum} 人已读 | {isRead}"
 msgstr ""
 
-#: src/components/BulletinBody.vue:12
-#: src/pages/Info.vue:98
 msgid "公告"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:140
 msgid "让我康康 ~"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:110
 msgid "加载历史消息失败（构建消息 ID 失败）"
 msgstr ""
 
-#: src/components/MsgBody.vue:256
 msgid "定位图片失败"
 msgstr ""
 
-#: src/function/connect.ts:85
-#: src/function/connect.ts:155
-#: src/function/connect.ts:161
 msgid "连接失败"
 msgstr ""
 
-#: src/function/model/msg-body.ts:233
 msgid "合并消息层级过多，解析失败。"
 msgstr ""
 
-#: src/function/msg.ts:540
 msgid "加载群文件失败（{code}）"
 msgstr ""
 
-#: src/function/msg.ts:735
-#: src/function/msg.ts:763
 msgid "获取消息失败，正在重试"
 msgstr ""
 
-#: src/function/msg.ts:757
-#: src/function/msg.ts:772
 msgid "获取消息失败"
 msgstr ""
 
-#: src/pages/Chat.vue:613
 msgid "无法定位上下文"
 msgstr ""
 
-#: src/pages/Chat.vue:1065
-#: src/pages/Chat.vue:1080
-#: src/pages/options/OptDev.vue:350
-#: src/pages/options/OptDev.vue:373
 msgid "复制成功"
 msgstr ""
 
-#: src/pages/Chat.vue:1067
-#: src/pages/Chat.vue:1082
 msgid "复制失败"
 msgstr ""
 
-#: src/pages/chat-view/Chat弹幕.vue:285
-#: src/pages/chat-view/Chat终端.vue:363
 msgid "图片过大"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:242
 msgid "你不是人（逃"
 msgstr ""
 
-#: src/registerServiceWorker.ts:14
 msgid "应用已通过 service worker 服务从缓存中加载，更多信息请查看 https://goo.gl/AFskqB。"
 msgstr ""
 
-#: src/registerServiceWorker.ts:17
 msgid "Service worker 服务注册成功。"
 msgstr ""
 
-#: src/registerServiceWorker.ts:21
 msgid "内容已完成缓存便于离线使用。"
 msgstr ""
 
-#: src/registerServiceWorker.ts:24
 msgid "正在下载新的内容 ……"
 msgstr ""
 
-#: src/registerServiceWorker.ts:27
 msgid "新的内容已缓存完成，请刷新以生效。"
 msgstr ""
 
-#: src/registerServiceWorker.ts:33
 msgid "没有有效的网络连接，应用正在以离线模式运行。"
 msgstr ""
 
-#: src/registerServiceWorker.ts:35
 msgid "注册 service worker 时发生错误。"
 msgstr ""
 
-#: src/registerServiceWorker.ts:32
 msgid "没有网络"
 msgstr ""
 
-#: src/components/MsgBody.vue:295
 msgid "加载图片失败"
 msgstr ""
 
-#: src/pages/Chat.vue:116
-#: src/pages/Chat.vue:193
 msgid "精华消息"
 msgstr ""
 
-#: src/pages/Messages.vue:17
-#: src/pages/Messages.vue:22
 msgid "消息"
 msgstr ""
 
-#: src/pages/Chat.vue:130
 msgid "{time}，由 {name} 设置"
 msgstr ""
 
-#: src/components/UpdatePan.vue:3
 msgid "更新记录"
 msgstr ""
 
-#: src/App.vue:408
-#: src/function/utils/appUtil.ts:601
-#: src/function/utils/appUtil.ts:626
-#: src/pages/options/OptFunction.vue:178
 msgid "知道了"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:610
-#: src/function/utils/appUtil.ts:623
 msgid "查看…"
 msgstr ""
 
-#: src/pages/Chat.vue:174
 msgid "没有找到匹配的群成员"
 msgstr ""
 
-#: src/components/WelPan.vue:31
-#: src/pages/options/OptView.vue:16
 msgid "作者："
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:86
 msgid "小尾巴"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:87
 msgid "只会追加在最后一段话后面"
 msgstr ""
 
-#: src/components/MsgBody.vue:80
 msgid "（点击查看合并转发消息）"
 msgstr ""
 
-#: src/components/WelPan.vue:38
-#: src/function/utils/appUtil.ts:649
 msgid "好耶"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:645
 msgid "好耶！Stapxs QQ Lite 已经被打开 {times} 次了！"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:646
 msgid "真的不去点个 star 吗 ……"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:657
 msgid "好喔"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:654
 msgid "不要"
 msgstr ""
 
-#: src/App.vue:404
-#: src/pages/Chat.vue:1119
-#: src/pages/options/OptFunction.vue:174
 msgid "提醒"
 msgstr ""
 
-#: src/App.vue:405
 msgid "连接密钥将以明文存储在浏览器 Cookie 中，请确保设备安全以防止密钥泄漏。"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:31
 msgid "昵称"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:32
 msgid "就只是个名字而已 ……"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:39
 msgid "签名"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:40
 msgid "啊吧啊吧（智慧的眼神）"
 msgstr ""
 
-#: src/pages/Messages.vue:43
 msgid "系统通知"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:129
 msgid "输出调试信息"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:130
 msgid "到底用的什么版本呢 ……"
 msgstr ""
 
-#: src/function/option.ts:511
-#: src/function/utils/appUtil.ts:721
-#: src/pages/Chat.vue:1000
-#: src/pages/Chat.vue:1123
-#: src/pages/options/OptDev.vue:354
-#: src/pages/options/OptDev.vue:377
-#: src/pages/options/OptDev.vue:396
-#: src/pages/options/OptDev.vue:423
-#: src/pages/options/OptInfo.vue:98
 msgid "确定"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:344
 msgid "调试信息"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:721
 msgid "继续"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:163
 msgid "维护与备份"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:167
-#: src/pages/options/OptDev.vue:367
 msgid "导出设置项"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:168
 msgid "tar zcvf config.tar.gz /localStorage"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:177
-#: src/pages/options/OptDev.vue:389
 msgid "导入设置项"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:178
 msgid "tar zxvf cache.tar.gz /localStorage"
 msgstr ""
 
-#: src/function/option.ts:523
-#: src/pages/Chat.vue:996
-#: src/pages/Chat.vue:1137
-#: src/pages/options/OptDev.vue:392
-#: src/pages/options/OptDev.vue:438
-#: src/pages/options/OptInfo.vue:116
 msgid "取消"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:407
 msgid "导入设置项失败"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:187
-#: src/pages/options/OptDev.vue:420
 msgid "重置应用"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:188
 msgid "sudo rm -rf /localStorage"
 msgstr ""
 
-#: src/components/MsgBody.vue:83
 msgid "（查看回复消息）"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:419
 msgid "确认要重置应用吗，重置应用将会失去所有设置内容（包括设置的置顶群组），但是可能可以解决一些因为浏览器缓存导致的奇怪问题。"
 msgstr ""
 
-#: src/components/WelPan.vue:18
 msgid "下面是一点点简单的使用引导 …… 如果不想看可以直接戳跳过（小声），但是也没多长啦"
 msgstr ""
 
-#: src/components/WelPan.vue:23
 msgid "选择语言"
 msgstr ""
 
-#: src/components/WelPan.vue:39
 msgid "该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。"
 msgstr ""
 
-#: src/pages/Chat.vue:344
 msgid "提及"
 msgstr ""
 
-#: src/pages/options/OptView.vue:158
 msgid "页面"
 msgstr ""
 
-#: src/pages/options/OptView.vue:162
 msgid "缩放比例"
 msgstr ""
 
-#: src/pages/options/OptView.vue:163
 msgid "调整页面在移动端的缩放比例"
 msgstr ""
 
-#: src/pages/Messages.vue:188
 msgid "已标记为已读"
 msgstr ""
 
-#: src/pages/Chat.vue:399
 msgid "群组"
 msgstr ""
 
-#: src/function/msg.ts:466
 msgid "消息已转发"
 msgstr ""
 
-#: src/pages/Chat.vue:385
-#: src/pages/Chat.vue:991
 msgid "转发消息"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:95
 msgid "使用 shift enter 换行"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:96
 msgid "I have a shift I have an enter ..."
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:175
 msgid "开启 shift enter 换行可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
 msgstr ""
 
-#: src/components/BulletinBody.vue:20
 msgid "点击展开"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:48
 msgid "消息类型"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:49
 msgid "[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:455
 msgid "自动检测"
 msgstr ""
 
-#: src/pages/options/OptInfo.vue:26
 msgid "我的本群昵称"
 msgstr ""
 
-#: src/pages/options/OptInfo.vue:27
 msgid "￡爺↘僞ηι慹著彡"
 msgstr ""
 
-#: src/pages/options/OptInfo.vue:17
 msgid "群聊名称"
 msgstr ""
 
-#: src/pages/options/OptInfo.vue:18
 msgid "“你们真是害人不浅呐你们这个群”"
 msgstr ""
 
-#: src/pages/chat-view/SystemNotice.vue:30
-#: src/pages/chat-view/SystemNotice.vue:45
 msgid "同意"
 msgstr ""
 
-#: src/pages/chat-view/SystemNotice.vue:29
-#: src/pages/chat-view/SystemNotice.vue:44
 msgid "拒绝"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:613
 msgid "刷新页面"
 msgstr ""
 
-#: src/pages/chat-view/SystemNotice.vue:14
 msgid "系统消息"
 msgstr ""
 
-#: src/pages/Chat.vue:348
 msgid "移出群聊"
 msgstr ""
 
-#: src/pages/options/OptView.vue:85
 msgid "自动跟随 GTK 主题"
 msgstr ""
 
-#: src/pages/options/OptView.vue:86
 msgid "（实验性）自动从 GTK 配置获取主题配色"
 msgstr ""
 
-#: src/pages/options/OptView.vue:101
 msgid "自动跟随主题色"
 msgstr ""
 
-#: src/pages/options/OptView.vue:102
 msgid "自动获取的主题色设置并应用"
 msgstr ""
 
-#: src/pages/options/OptView.vue:127
 msgid "背景图片"
 msgstr ""
 
-#: src/pages/options/OptView.vue:128
 msgid "嘿嘿嘿（痴呆"
 msgstr ""
 
-#: src/pages/options/OptView.vue:136
 msgid "背景模糊"
 msgstr ""
 
-#: src/pages/options/OptView.vue:137
 msgid "什么都看不见了（恼"
 msgstr ""
 
-#: src/pages/Chat.vue:1402
 msgid "压缩图片失败"
 msgstr ""
 
-#: src/pages/Chat.vue:1397
 msgid "正在压缩图片 ……"
 msgstr ""
 
-#: src/pages/Chat.vue:1120
 msgid "真的要将 {user} 移出群聊吗"
 msgstr ""
 
-#: src/function/option.ts:508
-#: src/pages/options/OptDev.vue:153
 msgid "重启应用"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:154
 msgid "99% 的特性都能通过重启解决！"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:84
 msgid "关闭"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:73
 msgid "打开…"
 msgstr ""
 
-#: src/pages/Chat.vue:1353
 msgid "发送文件失败"
 msgstr ""
 
-#: src/pages/Chat.vue:1357
 msgid "发送文件错误"
 msgstr ""
 
-#: src/pages/Chat.vue:1335
 msgid "正在发送文件 {percent}%"
 msgstr ""
 
-#: src/components/MsgBody.vue:69
 msgid "文件预览"
 msgstr ""
 
-#: src/function/msg.ts:1403
-#: src/pages/Info.vue:194
 msgid "临时会话"
 msgstr ""
 
-#: src/function/msg.ts:125
 msgid "添加好友 {name} 成功！"
 msgstr ""
 
-#: src/pages/Chat.vue:23
 msgid "来自群聊：{group}"
 msgstr ""
 
-#: src/pages/Messages.vue:30
 msgid "置顶"
 msgstr ""
 
-#: src/pages/Messages.vue:31
 msgid "取消置顶"
 msgstr ""
 
-#: src/pages/Messages.vue:32
 msgid "删除"
 msgstr ""
 
-#: src/pages/Messages.vue:33
 msgid "标记已读"
 msgstr ""
 
-#: src/function/msg.ts:439
 msgid "获取合并转发消息失败"
 msgstr ""
 
-#: src/components/msg-component/CardMessage.vue:81
-#: src/function/model/msg-body.ts:120
 msgid "解析消息错误"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:389
 msgid "应用显示完成，应用初始化完成！欢迎使用 {name}！"
 msgstr ""
 
-#: src/function/model/msg-body.ts:433
 msgid "刷新用户列表成功"
 msgstr ""
 
-#: src/function/connect.ts:177
 msgid "正在断开链接……"
 msgstr ""
 
-#: src/pages/Chat.vue:332
 msgid "下载图片"
 msgstr ""
 
-#: src/components/AboutPan.vue:43
-#: src/components/AboutPan.vue:159
 msgid "许可版权声明"
 msgstr ""
 
-#: src/components/DepPan.vue:21
 msgid "你可以在项目仓库的依赖关系图中找到大部分依赖，而这里列出了一些不由包管理管理的依赖。"
 msgstr ""
 
-#: src/pages/options/OptView.vue:173
 msgid "圆角适配"
 msgstr ""
 
-#: src/pages/options/OptView.vue:174
 msgid "适配全面屏设备防止四角出界"
 msgstr ""
 
-#: src/pages/Chat.vue:42
-#: src/pages/Chat.vue:252
 msgid "加载中"
 msgstr ""
 
-#: src/function/utils/msgUtil.ts:345
 msgid "发送中"
 msgstr ""
 
-#: src/components/DepPan.vue:12
 msgid "驱动自"
 msgstr ""
 
-#: src/components/UpdatePan.vue:3
 msgid "新版本"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:604
 msgid "下载更新…"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:69
 msgid "请不要在内嵌页面中输入敏感信息，内嵌页面并不安全。"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:255
 msgid "正在收集调试消息……"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:49
 msgid "还没有连接到 OneBot 耶"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:50
 msgid "去连接"
 msgstr ""
 
-#: src/pages/options/OptView.vue:198
 msgid "不要点这个"
 msgstr ""
 
-#: src/pages/options/OptView.vue:199
 msgid "啊吧啊吧（智慧）"
 msgstr ""
 
-#: src/pages/options/OptView.vue:120
-#: src/pages/options/OptView.vue:151
 msgid "默认"
 msgstr ""
 
-#: src/pages/Chat.vue:308
 msgid "+ 1"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:72
 msgid "关闭回应功能"
 msgstr ""
 
-#: src/pages/options/OptFunction.vue:73
 msgid "如果你不想用它或者 bot 不支持，可以关闭这个功能"
 msgstr ""
 
-#: src/components/MsgBody.vue:426
 msgid "（获取回复消息失败）"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:11
 msgid "进阶功能"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:28
 msgid "已启用"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:29
 msgid "已禁用"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:59
 msgid "解析配置"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:60
 msgid "不同框架之间的化学反应我们将其称之为达利园效应"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:63
 msgid "未连接"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:453
 msgid "CQ 码"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:454
 msgid "Array 数组"
 msgstr ""
 
-#: src/pages/Messages.vue:34
 msgid "开启通知"
 msgstr ""
 
-#: src/pages/Messages.vue:35
 msgid "关闭通知"
 msgstr ""
 
-#: src/pages/Chat.vue:218
 msgid "已被禁言至：{time}"
 msgstr ""
 
-#: src/components/NoticeBody.vue:20
 msgid "禁言了你"
 msgstr ""
 
-#: src/components/NoticeBody.vue:24
 msgid "管理员禁言了"
 msgstr ""
 
-#: src/components/NoticeBody.vue:29
 msgid "管理员解除了 {name} 的禁言"
 msgstr ""
 
-#: src/components/NoticeBody.vue:80
 msgid "天"
 msgstr ""
 
-#: src/components/NoticeBody.vue:83
 msgid "小时"
 msgstr ""
 
-#: src/components/NoticeBody.vue:86
 msgid "分钟"
 msgstr ""
 
-#: src/components/NoticeBody.vue:89
 msgid "秒"
 msgstr ""
 
-#: src/components/NoticeBody.vue:29
-#: src/function/msg.ts:198
 msgid "你"
 msgstr ""
 
-#: src/pages/options/OptInfo.vue:34
 msgid "退出群聊"
 msgstr ""
 
-#: src/pages/options/OptInfo.vue:95
 msgid "确定要退出群聊吗？"
 msgstr ""
 
-#: src/pages/chat-view/SystemNotice.vue:25
-#: src/pages/chat-view/SystemNotice.vue:40
 msgid "留言"
 msgstr ""
 
-#: src/pages/chat-view/SystemNotice.vue:22
 msgid "请求加为好友"
 msgstr ""
 
-#: src/pages/chat-view/SystemNotice.vue:37
 msgid "邀请你加入群聊"
 msgstr ""
 
-#: src/components/MsgBody.vue:195
 msgid "全体成员"
 msgstr ""
 
-#: src/pages/options/OptView.vue:184
 msgid "置顶窗口"
 msgstr ""
 
-#: src/pages/options/OptView.vue:185
 msgid "你也不想想让 ta 知道你不在看消息吧 ~"
 msgstr ""
 
-#: src/pages/options/OptView.vue:152
 msgid "完整模糊"
 msgstr ""
 
-#: src/pages/options/OptView.vue:153
 msgid "完整透明"
 msgstr ""
 
-#: src/pages/options/OptView.vue:147
 msgid "窗口透明模式"
 msgstr ""
 
-#: src/pages/options/OptView.vue:148
 msgid "怎么看光还要挑三拣四的"
 msgstr ""
 
-#: src/function/option.ts:498
 msgid "此操作将在重启应用后生效，现在就要重启吗？"
 msgstr ""
 
-#: src/function/option.ts:502
 msgid "此操作仅供娱乐，将会在下次关闭时恢复。"
 msgstr ""
 
-#: src/pages/options/OptAccount.vue:66
 # 连接正常（{timeout} > {step} s）
 msgid "连接_normal"
 msgstr "连接正常（{timeout} > {step} s）"
 
-#: src/pages/options/OptAccount.vue:66
 # 连接延迟（{timeout} > {step} s）
 msgid "连接_slow"
 msgstr "连接延迟（{timeout} > {step} s）"
 
-#: src/pages/options/OptAccount.vue:66
 # 正在收集连接信息……
 msgid "连接_loading"
 msgstr "正在收集连接信息……"
 
-#: src/pages/Chat.vue:196
 msgid "搜索消息"
 msgstr ""
 
-#: src/pages/Chat.vue:154
 msgid "搜索已加载的消息"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:392
-#: src/function/utils/appUtil.ts:459
-#: src/pages/Options.vue:17
 msgid "关于"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:393
 msgid "检查更新…"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:394
 msgid "隐藏"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:395
 msgid "隐藏其他"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:396
 msgid "全部显示"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:397
 msgid "退出"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:407
 msgid "账户"
 msgstr ""
 
-#: src/function/connect.ts:135
-#: src/function/utils/appUtil.ts:408
 msgid "连接"
 msgstr ""
 
-#: src/function/msg.ts:1017
-#: src/function/utils/appUtil.ts:410
 msgid "用户列表（{count}）"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:411
 msgid "刷新列表…"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:409
 msgid "登出"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:399
 msgid "编辑"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:400
 msgid "撤销"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:401
 msgid "重做"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:402
 msgid "剪切"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:404
 msgid "粘贴"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:405
 msgid "全选"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:413
 msgid "帮助"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:414
 msgid "帮助文档"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:415
 msgid "在 Github 上反馈问题"
 msgstr ""
 
-#: src/function/utils/appUtil.ts:416
 msgid "许可协议"
 msgstr ""
 
-#: src/pages/Chat.vue:191
 msgid "戳一戳"
 msgstr ""
 
-#: src/function/utils/msgUtil.ts:230
 msgid "语音"
 msgstr ""
 
-#: src/function/utils/msgUtil.ts:231
 msgid "视频"
 msgstr ""
 
-#: src/pages/Chat.vue:159
 msgid "合并转发"
 msgstr ""
 
-#: src/pages/Chat.vue:163
 msgid "截图"
 msgstr ""
 
 msgid "“{body}” 以及 {num} 条消息"
+msgstr ""
+
+msgid "信息"
+msgstr ""
+
+msgid "列表"
+msgstr ""
+
+msgid "群收纳盒"
+msgstr ""
+
+msgid "来自局域网的服务"
+msgstr ""
+
+msgid "更快的动画速度"
+msgstr ""
+
+msgid "咻咻！此选项将使动画加速到 100ms 并去除部分浪费时间的组动画"
+msgstr ""
+
+msgid "别划了别划了被看见了啦"
 msgstr ""

@@ -31,6 +31,23 @@ group_list:
         group_name: /group_name
         member_count: /member_count
         admin_flag: null
+# 群/好友信息
+friend_info:
+    name: get_stranger_info
+    source: $.data
+    list:
+        longNick: /longNick             # 签名
+        qid: /qid                       # 个性 QQ 账号
+        country: /country               # 国家
+        province: /province             # 省份
+        city: /city                     # 城市
+        regTime: /regTime               # 注册时间
+        qqLevel: /qqLevel               # QQ 等级
+        birthday_year: /birthday_year   # 生日年份
+        birthday_month: /birthday_month # 生日月份
+        birthday_day: /birthday_day     # 生日日期
+        age: /age                       # 年龄
+        sex: /sex                       # 性别
 # 好友分组
 friend_category:
     name: get_friends_with_category
@@ -72,7 +89,7 @@ forward_msg:
         post_type: /post_type
         group_id: /group_id
         sender: /sender
-        message: /content
+        message: /message
         raw_message: null
 # 消息基础信息
 message_info:
@@ -131,6 +148,7 @@ group_member_info:
         last_sent_time: /last_sent_time
         is_robot: /is_robot
         shut_up_timestamp: /shut_up_timestamp
+        role: /role
 # 退出群聊
 leave_group:
     name: set_group_leave

@@ -19,10 +19,5 @@
         "lang": "zh-HK",
         "name": "粵語（香港）",
         "fallback": "zh-TW"
-    },
-    {
-        "value": "en-US",
-        "lang": "en-US",
-        "name": "English (US)"
     }
 ]

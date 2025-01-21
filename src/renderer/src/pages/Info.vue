@@ -49,43 +49,45 @@
                     </div>
                 </div>
                 <div v-else-if="chat.show.type === 'user'">
+                    <header v-if="chat.info.user_info.qid">
+                        <span>QID</span>
+                    </header>
+                    <span v-if="chat.info.user_info.qid">{{ chat.info.user_info.qid }}</span>
+                    <header>
+                        <span>{{ $t('等级') }}</span>
+                    </header>
+                    <span>{{ chat.info.user_info.qqLevel }}</span>
+                    <header v-if="chat.info.user_info.regTime">
+                        <span>{{ $t('注册时间') }}</span>
+                    </header>
+                    <span v-if="chat.info.user_info.regTime">{{ Intl.DateTimeFormat(trueLang, {
+                        year: 'numeric'
+                    }).format(
+                        new Date(
+                            chat.info.user_info.regTime * 1000,
+                        ),
+                    ) }}</span>
                     <header>
                         <span>{{ $t('签名') }}</span>
                     </header>
-                    <span
-                        v-html="
-                            chat.info.user_info.lnick === undefined ||
-                                chat.info.user_info.lnick === ''
-                                ? $t('签名')
-                                : chat.info.user_info.lnick
-                        " />
+                    <span>{{ chat.info.user_info.longNick ? chat.info.user_info.longNick : $t("这个人很懒什么都没有写～") }}</span>
                     <header>
                         <span>{{ $t('其他信息') }}</span>
                     </header>
                     <div class="outher">
-                        <span>{{ $t('生日') }}:
+                        <span v-if="chat.info.user_info.birthday_year">{{ $t('生日') }}:
                             <span>
-                                {{
-                                    chat.info.user === undefined
-                                        ? ''
-                                        : Intl.DateTimeFormat(trueLang, {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                        }).format(
-                                            new Date(
-                                                `${chat.info.user_info.birthday.year}-${
-                                                    chat.info.user_info.birthday.month}-${
-                                                    chat.info.user_info.birthday.day}`,
-                                            ),
-                                        ) +
-                                            ` (${
-                                                $t('生肖').split('&')[
-                                                    chat.info.user_info
-                                                        .shengxiao - 1
-                                                ]
-                                            })`
-                                }}
+                                {{ Intl.DateTimeFormat(trueLang, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                }).format(
+                                    new Date(
+                                        `${chat.info.user_info.birthday_year}-${
+                                            chat.info.user_info.birthday_month}-${
+                                            chat.info.user_info.birthday_day}`,
+                                    ),
+                                ) }}
                             </span>
                         </span>
                         <span>{{ $t('地区') }}:
@@ -98,15 +100,14 @@
                             </span>
                         </span>
                     </div>
-                    <template v-if="!chat.show.temp">
-                        <!-- 临时会话没有这个板块 -->
+                    <!-- <template v-if="!chat.show.temp">
                         <header>
                             <span>{{ $t('设置') }}</span>
                         </header>
                         <OptInfo
                             :type="'number'"
                             :chat="chat" />
-                    </template>
+                    </template> -->
                 </div>
             </div>
             <BcTab

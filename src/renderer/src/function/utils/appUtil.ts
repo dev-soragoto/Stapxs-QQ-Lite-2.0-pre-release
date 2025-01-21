@@ -401,6 +401,7 @@ export function createIpc() {
                     runtimeData.onMsgList[i].user_id == data.id
                 ) {
                     runtimeData.onMsgList[i].new_msg = false
+                    runtimeData.onMsgList[i].highlight = undefined
                     break
                 }
             }
@@ -564,7 +565,7 @@ function setQuickLogin(address: string, port: number) {
 }
 
 export async function loadMobile() {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     // Capacitor：相关初始化
     if(runtimeData.tags.isCapacitor) {
         const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
@@ -643,6 +644,7 @@ export async function loadMobile() {
                                 == notification.extra.userId
                         ) {
                             runtimeData.onMsgList[i].new_msg = false
+                            runtimeData.onMsgList[i].highlight = undefined
                             break
                         }
                     }
@@ -756,7 +758,7 @@ function showUpadteLog(data: any) {
 }
 
 function showReleaseLog(data: any, isUpdated: boolean) {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     let msg = data.body
     // 处理 title，取开头到下一个 “\r\n” 之间的内容
     const title = msg.split('\r\n')[0].substring(1)
@@ -825,7 +827,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
 }
 
 export function checkOpenTimes() {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
     const times = localStorage.getItem('times')
     if (times != null) {
         const getTimes = Number(times) + 1
@@ -1024,7 +1026,7 @@ export function loadJsonMap(name: string) {
 
 // UM：统计事件统一上传方法
 export function sendStatEvent(event: string, data: any) {
-    if (!option.get('close_ga') && import.meta.env.DEV) {
+    if (!option.get('close_ga') && !import.meta.env.DEV) {
         Umami.trackEvent(event, data)
     }
 }

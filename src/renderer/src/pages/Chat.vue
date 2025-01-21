@@ -92,7 +92,7 @@
                 v-if="tags.nowGetHistroy && list.length > 0"
                 :data="{ sub_type: 'time', time: list[0].time }" />
             <TransitionGroup
-                name="msglist"
+                :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
                 tag="div">
                 <template v-for="(msgIndex, index) in list">
                     <!-- 时间戳 -->
@@ -144,7 +144,7 @@
             style="scroll-behavior: smooth">
             <!-- 搜索消息结果显示 -->
             <TransitionGroup
-                name="msglist"
+                :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
                 tag="div">
                 <template v-for="(msgIndex, index) in tags.search.list">
                     <!-- 时间戳 -->
@@ -1591,7 +1591,7 @@
 
             forwardSelf() {
                 if (this.selectedMsg) {
-                    const msg = this.selectedMsg
+                    const msg = JSON.parse(JSON.stringify(this.selectedMsg))
                     sendMsgRaw(
                         this.chat.show.id,
                         this.chat.show.type,
@@ -1928,14 +1928,14 @@
                         this.chat.show.type === 'user' &&
                         this.chat.info.user_info.uin !== this.chat.show.id
                     ) {
-                        const url =
-                            'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-                        const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.show.id}&nf=0&of=0&ldw=${runtimeData.loginInfo.bkn}`
-                        Connector.send(
-                            'http_proxy',
-                            { url: url, method: 'post', data: info },
-                            'getMoreUserInfo',
-                        )
+                        const userInfo = runtimeData.jsonMap.friend_info.name
+                        if(userInfo != undefined) {
+                            Connector.send(
+                                userInfo,
+                                { user_id: this.chat.show.id },
+                                'getMoreUserInfo',
+                            )
+                        }
                     }
                     // 加载群公告列表
                     const noticeName = runtimeData.jsonMap.group_notices.name

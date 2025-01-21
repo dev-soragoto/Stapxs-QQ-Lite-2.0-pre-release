@@ -237,7 +237,7 @@ export function parseMsgList(
  * @returns 字符串
  */
 export function getMsgRawTxt(data: any): string {
-    const $t = app.config.globalProperties.$t
+    const { $t } = app.config.globalProperties
 
     const message = data.message as [{ [key: string]: any }]
     const fromId = data.group_id ?? data.user_id
@@ -429,7 +429,7 @@ export function sendMsgRaw(
                 user_id: runtimeData.loginInfo.uin,
                 nickname: runtimeData.loginInfo.nickname,
             },
-            message: JSON.parse(JSON.stringify(msg)),
+            message: msg,
             raw_message: app.config.globalProperties.$t('发送中'),
         } as { [key: string]: any }
         if (showMsg.message_type == 'group') {
