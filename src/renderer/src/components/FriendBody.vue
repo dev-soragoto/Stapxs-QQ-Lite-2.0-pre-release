@@ -17,7 +17,7 @@
             v-if="data.user_id == -10000"
             :icon="['fas', 'bell']" />
         <font-awesome-icon
-            v-if="data.user_id == -10001"
+            v-else-if="data.user_id == -10001"
             :icon="['fas', 'user-group']" />
         <img
             v-else

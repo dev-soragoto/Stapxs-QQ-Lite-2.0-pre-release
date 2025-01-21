@@ -109,7 +109,7 @@ export function parse(str: string) {
             }
         }
     } catch (e) {
-        logger.error(e as Error, `处理消息或通知错误 - ${name}：`)
+        logger.error(e as Error, `处理消息或通知错误 - ${name}：\n${str}`)
     }
 }
 

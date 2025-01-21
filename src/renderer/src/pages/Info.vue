@@ -49,7 +49,9 @@
                     </div>
                 </div>
                 <div v-else-if="chat.show.type === 'user'">
-                    <header v-if="chat.info.user_info.qid"><span>QID</span></header>
+                    <header v-if="chat.info.user_info.qid">
+                        <span>QID</span>
+                    </header>
                     <span v-if="chat.info.user_info.qid">{{ chat.info.user_info.qid }}</span>
                     <header>
                         <span>{{ $t('等级') }}</span>

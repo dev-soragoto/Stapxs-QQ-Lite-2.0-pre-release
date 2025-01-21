@@ -89,7 +89,7 @@ forward_msg:
         post_type: /post_type
         group_id: /group_id
         sender: /sender
-        message: /content
+        message: /message
         raw_message: null
 # 消息基础信息
 message_info:

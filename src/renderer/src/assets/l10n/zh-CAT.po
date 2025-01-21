@@ -8,424 +8,302 @@ msgstr ""
 "PO-Revision-Date: 2024-09-20\n"
 "Language-Team: Stapx Steve (stapxs)\n"
 
-#: src/pages/options/OptView.vue:17
 # 这是当前语言的介绍，请自行发挥
 msgid "你好世界！这是 Stapxs QQ Lite 的默认简体中文。"
 msgstr "喵喵喵！这是喵星文化与宣传部提供的 Stapxs QQ Lite 默认喵体中文。"
 
-#: src/pages/options/OptView.vue:15
 # 这是当前语言的名字，请自行修改
 msgid "简体中文"
 msgstr "简体中文（喵体）"
 
-#: src/pages/Friends.vue:23
-#: src/pages/Friends.vue:32
-#: src/pages/Chat.vue:388
-#: src/pages/Info.vue:85
 msgid "搜索 ……"
 msgstr "翻找 ……"
 
-#: src/pages/Info.vue:64
 msgid "地区"
 msgstr "喵区"
 
-#: src/pages/Info.vue:59
 msgid "鼠&牛&虎&兔&龙&蛇&马&羊&猴&鸡&狗&猪"
 msgstr "鼠&牛&虎&猫&龙&蛇&马&羊&猴&鸡&狗&猪"
 
-#: src/pages/Info.vue:12
 msgid "群资料"
 msgstr "喵群资料"
 
-#: src/pages/Info.vue:26
 msgid "介绍"
 msgstr "喵喵介绍"
 
-#: src/pages/Info.vue:45
-#: src/pages/Info.vue:48
 msgid "签名"
 msgstr "喵爪"
 
-#: src/pages/Info.vue:82
 msgid "成员"
 msgstr "喵群成员"
 
-#: src/pages/Info.vue:29
 msgid "群主很懒，还没有群介绍哦～"
 msgstr "主子很懒，还没有喵群介绍哦～"
 
-#: src/pages/Info.vue:13
 msgid "好友"
 msgstr "喵朋友"
 
-#: src/components/FacePan.vue:27
 # 这儿的空间比较小，请尽量使用更短的句子（或者是词）
 msgid "一无所有"
 msgstr "没有鱼干"
 
-#: src/pages/Chat.vue:285
 msgid "{time} 加入群聊"
 msgstr "{time} 加入喵群"
 
-#: src/pages/Chat.vue:26
-#: src/pages/chat-view/Chat弹幕.vue:152
 msgid "上次消息 - {time}"
 msgstr "上次喵喵 - {time}"
 
-#: src/components/NoticeBody.vue:18
-#: src/pages/Info.vue:36
-#: src/pages/Chat.vue:280
 msgid "成员类型_admin"
 msgstr "发小鱼干的"
 
-#: src/pages/Chat.vue:280
 msgid "成员类型_owner"
 msgstr "喵主子"
 
-#: src/pages/Chat.vue:247
 msgid "合并消息"
 msgstr "合并喵喵"
 
-#: src/pages/Chat.vue:328
 msgid "复制选中文本"
 msgstr "复制选中喵喵"
 
-#: src/pages/Chat.vue:48
 msgid "没有更多消息了"
 msgstr "没有更多喵喵了"
 
-#: src/pages/Chat.vue:30
-#: src/pages/chat-view/Chat弹幕.vue:157
 msgid "暂无消息"
 msgstr "暂无喵喵"
 
-#: src/pages/Chat.vue:128
-#: src/pages/Chat.vue:362
 msgid "发送"
 msgstr "喵喵"
 
-#: src/pages/Friends.vue:84
-#: src/pages/Messages.vue:61
 msgid "选择联系人开始聊天"
 msgstr "选择喵开始聊天"
 
-#: src/components/MsgBody.vue:86
 msgid "不支持的消息"
 msgstr "不支持的喵喵"
 
-#: src/pages/Friends.vue:17
 msgid "联系人"
 msgstr "喵朋友"
 
-#: src/App.vue:46
 msgid "连接地址"
 msgstr "母星地址"
 
-#: src/pages/options/OptAccount.vue:54
 msgid "后端信息"
 msgstr "喵堡信息"
 
-#: src/pages/options/OptAccount.vue:27
 msgid "账号设置"
 msgstr "喵号设置"
 
-#: src/pages/Options.vue:13
 msgid "账号"
 msgstr "喵号"
 
-#: src/pages/options/OptFunction.vue:58
 msgid "消息防撤回"
 msgstr "喵喵防撤回"
 
-#: src/pages/options/OptFunction.vue:59
 msgid "说出去的话就像泼出去的水 ……"
 msgstr "送出去的鱼干怎么能要回来 ……"
 
-#: src/pages/options/OptFunction.vue:59
 msgid "说了不做这功能就是不做"
 msgstr "说了不给就是不给"
 
-#: src/pages/options/OptFunction.vue:72
 msgid "你也向往自由吗？"
 msgstr "猫猫才不要被关在笼子里"
 
-#: src/pages/options/OptView.vue:117
 msgid "一些好玩的主题！"
 msgstr "要用这个联系喵星吗"
 
-#: src/pages/options/OptDev.vue:30
 msgid "这儿是兼容性相关的高级选项，这些选项通常会自动识别，如果出现了不正确的情况你也可以手动调整。"
 msgstr ""
 
-#: src/pages/options/OptDev.vue:88
 msgid "点击进行 CAPTCHA 验证"
 msgstr "喵喵喵喵喵！"
 
-#: src/pages/options/OptDev.vue:70
 msgid "开发者选项"
 msgstr "工程喵选项"
 
-#: src/pages/options/OptFunction.vue:29
 msgid "通知所有新消息"
 msgstr "通知左右新喵喵"
 
-#: src/pages/options/OptFunction.vue:30
 msgid "让暴风雨来得更猛烈些吧！"
 msgstr "让喵喵风暴来得更猛烈些吧！"
 
-#: src/pages/options/OptFunction.vue:16
 msgid "好嘛 …… 不烦你 ……"
 msgstr "不可以喵喵！"
 
-#: src/pages/options/OptDev.vue:104
 msgid "咻 ——"
 msgstr "喵 ——"
 
-#: src/pages/options/OptFunction.vue:113
 msgid "真的不让看吗（小声"
 msgstr "猫猫那么可爱，真的不让看吗（小声"
 
-#: src/components/AboutPan.vue:29
 msgid "访问 GitHub 仓库"
 msgstr "访问 CatHub 仓库"
 
-#: src/pages/options/OptView.vue:51
 msgid "Biubiu ——，自动变黑！"
 msgstr "看不清了！喵！"
 
-#: src/pages/options/OptView.vue:33
 msgid "主题与颜色"
 msgstr "装饰和毛色"
 
-#: src/pages/options/OptView.vue:66
 msgid "主题色"
 msgstr "毛色"
 
-#: src/pages/options/OptView.vue:67
 msgid "换个心情 🎵 ~"
 msgstr "混搭一些橘色怎么样？"
 
-#: src/pages/options/OptDev.vue:120
 msgid "全都吐出来！"
 msgstr "把小鱼干都交出来！"
 
-#: src/components/NoticeBody.vue:12
 msgid "撤回了一条消息"
 msgstr "抢回去了一条小鱼干"
 
-#: src/components/BulletinBody.vue:12
-#: src/pages/Info.vue:98
 msgid "公告"
 msgstr "通知"
 
-#: src/function/connect.ts:85
-#: src/function/connect.ts:155
-#: src/function/connect.ts:161
 msgid "连接失败"
 msgstr "和喵星通信失败了"
 
-#: src/function/model/msg-body.ts:233
 msgid "合并消息层级过多，解析失败。"
 msgstr "太多喵喵了！解析失败。"
 
-#: src/pages/Chat.vue:116
-#: src/pages/Chat.vue:193
 msgid "精华消息"
 msgstr "精华喵喵"
 
-#: src/pages/Messages.vue:17
-#: src/pages/Messages.vue:22
 msgid "消息"
 msgstr "喵喵"
 
-#: src/App.vue:408
-#: src/function/utils/appUtil.ts:601
-#: src/function/utils/appUtil.ts:626
-#: src/pages/options/OptFunction.vue:178
 msgid "知道了"
 msgstr "喵喵！"
 
-#: src/pages/Chat.vue:174
 msgid "没有找到匹配的群成员"
 msgstr "没有找到匹配的猫猫"
 
-#: src/components/WelPan.vue:31
-#: src/pages/options/OptView.vue:16
 msgid "作者："
 msgstr "作者猫："
 
-#: src/components/MsgBody.vue:80
 msgid "（点击查看合并转发消息）"
 msgstr "（点击查看合并转发喵喵）"
 
-#: src/pages/options/OptAccount.vue:32
 msgid "就只是个名字而已 ……"
 msgstr "这是哪只猫猫 ……"
 
-#: src/pages/options/OptAccount.vue:40
 msgid "啊吧啊吧（智慧的眼神）"
 msgstr "奇怪的喵喵"
 
-#: src/pages/options/OptDev.vue:130
 msgid "到底用的什么版本呢 ……"
 msgstr "快给工程猫猫看看版本！"
 
-#: src/pages/options/OptDev.vue:168
 msgid "tar zcvf config.tar.gz /localStorage"
 msgstr "正在上传到喵星数据中心……"
 
-#: src/pages/options/OptDev.vue:178
 msgid "tar zxvf cache.tar.gz /localStorage"
 msgstr "正在从喵星数据中心下载存档……"
 
-#: src/pages/options/OptDev.vue:407
 msgid "导入设置项失败"
 msgstr "啊哦，装载数据失败"
 
-#: src/components/MsgBody.vue:83
 msgid "（查看回复消息）"
 msgstr "（查看回复喵喵）"
 
-#: src/pages/Chat.vue:399
 msgid "群组"
 msgstr "喵圈"
 
-#: src/function/msg.ts:466
 msgid "消息已转发"
 msgstr "喵喵已转发"
 
-#: src/pages/Chat.vue:385
-#: src/pages/Chat.vue:991
 msgid "转发消息"
 msgstr "转发喵喵"
 
-#: src/pages/options/OptFunction.vue:96
 msgid "I have a shift I have an enter ..."
 msgstr "大力出奇迹喵！"
 
-#: src/pages/options/OptDev.vue:48
 msgid "消息类型"
 msgstr "喵喵类型"
 
-#: src/pages/options/OptInfo.vue:26
 msgid "我的本群昵称"
 msgstr "我的喵圈昵称"
 
-#: src/pages/options/OptInfo.vue:27
 msgid "￡爺↘僞ηι慹著彡"
 msgstr "叫喵喵喵呢还是叫喵喵喵喵呢"
 
-#: src/pages/options/OptInfo.vue:17
 msgid "群聊名称"
 msgstr "喵圈名称"
 
-#: src/pages/options/OptInfo.vue:18
 msgid "“你们真是害人不浅呐你们这个群”"
 msgstr "很好的喵圈，使小鱼干消失。"
 
-#: src/pages/Chat.vue:348
 msgid "移出群聊"
 msgstr "移出喵圈"
 
-#: src/pages/Chat.vue:1120
 msgid "真的要将 {user} 移出群聊吗"
 msgstr "真的要将 {user} 移出喵圈吗"
 
-#: src/function/msg.ts:1403
-#: src/pages/Info.vue:194
 msgid "临时会话"
 msgstr "临时喵喵"
 
-#: src/function/msg.ts:125
 msgid "添加好友 {name} 成功！"
 msgstr "添加喵友 {name} 成功！"
 
-#: src/pages/Chat.vue:23
 msgid "来自群聊：{group}"
 msgstr "来自 {group} 喵圈"
 
-#: src/function/msg.ts:439
 msgid "获取合并转发消息失败"
 msgstr "获取合并转发喵喵失败"
 
-#: src/components/msg-component/CardMessage.vue:81
-#: src/function/model/msg-body.ts:120
 msgid "解析消息错误"
 msgstr "解析喵喵错误"
 
-#: src/function/utils/appUtil.ts:389
 msgid "应用显示完成，应用初始化完成！欢迎使用 {name}！"
 msgstr "应用显示完成，应用初始化完成！欢迎连接到喵星！"
 
-#: src/function/model/msg-body.ts:433
 msgid "刷新用户列表成功"
 msgstr "刷新猫猫列表成功"
 
-#: src/function/connect.ts:177
 msgid "正在断开链接……"
 msgstr "正在断开和猫星链接……"
 
-#: src/pages/options/OptAccount.vue:49
 msgid "还没有连接到 OneBot 耶"
 msgstr "还没有连接到猫星耶"
 
-#: src/pages/options/OptView.vue:199
 msgid "啊吧啊吧（智慧）"
 msgstr "好奇心害死猫！"
 
-#: src/components/MsgBody.vue:426
 msgid "（获取回复消息失败）"
 msgstr "（获取回复喵喵失败）"
 
-#: src/components/NoticeBody.vue:24
 msgid "管理员禁言了"
 msgstr "发小鱼干的禁言了"
 
-#: src/components/NoticeBody.vue:29
 msgid "管理员解除了 {name} 的禁言"
 msgstr "发小鱼干的解除了 {name} 的禁言"
 
-#: src/pages/options/OptInfo.vue:34
 msgid "退出群聊"
 msgstr "退出喵圈"
 
-#: src/pages/options/OptInfo.vue:95
 msgid "确定要退出群聊吗？"
 msgstr "确定要退出喵圈吗？"
 
-#: src/pages/chat-view/SystemNotice.vue:22
 msgid "请求加为好友"
 msgstr "请求加为喵友"
 
-#: src/pages/chat-view/SystemNotice.vue:37
 msgid "邀请你加入群聊"
 msgstr "邀请你加入喵圈"
 
-#: src/components/MsgBody.vue:195
 msgid "全体成员"
 msgstr "全体猫猫"
 
-#: src/pages/Chat.vue:196
 msgid "搜索消息"
 msgstr "搜索喵喵"
 
-#: src/pages/Chat.vue:154
 msgid "搜索已加载的消息"
 msgstr "搜索已加载的喵喵"
 
-#: src/function/utils/appUtil.ts:407
 msgid "账户"
 msgstr "喵号"
 
-#: src/function/msg.ts:1017
-#: src/function/utils/appUtil.ts:410
 msgid "用户列表（{count}）"
 msgstr "猫猫列表（{count}）"
 
-#: src/function/utils/appUtil.ts:415
 msgid "在 Github 上反馈问题"
 msgstr "在 Cathub 上反馈问题"
 
-#: src/pages/options/OptDev.vue:60
 msgid "不同框架之间的化学反应我们将其称之为达利园效应"
 msgstr "不同的喵星之间可是会打起来的！"
