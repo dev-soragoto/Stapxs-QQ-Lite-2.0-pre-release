@@ -13,6 +13,7 @@ export interface RunTimeDataElem {
     loginInfo: { [key: string]: any }
     userList: (UserFriendElem & UserGroupElem)[]
     showList: (UserFriendElem & UserGroupElem)[]
+    groupAssistList: (UserFriendElem & UserGroupElem)[]
     onMsgList: (UserFriendElem & UserGroupElem)[]
     systemNoticesList?: { [key: string]: any }
     chatInfo: ChatInfoElem
@@ -106,6 +107,7 @@ export interface UserElem {
     time?: number
     always_top?: boolean
     message_id?: string
+    highlight?: string
 }
 
 export interface UserFriendElem extends UserElem {
@@ -121,6 +123,7 @@ export interface UserGroupElem extends UserElem {
     user_id: number
     nickname: string
     remark: string
+    raw_msg_base?: string       // 给群收纳箱用的
     py_name?: string
     py_start?: string
     class_id?: number

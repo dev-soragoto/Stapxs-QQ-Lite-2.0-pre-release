@@ -1471,6 +1471,7 @@ function revokeMsg(_: string, msg: any) {
 
 let qed_try_times = 0
 function newMsg(_: string, data: any) {
+    const $t = app.config.globalProperties.$t
     // 没有对频道的支持计划
     if (data.detail_type == 'guild') {
         return
@@ -1571,7 +1572,7 @@ function newMsg(_: string, data: any) {
             )
             data = list[0]
         }
-        // 刷新好友列表
+        // 刷新消息列表
         const get = runtimeData.onMsgList.filter((item, index) => {
             if (
                 Number(id) === item.user_id ||
@@ -1594,6 +1595,22 @@ function newMsg(_: string, data: any) {
                 // 重新排序列表
                 const newList = orderOnMsgList(runtimeData.onMsgList)
                 runtimeData.onMsgList = newList
+                return true
+            }
+            return false
+        })
+        // 刷新群收纳箱列表
+        const getGroup = runtimeData.groupAssistList.filter((item, index) => {
+            if (Number(id) === item.group_id) {
+                runtimeData.groupAssistList[index].message_id = data.message_id
+                const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
+                runtimeData.groupAssistList[index].raw_msg = name + ': ' + getMsgRawTxt(data)
+                runtimeData.groupAssistList[index].raw_msg_base = getMsgRawTxt(data)
+                runtimeData.groupAssistList[index].time = getViewTime(Number(data.time))
+
+                // 重新排序
+                const newList = orderOnMsgList(runtimeData.groupAssistList)
+                runtimeData.groupAssistList = newList
                 return true
             }
             return false
@@ -1703,20 +1720,53 @@ function newMsg(_: string, data: any) {
                         return item.user_id === id || item.group_id === id
                     })
                     if (getList.length === 1) {
-                        runtimeData.onMsgList.push(getList[0])
+                        const showUser = getList[0]
+                        showUser.message_id = data.message_id
+                        if (data.message_type === 'group') {
+                            const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
+                            showUser.raw_msg = name + ': ' + getMsgRawTxt(data)
+                        } else {
+                            showUser.raw_msg = getMsgRawTxt(data)
+                        }
+                        showUser.time = getViewTime(Number(data.time))
+                        runtimeData.onMsgList.push(showUser)
+                        if(data.atme) {
+                            showUser.highlight = $t('[有人@你]')
+                        }
+                        if(data.atall) {
+                            showUser.highlight = $t('[@全体]')
+                        }
+                        if(isImportant) {
+                            showUser.highlight = $t('[特别关心]')
+                        }
                     }
                 }
             }
 
             runtimeData.onMsgList.forEach((item) => {
                 // 刷新新消息标签
-                if (
-                    id !== showId &&
-                    (id == item.group_id || id == item.user_id)
-                ) {
+                if(id !== showId && (id == item.group_id || id == item.user_id)) {
                     item.new_msg = true
                 }
             })
+        }
+
+        // ( 如果是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群通知列表中
+        if (getGroup.length != 1 && data.message_type === 'group' && !isGroupNotice) {
+            const getList = runtimeData.userList.filter((item) => {
+                return item.group_id === id
+            })
+            if (getList.length === 1) {
+                const showGroup = getList[0]
+                if(!showGroup.always_top) {
+                    showGroup.message_id = data.message_id
+                    const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
+                    showGroup.raw_msg = name + ': ' + getMsgRawTxt(data)
+                    showGroup.raw_msg_base = getMsgRawTxt(data)
+                    showGroup.time = getViewTime(Number(data.time))
+                    runtimeData.groupAssistList.push(showGroup)
+                }
+            }
         }
     }
 }
@@ -1787,6 +1837,7 @@ const baseRuntime = {
     },
     userList: [],
     showList: [],
+    groupAssistList: [],
     systemNoticesList: undefined,
     onMsgList: [],
     loginInfo: {},
@@ -1809,6 +1860,7 @@ export function resetRimtime(resetAll = false) {
         runtimeData.chatInfo = reactive(baseRuntime.chatInfo)
         runtimeData.userList = reactive([])
         runtimeData.showList = reactive([])
+        runtimeData.groupAssistList = reactive([])
         runtimeData.systemNoticesList = reactive([])
         runtimeData.onMsgList = reactive([])
         runtimeData.loginInfo = reactive([])

@@ -401,6 +401,7 @@ export function createIpc() {
                     runtimeData.onMsgList[i].user_id == data.id
                 ) {
                     runtimeData.onMsgList[i].new_msg = false
+                    runtimeData.onMsgList[i].highlight = undefined
                     break
                 }
             }
@@ -643,6 +644,7 @@ export async function loadMobile() {
                                 == notification.extra.userId
                         ) {
                             runtimeData.onMsgList[i].new_msg = false
+                            runtimeData.onMsgList[i].highlight = undefined
                             break
                         }
                     }

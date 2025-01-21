@@ -33,6 +33,12 @@
                     </div>
                 </div>
             </div>
+            <div v-if="showGroupAssist"
+                class="group-assist"
+                @click="showGroupAssist = !showGroupAssist">
+                <font-awesome-icon :icon="['fas', 'angle-left']" />
+                <span>{{ $t("群收纳盒") }}</span>
+            </div>
             <BcMenu
                 :data="listMenu"
                 name="messages-menu"
@@ -91,9 +97,26 @@
                         remark: $t('系统通知'),
                     }"
                     @click="systemNoticeClick" />
+                <!--- 群组消息 -->
+                <FriendBody
+                    v-if="runtimeData.groupAssistList &&
+                        runtimeData.groupAssistList.length > 0 &&
+                        !showGroupAssist"
+                    key="inMessage--10001"
+                    :select="chat.show.id === -10001"
+                    :data="{
+                        user_id: -10001,
+                        always_top: true,
+                        nickname: $t('群收纳盒'),
+                        remark: $t('群收纳盒'),
+                        time: runtimeData.groupAssistList[0].time,
+                        raw_msg: runtimeData.groupAssistList[0].group_name + ': ' +
+                            runtimeData.groupAssistList[0].raw_msg_base
+                    }"
+                    @click="showGroupAssist = !showGroupAssist" />
                 <!-- 其他消息 -->
                 <FriendBody
-                    v-for="item in runtimeData.onMsgList"
+                    v-for="item in showGroupAssist ? runtimeData.groupAssistList : runtimeData.onMsgList"
                     :key="
                         'inMessage-' +
                             (item.user_id ? item.user_id : item.group_id)
@@ -171,6 +194,7 @@
                 menu: Menu.append,
                 showMenu: false,
                 loginInfo: loginInfo,
+                showGroupAssist: false,
             }
         },
         mounted() {
@@ -220,6 +244,7 @@
                     }
                     // 清除新消息标记
                     runtimeData.onMsgList[index].new_msg = false
+                    runtimeData.onMsgList[index].highlight = undefined
                     // 关闭所有通知
                     new Notify().closeAll(
                         (
@@ -260,6 +285,7 @@
             readMsg(data: UserFriendElem & UserGroupElem) {
                 const index = runtimeData.onMsgList.indexOf(data)
                 runtimeData.onMsgList[index].new_msg = false
+                runtimeData.onMsgList[index].highlight = undefined
                 // 标记消息已读
                 const id = data.group_id ? data.group_id : data.user_id
                 const type = data.group_id ? 'group' : 'user'
@@ -342,6 +368,16 @@
                                 ]
                             }
                             Option.save('notice_group', noticeInfo)
+                            // 如果它在 groupAssistList 里面，移到 onMsgList
+                            const index = runtimeData.groupAssistList.findIndex(
+                                (get) => {
+                                    return item == get
+                                },
+                            )
+                            if (index >= 0) {
+                                runtimeData.groupAssistList.splice(index, 1)
+                                runtimeData.onMsgList.push(item)
+                            }
                             break
                         }
                         case 'notice_close': {
@@ -354,6 +390,16 @@
                                 }
                             }
                             Option.save('notice_group', noticeInfo)
+                            // 如果它在 onMsgList 里面，移到 groupAssistList
+                            const index = runtimeData.onMsgList.findIndex(
+                                (get) => {
+                                    return item == get
+                                },
+                            )
+                            if (index >= 0 && !item.always_top) {
+                                runtimeData.onMsgList.splice(index, 1)
+                                runtimeData.groupAssistList.push(item)
+                            }
                             break
                         }
                     }
@@ -488,6 +534,22 @@
 </script>
 
 <style>
+    .group-assist {
+        cursor: pointer;
+        color: var(--color-font-2);
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        margin-top: -20px;
+        margin-bottom: 5px;
+        width: calc(100% - 30px);
+    }
+    .group-assist span {
+        flex: 1;
+        text-align: right;
+        font-size: 0.8rem;
+    }
+
     .onmsg-enter-active,
     .onmsg-leave-active,
     .onmsg-move {

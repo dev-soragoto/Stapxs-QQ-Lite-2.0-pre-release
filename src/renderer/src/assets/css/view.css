@@ -563,6 +563,9 @@ textarea:focus {
     font-size: 0.9rem;
     flex: 1;
 }
+.friend-body > div > div a.highlight {
+    color: #f20000dd;
+}
 /* .friend-body > div > div a.nick {
 } */
 .friend-body.active > div > div a {
