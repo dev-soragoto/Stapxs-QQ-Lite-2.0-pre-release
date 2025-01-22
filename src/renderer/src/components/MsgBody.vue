@@ -118,11 +118,6 @@
                                 class="msg-face"
                                 :src="getFace(item.id)"
                                 :title="item.text">
-                            <span
-                                v-else-if="item.id == 394"
-                                class="msg-face-long"><span
-                                v-for="i in 15"
-                                :key="data.message_id + '-l-' + i">🐲</span></span>
                             <font-awesome-icon
                                 v-else
                                 :class="'msg-face-svg' + (isMe ? ' me' : '')"

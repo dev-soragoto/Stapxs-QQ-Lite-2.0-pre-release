@@ -116,23 +116,35 @@ export class Logger {
             }
         }
 
-        if (!hidden && from) {
-            // eslint-disable-next-line no-console
-            console.log(
-                `%c${typeStr}%c${from}%c\n${args}`,
-                `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px 0 0 7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
-                'background:#e3e8ec;color:#000;padding:2px 7px 4px 4px;border-radius:0 7px 7px 0;margin-bottom:7px;',
-                '',
-                data
-            )
+        // 如果存在 vconsole 就不打印带 css 样式的日志（它不支持）
+        const vConsole = document.getElementById('__vconsole')
+        if (vConsole) {
+            if (!hidden && from) {
+                // eslint-disable-next-line no-console
+                console.log(`${typeStr} | ${from}\n${args}`, data)
+            } else {
+                // eslint-disable-next-line no-console
+                console.log(`${typeStr} | ${args}`, data)
+            }
         } else {
-            // eslint-disable-next-line no-console
-            console.log(
-                `%c${typeStr}%c ${args}`,
-                `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
-                '',
-                data
-            )
+            if (!hidden && from) {
+                // eslint-disable-next-line no-console
+                console.log(
+                    `%c${typeStr}%c${from}%c\n${args}`,
+                    `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px 0 0 7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
+                    'background:#e3e8ec;color:#000;padding:2px 7px 4px 4px;border-radius:0 7px 7px 0;margin-bottom:7px;',
+                    '',
+                    data
+                )
+            } else {
+                // eslint-disable-next-line no-console
+                console.log(
+                    `%c${typeStr}%c ${args}`,
+                    `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
+                    '',
+                    data
+                )
+            }
         }
     }
 }

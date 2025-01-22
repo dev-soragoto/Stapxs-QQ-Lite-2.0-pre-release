@@ -284,6 +284,10 @@ function changeColorMode(mode: string) {
         const StatusBar = runtimeData.plantform.capacitor.Plugins.StatusBar
         StatusBar.setStyle({ style: mode.toUpperCase() })
     }
+    // Capacitor: VConsole 颜色
+    if(runtimeData.plantform.vConsole) {
+        runtimeData.plantform.vConsole.setOption('theme', mode)
+    }
 }
 
 /**

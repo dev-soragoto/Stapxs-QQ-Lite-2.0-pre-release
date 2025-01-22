@@ -989,3 +989,12 @@ msgstr ""
 
 msgid "别划了别划了被看见了啦"
 msgstr ""
+
+msgid "[有人@你]"
+msgstr ""
+
+msgid "[@全体]"
+msgstr ""
+
+msgid "[特別关心]"
+msgstr ""

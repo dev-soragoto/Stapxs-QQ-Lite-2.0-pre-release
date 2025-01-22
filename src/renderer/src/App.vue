@@ -124,7 +124,7 @@
                 <div v-if="tags.page == 'Friends'">
                     <Friends :list="runtimeData.userList" @load-history="loadHistory" @user-click="changeChat" />
                 </div>
-                <div class="opt-main-tab">
+                <div class="opt-main-tab" style="opacity: 0">
                     <Options :show="tags.page == 'Options'" :class="tags.page == 'Options' ? 'active' : ''"
                         :config="runtimeData.sysConfig" />
                 </div>
@@ -483,9 +483,19 @@ export default defineComponent({
             this.tags.showChat = show
             this.tags.page = view
             // 附加操作
+            const optTab = document.getElementsByClassName('opt-main-tab')[0] as HTMLDivElement
             switch (view) {
                 case 'Options': {
                     Connector.send('get_version_info', {}, 'getVersionInfo')
+                    if (optTab) {
+                        optTab.style.opacity = '1'
+                    }
+                    break
+                }
+                case 'Home': {
+                    if (optTab) {
+                        optTab.style.opacity = '0'
+                    }
                     break
                 }
             }

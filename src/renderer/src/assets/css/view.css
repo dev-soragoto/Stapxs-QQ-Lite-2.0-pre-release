@@ -17,6 +17,11 @@ textarea:focus {
     outline: none;
 }
 
+.vc-switch {
+    background: var(--color-main) !important;
+    display: none !important;
+}
+
 .mac-controller {
     -webkit-app-region: drag;
     z-index: 100;

@@ -24,7 +24,8 @@ export interface RunTimeDataElem {
     plantform: {
         reader?: IpcRenderer | null,
         capacitor?: any,
-        pulgins?: any
+        pulgins?: any,
+        vConsole?: any,
     },
     tags: {
         firstLoad: boolean

@@ -1725,8 +1725,8 @@ function newMsg(_: string, data: any) {
                         Object.assign(showUser, formatted)
 
                         if(data.atme) showUser.highlight = $t('[有人@你]')
-                        if(data.atall) showUser.highlight = $t('[@全體]')
-                        if(isImportant) showUser.highlight = $t('[特別關心]')
+                        if(data.atall) showUser.highlight = $t('[@全体]')
+                        if(isImportant) showUser.highlight = $t('[特別关心]')
 
                         runtimeData.onMsgList.push(showUser)
                     }
