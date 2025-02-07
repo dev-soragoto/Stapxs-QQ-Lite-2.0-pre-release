@@ -123,7 +123,7 @@
                 // 如果滚到了底部
                 if (
                     target.scrollHeight - target.scrollTop <
-                    target.clientHeight + 1
+                    target.clientHeight + 0.5
                 ) {
                     if (runtimeData.stickerCache) {
                         if (
