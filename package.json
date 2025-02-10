@@ -1,6 +1,6 @@
 {
     "name": "stapxs-qq-lite",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "private": false,
     "author": "Stapx Steve [林槐]",
     "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现",
