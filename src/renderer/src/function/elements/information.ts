@@ -55,6 +55,7 @@ export interface RunTimeDataElem {
     }
     messageList: any[]
     mergeMessageList?: any[] | undefined
+    mergeMessageImgList?: any[] | undefined
     stickerCache?: any[]
     popBoxList: {
         // 通用弹窗

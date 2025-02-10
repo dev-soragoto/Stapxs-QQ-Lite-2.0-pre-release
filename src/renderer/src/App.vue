@@ -206,7 +206,9 @@
         </Transition>
         <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
             :options="viewerOpt"
-            :images="runtimeData.chatInfo.info.image_list" @inited="viewerInited" @hide="viewerHide"
+            :images="runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list"
+            @inited="viewerInited"
+            @hide="viewerHide"
             @show="viewerShow">
             <template #default="scope">
                 <img v-for="info in scope.images" :key="'imgView-' + info.index" :src="info.img_url">

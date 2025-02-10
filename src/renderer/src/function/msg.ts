@@ -549,6 +549,26 @@ const msgFunctons = {
             list = getMessageList(list)
             if (list != undefined) {
                 runtimeData.mergeMessageList = list
+                // 提取合并转发中的消息图片列表
+                const imgList = [] as {
+                    index: number
+                    message_id: string
+                    img_url: string
+                }[]
+                let index = 0
+                list.forEach((item) => {
+                    item.message.forEach((msg) => {
+                        if (msg.type == 'image') {
+                            imgList.push({
+                                index: index,
+                                message_id: item.message_id,
+                                img_url: msg.url,
+                            })
+                            index++
+                        }
+                    })
+                })
+                runtimeData.mergeMessageImgList = imgList
             }
         }
     },

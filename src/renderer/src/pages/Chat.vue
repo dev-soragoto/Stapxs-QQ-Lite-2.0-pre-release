@@ -1910,6 +1910,7 @@
              */
             closeMergeMsg() {
                 this.runtimeData.mergeMessageList = undefined
+                this.runtimeData.mergeMessageImgList = undefined
             },
 
             /**
