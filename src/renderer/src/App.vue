@@ -399,7 +399,7 @@ export default defineComponent({
             // =============================================================
             // 初始化完成
             // 创建 popstate
-            if(runtimeData.tags.platform == 'web' && getDeviceType() === 'Android' || getDeviceType() === 'iOS') {
+            if(runtimeData.tags.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
                 window.addEventListener('popstate', () => {
                     if(!loginInfo.status || runtimeData.tags.openSideBar) {
                         // 离开提醒

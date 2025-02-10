@@ -1727,9 +1727,9 @@ function newMsg(_: string, data: any) {
                         const formatted = formatMessageData(data, data.message_type === 'group')
                         Object.assign(showUser, formatted)
 
-                        if(data.atme) showUser.highlight = $t('[有人@你]')
-                        if(data.atall) showUser.highlight = $t('[@全体]')
-                        if(isImportant) showUser.highlight = $t('[特別关心]')
+                        if(data.atme) { showUser.highlight = $t('[有人@你]') }
+                        if(data.atall) { showUser.highlight = $t('[@全体]') }
+                        if(isImportant) { showUser.highlight = $t('[特別关心]') }
 
                         runtimeData.onMsgList.push(showUser)
                     }
