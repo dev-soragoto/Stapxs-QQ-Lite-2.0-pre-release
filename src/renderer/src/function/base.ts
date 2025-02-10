@@ -79,7 +79,11 @@ export class Logger {
     private print(type: LogType, args: string, data: any, hidden: boolean) {
         const error = new Error()
         // 浏览器类型，用于判断是不是 webkit
-        const isWebkit = /webkit/i.test(navigator.userAgent)
+        let isWebkit = /webkit/i.test(navigator.userAgent)
+        if(window.electron != undefined) {
+            // electron 是 chrome，但是 userAgent 里面含有 webkit 字样
+            isWebkit = false
+        }
         // 从调用栈中获取调用者信息
         let from = undefined as string | undefined
         const stack = error.stack
@@ -116,23 +120,53 @@ export class Logger {
             }
         }
 
-        if (!hidden && from) {
+        // 如果存在 vconsole 就不打印带 css 样式的日志（它不支持）
+        // 因为在 capturer 下 from 是无意义的，所以也不显示
+        if (document.getElementById('__vconsole')) {
+            const { message } = this.buildLogParams(typeStr, args, hidden, type)
+            this.logOutput(message.replaceAll('%c', ' | '), [], data, false)
+        } else {
+            const { message, styles } = this.buildLogParams(typeStr, args, hidden, type, from)
+            this.logOutput(message, styles, data)
+        }
+    }
+
+    private buildLogParams(
+        typeStr: string,
+        args: string,
+        hidden: boolean,
+        type: LogType,
+        from?: string
+    ): { message: string; styles: string[] } {
+        const hasFrom = !hidden && from;
+        if (hasFrom) {
+            return {
+                message: `%c${typeStr}%c${from}%c\n${args}`,
+                styles: [
+                    `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px 0 0 7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
+                    'background:#e3e8ec;color:#000;padding:2px 7px 4px 4px;border-radius:0 7px 7px 0;margin-bottom:7px;',
+                    ''
+                ]
+            }
+        } else {
+            return {
+                message: `%c${typeStr}%c ${args}`,
+                styles: [
+                    `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
+                    '',
+                    ''
+                ]
+            }
+        }
+    }
+
+    private logOutput(message: string, styles: string[], data: any, useStyles = true) {
+        if (useStyles) {
             // eslint-disable-next-line no-console
-            console.log(
-                `%c${typeStr}%c${from}%c\n${args}`,
-                `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px 0 0 7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
-                'background:#e3e8ec;color:#000;padding:2px 7px 4px 4px;border-radius:0 7px 7px 0;margin-bottom:7px;',
-                '',
-                data
-            )
+            console.log(message, ...styles, data)
         } else {
             // eslint-disable-next-line no-console
-            console.log(
-                `%c${typeStr}%c ${args}`,
-                `background:#${this.logTypeInfo[type][0]};color:#${this.logTypeInfo[type][1]};border-radius:7px;padding:2px 4px 2px 7px;margin-bottom:7px;`,
-                '',
-                data
-            )
+            console.log(message, data)
         }
     }
 }

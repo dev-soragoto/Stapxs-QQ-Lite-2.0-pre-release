@@ -1,9 +1,9 @@
 {
     "name": "stapxs-qq-lite",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "private": false,
     "author": "Stapx Steve [林槐]",
-    "description": "一个兼容 OneBot 的非官方网页版 QQ 客户端，使用 Vue 重制的全新版本。",
+    "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现",
     "homepage": "http://github.com/Stapxs/Stapxs-QQ-Lite-2.0",
     "license": "Apache-2.0",
     "main": "./out/main/index.js",
@@ -32,6 +32,7 @@
         "electron-window-state": "^5.0.3",
         "log4js": "^6.9.1",
         "rollup-plugin-node-polyfills": "^0.2.1",
+        "vconsole": "^3.15.1",
         "ws": "^8.18.0"
     },
     "devDependencies": {

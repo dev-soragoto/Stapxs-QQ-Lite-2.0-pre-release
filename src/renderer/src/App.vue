@@ -1,6 +1,6 @@
 <template>
     <div v-if="dev" class="dev-bar">
-        {{ 'Stapxs QQ Lite Development Mode' }}
+        {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
         {{ ' / fps: ' + fps.value }}
     </div>
     <div v-if="runtimeData.sysConfig.opt_no_window" class="top-bar" name="appbar">
@@ -124,7 +124,7 @@
                 <div v-if="tags.page == 'Friends'">
                     <Friends :list="runtimeData.userList" @load-history="loadHistory" @user-click="changeChat" />
                 </div>
-                <div class="opt-main-tab">
+                <div class="opt-main-tab" style="opacity: 0">
                     <Options :show="tags.page == 'Options'" :class="tags.page == 'Options' ? 'active' : ''"
                         :config="runtimeData.sysConfig" />
                 </div>
@@ -206,7 +206,9 @@
         </Transition>
         <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
             :options="viewerOpt"
-            :images="runtimeData.chatInfo.info.image_list" @inited="viewerInited" @hide="viewerHide"
+            :images="runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list"
+            @inited="viewerInited"
+            @hide="viewerHide"
             @show="viewerShow">
             <template #default="scope">
                 <img v-for="info in scope.images" :key="'imgView-' + info.index" :src="info.img_url">
@@ -234,6 +236,7 @@ import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
+import { getDeviceType } from './function/utils/systemUtil'
 
 export default defineComponent({
     name: 'App',
@@ -301,10 +304,12 @@ export default defineComponent({
                 runtimeData.tags.release =
                     await runtimeData.plantform.reader.invoke('sys:getRelease')
             }
-            if (runtimeData.tags.isCapacitor) {
+            else if (runtimeData.tags.isCapacitor) {
                 runtimeData.tags.platform = window.Capacitor.getPlatform()
                 runtimeData.plantform.capacitor = window.Capacitor
                 runtimeData.plantform.pulgins = window.Capacitor.Plugins
+            } else {
+                runtimeData.tags.platform = 'web'
             }
             app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
@@ -395,6 +400,43 @@ export default defineComponent({
             }
             // =============================================================
             // 初始化完成
+            // 创建 popstate
+            if(runtimeData.tags.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
+                window.addEventListener('popstate', () => {
+                    if(!loginInfo.status || runtimeData.tags.openSideBar) {
+                        // 离开提醒
+                        const popInfo = {
+                            title: this.$t('提醒'),
+                            html: `<span>${this.$t('离开 Stapxs QQ Lite？')}</span>`,
+                            button: [
+                                {
+                                    text: this.$t('取消'),
+                                    fun: () => {
+                                        runtimeData.popBoxList.shift()
+                                        history.pushState('ssqqweb', '', location.href)
+                                    },
+                                },
+                                {
+                                    text: this.$t('离开'),
+                                    master: true,
+                                    fun: () => {
+                                        runtimeData.popBoxList.shift()
+                                        history.back()
+                                    },
+                                },
+                            ],
+                        }
+                        runtimeData.popBoxList.push(popInfo)
+                    } else {
+                        // 内部的页面返回处理，此处使用 watch backTimes 监听
+                        runtimeData.watch.backTimes += 1
+                        history.pushState('ssqqweb', '', location.href)
+                    }
+                });
+                if (history.state != 'ssqqweb') {
+                    history.pushState('ssqqweb', '', location.href)
+                }
+            }
             // UM：加载 Umami 统计功能
             if (!Option.get('close_ga') && !this.dev) {
                 // 给页面添加一个来源域名方便在 electron 中获取
@@ -404,6 +446,9 @@ export default defineComponent({
                 } as any
                 if (runtimeData.tags.isElectron) {
                     config.hostName = 'electron.stapxs.cn'
+                }
+                if(runtimeData.tags.isCapacitor) {
+                    config.hostName = 'capacitor.stapxs.cn'
                 }
                 Umami.initialize(config)
             } else if (this.dev) {
@@ -483,9 +528,19 @@ export default defineComponent({
             this.tags.showChat = show
             this.tags.page = view
             // 附加操作
+            const optTab = document.getElementsByClassName('opt-main-tab')[0] as HTMLDivElement
             switch (view) {
                 case 'Options': {
                     Connector.send('get_version_info', {}, 'getVersionInfo')
+                    if (optTab) {
+                        optTab.style.opacity = '1'
+                    }
+                    break
+                }
+                case 'Home': {
+                    if (optTab) {
+                        optTab.style.opacity = '0'
+                    }
                     break
                 }
             }

@@ -418,6 +418,14 @@ export function sendMsgRaw(
     // 将消息构建为完整消息体先显示出去
     const msgUUID = uuid()
     if (preShow) {
+        const preShowMsg = JSON.parse(JSON.stringify(msg));
+        preShowMsg.forEach((item: any) => {
+            // 对 base64 图片做特殊处理
+            if (item.type == 'image') {
+                const b64Str = (item.file as string).substring(9)
+                item.url = 'data:image/png;base64,' + b64Str
+            }
+        })
         const showMsg = {
             revoke: true,
             fake_msg: true,
@@ -429,9 +437,10 @@ export function sendMsgRaw(
                 user_id: runtimeData.loginInfo.uin,
                 nickname: runtimeData.loginInfo.nickname,
             },
-            message: msg,
-            raw_message: app.config.globalProperties.$t('发送中'),
+            message: preShowMsg,
         } as { [key: string]: any }
+        showMsg.raw_message = getMsgRawTxt(showMsg)
+
         if (showMsg.message_type == 'group') {
             showMsg.group_id = runtimeData.chatInfo.show.id
         } else {

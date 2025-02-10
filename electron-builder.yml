@@ -1,7 +1,7 @@
 # 基础配置
 appId: cn.stapxs.qqweb
 productName: Stapxs QQ Lite
-copyright: Copyright © 2022-2024 Stapx Steve [林槐]
+copyright: Copyright © 2022-2025 Stapx Steve [林槐]
 directories:
     buildResources: build,
     output: dist_electron
@@ -24,7 +24,7 @@ win:
         # - { target: portable, arch: arm64 }
     executableName: Stapxs QQ Lite
     icon: build/icon-client-others.png
-    legalTrademarks: Copyright © 2022-2024 Stapx Steve [林槐]
+    legalTrademarks: Copyright © 2022-2025 Stapx Steve [林槐]
     publisherName: stapxs
 
 # macOS 配置

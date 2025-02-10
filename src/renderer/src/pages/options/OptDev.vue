@@ -233,6 +233,10 @@
 </template>
 
 <script lang="ts">
+    import VConsole from 'vconsole'
+    import app from '@renderer/main'
+    import packageInfo from '../../../../../package.json'
+
     import { defineComponent } from 'vue'
     import {
         run,
@@ -242,9 +246,7 @@
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { runtimeData } from '@renderer/function/msg'
-    import app from '@renderer/main'
     import { BrowserInfo, detect } from 'detect-browser'
-    import packageInfo from '../../../../../package.json'
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
@@ -295,6 +297,32 @@
                 )
             },
             printRuntime() {
+                if(runtimeData.tags.isCapacitor) {
+                    if(!runtimeData.plantform.vConsole) {
+                        runtimeData.plantform.vConsole = new VConsole({
+                            theme: runtimeData.tags.darkMode ? 'dark' : 'light',
+                        })
+                    }
+                    const switcher = document.getElementById('__vconsole')?.getElementsByClassName('vc-switch')[0]
+                    if (switcher) {
+                        (switcher as HTMLDivElement).click()
+                    // safeArea
+                    runtimeData.plantform.pulgins.SafeArea?.getSafeArea().then((safeArea) => {
+                        if (safeArea) {
+                            const vcPanel = document.getElementById('__vconsole')?.getElementsByClassName('vc-panel')[0]
+                            if (vcPanel) {
+                                // vc-content、vc-toolbar
+                                const vcContent = vcPanel.getElementsByClassName('vc-content')[0] as HTMLDivElement
+                                const vcToolbar = vcPanel.getElementsByClassName('vc-toolbar')[0] as HTMLDivElement
+                                if (vcContent && vcToolbar) {
+                                    vcContent.style.marginBottom = safeArea.bottom + 'px'
+                                    vcToolbar.style.marginBottom = safeArea.bottom + 'px'
+                                }
+                            }
+                        }
+                    })
+                    }
+                }
                 /* eslint-disable no-console */
                 console.log('=========================')
                 console.log(runtimeData)
@@ -385,6 +413,16 @@
 
                 info += 'View Info:\n'
                 info += `    Doc Width        -> ${document.getElementById('app')?.offsetWidth} px\n`
+
+                // capactior：索要 safeArea
+                if (runtimeData.tags.isCapacitor) {
+                    const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+                    if (safeArea) {
+                        // 按照前端习惯，这儿的 safeArea 顺序是 top, right, bottom, left
+                        const safeAreaStr = safeArea.top + ', ' + safeArea.right + ', ' + safeArea.bottom + ', ' + safeArea.left
+                        info += `    Safe Area        -> ${safeAreaStr}\n`
+                    }
+                }
 
                 info += 'Network Info:\n'
                 const testList = [

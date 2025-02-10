@@ -18,26 +18,33 @@
             ">
             <div>
                 <div class="base only">
-                    <span>{{ $t('消息') }}</span>
+                    <span v-if="showGroupAssist" style="cursor: pointer;"
+                        @click="showGroupAssist = !showGroupAssist">
+                        <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
+                        {{ $t('群收纳盒') }}
+                    </span>
+                    <span v-else>{{ $t('消息') }}</span>
                     <div style="flex: 1" />
-                    <font-awesome-icon
+                    <font-awesome-icon v-if="!showGroupAssist"
                         :icon="['fas', 'trash-can']"
                         @click="cleanList" />
                 </div>
                 <div class="small">
-                    <span>{{
+                    <span v-if="showGroupAssist" style="cursor: pointer;">
+                        {{ $t('群收纳盒') }}
+                    </span>
+                    <span v-else>{{
                         $t('消息')
                     }}</span>
+                    <div v-if="showGroupAssist"
+                        style="margin-right: -5px;margin-left: 5px;"
+                        @click="showGroupAssist = !showGroupAssist">
+                        <font-awesome-icon :icon="['fas', 'angle-left']" />
+                    </div>
                     <div @click="openLeftBar">
                         <font-awesome-icon :icon="['fas', 'bars-staggered']" />
                     </div>
                 </div>
-            </div>
-            <div v-if="showGroupAssist"
-                class="group-assist"
-                @click="showGroupAssist = !showGroupAssist">
-                <font-awesome-icon :icon="['fas', 'angle-left']" />
-                <span>{{ $t("群收纳盒") }}</span>
             </div>
             <BcMenu
                 :data="listMenu"
@@ -84,10 +91,9 @@
                 style="overflow-x: hidden">
                 <!-- 系统信息 -->
                 <FriendBody
-                    v-if="
+                    v-if="!showGroupAssist &&
                         runtimeData.systemNoticesList &&
-                            Object.keys(runtimeData.systemNoticesList).length > 0
-                    "
+                        Object.keys(runtimeData.systemNoticesList).length > 0"
                     key="inMessage--10000"
                     :select="chat.show.id === -10000"
                     :data="{
@@ -252,6 +258,33 @@
                             runtimeData.onMsgList[index].user_id
                         ).toString(),
                     )
+                }
+                // 判断一下群是否应该在群收纳盒内
+                if(!this.showGroupAssist) {
+                    // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
+                    if (
+                        data.group_id &&
+                        !this.canGroupNotice(data.group_id) &&
+                        !data.always_top
+                    ) {
+                        // 查重
+                        let has = false
+                        for (const get of runtimeData.groupAssistList) {
+                            if (get.group_id == data.group_id) {
+                                has = true
+                                break
+                            }
+                        }
+                        const index = runtimeData.onMsgList.findIndex((get) => {
+                            return data == get
+                        })
+                        runtimeData.onMsgList.splice(index, 1)
+                        if(!has) {
+                            runtimeData.groupAssistList.push(data)
+                        }
+                        // 打开群收纳盒
+                        this.showGroupAssist = true
+                    }
                 }
             },
 
@@ -534,22 +567,6 @@
 </script>
 
 <style>
-    .group-assist {
-        cursor: pointer;
-        color: var(--color-font-2);
-        display: flex;
-        align-items: center;
-        padding: 0 10px;
-        margin-top: -20px;
-        margin-bottom: 5px;
-        width: calc(100% - 30px);
-    }
-    .group-assist span {
-        flex: 1;
-        text-align: right;
-        font-size: 0.8rem;
-    }
-
     .onmsg-enter-active,
     .onmsg-leave-active,
     .onmsg-move {

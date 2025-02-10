@@ -549,6 +549,26 @@ const msgFunctons = {
             list = getMessageList(list)
             if (list != undefined) {
                 runtimeData.mergeMessageList = list
+                // 提取合并转发中的消息图片列表
+                const imgList = [] as {
+                    index: number
+                    message_id: string
+                    img_url: string
+                }[]
+                let index = 0
+                list.forEach((item) => {
+                    item.message.forEach((msg) => {
+                        if (msg.type == 'image') {
+                            imgList.push({
+                                index: index,
+                                message_id: item.message_id,
+                                img_url: msg.url,
+                            })
+                            index++
+                        }
+                    })
+                })
+                runtimeData.mergeMessageImgList = imgList
             }
         }
     },
@@ -1202,6 +1222,9 @@ function saveUser(msg: { [key: string]: any }, type: string) {
     if (list != undefined) {
         const groupNames = {} as { [key: number]: string }
         list.forEach((item, index) => {
+            if(item.group_name  == null || item.group_name == undefined) {
+                item.group_name = ''
+            }
             // 为所有项目追加拼音名称
             let py_name = ''
             if (item.group_id) {
@@ -1724,9 +1747,9 @@ function newMsg(_: string, data: any) {
                         const formatted = formatMessageData(data, data.message_type === 'group')
                         Object.assign(showUser, formatted)
 
-                        if(data.atme) showUser.highlight = $t('[有人@你]')
-                        if(data.atall) showUser.highlight = $t('[@全體]')
-                        if(isImportant) showUser.highlight = $t('[特別關心]')
+                        if(data.atme) { showUser.highlight = $t('[有人@你]') }
+                        if(data.atall) { showUser.highlight = $t('[@全体]') }
+                        if(isImportant) { showUser.highlight = $t('[特別关心]') }
 
                         runtimeData.onMsgList.push(showUser)
                     }
@@ -1796,7 +1819,7 @@ const baseRuntime = {
     tags: {
         firstLoad: false,
         canLoadHistory: true,
-        openSideBar: false,
+        openSideBar: true,
         viewer: { index: 0 },
         msgType: BotMsgType.Array,
         isElectron: false,
@@ -1807,7 +1830,9 @@ const baseRuntime = {
         classes: [],
         darkMode: false,
     },
-    watch: {},
+    watch: {
+        backTimes: 0,
+    },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },
         info: {

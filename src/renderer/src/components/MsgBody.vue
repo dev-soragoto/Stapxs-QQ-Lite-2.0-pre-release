@@ -118,11 +118,6 @@
                                 class="msg-face"
                                 :src="getFace(item.id)"
                                 :title="item.text">
-                            <span
-                                v-else-if="item.id == 394"
-                                class="msg-face-long"><span
-                                v-for="i in 15"
-                                :key="data.message_id + '-l-' + i">🐲</span></span>
                             <font-awesome-icon
                                 v-else
                                 :class="'msg-face-svg' + (isMe ? ' me' : '')"
@@ -537,15 +532,12 @@
              * @param msgId 消息 ID
              */
             imgClick(msgId: string) {
-                if (runtimeData.chatInfo.info.image_list !== undefined) {
+                const images = runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list
+                if (images !== undefined) {
                     // 寻找实际的序号
                     let num = -1
-                    for (
-                        let i = 0;
-                        i < runtimeData.chatInfo.info.image_list.length;
-                        i++
-                    ) {
-                        const item = runtimeData.chatInfo.info.image_list[i]
+                    for (let i = 0; i < images.length; i++) {
+                        const item = images[i]
                         if (item.message_id == msgId) {
                             num = i
                             break

@@ -24,7 +24,8 @@ export interface RunTimeDataElem {
     plantform: {
         reader?: IpcRenderer | null,
         capacitor?: any,
-        pulgins?: any
+        pulgins?: any,
+        vConsole?: any,
     },
     tags: {
         firstLoad: boolean
@@ -50,9 +51,11 @@ export interface RunTimeDataElem {
         heartbeatTime?: number
         oldHeartbeatTime?: number
         lastHeartbeatTime?: number
+        backTimes: number
     }
     messageList: any[]
     mergeMessageList?: any[] | undefined
+    mergeMessageImgList?: any[] | undefined
     stickerCache?: any[]
     popBoxList: {
         // 通用弹窗

@@ -40,7 +40,7 @@
                         <span>Stapxs QQ Lite</span>
                         <a>{{ packageInfo.version }}</a>
                     </div>
-                    <span>Copyright © 2022 - 2024 Stapx Steve [ 林槐 ]</span>
+                    <span>Copyright © 2022 - 2025 Stapx Steve [ 林槐 ]</span>
                 </div>
                 <svg
                     style="width: 50px"

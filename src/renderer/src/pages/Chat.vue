@@ -1037,6 +1037,12 @@
                     this.chatMoveEnd()
                 })
             }
+            // Web：系统返回操作
+            this.$watch(() => runtimeData.watch.backTimes, () => {
+                // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
+                this.tags.chatTouch.openSuccess = true
+                    this.chatMoveEnd()
+            })
         },
         methods: {
             /**
@@ -1904,6 +1910,7 @@
              */
             closeMergeMsg() {
                 this.runtimeData.mergeMessageList = undefined
+                this.runtimeData.mergeMessageImgList = undefined
             },
 
             /**
@@ -2785,6 +2792,7 @@
                                 }
                             }, 500)
                          } else {
+                            runtimeData.chatInfo.show.id = 0
                             runtimeData.tags.openSideBar = true
                             new Logger().add(LogType.UI, '右滑打开侧边栏触发完成')
                         }
