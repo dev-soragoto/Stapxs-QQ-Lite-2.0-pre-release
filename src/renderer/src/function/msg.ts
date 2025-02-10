@@ -1202,6 +1202,9 @@ function saveUser(msg: { [key: string]: any }, type: string) {
     if (list != undefined) {
         const groupNames = {} as { [key: number]: string }
         list.forEach((item, index) => {
+            if(item.group_name  == null || item.group_name == undefined) {
+                item.group_name = ''
+            }
             // 为所有项目追加拼音名称
             let py_name = ''
             if (item.group_id) {

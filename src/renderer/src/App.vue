@@ -1,6 +1,6 @@
 <template>
     <div v-if="dev" class="dev-bar">
-        {{ 'Stapxs QQ Lite Development Mode' }}
+        {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
         {{ ' / fps: ' + fps.value }}
     </div>
     <div v-if="runtimeData.sysConfig.opt_no_window" class="top-bar" name="appbar">
@@ -404,6 +404,9 @@ export default defineComponent({
                 } as any
                 if (runtimeData.tags.isElectron) {
                     config.hostName = 'electron.stapxs.cn'
+                }
+                if(runtimeData.tags.isCapacitor) {
+                    config.hostName = 'capacitor.stapxs.cn'
                 }
                 Umami.initialize(config)
             } else if (this.dev) {
