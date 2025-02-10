@@ -122,8 +122,8 @@
                 const target = e.target as HTMLDivElement
                 // 如果滚到了底部
                 if (
-                    target.scrollHeight - target.scrollTop ===
-                    target.clientHeight
+                    target.scrollHeight - target.scrollTop <
+                    target.clientHeight + 0.5
                 ) {
                     if (runtimeData.stickerCache) {
                         if (
