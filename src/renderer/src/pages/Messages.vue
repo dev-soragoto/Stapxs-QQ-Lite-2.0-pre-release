@@ -37,7 +37,7 @@
                         $t('消息')
                     }}</span>
                     <div v-if="showGroupAssist"
-                        style="margin-right: -5px;"
+                        style="margin-right: -5px;margin-left: 5px;"
                         @click="showGroupAssist = !showGroupAssist">
                         <font-awesome-icon :icon="['fas', 'angle-left']" />
                     </div>

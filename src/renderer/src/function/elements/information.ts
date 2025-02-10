@@ -51,6 +51,7 @@ export interface RunTimeDataElem {
         heartbeatTime?: number
         oldHeartbeatTime?: number
         lastHeartbeatTime?: number
+        backTimes: number
     }
     messageList: any[]
     mergeMessageList?: any[] | undefined

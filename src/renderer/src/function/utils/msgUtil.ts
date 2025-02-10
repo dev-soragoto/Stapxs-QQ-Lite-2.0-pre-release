@@ -438,8 +438,9 @@ export function sendMsgRaw(
                 nickname: runtimeData.loginInfo.nickname,
             },
             message: preShowMsg,
-            raw_message: app.config.globalProperties.$t('发送中'),
         } as { [key: string]: any }
+        showMsg.raw_message = getMsgRawTxt(showMsg)
+
         if (showMsg.message_type == 'group') {
             showMsg.group_id = runtimeData.chatInfo.show.id
         } else {

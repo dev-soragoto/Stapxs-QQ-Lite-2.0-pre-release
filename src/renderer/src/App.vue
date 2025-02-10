@@ -234,6 +234,7 @@ import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
+import { getDeviceType } from './function/utils/systemUtil'
 
 export default defineComponent({
     name: 'App',
@@ -301,10 +302,12 @@ export default defineComponent({
                 runtimeData.tags.release =
                     await runtimeData.plantform.reader.invoke('sys:getRelease')
             }
-            if (runtimeData.tags.isCapacitor) {
+            else if (runtimeData.tags.isCapacitor) {
                 runtimeData.tags.platform = window.Capacitor.getPlatform()
                 runtimeData.plantform.capacitor = window.Capacitor
                 runtimeData.plantform.pulgins = window.Capacitor.Plugins
+            } else {
+                runtimeData.tags.platform = 'web'
             }
             app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
@@ -395,6 +398,43 @@ export default defineComponent({
             }
             // =============================================================
             // 初始化完成
+            // 创建 popstate
+            if(runtimeData.tags.platform == 'web' && getDeviceType() === 'Android' || getDeviceType() === 'iOS') {
+                window.addEventListener('popstate', () => {
+                    if(!loginInfo.status || runtimeData.tags.openSideBar) {
+                        // 离开提醒
+                        const popInfo = {
+                            title: this.$t('提醒'),
+                            html: `<span>${this.$t('离开 Stapxs QQ Lite？')}</span>`,
+                            button: [
+                                {
+                                    text: this.$t('取消'),
+                                    fun: () => {
+                                        runtimeData.popBoxList.shift()
+                                        history.pushState('ssqqweb', '', location.href)
+                                    },
+                                },
+                                {
+                                    text: this.$t('离开'),
+                                    master: true,
+                                    fun: () => {
+                                        runtimeData.popBoxList.shift()
+                                        history.back()
+                                    },
+                                },
+                            ],
+                        }
+                        runtimeData.popBoxList.push(popInfo)
+                    } else {
+                        // 内部的页面返回处理，此处使用 watch backTimes 监听
+                        runtimeData.watch.backTimes += 1
+                        history.pushState('ssqqweb', '', location.href)
+                    }
+                });
+                if (history.state != 'ssqqweb') {
+                    history.pushState('ssqqweb', '', location.href)
+                }
+            }
             // UM：加载 Umami 统计功能
             if (!Option.get('close_ga') && !this.dev) {
                 // 给页面添加一个来源域名方便在 electron 中获取

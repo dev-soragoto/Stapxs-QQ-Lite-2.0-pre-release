@@ -1799,7 +1799,7 @@ const baseRuntime = {
     tags: {
         firstLoad: false,
         canLoadHistory: true,
-        openSideBar: false,
+        openSideBar: true,
         viewer: { index: 0 },
         msgType: BotMsgType.Array,
         isElectron: false,
@@ -1810,7 +1810,9 @@ const baseRuntime = {
         classes: [],
         darkMode: false,
     },
-    watch: {},
+    watch: {
+        backTimes: 0,
+    },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },
         info: {
