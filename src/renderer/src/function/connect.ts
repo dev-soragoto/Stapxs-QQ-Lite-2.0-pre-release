@@ -35,6 +35,7 @@ export class Connector {
         wss: boolean | undefined = undefined,
     ) {
         const { $t } = app.config.globalProperties
+        login.creating = true
 
         // Electron 默认使用后端连接模式
         if (runtimeData.tags.isElectron) {
@@ -58,52 +59,76 @@ export class Connector {
             return
         }
 
-        // PS：只有在未设定 wss 类型的情况下才认为是首次连接
-        if (wss == undefined) retry = 0
-        else retry++
-        // 最多自动重试连接五次
-        if (retry > 5) return
-
-        logger.debug('当前处于 debug 日志模式。连接器将仅输出发出的消息 ……')
-        logger.add(
-            LogType.WS,
-            '当前处于 all 日志模式。连接器将输出全部收发消息 ……',
-        )
-
-        let url = `ws://${address}?access_token=${token}`
-        if (address.startsWith('ws://') || address.startsWith('wss://')) {
-            url = `${address}?access_token=${token}`
+        if(import.meta.env.VITE_APP_SSE_MODE) {
+            logger.add(LogType.WS, '使用 SSE 连接模式')
+            const sse = new EventSource(`${import.meta.env.VITE_APP_SEE_EVENT_ADDRESS}?access_token=${token}`)
+            sse.onopen = () => {
+                login.creating = false
+                this.onopen(address, token)
+            }
+            sse.onmessage = (e) => {
+                this.onmessage(e.data)
+            }
+            sse.onerror = (e) => {
+                login.creating = false
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
+                return
+            }
+            return
         } else {
-            if (wss == undefined) {
-                // 判断连接类型
-                if (document.location.protocol == 'https:') {
-                    // 判断连接 URL 的协议，https 优先尝试 wss
-                    runtimeData.tags.connectSsl = true
-                    url = `wss://${address}?access_token=${token}`
-                }
+            // PS：只有在未设定 wss 类型的情况下才认为是首次连接
+            if (wss == undefined) retry = 0
+            else retry++
+            // 最多自动重试连接五次
+            if (retry > 5) {
+                login.creating = false
+                return
+            }
+
+            logger.debug('当前处于 debug 日志模式。连接器将仅输出发出的消息 ……')
+            logger.add(
+                LogType.WS,
+                '当前处于 all 日志模式。连接器将输出全部收发消息 ……',
+            )
+
+            let url = `ws://${address}?access_token=${token}`
+            if (address.startsWith('ws://') || address.startsWith('wss://')) {
+                url = `${address}?access_token=${token}`
             } else {
-                if (wss) {
-                    url = `wss://${address}?access_token=${token}`
+                if (wss == undefined) {
+                    // 判断连接类型
+                    if (document.location.protocol == 'https:') {
+                        // 判断连接 URL 的协议，https 优先尝试 wss
+                        runtimeData.tags.connectSsl = true
+                        url = `wss://${address}?access_token=${token}`
+                    }
+                } else {
+                    if (wss) {
+                        url = `wss://${address}?access_token=${token}`
+                    }
                 }
             }
-        }
 
-        if (!websocket) {
-            websocket = new WebSocket(url)
-        }
+            if (!websocket) {
+                websocket = new WebSocket(url)
+            }
 
-        websocket.onopen = () => {
-            this.onopen(address, token)
-        }
-        websocket.onmessage = (e) => {
-            this.onmessage(e.data)
-        }
-        websocket.onclose = (e) => {
-            this.onclose(e.code, e.reason, address, token)
-        }
-        websocket.onerror = (e) => {
-            popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
-            return
+            websocket.onopen = () => {
+                login.creating = false
+                this.onopen(address, token)
+            }
+            websocket.onmessage = (e) => {
+                this.onmessage(e.data)
+            }
+            websocket.onclose = (e) => {
+                login.creating = false
+                this.onclose(e.code, e.reason, address, token)
+            }
+            websocket.onerror = (e) => {
+                login.creating = false
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
+                return
+            }
         }
     }
 
@@ -221,13 +246,33 @@ export class Connector {
         value: { [key: string]: any },
         echo: string = name,
     ) {
-        // 构建 JSON
-        const json = JSON.stringify({
-            action: name,
-            params: value,
-            echo: echo,
-        } as BotActionElem)
-        this.sendRaw(json)
+        if(import.meta.env.VITE_APP_SSE_MODE) {
+            // 使用 http POST 请求 /api/$name,body 为 json
+            const body = JSON.stringify(value)
+            fetch(`${import.meta.env.VITE_APP_SEE_HTTP_ADDRESS}/${name}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': login.token,
+                },
+                body: body,
+            }).then((response) => {
+                if (response.ok) {
+                    response.json().then((data) => {
+                        data.echo = echo
+                        parse(JSON.stringify(data))
+                    })
+                }
+            })
+        } else {
+            // 构建 JSON
+            const json = JSON.stringify({
+                action: name,
+                params: value,
+                echo: echo,
+            } as BotActionElem)
+            this.sendRaw(json)
+        }
     }
     static sendRaw(json: string) {
         // 发送
@@ -258,4 +303,5 @@ export const login: LoginCacheElem = reactive({
     status: false,
     address: '',
     token: '',
+    creating: false,
 })

@@ -5,7 +5,8 @@ export interface LoginCacheElem {
     quickLogin: { address: string, port: number }[] | null
     address: string
     token: string
-    status: boolean
+    status: boolean,
+    creating: boolean
 }
 
 export interface PopInfoElem {

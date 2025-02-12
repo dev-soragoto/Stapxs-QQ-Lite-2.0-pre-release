@@ -52,7 +52,7 @@
                             <p>{{ $t('连接到 OneBot') }}</p>
                             <form @submit.prevent @submit="connect">
                                 <template v-if="loginInfo.quickLogin == null || loginInfo.quickLogin.length == 0">
-                                    <label>
+                                    <label v-if="!sse">
                                         <font-awesome-icon :icon="['fas', 'link']" />
                                         <input id="sev_address" v-model="loginInfo.address" :placeholder="$t('连接地址')"
                                             class="ss-input" autocomplete="off">
@@ -93,8 +93,9 @@
                                     </label>
                                 </div>
                                 <button id="connect_btn" class="ss-button" type="submit"
+                                    :disabled="loginInfo.creating"
                                     @mousemove="afd">
-                                    {{ $t('连接') }}
+                                    {{ loginInfo.creating ? $t('连接中') : $t('连接') }}
                                 </button>
                             </form>
                             <a href="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8"
@@ -249,6 +250,7 @@ export default defineComponent({
     data() {
         return {
             dev: import.meta.env.DEV,
+            sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
             Connector: Connector,
             defineAsyncComponent: defineAsyncComponent,
             save: Option.runASWEvent,
@@ -317,7 +319,7 @@ export default defineComponent({
                 document.getElementById('login-wave'),
             )
             // AMAP：初始化高德地图
-            window._AMapSecurityConfig = import.meta.env.VITE_AMAP_SECRET
+            window._AMapSecurityConfig = import.meta.env.VITE_APP_AMAP_SECRET
             // =============================================================
             // 初始化功能
             App.createMenu() // Electron：创建菜单

@@ -1,18 +1,27 @@
-import { defineConfig, type PluginOption } from 'vite'
-import { resolve } from 'path'
-import { VitePWA } from 'vite-plugin-pwa'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import ViteYaml from '@modyfi/vite-plugin-yaml'
+
+import { defineConfig, type PluginOption } from 'vite'
+import { resolve } from 'path'
+import { VitePWA } from 'vite-plugin-pwa'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 /** @type {import('vite').UserConfig} */
 export default defineConfig({
     root: './src/renderer',
+    envDir: '../../',
     base: process.env.BUILD_ENV == 'github-actions'? '/Stapxs-QQ-Lite-2.0/' : './',
     server: {
-        port: 8080
+        port: 8080,
+        proxy: {
+            '/api': {
+                target: 'http://localhost:3000',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, '')
+            }
+        }
     },
     plugins: [
         vue(),
