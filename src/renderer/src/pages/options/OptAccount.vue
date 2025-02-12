@@ -28,7 +28,7 @@
                             : ''
                     }}</span>
                 </div>
-                <font-awesome-icon
+                <font-awesome-icon v-if="!sse"
                     :icon="['fas', 'right-from-bracket']"
                     @click="exitConnect" />
             </div>
@@ -168,6 +168,7 @@
                 runtimeData: runtimeData,
                 save: saveR,
                 login: login,
+                sse: import.meta.env.VITE_APP_SSE_MODE == 'true'
             }
         },
         methods: {

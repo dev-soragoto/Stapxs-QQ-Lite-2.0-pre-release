@@ -60,6 +60,14 @@ export class Connector {
         }
 
         if(import.meta.env.VITE_APP_SSE_MODE) {
+            if(import.meta.env.VITE_APP_SSE_SUPPORT == 'false') {
+                // 如果 Bot 不支持 SSE 连接，直接跳过触发连接完成的后续操作
+                // PS：在未连接 SSE 的情况下，ssqq 将会缺失一些功能：
+                // - 新的消息推送、通知推送
+                // - 聊天面板新消息将不会自动更新，但依旧可以通过重新加载面板来获取新消息
+                this.onopen(address, token)
+                return
+            }
             logger.add(LogType.WS, '使用 SSE 连接模式')
             const sse = new EventSource(`${import.meta.env.VITE_APP_SEE_EVENT_ADDRESS}?access_token=${token}`)
             sse.onopen = () => {

@@ -21,10 +21,6 @@
 
 ![view](README/view.png)
 
-# 文档
-
-- **简体中文(当前)**
-
 ## ✨ 特性支持
 
 - ✅ 使用 Vue.js 全家桶开发，快乐前后端分离
@@ -127,6 +123,25 @@ yarn lint
 yarn build
 ```
 
+#### SSE 模式
+Stapxs QQ Lite 2.0 支持 SSE 模式。在此模式下本应用将以 HTTP SSE + HTTP API 的方式连接到 QQ Bot 后端以提供更快速和轻量化的连接；甚至可以直接抛弃 SSE 通知推送，仅使用 HTTP API 进行通信。
+
+SSE 模式不支持动态切换，你需要在构建前修改 `.env` 环境变量中 `VITE_APP_SSE` 开头的项来启用 SSE 模式。启用了 SSE 模式后页面将不能使用其他模式。
+
+~~~ ini
+VITE_APP_SSE_MODE=true
+VITE_APP_SSE_SUPPORT=true
+VITE_APP_SEE_EVENT_ADDRESS=api/_events
+VITE_APP_SEE_HTTP_ADDRESS=api
+~~~
+SSE_MODE 指定了 SSE 模式的主要开关；
+
+SSE_SUPPORT 指定了是否支持 SSE 模式。为 false 时将仅使用 HTTP API 进行通信，这将无法接收到 QQ Bot 的主动推送消息而导致部分功能缺失：
+- 失去新的消息推送、通知推送
+- 聊天面板新消息将不会自动更新，但依旧可以通过重新加载面板来获取新消息
+
+剩余的两项指定了 SSE 模式的地址，你可以根据自己的需求来修改。
+
 ### > 构建 Electron 客户端
 
 在 `2.3.0` 版本后，Stapxs QQ Lite 2.0 支持构建为 Electron 应用并补充部分平台特性的功能，你也可以自行构建。
@@ -141,26 +156,47 @@ yarn dev:electron
 yarn build:win
 ```
 
-其他平台构建查看[命令列表](#-命令列表)
+更多功能查看 [命令列表](#-命令列表)
+
+### > 构建 Capacitor 应用
+在 `3.0.0` 版本及以后，Stapxs QQ Lite 2.0 支持通过 Capacitor 构建为移动端应用并补充部分平台特性的功能，你也可以自行构建。
+
+#### Android
+你可以使用 `yarn open:android` 来打开 Android Studio。通过 Build -> Generate Signed Bundle or APK 来构建 APK 文件。
+
+你也可以直接使用 `yarn build:android` 来构建 APK 文件。请检查修改 `capacitor.config.ts` 文件中的 `android.buildOptions` 中的 keyStore 配置。
+
+构建结果将最终输出在 `src/mobile/android/app/build/outputs/apk/release` 目录下。
+
+#### iOS
+你可以使用 `yarn open:ios` 来打开 Xcode。通过 Product -> Archive 来构建 IPA 文件。
+
+你也可以直接使用 `yarn build:ios` 来构建 IPA 文件。此构建方式将执行 `scripts/build-export-ipa.sh` 脚本，构建将使用钥匙串中的默认开发者证书，请确保你的开发者证书已经配置。
+
+XCode 的构建结果将最终输出在 `src/mobile/ios/build` 目录下，脚本构建结果将输出在 `dist_capacitor` 目录下。
 
 ### > 命令列表
 
 **命令格式为`yarn <命令>`，其中`<命令>`为列表中的一个：**
 
-| 命令          | 描述                |
-| ------------- | ------------------ |
-| install       | 安装依赖            |
-| lint          | 代码检查和自动格式化 |
-| dev           | 网页调试            |
-| dev:electron  | Electron 调试      |
-| dev:ios       | Ios 调试           |
-| dev:android   | 安卓调试            |
-| build         | 网页构建            |
-| build:win     | 构建 Windows 应用   |
-| build:mac     | 构建 Mac Os 应用    |
-| build:linux   | 构建 Liunx 应用     |
-| build:ios     | 构建 Ios 应用       |
-| build:android | 构建 Andorid 应用   |
+| 命令           | 描述                |
+| -------------- | ------------------ |
+| install        | 安装依赖            |
+| lint           | 代码检查和自动格式化  |
+| update:icon    | 更新移动端应用图标集  |
+| update:version | 更新移动端应用版本号  |
+| dev            | 网页调试            |
+| dev:electron   | Electron 调试      |
+| dev:ios        | iOS 调试           |
+| dev:android    | 安卓调试            |
+| open:ios       | 在 XCode 中打开项目  |
+| open:android   | 在 Android Studio 中打开项目  |
+| build          | 网页构建            |
+| build:win      | 构建 Windows 应用   |
+| build:mac      | 构建 macOS 应用    |
+| build:linux    | 构建 Liunx 应用     |
+| build:ios      | 构建 iOS 应用       |
+| build:android  | 构建 Andorid 应用   |
 
 ### > Github Actions
 
