@@ -69,7 +69,7 @@ export class Connector {
                 return
             }
             logger.add(LogType.WS, '使用 SSE 连接模式')
-            const sse = new EventSource(`${import.meta.env.VITE_APP_SEE_EVENT_ADDRESS}?access_token=${token}`)
+            const sse = new EventSource(`${import.meta.env.VITE_APP_SSE_EVENT_ADDRESS}?access_token=${token}`)
             sse.onopen = () => {
                 login.creating = false
                 this.onopen(address, token)
@@ -85,8 +85,11 @@ export class Connector {
             return
         } else {
             // PS：只有在未设定 wss 类型的情况下才认为是首次连接
-            if (wss == undefined) retry = 0
-            else retry++
+            if (wss == undefined) {
+                retry = 0
+            } else {
+                retry++
+            }
             // 最多自动重试连接五次
             if (retry > 5) {
                 login.creating = false
@@ -102,19 +105,15 @@ export class Connector {
             let url = `ws://${address}?access_token=${token}`
             if (address.startsWith('ws://') || address.startsWith('wss://')) {
                 url = `${address}?access_token=${token}`
-            } else {
-                if (wss == undefined) {
-                    // 判断连接类型
-                    if (document.location.protocol == 'https:') {
-                        // 判断连接 URL 的协议，https 优先尝试 wss
-                        runtimeData.tags.connectSsl = true
-                        url = `wss://${address}?access_token=${token}`
-                    }
-                } else {
-                    if (wss) {
-                        url = `wss://${address}?access_token=${token}`
-                    }
+            } else if (wss == undefined) {
+                // 判断连接类型
+                if (document.location.protocol == 'https:') {
+                    // 判断连接 URL 的协议，https 优先尝试 wss
+                    runtimeData.tags.connectSsl = true
+                    url = `wss://${address}?access_token=${token}`
                 }
+            } else {
+                url = `wss://${address}?access_token=${token}`
             }
 
             if (!websocket) {
@@ -257,7 +256,7 @@ export class Connector {
         if(import.meta.env.VITE_APP_SSE_MODE) {
             // 使用 http POST 请求 /api/$name,body 为 json
             const body = JSON.stringify(value)
-            fetch(`${import.meta.env.VITE_APP_SEE_HTTP_ADDRESS}/${name}`, {
+            fetch(`${import.meta.env.VITE_APP_SSE_HTTP_ADDRESS}/${name}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -271,6 +270,8 @@ export class Connector {
                         parse(JSON.stringify(data))
                     })
                 }
+            }).catch((error) => {
+                logger.error(error, ' 请求 API ' + name + ' 失败')
             })
         } else {
             // 构建 JSON
