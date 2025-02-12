@@ -584,14 +584,6 @@ const msgFunctons = {
         if (msg.message_id == undefined) {
             msg.message_id = msg.data.message_id
         }
-        if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
-            // 请求消息内容
-            Connector.send(
-                runtimeData.jsonMap.get_message.name ?? 'get_msg',
-                { message_id: msg.message_id },
-                'getSendMsg_' + msg.message_id + '_0',
-            )
-        }
         if (echoList[1] == 'forward') {
             // PS：这儿写是写了转发成功，事实上不确定消息有没有真的发送出去（x
             popInfo.add(
@@ -608,6 +600,14 @@ const msgFunctons = {
                     return
                 }
             })
+            // 请求消息内容
+            // PS：其实有消息通知的情况下不需要再去主动获取了
+            // 但是为了兼容没有开启自身消息通知的情况，还是保留了这个功能
+            Connector.send(
+                runtimeData.jsonMap.get_message.name ?? 'get_msg',
+                { message_id: msg.message_id },
+                'getSendMsg_' + msg.message_id,
+            )
         }
     },
 
@@ -923,76 +923,48 @@ const msgFunctons = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
-        if (msg.status == 'ok') {
-            const msgData = getMsgData('get_message', msg, msgPath.get_message)
-            let msgInfoData = undefined as any[] | undefined
-            if (msgData) {
-                msgInfoData = getMsgData(
-                    'message_info',
-                    msgData[0],
-                    msgPath.message_info,
-                )
-            }
-            if (Number(echoList[2]) <= 5 && msgData && msgInfoData) {
-                const msg = msgData[0]
-                const msgInfo = msgInfoData[0]
-                if (echoList[1] !== msgInfo.message_id.toString()) {
-                    // 返回的不是这条消息，重新请求
-                    // popInfo.add(PopType.ERR,
-                    //     app.config.globalProperties.$t('获取消息失败，正在重试') +
-                                // ' ( A' + echoList[2] + ' )')
-                    setTimeout(() => {
-                        Connector.send(
-                            runtimeData.jsonMap.get_message.name ?? 'get_msg',
-                            { message_id: echoList[1] },
-                            'getSendMsg_' +
-                                echoList[1] +
-                                '_' +
-                                (Number(echoList[2]) + 1),
-                        )
-                    }, 5000)
-                } else {
-                    // 去消息列表里找这条消息，如果有的话删掉它
-                    runtimeData.messageList.forEach((item, index) => {
-                        if (item.message_id == msgInfo.message_id) {
-                            runtimeData.messageList.splice(index, 1)
-                        }
-                    })
-                    // 防止重试过程中切换聊天
-                    if (
-                        msgInfo.group_id == runtimeData.chatInfo.show.id ||
-                        msgInfo.private_id == runtimeData.chatInfo.show.id
-                    ) {
-                        saveMsg(buildMsgList([msg]), 'bottom')
-                    }
-                }
-            } else {
-                popInfo.add(
-                    PopType.ERR,
-                    app.config.globalProperties.$t('获取消息失败'),
-                )
-            }
-        } else {
-            if (Number(echoList[2]) < 5) {
-                // 看起来没获取到，再试试
-                // popInfo.add(PopType.ERR,
-                //     app.config.globalProperties.$t('获取消息失败，正在重试') +
-                            // ' ( B' + echoList[2] + ' )')
+        const msgInfo = getMsgData('message_info', msg.data, msgPath.message_info)
+        if (msgInfo) {
+            const info = msgInfo[0]
+            if (echoList[1] !== info.message_id.toString()) {
+                // 返回的不是这条消息，重新请求
                 setTimeout(() => {
                     Connector.send(
                         runtimeData.jsonMap.get_message.name ?? 'get_msg',
                         { message_id: echoList[1] },
-                        'getSendMsg_' +
-                            echoList[1] +
-                            '_' +
-                            (Number(echoList[2]) + 1),
+                        'getSendMsg_' + echoList[1]
                     )
                 }, 5000)
             } else {
-                popInfo.add(
-                    PopType.ERR,
-                    app.config.globalProperties.$t('获取消息失败'),
-                )
+                // 列表内最近的一条 fake_msg（倒序查找）
+                let fakeIndex = -1
+                for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
+                    const msg = runtimeData.messageList[i]
+                    if (msg.fake_msg != undefined && info.sender == runtimeData.loginInfo.uin) {
+                        fakeIndex = i
+                        break
+                    }
+                }
+                // 预发送消息刷新
+                if (fakeIndex != -1) {
+                    // 将这条消息直接替换掉
+                    let trueMsg = getMsgData(
+                        'message_list',
+                        buildMsgList([msg.data]),
+                        msgPath.message_list,
+                    )
+                    trueMsg = getMessageList(trueMsg)
+                    if (trueMsg && trueMsg.length == 1) {
+                        runtimeData.messageList[fakeIndex].message = trueMsg[0].message
+                        runtimeData.messageList[fakeIndex].raw_message =
+                            trueMsg[0].raw_message
+                        runtimeData.messageList[fakeIndex].time = trueMsg[0].time
+
+                        runtimeData.messageList[fakeIndex].fake_msg = undefined
+                        runtimeData.messageList[fakeIndex].revoke = false
+                    }
+                    return
+                }
             }
         }
     },
@@ -1512,12 +1484,6 @@ function newMsg(_: string, data: any) {
             return item.user_id == sender
         })
         const isImportant = senderInfo?.class_id == 9999
-
-        // 消息回调检查
-        // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
-        if (Option.get('send_reget') !== true && sender === loginId) {
-            Option.save('send_reget', true)
-        }
 
         // 列表内最近的一条 fake_msg（倒序查找）
         let fakeIndex = -1
