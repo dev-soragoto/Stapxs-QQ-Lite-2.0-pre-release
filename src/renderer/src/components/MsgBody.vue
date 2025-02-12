@@ -650,7 +650,7 @@
                             })
                     } else {
                         // 获取链接预览
-                        fetch(import.meta.env.VITE_APP_LINK_VIEW + encodeURIComponent(fistLink))
+                        fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
                             .then((res) => res.json())
                             .then((res) => {
                                 if (res.status === undefined && Object.keys(res).length > 0) {
