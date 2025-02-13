@@ -18,7 +18,7 @@
             ">
             <div>
                 <div class="base only">
-                    <span v-if="!runtimeData.sysConfig.notice_all && showGroupAssist" style="cursor: pointer;"
+                    <span v-if="showGroupAssist" style="cursor: pointer;"
                         @click="showGroupAssist = !showGroupAssist">
                         <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
                         {{ $t('群收纳盒') }}
@@ -30,7 +30,7 @@
                         @click="cleanList" />
                 </div>
                 <div class="small">
-                    <span v-if="!runtimeData.sysConfig.notice_all && showGroupAssist" style="cursor: pointer;">
+                    <span v-if="showGroupAssist" style="cursor: pointer;">
                         {{ $t('群收纳盒') }}
                     </span>
                     <span v-else>{{
@@ -105,8 +105,7 @@
                     @click="systemNoticeClick" />
                 <!--- 群组消息 -->
                 <FriendBody
-                    v-if="!runtimeData.sysConfig.notice_all && 
-                        runtimeData.groupAssistList &&
+                    v-if="runtimeData.groupAssistList &&
                         runtimeData.groupAssistList.length > 0 &&
                         !showGroupAssist"
                     key="inMessage--10001"
@@ -261,10 +260,10 @@
                     )
                 }
 
-                const close_group_assist = runtimeData.sysConfig.notice_all
-
                 // 判断一下群是否应该在群收纳盒内
-                if (!close_group_assist && !this.showGroupAssist) {
+                if (!this.showGroupAssist &&
+                    !runtimeData.sysConfig.bubble_sort_user
+                ) {
                     // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
                     if (
                         data.group_id &&
@@ -428,17 +427,17 @@
                             }
                             Option.save('notice_group', noticeInfo)
                             // 如果它在 onMsgList 里面，移到 groupAssistList
-                            const index = runtimeData.onMsgList.findIndex(
-                                (get) => {
-                                    return item == get
-                                },
-                            )
+                            if(!runtimeData.sysConfig.bubble_sort_user) {
+                                const index = runtimeData.onMsgList.findIndex(
+                                    (get) => {
+                                        return item == get
+                                    },
+                                )
 
-                            const close_group_assist = runtimeData.sysConfig.notice_all
-
-                            if (!close_group_assist && index >= 0 && !item.always_top) {
-                                runtimeData.onMsgList.splice(index, 1)
-                                runtimeData.groupAssistList.push(item)
+                                if (index >= 0 && !item.always_top) {
+                                    runtimeData.onMsgList.splice(index, 1)
+                                    runtimeData.groupAssistList.push(item)
+                                }
                             }
                             break
                         }

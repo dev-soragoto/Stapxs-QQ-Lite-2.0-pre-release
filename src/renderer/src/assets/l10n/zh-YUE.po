@@ -246,11 +246,11 @@ msgstr "Info"
 msgid "ReferenceError: moYu is not defined"
 msgstr "小心老闆叫你 OT debug 囉"
 
-msgid "通知所有新消息"
-msgstr "通知所有訊息"
+msgid "关闭群收纳盒"
+msgstr ""
 
-msgid "让暴风雨来得更猛烈些吧！"
-msgstr "電 腦 大 爆 炸！！！"
+msgid "全都放出来！全都放出来！"
+msgstr ""
 
 msgid "禁用通知"
 msgstr "停用通知"

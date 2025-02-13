@@ -1,11 +1,18 @@
 dirs=(
+    # web
     "dist"
-    "dist_electron"
-    "dist_capacitor"
+    "stats.html"
+    # electron
     "out"
+    "dist_electron"
+    # capacitor
+    "dist_capacitor"
+    # npx
     "ssqq.npx-web-quick-start/bin"
     "ssqq.npx-web-quick-start/node_modules"
-    "stats.html"
+    # android
+    "src/mobile/android/app/release"
+    "src/mobile/android/app/debug"
 )
 
 for dir in ${dirs[@]}; do

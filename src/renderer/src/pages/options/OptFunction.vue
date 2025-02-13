@@ -27,19 +27,17 @@
                     </div>
                 </label>
             </div>
-            <div
-                v-if="!runtimeData.sysConfig.close_notice"
-                class="opt-item">
-                <font-awesome-icon :icon="['fas', 'bolt']" />
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'box-open']" />
                 <div>
-                    <span>{{ $t('通知所有新消息') }}</span>
-                    <span>{{ $t('让暴风雨来得更猛烈些吧！') }}</span>
+                    <span>{{ $t('关闭群收纳盒') }}</span>
+                    <span>{{ $t('全都放出来！全都放出来！') }}</span>
                 </div>
                 <label class="ss-switch">
                     <input
-                        v-model="runtimeData.sysConfig.notice_all"
+                        v-model="runtimeData.sysConfig.bubble_sort_user"
                         type="checkbox"
-                        name="notice_all"
+                        name="bubble_sort_user"
                         @change="save">
                     <div>
                         <div />

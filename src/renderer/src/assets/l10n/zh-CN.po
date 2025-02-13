@@ -246,10 +246,10 @@ msgstr ""
 msgid "ReferenceError: moYu is not defined"
 msgstr ""
 
-msgid "通知所有新消息"
+msgid "关闭群收纳盒"
 msgstr ""
 
-msgid "让暴风雨来得更猛烈些吧！"
+msgid "全都放出来！全都放出来！"
 msgstr ""
 
 msgid "禁用通知"
@@ -991,10 +991,10 @@ msgid "别划了别划了被看见了啦"
 msgstr ""
 
 msgid "[有人@你]"
-msgstr ""
+msgstr "[有人{'@'}你]"
 
 msgid "[@全体]"
-msgstr ""
+msgstr "[{'@'}全体]"
 
 msgid "[特別关心]"
 msgstr ""

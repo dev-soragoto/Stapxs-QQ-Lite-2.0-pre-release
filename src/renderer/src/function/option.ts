@@ -26,6 +26,7 @@ import {
     getPortableFileLang,
     getTrueLang,
 } from '@renderer/function/utils/systemUtil'
+import { orderOnMsgList } from './utils/msgUtil'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -58,6 +59,17 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_revolve: viewRevolve,
     opt_always_top: viewAlwaysTop,
     opt_fast_animation: updateFarstAnimation,
+    bubble_sort_user: clearGroupAssist,
+}
+
+function clearGroupAssist() {
+    // 如果 GroupAssistList 里有东西，把它们全部挪到 OnMsgList 里然后清空
+    if (runtimeData.groupAssistList.length > 0) {
+        runtimeData.onMsgList.push(...runtimeData.groupAssistList)
+        runtimeData.groupAssistList = []
+        const newList = orderOnMsgList(runtimeData.onMsgList)
+        runtimeData.onMsgList = newList
+    }
 }
 
 function updateFarstAnimation(value: boolean) {
