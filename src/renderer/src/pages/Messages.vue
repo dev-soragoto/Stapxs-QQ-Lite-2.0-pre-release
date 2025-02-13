@@ -496,6 +496,28 @@
                 }
                 // 为消息列表内的对象刷新置顶标志
                 item.always_top = value
+                // 刷新群收纳盒
+                if(item.group_id && !runtimeData.sysConfig.bubble_sort_user) {
+                    if(value) {
+                        const index = runtimeData.groupAssistList.findIndex((get) => {
+                            return item == get
+                        })
+                        if (index >= 0) {
+                            runtimeData.groupAssistList.splice(index, 1)
+                        }
+                        runtimeData.onMsgList.push(item)
+                        this.showGroupAssist = false
+                    } else {
+                        const index = runtimeData.onMsgList.findIndex((get) => {
+                            return item == get
+                        })
+                        if (index >= 0) {
+                            runtimeData.onMsgList.splice(index, 1)
+                            runtimeData.groupAssistList.push(item)
+                        }
+                        this.showGroupAssist = true
+                    }
+                }
                 // 重新排序列表
                 const newList = orderOnMsgList(runtimeData.onMsgList)
                 runtimeData.onMsgList = newList

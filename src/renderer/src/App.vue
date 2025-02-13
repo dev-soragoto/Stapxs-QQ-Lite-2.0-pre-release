@@ -290,8 +290,11 @@ export default defineComponent({
     },
     mounted() {
         const logger = new Logger()
-        window.moYu = () => {
-            return 'undefined'
+        window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
+        window.onbeforeunload = () => {
+            if (runtimeData.tags.isElectron) {
+                Connector.close()
+            }
         }
         // 页面加载完成后
         window.onload = async () => {

@@ -1644,9 +1644,11 @@ function newMsg(_: string, data: any) {
                 runtimeData.onMsgList[index].time = getViewTime(
                     Number(data.time),
                 )
-                if(data.atme) { runtimeData.onMsgList[index].highlight = $t('[有人@你]') }
-                if(data.atall) { runtimeData.onMsgList[index].highlight = $t('[@全体]') }
-                if(isImportant) { runtimeData.onMsgList[index].highlight = $t('[特別关心]') }
+                if(id != showId) {
+                    if(data.atme) { runtimeData.onMsgList[index].highlight = $t('[有人@你]') }
+                    if(data.atall) { runtimeData.onMsgList[index].highlight = $t('[@全体]') }
+                    if(isImportant) { runtimeData.onMsgList[index].highlight = $t('[特別关心]') }
+                }
 
                 // 重新排序列表
                 const newList = orderOnMsgList(runtimeData.onMsgList)
@@ -1767,7 +1769,8 @@ function newMsg(_: string, data: any) {
                             const formatted = formatMessageData(data, data.message_type === 'group')
                             Object.assign(showUser, formatted)
                             runtimeData.onMsgList.push(showUser)
-                        } else {
+                        } else if(id != showId) {
+                            // 显示特殊高亮提醒
                             const showUser = getOnMsg[0]
                             if(data.atme) { showUser.highlight = $t('[有人@你]') }
                             if(data.atall) { showUser.highlight = $t('[@全体]') }
