@@ -1730,14 +1730,15 @@ function newMsg(_: string, data: any) {
             })
         }
 
-        // ( 如果是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群通知列表中
-        if (getGroup.length != 1 && data.message_type === 'group' && !isGroupNotice) {
+        // ( 如果 没有关闭群收纳盒 && 是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群通知列表中
+        const close_group_assist = runtimeData.sysConfig.close_group_assist
+        if (!close_group_assist && getGroup.length != 1 && data.message_type === 'group' && !isGroupNotice) {
             const getList = runtimeData.userList.filter((item) => {
                 return item.group_id === id
             })
-            if(getList.length === 1) {
+            if (getList.length === 1) {
                 const showGroup = getList[0]
-                if(!showGroup.always_top) {
+                if (!showGroup.always_top) {
                     const formatted = formatMessageData(data, true)
                     Object.assign(showGroup, formatted)
                     runtimeData.groupAssistList.push(showGroup)

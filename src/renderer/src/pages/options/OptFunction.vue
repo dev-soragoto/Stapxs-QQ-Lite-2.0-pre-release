@@ -50,6 +50,26 @@
         <div class="ss-card">
             <header>{{ $t('聊天选项') }}</header>
             <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'user-group']" />
+                <div>
+                    <span>{{ $t('关闭群收纳盒') }}</span>
+                    <span>{{ $t('你也不想点来点去找群聊和私聊吧') }}</span>
+                </div>
+                <label
+                    v-if="ndt < 3"
+                    class="ss-switch">
+                    <input
+                        v-model="runtimeData.sysConfig.close_group_assist"
+                        type="checkbox"
+                        name="close_group_assist"
+                        @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+
+            <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'box-archive']" />
                 <div>
                     <span>{{ $t('消息防撤回') }}</span>
