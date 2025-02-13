@@ -18,7 +18,7 @@
             ">
             <div>
                 <div class="base only">
-                    <span v-if="showGroupAssist" style="cursor: pointer;"
+                    <span v-if="!runtimeData.sysConfig.notice_all && showGroupAssist" style="cursor: pointer;"
                         @click="showGroupAssist = !showGroupAssist">
                         <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
                         {{ $t('群收纳盒') }}
@@ -30,7 +30,7 @@
                         @click="cleanList" />
                 </div>
                 <div class="small">
-                    <span v-if="showGroupAssist" style="cursor: pointer;">
+                    <span v-if="!runtimeData.sysConfig.notice_all && showGroupAssist" style="cursor: pointer;">
                         {{ $t('群收纳盒') }}
                     </span>
                     <span v-else>{{
@@ -105,7 +105,8 @@
                     @click="systemNoticeClick" />
                 <!--- 群组消息 -->
                 <FriendBody
-                    v-if="runtimeData.groupAssistList &&
+                    v-if="!runtimeData.sysConfig.notice_all && 
+                        runtimeData.groupAssistList &&
                         runtimeData.groupAssistList.length > 0 &&
                         !showGroupAssist"
                     key="inMessage--10001"
@@ -259,8 +260,11 @@
                         ).toString(),
                     )
                 }
+
+                const close_group_assist = runtimeData.sysConfig.notice_all
+
                 // 判断一下群是否应该在群收纳盒内
-                if(!this.showGroupAssist) {
+                if (!close_group_assist && !this.showGroupAssist) {
                     // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
                     if (
                         data.group_id &&
@@ -279,7 +283,7 @@
                             return data == get
                         })
                         runtimeData.onMsgList.splice(index, 1)
-                        if(!has) {
+                        if (!has) {
                             runtimeData.groupAssistList.push(data)
                         }
                         // 打开群收纳盒
@@ -429,7 +433,10 @@
                                     return item == get
                                 },
                             )
-                            if (index >= 0 && !item.always_top) {
+
+                            const close_group_assist = runtimeData.sysConfig.notice_all
+
+                            if (!close_group_assist && index >= 0 && !item.always_top) {
                                 runtimeData.onMsgList.splice(index, 1)
                                 runtimeData.groupAssistList.push(item)
                             }

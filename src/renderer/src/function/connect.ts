@@ -59,7 +59,7 @@ export class Connector {
             return
         }
 
-        if(import.meta.env.VITE_APP_SSE_MODE) {
+        if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
             if(import.meta.env.VITE_APP_SSE_SUPPORT == 'false') {
                 // 如果 Bot 不支持 SSE 连接，直接跳过触发连接完成的后续操作
                 // PS：在未连接 SSE 的情况下，ssqq 将会缺失一些功能：
@@ -253,7 +253,7 @@ export class Connector {
         value: { [key: string]: any },
         echo: string = name,
     ) {
-        if(import.meta.env.VITE_APP_SSE_MODE) {
+        if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
             // 使用 http POST 请求 /api/$name,body 为 json
             const body = JSON.stringify(value)
             fetch(`${import.meta.env.VITE_APP_SSE_HTTP_ADDRESS}/${name}`, {
