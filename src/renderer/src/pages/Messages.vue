@@ -18,7 +18,7 @@
             ">
             <div>
                 <div class="base only">
-                    <span v-if="!runtimeData.sysConfig.close_group_assist && showGroupAssist" style="cursor: pointer;"
+                    <span v-if="!runtimeData.sysConfig.notice_all && showGroupAssist" style="cursor: pointer;"
                         @click="showGroupAssist = !showGroupAssist">
                         <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
                         {{ $t('群收纳盒') }}
@@ -30,7 +30,7 @@
                         @click="cleanList" />
                 </div>
                 <div class="small">
-                    <span v-if="!runtimeData.sysConfig.close_group_assist && showGroupAssist" style="cursor: pointer;">
+                    <span v-if="!runtimeData.sysConfig.notice_all && showGroupAssist" style="cursor: pointer;">
                         {{ $t('群收纳盒') }}
                     </span>
                     <span v-else>{{
@@ -105,7 +105,7 @@
                     @click="systemNoticeClick" />
                 <!--- 群组消息 -->
                 <FriendBody
-                    v-if="!runtimeData.sysConfig.close_group_assist && 
+                    v-if="!runtimeData.sysConfig.notice_all && 
                         runtimeData.groupAssistList &&
                         runtimeData.groupAssistList.length > 0 &&
                         !showGroupAssist"
@@ -261,7 +261,7 @@
                     )
                 }
 
-                const close_group_assist = runtimeData.sysConfig.close_group_assist
+                const close_group_assist = runtimeData.sysConfig.notice_all
 
                 // 判断一下群是否应该在群收纳盒内
                 if (!close_group_assist && !this.showGroupAssist) {
@@ -434,7 +434,7 @@
                                 },
                             )
 
-                            const close_group_assist = runtimeData.sysConfig.close_group_assist
+                            const close_group_assist = runtimeData.sysConfig.notice_all
 
                             if (!close_group_assist && index >= 0 && !item.always_top) {
                                 runtimeData.onMsgList.splice(index, 1)

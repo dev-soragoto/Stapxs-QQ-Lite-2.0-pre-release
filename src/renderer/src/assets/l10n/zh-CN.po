@@ -978,12 +978,6 @@ msgstr ""
 msgid "群收纳盒"
 msgstr ""
 
-msgid "关闭群收纳盒"
-msgstr ""
-
-msgid "你也不想点来点去找群聊和私聊吧"
-msgstr ""
-
 msgid "来自局域网的服务"
 msgstr ""
 
