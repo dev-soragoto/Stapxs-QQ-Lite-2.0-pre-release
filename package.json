@@ -1,6 +1,6 @@
 {
     "name": "stapxs-qq-lite",
-    "version": "3.0.4",
+    "version": "3.0.5",
     "private": false,
     "author": "Stapx Steve [林槐]",
     "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现",
@@ -10,8 +10,10 @@
     "type": "module",
     "scripts": {
         "capacitor:copy:before": "capacitor-sync-version",
+
         "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
         "update:icon": "npx @capacitor/assets generate --assetPath 'src/mobile/_assets' --iosProject 'src/mobile/ios/App' --androidProject 'src/mobile/android' --android --ios",
+        "update:version": "npx @stapxs/capacitor-sync-version android ios",
         "dev": "vite dev",
         "dev:electron": "electron-vite dev",
         "dev:ios": "vite build && capacitor sync ios && capacitor run ios",
