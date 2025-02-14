@@ -1,0 +1,71 @@
+name: sync
+
+permissions:
+  contents: write
+
+on:
+    push: 
+        branches:
+            - main
+    schedule:
+      - cron: "0 * * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout pre-release repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github action bot"
+          git config --global user.email "soragoto@soragoto.io"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/Stapxs/Stapxs-QQ-Lite-2.0.git || true
+
+      - name: fetch branch
+        run: |
+          git fetch upstream "+refs/heads/*:refs/remotes/upstream/*" --prune
+          git fetch origin  "+refs/heads/*:refs/remotes/origin/*" --prune
+
+      - name: push latest branch
+        run: |
+
+          latest_branch=""
+          latest_time=0
+
+          for branch in $(git branch -r | grep '^[[:space:]]*upstream/' | grep -v 'HEAD[[:space:]]*' | grep -v gh-pages | grep -v main | sed 's/^[[:space:]]*//g'); do
+            commit_time=$(git show -s --format=%ct $branch)
+            if [ "$commit_time" -gt "$latest_time" ]; then
+              latest_time=$commit_time
+              latest_branch=$branch
+            fi
+          done
+
+          if [ -z "$latest_branch" ]; then
+            echo "lastest branch not found"
+            exit 1
+          fi
+
+          git checkout -B pre-release $latest_branch
+
+          local_hash=$(git rev-parse HEAD)
+          remote_hash=$(git rev-parse --verify origin/pre-release^ || echo "-1")
+
+          if [ "$local_hash" = "$remote_hash" ]; then
+            echo "no changes"
+            exit 0
+          fi
+
+          sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\\1\\2.$latest_time\\3/g" package.json
+
+          rm -rf .github/
+
+          git commit -a -m "" --allow-empty-message
+
+          git push origin pre-release --force
