@@ -65,7 +65,6 @@ jobs:
           if [ "$latest_branch" = "upstream/next" ]
           then
             echo "upstream latest branch is release branch"
-            exit 0
           else
             sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\\1\\2.$latest_time\\3/g" package.json
           fi
