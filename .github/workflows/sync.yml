@@ -70,8 +70,10 @@ jobs:
           fi
 
           find . -type f -exec sed -i 's#https://api.github.com/repos/Stapxs/Stapxs-QQ-Lite-2.0/releases/latest#https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest#gI' {} +
+          sed -i 's#/Stapxs-QQ-Lite-2.0#Stapxs-QQ-Lite-2.0-pre-release#gI' vite.config.ts
 
           rm -rf .github/
+          git restore --source=origin/main .github/workflows/build-app.yml
 
           git commit -a -m "" --allow-empty-message
 
