@@ -1514,6 +1514,8 @@ function newMsg(_: string, data: any) {
                 runtimeData.messageList[fakeIndex].fake_msg = undefined
                 runtimeData.messageList[fakeIndex].revoke = false
             }
+            // 移除最顶端的一条消息以被动刷新整个列表
+            runtimeData.messageList.shift()
             return
         }
 
@@ -1677,12 +1679,13 @@ function newMsg(_: string, data: any) {
 
         // 通知判定 ============================================
         // eslint-disable-next-line max-len
-        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 群组 AT || 群组 AT 全体 || 群组开启了通知)) 这些情况需要进行新消息处理
+        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 开启了群组通知模式 || 群组 AT || 群组 AT 全体 || 群组开启了通知)) 这些情况需要进行新消息处理
         if (
             sender != loginId &&
             sender != 0 &&
             (isImportant ||
                 data.message_type !== 'group' ||
+                runtimeData.sysConfig.group_notice_type != 'none' ||
                 data.atme ||
                 data.atall ||
                 isGroupNotice)
@@ -1695,6 +1698,7 @@ function newMsg(_: string, data: any) {
             })
             // (发送者没有被打开 || 窗口没有焦点 || 窗口被最小化 || 在特别关心列表里) 这些情况需要进行消息通知
             if (
+                runtimeData.sysConfig.group_notice_type == 'all' ||
                 id !== showId ||
                 !document.hasFocus() ||
                 document.hidden ||

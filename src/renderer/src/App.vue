@@ -95,7 +95,12 @@
                                 <button id="connect_btn" class="ss-button" type="submit"
                                     :disabled="loginInfo.creating"
                                     @mousemove="afd">
-                                    {{ loginInfo.creating ? $t('连接中') : $t('连接') }}
+                                    <template v-if="!loginInfo.creating">
+                                        {{ $t('连接') }}
+                                    </template>
+                                    <template v-else>
+                                        <font-awesome-icon :icon="['fas', 'spinner']" spin />
+                                    </template>
                                 </button>
                             </form>
                             <a href="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8"

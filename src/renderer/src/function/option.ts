@@ -44,6 +44,7 @@ const optDefault: { [key: string]: any } = {
     chat_background_blur: 0,
     msg_type: 2,
     store_face: '[]',
+    group_notice_type: 'none',
 }
 
 // =============== 设置项事件 ===============

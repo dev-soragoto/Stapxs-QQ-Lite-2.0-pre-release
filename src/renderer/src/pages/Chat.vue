@@ -1367,10 +1367,9 @@
                         if (
                             runtimeData.chatInfo.show.type != 'group' ||
                             data.sender.user_id === runtimeData.loginInfo.uin ||
-                            runtimeData.chatInfo.info.me_info.role ===
-                                'member' ||
+                            runtimeData.chatInfo.info.me_info.role === 'member' ||
                             selectUserType == 'owner' ||
-                            selectUserType == 'admin'
+                            (selectUserType == 'admin' && runtimeData.chatInfo.info.me_info.role != 'owner')
                         ) {
                             // 自己、私聊或者没有权限的时候不显示移除
                             this.tags.menuDisplay.remove = false

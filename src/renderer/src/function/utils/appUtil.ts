@@ -581,7 +581,11 @@ export async function loadMobile() {
                 case 'onopen': Connector.onopen(login.address, login.token); break
                 case 'onmessage': Connector.onmessage(data.data); break
                 case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
-                case 'onerror': popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false); break
+                case 'onerror': {
+                    login.creating = false
+                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
+                    break
+                }
                 case 'onServiceFound': setQuickLogin(msg.address, msg.port); break
                 default: break
             }
