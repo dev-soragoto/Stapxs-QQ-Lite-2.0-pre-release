@@ -1,0 +1,1 @@
+import{g as i}from"./@stapxs-Av0aUqI6.js";var m=function(a,s){for(var p=a.split("."),N=s.split("."),r=0;r<3;r++){var t=Number(p[r]),e=Number(N[r]);if(t>e)return 1;if(e>t)return-1;if(!isNaN(t)&&isNaN(e))return 1;if(isNaN(t)&&!isNaN(e))return-1}return 0};const f=i(m);export{f as c};
