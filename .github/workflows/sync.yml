@@ -69,6 +69,8 @@ jobs:
             sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\\1\\2.$latest_time\\3/g" package.json
           fi
 
+          find . -type f -exec sed -i 's#https://api.github.com/repos/Stapxs/Stapxs-QQ-Lite-2.0/releases/latest#https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest#gI' {} +
+
           rm -rf .github/
 
           git commit -a -m "" --allow-empty-message
