@@ -286,11 +286,11 @@ body {
     font-size: 0.7rem;
 }
 .contributors-card > div > div {
-    min-width: 25px;
-    min-height: 25px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    min-width: calc(20% - 10px);
+    aspect-ratio: 1;
+    margin: 5px;
 }
+
 .contributors-card {
     width: calc(100% - 20px);
     min-height: 0;

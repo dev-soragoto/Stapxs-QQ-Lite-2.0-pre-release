@@ -246,11 +246,11 @@ msgstr "基本"
 msgid "ReferenceError: moYu is not defined"
 msgstr "ReferenceError: moYu is not defined"
 
-msgid "通知所有新消息"
-msgstr "通知所有新訊息"
+msgid "关闭群收纳盒"
+msgstr ""
 
-msgid "让暴风雨来得更猛烈些吧！"
-msgstr "讓暴風雨來得更猛烈些吧！"
+msgid "全都放出来！全都放出来！"
+msgstr ""
 
 msgid "禁用通知"
 msgstr "停用通知"
@@ -834,7 +834,7 @@ msgstr ""
 msgid "确定要退出群聊吗？"
 msgstr ""
 
-msgid "留言"
+msgid "留言："
 msgstr ""
 
 msgid "请求加为好友"

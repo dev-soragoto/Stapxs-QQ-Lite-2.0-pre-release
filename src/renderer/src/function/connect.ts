@@ -77,9 +77,9 @@ export class Connector {
             sse.onmessage = (e) => {
                 this.onmessage(e.data)
             }
-            sse.onerror = (e) => {
+            sse.onerror = () => {
                 login.creating = false
-                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
+                popInfo.add(PopType.ERR, $t('连接不稳定'))
                 return
             }
             return
@@ -209,11 +209,13 @@ export class Connector {
                 break
             }
             default: {
+                login.creating = false
                 popInfo.add(PopType.ERR, $t('连接失败') + ': ' + code, false)
             }
         }
 
         logger.error(null, $t('连接失败') + ': ' + code)
+        login.creating = false
         login.status = false
     }
 

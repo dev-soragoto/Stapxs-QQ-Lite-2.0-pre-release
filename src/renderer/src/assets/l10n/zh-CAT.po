@@ -119,12 +119,6 @@ msgstr "喵喵喵喵喵！"
 msgid "开发者选项"
 msgstr "工程喵选项"
 
-msgid "通知所有新消息"
-msgstr "通知左右新喵喵"
-
-msgid "让暴风雨来得更猛烈些吧！"
-msgstr "让喵喵风暴来得更猛烈些吧！"
-
 msgid "好嘛 …… 不烦你 ……"
 msgstr "不可以喵喵！"
 

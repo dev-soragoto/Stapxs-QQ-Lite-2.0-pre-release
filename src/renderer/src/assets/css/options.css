@@ -158,25 +158,25 @@
     flex-wrap: wrap;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    width: 100%;
 }
 .contributors-card > div > div {
+    min-width: calc(20% - 20px);
+    aspect-ratio: 1;
+    margin: 10px;
     background-size: 100%;
     border-radius: 35px;
-    margin-right: 10px;
-    min-height: 35px;
-    min-width: 35px;
-    margin-top: 10px;
-    margin-bottom: 10px;
     cursor: pointer;
 }
 .contributors-card > div > div.me {
     outline: 2px solid var(--color-main);
     border: 1px solid var(--color-card-1);
+    box-sizing: border-box;
 }
 .contributors-card > div > div.super-thanks {
     outline: 2px dashed var(--color-main);
     border: 1px solid var(--color-card-1);
+    box-sizing: border-box;
 }
 
 .opt-tab {

@@ -27,24 +27,44 @@
                     </div>
                 </label>
             </div>
-            <div
-                v-if="!runtimeData.sysConfig.close_notice"
-                class="opt-item">
-                <font-awesome-icon :icon="['fas', 'bolt']" />
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'box-open']" />
                 <div>
-                    <span>{{ $t('通知所有新消息') }}</span>
-                    <span>{{ $t('让暴风雨来得更猛烈些吧！') }}</span>
+                    <span>{{ $t('关闭群收纳盒') }}</span>
+                    <span>{{ $t('全都放出来！全都放出来！') }}</span>
                 </div>
                 <label class="ss-switch">
                     <input
-                        v-model="runtimeData.sysConfig.notice_all"
+                        v-model="runtimeData.sysConfig.bubble_sort_user"
                         type="checkbox"
-                        name="notice_all"
+                        name="bubble_sort_user"
                         @change="save">
                     <div>
                         <div />
                     </div>
                 </label>
+            </div>
+            <div v-if="runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'user-group']" />
+                <div>
+                    <span>{{ $t('群消息通知方式') }}</span>
+                    <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
+                </div>
+                <select
+                    v-model="runtimeData.sysConfig.group_notice_type"
+                    name="group_notice_type"
+                    title="group_notice_type"
+                    @change="save">
+                    <option value="none">
+                        {{ $t('不通知（默认）') }}
+                    </option>
+                    <option value="inner">
+                        {{ $t('仅应用内通知') }}
+                    </option>
+                    <option value="all">
+                        {{ $t('应用内通知和系统通知') }}
+                    </option>
+                </select>
             </div>
         </div>
         <div class="ss-card">

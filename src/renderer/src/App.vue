@@ -95,7 +95,12 @@
                                 <button id="connect_btn" class="ss-button" type="submit"
                                     :disabled="loginInfo.creating"
                                     @mousemove="afd">
-                                    {{ loginInfo.creating ? $t('连接中') : $t('连接') }}
+                                    <template v-if="!loginInfo.creating">
+                                        {{ $t('连接') }}
+                                    </template>
+                                    <template v-else>
+                                        <font-awesome-icon :icon="['fas', 'spinner']" spin />
+                                    </template>
                                 </button>
                             </form>
                             <a href="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8"
@@ -290,8 +295,11 @@ export default defineComponent({
     },
     mounted() {
         const logger = new Logger()
-        window.moYu = () => {
-            return 'undefined'
+        window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
+        window.onbeforeunload = () => {
+            if (runtimeData.tags.isElectron) {
+                Connector.close()
+            }
         }
         // 页面加载完成后
         window.onload = async () => {
@@ -644,8 +652,6 @@ export default defineComponent({
                     'getGroupMemberList',
                 )
             }
-            // 刷新系统消息
-            Connector.send('get_system_msg', {}, 'getSystemMsg')
 
             // 清理通知
             if (runtimeData.plantform.reader) {

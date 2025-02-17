@@ -26,6 +26,8 @@ import {
     getPortableFileLang,
     getTrueLang,
 } from '@renderer/function/utils/systemUtil'
+import { orderOnMsgList } from './utils/msgUtil'
+import OptionFun from './option'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -42,6 +44,7 @@ const optDefault: { [key: string]: any } = {
     chat_background_blur: 0,
     msg_type: 2,
     store_face: '[]',
+    group_notice_type: 'none',
 }
 
 // =============== 设置项事件 ===============
@@ -58,6 +61,43 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_revolve: viewRevolve,
     opt_always_top: viewAlwaysTop,
     opt_fast_animation: updateFarstAnimation,
+    bubble_sort_user: clearGroupAssist,
+}
+
+function clearGroupAssist(value: boolean) {
+    if(value) {
+        // 如果 GroupAssistList 里有东西，把它们全部挪到 OnMsgList 里然后清空
+        if (runtimeData.groupAssistList.length > 0) {
+            runtimeData.onMsgList.push(...runtimeData.groupAssistList)
+            runtimeData.groupAssistList = []
+            const newList = orderOnMsgList(runtimeData.onMsgList)
+            runtimeData.onMsgList = newList
+        }
+    } else {
+        // 将 onMsgList 中的非置顶、没有开启消息通知的群挪到 GroupAssistList 里
+        const noticeInfo = OptionFun.get('notice_group') ?? {}
+        const noticeGroupIdList = noticeInfo[runtimeData.loginInfo.uin]
+
+        const notTopGroupIdList = runtimeData.onMsgList.filter((item) => {
+            return !item.always_top && item.group_id
+        }).map((item) => {
+            return item.group_id
+        })
+
+        const groupAssistList = notTopGroupIdList.filter((item) => {
+            return !noticeGroupIdList.includes(item)
+        })
+
+        const newList = runtimeData.onMsgList.filter((item) => {
+            return groupAssistList.includes(item.group_id)
+        })
+        // 删除 onMsgList 中的这些群
+        runtimeData.onMsgList = runtimeData.onMsgList.filter((item) => {
+            return !groupAssistList.includes(item.group_id)
+        })
+        const sortedList = orderOnMsgList(newList)
+        runtimeData.groupAssistList = sortedList
+    }
 }
 
 function updateFarstAnimation(value: boolean) {

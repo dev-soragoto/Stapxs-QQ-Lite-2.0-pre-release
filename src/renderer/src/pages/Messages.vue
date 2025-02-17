@@ -259,8 +259,11 @@
                         ).toString(),
                     )
                 }
+
                 // 判断一下群是否应该在群收纳盒内
-                if(!this.showGroupAssist) {
+                if (!this.showGroupAssist &&
+                    !runtimeData.sysConfig.bubble_sort_user
+                ) {
                     // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
                     if (
                         data.group_id &&
@@ -279,7 +282,7 @@
                             return data == get
                         })
                         runtimeData.onMsgList.splice(index, 1)
-                        if(!has) {
+                        if (!has) {
                             runtimeData.groupAssistList.push(data)
                         }
                         // 打开群收纳盒
@@ -424,14 +427,17 @@
                             }
                             Option.save('notice_group', noticeInfo)
                             // 如果它在 onMsgList 里面，移到 groupAssistList
-                            const index = runtimeData.onMsgList.findIndex(
-                                (get) => {
-                                    return item == get
-                                },
-                            )
-                            if (index >= 0 && !item.always_top) {
-                                runtimeData.onMsgList.splice(index, 1)
-                                runtimeData.groupAssistList.push(item)
+                            if(!runtimeData.sysConfig.bubble_sort_user) {
+                                const index = runtimeData.onMsgList.findIndex(
+                                    (get) => {
+                                        return item == get
+                                    },
+                                )
+
+                                if (index >= 0 && !item.always_top) {
+                                    runtimeData.onMsgList.splice(index, 1)
+                                    runtimeData.groupAssistList.push(item)
+                                }
                             }
                             break
                         }
@@ -490,6 +496,28 @@
                 }
                 // 为消息列表内的对象刷新置顶标志
                 item.always_top = value
+                // 刷新群收纳盒
+                if(item.group_id && !runtimeData.sysConfig.bubble_sort_user) {
+                    if(value) {
+                        const index = runtimeData.groupAssistList.findIndex((get) => {
+                            return item == get
+                        })
+                        if (index >= 0) {
+                            runtimeData.groupAssistList.splice(index, 1)
+                        }
+                        runtimeData.onMsgList.push(item)
+                        this.showGroupAssist = false
+                    } else {
+                        const index = runtimeData.onMsgList.findIndex((get) => {
+                            return item == get
+                        })
+                        if (index >= 0) {
+                            runtimeData.onMsgList.splice(index, 1)
+                            runtimeData.groupAssistList.push(item)
+                        }
+                        this.showGroupAssist = true
+                    }
+                }
                 // 重新排序列表
                 const newList = orderOnMsgList(runtimeData.onMsgList)
                 runtimeData.onMsgList = newList

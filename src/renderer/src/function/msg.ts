@@ -908,13 +908,6 @@ const msgFunctons = {
     },
 
     /**
-     * 保存系统消息
-     */
-    getSystemMsg: (_: string, msg: { [key: string]: any }) => {
-        runtimeData.systemNoticesList = msg.data
-    },
-
-    /**
      * 获取发送的消息（消息发送后处理）
      * @deprecated 功能已被遗弃，暂时保留方法
      */
@@ -1471,9 +1464,10 @@ function newMsg(_: string, data: any) {
     if (data.detail_type == 'guild') {
         return
     }
-    // 获取一些基础信息
+
     const infoList = getMsgData('message_info', data, msgPath.message_info)
     if (infoList != undefined) {
+        // 消息基础信息 ============================================
         const info = infoList[0]
         const id = info.group_id ?? info.private_id
         const loginId = runtimeData.loginInfo.uin
@@ -1485,6 +1479,7 @@ function newMsg(_: string, data: any) {
         })
         const isImportant = senderInfo?.class_id == 9999
 
+        // 预发送消息填充 ============================================
         // 列表内最近的一条 fake_msg（倒序查找）
         let fakeIndex = -1
         for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
@@ -1512,10 +1507,12 @@ function newMsg(_: string, data: any) {
                 runtimeData.messageList[fakeIndex].fake_msg = undefined
                 runtimeData.messageList[fakeIndex].revoke = false
             }
+            // 移除最顶端的一条消息以被动刷新整个列表
+            runtimeData.messageList.shift()
             return
         }
 
-        // 显示消息
+        // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
             // 保存消息
             saveMsg(buildMsgList([data]), 'bottom')
@@ -1561,49 +1558,8 @@ function newMsg(_: string, data: any) {
             )
             data = list[0]
         }
-        // 刷新消息列表
-        const get = runtimeData.onMsgList.filter((item, index) => {
-            if (
-                Number(id) === item.user_id ||
-                Number(id) === item.group_id ||
-                Number(info.target_id) === item.user_id
-            ) {
-                runtimeData.onMsgList[index].message_id = data.message_id
-                if (data.message_type === 'group') {
-                    const name =
-                        data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
-                    runtimeData.onMsgList[index].raw_msg =
-                        name + ': ' + getMsgRawTxt(data)
-                } else {
-                    runtimeData.onMsgList[index].raw_msg = getMsgRawTxt(data)
-                }
-                runtimeData.onMsgList[index].time = getViewTime(
-                    Number(data.time),
-                )
 
-                // 重新排序列表
-                const newList = orderOnMsgList(runtimeData.onMsgList)
-                runtimeData.onMsgList = newList
-                return true
-            }
-            return false
-        })
-        // 刷新群收纳箱列表
-        const getGroup = runtimeData.groupAssistList.filter((item, index) => {
-            if (Number(id) === item.group_id) {
-                runtimeData.groupAssistList[index].message_id = data.message_id
-                const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
-                runtimeData.groupAssistList[index].raw_msg = name + ': ' + getMsgRawTxt(data)
-                runtimeData.groupAssistList[index].raw_msg_base = getMsgRawTxt(data)
-                runtimeData.groupAssistList[index].time = getViewTime(Number(data.time))
-
-                // 重新排序
-                const newList = orderOnMsgList(runtimeData.groupAssistList)
-                runtimeData.groupAssistList = newList
-                return true
-            }
-            return false
-        })
+        // 通知判定预处理 ============================================
         // 对于其他不在消息里标记 atme、atall 的处理
         if (data.atme == undefined || data.atall == undefined) {
             data.message.forEach((item: any) => {
@@ -1625,17 +1581,107 @@ function newMsg(_: string, data: any) {
                 isGroupNotice = list.indexOf(id) >= 0
             }
         }
+
+        // 群收纳箱 ============================================
+        if(!runtimeData.sysConfig.bubble_sort_user) {
+            // 刷新群收纳箱列表
+            const getGroup = runtimeData.groupAssistList.filter((item, index) => {
+                if (Number(id) === item.group_id) {
+                    runtimeData.groupAssistList[index].message_id = data.message_id
+                    const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
+                    runtimeData.groupAssistList[index].raw_msg = name + ': ' + getMsgRawTxt(data)
+                    runtimeData.groupAssistList[index].raw_msg_base = getMsgRawTxt(data)
+                    runtimeData.groupAssistList[index].time = getViewTime(Number(data.time))
+
+                    // 重新排序
+                    const newList = orderOnMsgList(runtimeData.groupAssistList)
+                    runtimeData.groupAssistList = newList
+                    return true
+                }
+                return false
+            })
+            // ( 如果 是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群收纳盒中
+            if (getGroup.length != 1 && data.message_type === 'group' && !isGroupNotice) {
+                const getList = runtimeData.userList.filter((item) => {
+                    return item.group_id === id
+                })
+                if (getList.length === 1) {
+                    const showGroup = getList[0]
+                    if (!showGroup.always_top) {
+                        const formatted = formatMessageData(data, true)
+                        Object.assign(showGroup, formatted)
+                        runtimeData.groupAssistList.push(showGroup)
+                        // 重新排序
+                        const newList = orderOnMsgList(runtimeData.groupAssistList)
+                        runtimeData.groupAssistList = newList
+                    }
+                }
+            }
+        }
+
+        // 消息列表 ============================================
+        // 刷新消息列表
+        const get = runtimeData.onMsgList.filter((item, index) => {
+            if (
+                Number(id) === item.user_id ||
+                Number(id) === item.group_id ||
+                Number(info.target_id) === item.user_id
+            ) {
+                runtimeData.onMsgList[index].message_id = data.message_id
+                if (data.message_type === 'group') {
+                    const name =
+                        data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
+                    runtimeData.onMsgList[index].raw_msg =
+                        name + ': ' + getMsgRawTxt(data)
+                } else {
+                    runtimeData.onMsgList[index].raw_msg = getMsgRawTxt(data)
+                }
+                runtimeData.onMsgList[index].time = getViewTime(
+                    Number(data.time),
+                )
+                if(id != showId) {
+                    if(data.atme) { runtimeData.onMsgList[index].highlight = $t('[有人@你]') }
+                    if(data.atall) { runtimeData.onMsgList[index].highlight = $t('[@全体]') }
+                    if(isImportant) { runtimeData.onMsgList[index].highlight = $t('[特別关心]') }
+                }
+
+                // 重新排序列表
+                const newList = orderOnMsgList(runtimeData.onMsgList)
+                runtimeData.onMsgList = newList
+                return true
+            }
+            return false
+        })
+        // 如果禁用了群收纳箱，将群消息添加到消息列表里
+        if(runtimeData.sysConfig.bubble_sort_user) {
+            if (get.length !== 1 && data.message_type === 'group') {
+                const getList = runtimeData.userList.filter((item) => {
+                    return item.group_id === id
+                })
+                if (getList.length === 1) {
+                    const showGroup = getList[0]
+                    const formatted = formatMessageData(data, true)
+                    Object.assign(showGroup, formatted)
+                    runtimeData.onMsgList.push(showGroup)
+                    // 重新排序列表
+                    const newList = orderOnMsgList(runtimeData.onMsgList)
+                    runtimeData.onMsgList = newList
+                }
+            }
+        }
+
+        // 通知判定 ============================================
         // eslint-disable-next-line max-len
-        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 群组 AT || 群组 AT 全体 || 群组开启了通知 || 打开了通知全部消息)) 这些情况需要进行新消息处理
+        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 开启了群组通知模式 || 群组 AT || 群组 AT 全体 || 群组开启了通知)) 这些情况需要进行新消息处理
         if (
             sender != loginId &&
             sender != 0 &&
             (isImportant ||
                 data.message_type !== 'group' ||
+                runtimeData.sysConfig.group_notice_type != 'none' ||
                 data.atme ||
                 data.atall ||
-                isGroupNotice ||
-                Option.get('notice_all') === true)
+                isGroupNotice)
         ) {
             logger.add(LogType.DEBUG, '通知判定：', {
                 notShow: id !== showId,
@@ -1645,6 +1691,7 @@ function newMsg(_: string, data: any) {
             })
             // (发送者没有被打开 || 窗口没有焦点 || 窗口被最小化 || 在特别关心列表里) 这些情况需要进行消息通知
             if (
+                runtimeData.sysConfig.group_notice_type == 'all' ||
                 id !== showId ||
                 !document.hasFocus() ||
                 document.hidden ||
@@ -1708,16 +1755,24 @@ function newMsg(_: string, data: any) {
                     const getList = runtimeData.userList.filter((item) => {
                         return item.user_id === id || item.group_id === id
                     })
+                    // 检查 onMsgList 里有没有这个人
+                    const getOnMsg = runtimeData.onMsgList.filter((item) => {
+                        return item.user_id === id || item.group_id === id
+                    })
+
                     if (getList.length === 1) {
-                        const showUser = getList[0]
-                        const formatted = formatMessageData(data, data.message_type === 'group')
-                        Object.assign(showUser, formatted)
-
-                        if(data.atme) { showUser.highlight = $t('[有人@你]') }
-                        if(data.atall) { showUser.highlight = $t('[@全体]') }
-                        if(isImportant) { showUser.highlight = $t('[特別关心]') }
-
-                        runtimeData.onMsgList.push(showUser)
+                        if(getOnMsg.length === 0) {
+                            const showUser = getList[0]
+                            const formatted = formatMessageData(data, data.message_type === 'group')
+                            Object.assign(showUser, formatted)
+                            runtimeData.onMsgList.push(showUser)
+                        } else if(id != showId) {
+                            // 显示特殊高亮提醒
+                            const showUser = getOnMsg[0]
+                            if(data.atme) { showUser.highlight = $t('[有人@你]') }
+                            if(data.atall) { showUser.highlight = $t('[@全体]') }
+                            if(isImportant) { showUser.highlight = $t('[特別关心]') }
+                        }
                     }
                 }
             }
@@ -1728,21 +1783,6 @@ function newMsg(_: string, data: any) {
                     item.new_msg = true
                 }
             })
-        }
-
-        // ( 如果是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群通知列表中
-        if (getGroup.length != 1 && data.message_type === 'group' && !isGroupNotice) {
-            const getList = runtimeData.userList.filter((item) => {
-                return item.group_id === id
-            })
-            if(getList.length === 1) {
-                const showGroup = getList[0]
-                if(!showGroup.always_top) {
-                    const formatted = formatMessageData(data, true)
-                    Object.assign(showGroup, formatted)
-                    runtimeData.groupAssistList.push(showGroup)
-                }
-            }
         }
     }
 }

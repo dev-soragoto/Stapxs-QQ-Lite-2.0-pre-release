@@ -30,8 +30,8 @@ win:
 # macOS 配置
 mac:
     target:
-        - { target: dmg, arch: x64 }
         - { target: dmg, arch: arm64 }
+        - { target: dmg, arch: x64 }
     entitlementsInherit: build/entitlements.mac.plist
     icon: build/icon-client-mac.icns
     darkModeSupport: true
@@ -55,14 +55,14 @@ linux:
         - { target: tar.gz, arch: arm64 }
     maintainer: Stapx Steve [林槐]
     vendor: Stapxs Steve Team
-    synopsis: 一个兼容 OneBot 的非官方网页版 QQ 客户端。
+    synopsis: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
     category: Network
     mimeTypes: [ application/x-stapxs-qq-lite ]
     desktop:
         Type: Application
         Name: Stapxs QQ Lite
         GenericName: Stapxs QQ Lite Electron 客户端
-        Comment: 一个兼容 OneBot 的非官方网页版 QQ 客户端。
+        Comment: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
         Terminal: false
         Category: Network
         Icon: stapxs-qq-lite
