@@ -43,7 +43,7 @@
                                     minute: 'numeric',
                                 }).format(new Date(notice.time * 1000))
                             }}</a>
-                            <a>{{ $t('留言') + notice.comment }}</a>
+                            <a>{{ $t('留言：') + notice.comment }}</a>
                         </div>
                     </div>
                     <div>
@@ -82,7 +82,7 @@
                                     minute: 'numeric',
                                 }).format(new Date(notice.time * 1000))
                             }}</a>
-                            <a>{{ $t('留言') + notice.comment }}</a>
+                            <a>{{ $t('留言：') + notice.comment }}</a>
                         </div>
                     </div>
                     <div>

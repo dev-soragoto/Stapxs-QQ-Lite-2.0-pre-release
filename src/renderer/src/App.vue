@@ -652,8 +652,6 @@ export default defineComponent({
                     'getGroupMemberList',
                 )
             }
-            // 刷新系统消息
-            Connector.send('get_system_msg', {}, 'getSystemMsg')
 
             // 清理通知
             if (runtimeData.plantform.reader) {

@@ -173,8 +173,6 @@ export function reloadUsers() {
         }
         Connector.send(friendName, {}, 'getFriendList')
         Connector.send(groupName, {}, 'getGroupList')
-        // 获取系统消息
-        Connector.send('get_system_msg', {}, 'getSystemMsg')
     }
 }
 

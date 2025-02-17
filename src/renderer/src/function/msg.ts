@@ -908,13 +908,6 @@ const msgFunctons = {
     },
 
     /**
-     * 保存系统消息
-     */
-    getSystemMsg: (_: string, msg: { [key: string]: any }) => {
-        runtimeData.systemNoticesList = msg.data
-    },
-
-    /**
      * 获取发送的消息（消息发送后处理）
      * @deprecated 功能已被遗弃，暂时保留方法
      */

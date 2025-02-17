@@ -834,7 +834,7 @@ msgstr ""
 msgid "确定要退出群聊吗？"
 msgstr ""
 
-msgid "留言"
+msgid "留言："
 msgstr ""
 
 msgid "请求加为好友"
