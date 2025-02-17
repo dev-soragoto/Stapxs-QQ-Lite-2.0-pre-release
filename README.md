@@ -1,11 +1,14 @@
 # Stapxs-QQ-Lite-2.0-pre-release
 
 ## web端使用
+
 [https://dev-soragoto.github.io/Stapxs-QQ-Lite-2.0-pre-release/](https://dev-soragoto.github.io/Stapxs-QQ-Lite-2.0-pre-release/)
 
 ## wip
+
 ~~施工中，什么时候完成我也不知道，先挖个坑在这里~~
-已经施工的差不多了，应该能用
+
+已经施工的差不多了，应该能用。
 
 ## 当前进度
 
@@ -21,7 +24,6 @@
 为 [Stapxs-QQ-Lite](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0) 提供一个非官方的 pre-release
 
 会自动同步上游最新更改，更新版本号后缀为更改日期后自动打包
-
 
 
 ## 警告

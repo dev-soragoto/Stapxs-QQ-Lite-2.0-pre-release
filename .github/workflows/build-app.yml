@@ -165,10 +165,8 @@ jobs:
                   files: ./${{ needs.build-electron.outputs.version }}/*
                   tag_name: v${{ needs.build-electron.outputs.version }}
                   body: |
-                      # Release 自动构建
-                      `这是一个自动构建版本，由 GitHub Actions 自动构建并发布。`
-                      ## 更新内容
-                      ${{ github.event.head_commit.message }}
+                      这是一个自动构建版本，由 GitHub Actions 自动构建并发布。
+                      ---
                       ## 自动构建信息
                       - 构建时间：${{ github.event.head_commit.timestamp }}
                       - 构建提交：${{ github.event.head_commit.id }}
