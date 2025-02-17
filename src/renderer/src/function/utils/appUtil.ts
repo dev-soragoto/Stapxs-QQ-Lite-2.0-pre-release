@@ -744,16 +744,16 @@ function showUpadteLog(data: any) {
     // 这儿有两种情况：
     //    如果当前版本小于获取到的版本就是有更新
     //    如果缓存版本小于获取到的版本但是当前版本等于获取到的版本就是更新完成首次启动
-    const lastestVersion = data.tag_name.substring(1)
+    constlatestVersion = data.tag_name.substring(1)
 
-    if (semver.lt(appVersion, lastestVersion)) {
+    if (semver.lt(appVersion,latestVersion)) {
         // 有更新
         showReleaseLog(data, false)
     }
     if (
         cacheVersion &&
-        semver.eq(appVersion, lastestVersion) &&
-        semver.lt(cacheVersion, lastestVersion)
+        semver.eq(appVersion,latestVersion) &&
+        semver.lt(cacheVersion,latestVersion)
     ) {
         // 更新完成首次启动
         showReleaseLog(data, true)
