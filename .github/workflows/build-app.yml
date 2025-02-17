@@ -125,13 +125,13 @@ jobs:
               if: matrix.os == 'windows-2019'
               run: yarn build:win
               env:
-                  GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+                  GH_TOKEN: ${{ secrets.TOKEN }}
             # 构建 electron 版本（Linux）
             - name: Build Electron (Linux)
               if: matrix.os == 'ubuntu-latest'
               run: yarn build:linux
               env:
-                  GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+                  GH_TOKEN: ${{ secrets.TOKEN }}
 
             # 上传构建结果
             - name: Upload Artifacts
