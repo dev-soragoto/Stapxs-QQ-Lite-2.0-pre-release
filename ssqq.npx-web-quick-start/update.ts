@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import cmp from 'semver-compare'
+import semver from 'semver'
 import Logger from 'log4js'
 import request from 'request'
 import unzipper from 'unzipper'
@@ -18,7 +18,7 @@ export function checkUpdate(nowVersion: string) {
         .then(json => {
             const version = json.tag_name.slice(1)
             logger.info(`Stapxs QQ Lite 当前版本: ${version}, 本地版本: ${nowVersion}`)
-            if (cmp(nowVersion, version) === -1) {
+            if (semver.lt(nowVersion, version)) {
                 // 本地版本小于线上版本, 需要更新
                 logger.info('发现新版本, 正在更新...')
                 logger.info(`运行路径: ${process.cwd()}`)

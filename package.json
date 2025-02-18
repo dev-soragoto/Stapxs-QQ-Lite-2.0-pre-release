@@ -10,7 +10,6 @@
     "type": "module",
     "scripts": {
         "capacitor:copy:before": "capacitor-sync-version",
-
         "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
         "update:icon": "npx @capacitor/assets generate --assetPath 'src/mobile/_assets' --iosProject 'src/mobile/ios/App' --androidProject 'src/mobile/android' --android --ios",
         "update:version": "npx @stapxs/capacitor-sync-version android ios",
@@ -34,6 +33,7 @@
         "electron-window-state": "^5.0.3",
         "log4js": "^6.9.1",
         "rollup-plugin-node-polyfills": "^0.2.1",
+        "semver": "^7.7.1",
         "vconsole": "^3.15.1",
         "ws": "^8.18.0"
     },
@@ -61,6 +61,7 @@
         "@stapxs/umami-logger-typescript": "^1.0.12",
         "@types/jsonpath": "^0.2.4",
         "@types/node": "^20.14.8",
+        "@types/semver": "^7.5.8",
         "@untiny/capacitor-safe-area": "^1.0.3",
         "@vitejs/plugin-vue": "^5.0.5",
         "@vue/eslint-config-typescript": "^13.0.0",

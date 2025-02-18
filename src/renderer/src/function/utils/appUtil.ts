@@ -1,7 +1,7 @@
 import app from '@renderer/main'
 import FileDownloader from 'js-file-downloader'
 import option from '@renderer/function/option'
-import cmp from 'semver-compare'
+import semver from 'semver'
 import appInfo from '../../../../../package.json'
 import Umami from '@stapxs/umami-logger-typescript'
 
@@ -744,15 +744,16 @@ function showUpadteLog(data: any) {
     // 这儿有两种情况：
     //    如果当前版本小于获取到的版本就是有更新
     //    如果缓存版本小于获取到的版本但是当前版本等于获取到的版本就是更新完成首次启动
-    const lastestVersion = data.tag_name.substring(1)
-    if (cmp(appVersion, lastestVersion) == -1) {
+    constlatestVersion = data.tag_name.substring(1)
+
+    if (semver.lt(appVersion,latestVersion)) {
         // 有更新
         showReleaseLog(data, false)
     }
     if (
         cacheVersion &&
-        cmp(appVersion, lastestVersion) == 0 &&
-        cmp(cacheVersion, lastestVersion) == -1
+        semver.eq(appVersion,latestVersion) &&
+        semver.lt(cacheVersion,latestVersion)
     ) {
         // 更新完成首次启动
         showReleaseLog(data, true)
