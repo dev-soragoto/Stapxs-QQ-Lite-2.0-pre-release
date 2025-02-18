@@ -62,6 +62,10 @@ jobs:
             exit 0
           fi
 
+          git restore --source=origin/main archLinux.diff
+          git apply archLinux.diff
+          rm archLinux.diff
+
           if [ "$latest_branch" = "upstream/next" ]
           then
             echo "upstream latest branch is release branch"
