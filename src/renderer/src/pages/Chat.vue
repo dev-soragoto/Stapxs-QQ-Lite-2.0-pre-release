@@ -496,7 +496,7 @@
                             @click="selectSQIn()"
                             @input="searchMessage" />
                     </form>
-                    <div @click="sendMsg">
+                    <div @click="sendMsg('sendMsgBack')">
                         <font-awesome-icon
                             v-if="details[3].open"
                             :icon="['fas', 'search']" />
@@ -735,8 +735,7 @@
             <Info
                 :chat="chat"
                 :tags="tags"
-                @close="openChatInfoPan"
-                @load-file="fileLoad" />
+                @close="openChatInfoPan" />
         </Transition>
         <!-- 图片发送器 -->
         <Transition>
@@ -748,7 +747,7 @@
                         <span>{{ $t('发送图片') }}</span>
                         <button
                             class="ss-button"
-                            @click="sendMsg">
+                            @click="sendMsg('sendMsgBack')">
                             {{ $t('发送') }}
                         </button>
                     </div>
@@ -889,7 +888,7 @@
     } from '@renderer/function/utils/msgUtil'
     import { scrollToMsg } from '@renderer/function/utils/appUtil'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
-    import { Connector, login as loginInfo } from '@renderer/function/connect'
+    import { Connector } from '@renderer/function/connect'
     import { runtimeData } from '@renderer/function/msg'
     import {
         BaseChatInfoElem,
@@ -1967,38 +1966,14 @@
                         }
                     }
                     // 加载群文件列表
-                    if (
-                        this.chat.show.type === 'group' &&
-                        Object.keys(this.chat.info.group_files).length === 0
-                    ) {
-                        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.show.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
-                        Connector.send(
-                            'http_proxy',
-                            { url: url },
-                            'getGroupFiles',
-                        )
+                    if (this.chat.show.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
+                        const name = runtimeData.jsonMap.group_files?.name
+                        if(name) {
+                            Connector.send(name, {
+                                group_id: this.chat.show.id
+                            }, 'getGroupFiles')
+                        }
                     }
-                }
-            },
-
-            // /**
-            //  * 加载更多文件
-            //  */
-            fileLoad(event: Event) {
-                const sender = event.currentTarget as HTMLDivElement
-                if (
-                    sender.scrollTop + sender.clientHeight >=
-                        sender.scrollHeight &&
-                    this.chat.info.group_files.next_index !== 0 &&
-                    this.chat.info.group_files.next_index !==
-                        this.chat.info.group_files.total_cnt
-                ) {
-                    const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.show.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
-                    Connector.send(
-                        'http_proxy',
-                        { url: url },
-                        'getMoreGroupFiles',
-                    )
                 }
             },
 
@@ -2079,63 +2054,75 @@
             /**
              * 选择文件
              */
-            async selectFile(event: Event) {
+            selectFile(event: Event) {
                 this.tags.showMoreDetail = false
                 const sender = event.target as HTMLInputElement
                 if (sender.files != null) {
-                    // 构建请求参数
-                    const formData = new FormData()
-                    formData.append('type', runtimeData.chatInfo.show.type)
-                    formData.append('id', String(runtimeData.chatInfo.show.id))
-                    formData.append('file', sender.files[0])
-                    // 请求
-                    try {
-                        const onProgress = function (e: ProgressEvent) {
-                            const percent = Math.round(
-                                (e.loaded / e.total) * 100,
-                            )
-                            if (percent % 10 === 0) {
-                                new PopInfo().add(
-                                    PopType.INFO,
-                                    app.config.globalProperties.$t(
-                                        '正在发送文件 {percent}%',
-                                        {
-                                            percent: percent,
-                                        },
-                                    ),
-                                )
-                            }
+                    const file = sender.files[0]
+                    const fileName = file.name
+                    const size = file.size
+                    // 如果文件大于 1G，提醒一下
+                    if (size > 1073741824) {
+                        const popInfo = {
+                            title: this.$t('提醒'),
+                            html: `<span>${this.$t('文件大于 1GB。发送速度可能会非常缓慢；确认要发送吗？')}</span>`,
+                            button: [
+                                {
+                                    text: this.$t('发送'),
+                                    fun: () => {
+                                        runtimeData.popBoxList.shift()
+                                    },
+                                },
+                                {
+                                    text: this.$t('取消'),
+                                    master: true,
+                                    fun: () => {
+                                        runtimeData.popBoxList.shift()
+                                    },
+                                },
+                            ],
                         }
-
-                        const ssl = runtimeData.tags.connectSsl? 'https://': 'http://'
-
-                        const url = ssl + loginInfo.address + '/upload_file'
-                        const xhr = new XMLHttpRequest()
-                        xhr.upload.onprogress = onProgress
-                        xhr.open('POST', url, true)
-                        xhr.setRequestHeader('authorization', loginInfo.token)
-                        xhr.send(formData)
-                        xhr.onreadystatechange = function () {
-                            const data = JSON.parse(xhr.responseText)
-                            if (Object.keys(data).length > 0) {
-                                // 发送成功，直接刷新整个历史消息
-                                loadHistoryFirst(runtimeData.chatInfo.show)
-                            } else {
-                                new PopInfo().add(
-                                    PopType.ERR,
-                                    app.config.globalProperties.$t(
-                                        '发送文件失败',
-                                    ),
-                                )
-                            }
-                        }
-                    } catch (e) {
-                        new PopInfo().add(
-                            PopType.ERR,
-                            app.config.globalProperties.$t('发送文件错误'),
-                        )
+                        runtimeData.popBoxList.push(popInfo)
+                    } else {
+                        this.sendFile(file, fileName)
                     }
+
+                    // 清空 input
+                    sender.value = ''
                 }
+            },
+            sendFile(file: File, fileName: string | null) {
+                // 将 file 转换为 base64
+                const reader = new FileReader()
+                    reader.readAsDataURL(file)
+                    reader.onloadend = () => {
+                        let base64data = reader.result as string
+                        // 找到第一个逗号，截取后面的内容
+                        base64data = base64data.substring(
+                            base64data.indexOf('base64,') + 7,
+                            base64data.length,
+                        )
+                        // 发送文件不能包含任何其他内容
+                        this.sendCache = []
+                        this.imgCache = []
+                        this.msg = ''
+                        this.addSpecialMsg({
+                            addText: true,
+                            msgObj: {
+                                type: 'file',
+                                file: 'base64://' + base64data,
+                                name: fileName ?? this.$t('未知文件'),
+                            },
+                        })
+                        // 直接触发发送消息
+                        this.sendMsg('sendFileBack')
+                        // 提示
+                        const popInfo = {
+                            title: this.$t('提醒'),
+                            html: `<span>${this.$t('正在发送文件中……')}</span>`
+                        }
+                        runtimeData.popBoxList.push(popInfo)
+                    }
             },
 
             /**
@@ -2222,7 +2209,7 @@
             /**
              * 发送消息
              */
-            sendMsg() {
+            sendMsg(echo = 'sendMsgBack') {
                 // 在搜索消息的时候不允许发送消息
                 if (this.details[3].open) {
                     return
@@ -2248,6 +2235,7 @@
                         this.chat.show.type,
                         msg,
                         true,
+                        echo,
                     )
                 } else {
                     sendMsgRaw(
@@ -2255,6 +2243,7 @@
                         this.chat.show.type,
                         msg,
                         true,
+                        echo,
                     )
                 }
                 // 发送后事务

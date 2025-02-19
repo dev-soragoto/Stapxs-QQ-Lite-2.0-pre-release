@@ -156,24 +156,13 @@
                 </div>
                 <div :name="$t('文件')">
                     <div
-                        class="group-files"
-                        @scroll="fileLoad">
+                        class="group-files">
                         <div
-                            v-for="item in chat.info.group_files.file_list"
-                            :key="'file-' + item.id">
+                            v-for="item in chat.info.group_files as (GroupFileElem & GroupFileFolderElem)[]"
+                            :key="'file-' + (item.folder_id ?? item.file_id)">
                             <FileBody
                                 :chat="chat"
                                 :item="item" />
-                        </div>
-                        <div
-                            v-show="
-                                chat.info.group_files !== undefined &&
-                                    chat.info.group_files.next_index !==
-                                    undefined &&
-                                    chat.info.group_files.next_index !== 0
-                            "
-                            class="group-files-loader">
-                            <font-awesome-icon :icon="['fas', 'ellipsis']" />
                         </div>
                     </div>
                 </div>
@@ -201,6 +190,8 @@
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { runtimeData } from '@renderer/function/msg'
     import {
+        GroupFileElem,
+        GroupFileFolderElem,
         UserFriendElem,
         UserGroupElem,
     } from '@renderer/function/elements/information'
@@ -209,7 +200,7 @@
         name: 'ViewInfo',
         components: { BulletinBody, FileBody, OptInfo, BcTab },
         props: ['tags', 'chat'],
-        emits: ['close', 'loadFile'],
+        emits: ['close'],
         data() {
             return {
                 runtimeData: runtimeData,
@@ -224,14 +215,6 @@
              */
             closeChatInfoPan() {
                 this.$emit('close', null)
-            },
-
-            /**
-             * 加载更多文件
-             * @param event 滚动事件
-             */
-            fileLoad(event: Event) {
-                this.$emit('loadFile', event)
             },
 
             /**

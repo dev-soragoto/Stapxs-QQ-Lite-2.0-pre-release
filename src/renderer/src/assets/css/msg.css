@@ -305,52 +305,49 @@
     align-items: center;
     flex-wrap: wrap;
 }
-.msg-file > svg {
-    color: var(--color-font-1);
-    height: calc(2rem + 10px);
-    margin-right: 20px;
-    margin-left: 10px;
-}
 .msg-file svg {
     color: var(--color-font-1);
 }
 .msg-file.me svg {
     color: var(--color-font-1-r);
 }
-.msg-file > div:nth-child(2) {
+.msg-file > div:nth-child(1) {
     display: flex;
     flex-direction: column;
     flex: 1;
 }
-.msg-file > div:nth-child(2) i {
-    font-size: 0.9rem;
+.msg-file > div:nth-child(1) a {
+    font-size: 0.75rem;
+    display: block;
+    opacity: 0.7;
+}
+.msg-file > div:nth-child(1) i {
+    font-size: 0.8rem;
     font-style: normal;
     overflow-wrap: anywhere;
 }
-.msg-file > div:nth-child(2) a {
-    font-size: 0.8rem;
-}
-.msg-file > div:nth-child(2) p {
+.msg-file > div:nth-child(1) p {
     display: inline-block;
     font-size: 1rem;
-    margin-bottom: 0;
+    margin: 5px 0 0 0;
 }
-.msg-file > div:nth-child(3) {
+.msg-file > div:nth-child(2) {
     background: #0000002e;
     border-radius: 100%;
-    margin-left: 20px;
+    margin-left: 40px;
+    margin-right: 5px;
     cursor: pointer;
 }
-.msg-file > div:nth-child(3) svg {
+.msg-file > div:nth-child(2) svg {
     margin: 15px 10px 10px 10px;
     height: 20px;
-    width: 31px;
+    width: 27px;
 }
-.msg-file > div:nth-child(3) svg.download-bar {
+.msg-file > div:nth-child(2) svg.download-bar {
     --main-size: 40px;
     margin: 3px 1px -4px 0 !important;
 }
-.msg-file.me > div:nth-child(3) svg.download-bar > circle:last-child {
+.msg-file.me > div:nth-child(2) svg.download-bar > circle:last-child {
     stroke: var(--color-card-2);
 }
 

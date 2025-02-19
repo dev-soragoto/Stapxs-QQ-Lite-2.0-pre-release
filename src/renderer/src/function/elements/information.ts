@@ -133,6 +133,29 @@ export interface UserGroupElem extends UserElem {
     class_name?: string
 }
 
+export interface GroupFileElem {
+    file_id: string
+    file_name: string
+    size: number
+    download_times: number
+    dead_time: number
+    upload_time: number
+    uploader_name: string
+
+    download_percent?: number
+}
+
+export interface GroupFileFolderElem {
+    folder_id: string
+    folder_name: string
+    count: number
+    create_time: number
+    creater_name: string
+
+    items?: GroupFileElem[]
+    show_items?: boolean
+}
+
 export interface GroupMemberInfoElem {
     user_id: number
     title: string

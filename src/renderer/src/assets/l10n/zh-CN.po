@@ -998,3 +998,26 @@ msgstr "[{'@'}全体]"
 
 msgid "[特別关心]"
 msgstr ""
+
+msgid "离线文件"
+msgstr ""
+
+msgid "正在发送文件中……"
+msgstr ""
+
+msgid "群消息通知方式"
+msgstr ""
+
+msgid "重要消息将始终发起应用内通知和系统通知"
+msgstr ""
+
+msgid "不通知（默认）"
+msgstr ""
+
+msgid "仅应用内通知"
+msgstr ""
+
+msgid "应用内通知和系统通知"
+msgstr ""
+
+

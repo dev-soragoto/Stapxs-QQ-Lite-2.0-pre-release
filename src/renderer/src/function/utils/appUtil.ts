@@ -241,7 +241,7 @@ export function downloadFile(
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    if (runtimeData.tags.isElectron) {
+    if (!runtimeData.tags.isElectron) {
         try {
             new FileDownloader({
                 url: url,
@@ -744,7 +744,7 @@ function showUpadteLog(data: any) {
     // 这儿有两种情况：
     //    如果当前版本小于获取到的版本就是有更新
     //    如果缓存版本小于获取到的版本但是当前版本等于获取到的版本就是更新完成首次启动
-    constlatestVersion = data.tag_name.substring(1)
+    const latestVersion = data.tag_name.substring(1)
 
     if (semver.lt(appVersion,latestVersion)) {
         // 有更新

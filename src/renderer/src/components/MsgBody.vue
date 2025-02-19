@@ -137,23 +137,17 @@
                                 @mouseenter="showUserInfo">{{ getAtName(item) }}</a>
                         </div>
                         <div
-                            v-else-if="item.type == 'file'"
-                            :class="'msg-file' + (isMe ? ' me' : '')">
-                            <font-awesome-icon :icon="['fas', 'file']" />
+                            v-else-if="item.type == 'file'" :class="'msg-file' + (isMe ? ' me' : '')">
                             <div>
                                 <div>
-                                    <p>
-                                        {{
-                                            loadFileBase(
-                                                item,
-                                                item.name,
-                                                data.message_id,
-                                            )
-                                        }}
-                                    </p>
-                                    <a>（{{ getSizeFromBytes(item.size) }}）</a>
+                                    <a>
+                                        <font-awesome-icon :icon="['fas', 'file']" />
+                                        {{ runtimeData.chatInfo.show.type == 'group' ?
+                                            $t('群文件') : $t('离线文件') }}
+                                    </a>
+                                    <p>{{ loadFileBase( item, item.name, data.message_id) }}</p>
                                 </div>
-                                <i>{{ item.md5 }}</i>
+                                <i>{{ getSizeFromBytes(item.size ?? item.file_size) }}</i>
                             </div>
                             <div>
                                 <font-awesome-icon
@@ -191,32 +185,16 @@
                                 </svg>
                             </div>
                             <div
-                                v-if="
-                                    data.fileView &&
-                                        Object.keys(data.fileView).length > 0
-                                "
+                                v-if="data.fileView && Object.keys(data.fileView).length > 0"
                                 class="file-view">
                                 <img
-                                    v-if="
-                                        [
-                                            'jpg',
-                                            'jpeg',
-                                            'png',
-                                            'gif',
-                                            'bmp',
-                                            'webp',
-                                        ].includes(data.fileView.ext)
-                                    "
+                                    v-if="['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+                                        .includes(data.fileView.ext)"
                                     :src="data.fileView.url">
                                 <video
-                                    v-if="
-                                        ['mp4', 'avi', 'mkv', 'flv'].includes(
-                                            data.fileView.ext,
-                                        )
-                                    "
-                                    playsinline
-                                    controls
-                                    muted
+                                    v-else-if="['mp4', 'avi', 'mkv', 'flv']
+                                        .includes(data.fileView.ext)"
+                                    playsinline controls muted
                                     autoplay>
                                     <source
                                         :src="data.fileView.url"
@@ -224,20 +202,11 @@
                                     现在还有不支持 video tag 的浏览器吗？
                                 </video>
                                 <span
-                                    v-if="
-                                        ['txt', 'md'].includes(
-                                            data.fileView.ext,
-                                        ) && item.size < 2000000
-                                    "
+                                    v-else-if="['txt', 'md']
+                                        .includes(data.fileView.ext) && (item.size ?? item.file_size) < 2000000"
                                     class="txt">
-                                    <a>&gt; {{ item.name }} -
-                                        {{ $t('文件预览') }}</a>
-                                    {{
-                                        getTxtUrl(
-                                            data.fileView.url,
-                                            data.message_id,
-                                        )
-                                    }}{{ data.fileView.txt }}
+                                    <a>&gt; {{ item.name }} - {{ $t('文件预览') }}</a>
+                                    {{ getTxtUrl(data.fileView) }}{{ data.fileView.txt }}
                                 </span>
                             </div>
                         </div>
@@ -395,7 +364,6 @@
     import { getFace, getMsgRawTxt } from '@renderer/function/utils/msgUtil'
     import {
         openLink,
-        downloadFile,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
     import { getSizeFromBytes, getTrueLang } from '@renderer/function/utils/systemUtil'
@@ -772,27 +740,17 @@
              * @param data 消息对象
              */
             downloadFile(data: any, message_id: string) {
-                const onProcess = function (event: ProgressEvent): undefined {
-                    if (!event.lengthComputable) return
-                    data.downloadingPercentage = Math.floor(
-                        (event.loaded / event.total) * 100,
-                    )
+                // 获取下载链接
+                let name = runtimeData.jsonMap.file_download?.private_name
+                if(runtimeData.chatInfo.show.type == 'group') {
+                    name = runtimeData.jsonMap.file_download?.name
                 }
-                if (data.url) {
-                    // 消息中有文件链接的话就不用获取了 ……
-                    downloadFile(data.url, data.name, onProcess)
-                } else {
-                    // 获取下载链接
-                    Connector.send(
-                        'get_file_url',
-                        {
-                            id: runtimeData.chatInfo.show.id,
-                            message_id: message_id,
-                            fid: data.fid,
-                        },
-                        'downloadFile_' + message_id + '_' + data.name,
-                    )
-                }
+                Connector.send(name, {
+                    file_id: data.file_id,
+                    group_id: runtimeData.chatInfo.show.type == 'group' ? runtimeData.chatInfo.show.id : undefined,
+                },
+                    'downloadFile_' + message_id + '_' + btoa(unescape(encodeURIComponent(data.name))),
+                )
             },
 
             /**
@@ -818,54 +776,30 @@
                 message_id: StringifyOptions,
             ) {
                 const ext = name.split('.').pop()
-                // 寻找消息位置
-                let msgIndex = -1
-                runtimeData.messageList.forEach((item, index) => {
-                    if (item.message_id === message_id) {
-                        msgIndex = index
-                    }
-                })
-                if (
-                    ext &&
-                    runtimeData.messageList[msgIndex].fileView == undefined
-                ) {
+                // 寻找消息
+                const msg = runtimeData.messageList.find(
+                    (item) => item.message_id === message_id,
+                )
+                if (ext && msg?.fileView == undefined) {
                     // 图片、视频和文本文件获取文件链接
                     const list = [
-                        'jpg',
-                        'jpeg',
-                        'png',
-                        'gif',
-                        'bmp',
-                        'webp',
-                        'mp4',
-                        'avi',
-                        'mkv',
-                        'flv',
-                        'txt',
-                        'md',
+                        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',
+                        'mp4', 'avi', 'mkv', 'flv',
+                        'txt', 'md',
                     ]
                     if (list.includes(ext)) {
-                        runtimeData.messageList[msgIndex].fileView = {}
-                        if (data.url) {
-                            if (msgIndex !== -1) {
-                                runtimeData.messageList[msgIndex].fileView.url =
-                                    data.url
-                                runtimeData.messageList[msgIndex].fileView.ext =
-                                    ext
-                            }
-                        } else {
-                            // 获取下载链接
-                            Connector.send(
-                                'get_file_url',
-                                {
-                                    id: runtimeData.chatInfo.show.id,
-                                    message_id: message_id,
-                                    fid: data.fid,
-                                },
-                                'loadFileBase_' +
-                                    this.data.message_id +
-                                    '_' +
-                                    ext,
+                        msg.fileView = {}
+                        // 获取下载链接
+                        let name = runtimeData.jsonMap.file_download?.private_name
+                        if(runtimeData.chatInfo.show.type == 'group') {
+                            name = runtimeData.jsonMap.file_download?.name
+                        }
+                        if(name) {
+                            Connector.send(name, {
+                                file_id: data.file_id,
+                                group_id: runtimeData.chatInfo.show.type == 'group' ? runtimeData.chatInfo.show.id : undefined,
+                            },
+                                'loadFileBase_' + this.data.message_id + '_' + ext,
                             )
                         }
                     }
@@ -877,28 +811,19 @@
              * 下载 txt 文件并获取文件内容
              * @param url 链接
              */
-            getTxtUrl(url: string, id: string) {
-                // 寻找消息位置
-                let msgIndex = -1
-                runtimeData.messageList.forEach((item, index) => {
-                    if (item.message_id === id) {
-                        msgIndex = index
-                    }
-                })
+            getTxtUrl(view: any) {
+                const url = view.url
                 // 保存文件为 Blob
                 fetch(url)
                     .then((r) => r.blob())
                     .then((blob) => {
-                        if (msgIndex !== -1) {
-                            // 读取文件内容并返回文本
-                            const reader = new FileReader()
-                            reader.readAsText(blob, 'utf-8')
-                            reader.onload = function () {
-                                // 只取前 300 字，超出部分加上 ……
-                                const txt = reader.result as string
-                                runtimeData.messageList[msgIndex].fileView.txt =
-                                    txt.length > 300? txt.slice(0, 300) + '…': txt
-                            }
+                        // 读取文件内容并返回文本
+                        const reader = new FileReader()
+                        reader.readAsText(blob, 'utf-8')
+                        reader.onload = function () {
+                            // 只取前 300 字，超出部分加上 ……
+                            const txt = reader.result as string
+                            view.txt = txt.length > 300? txt.slice(0, 300) + '…': txt
                         }
                     })
             },
