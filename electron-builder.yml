@@ -21,7 +21,6 @@ asarUnpack:
 win:
     target:
         - { target: portable, arch: x64 }
-        # - { target: portable, arch: arm64 }
     executableName: Stapxs QQ Lite
     icon: build/icon-client-others.png
     legalTrademarks: Copyright © 2022-2025 Stapx Steve [林槐]
@@ -47,12 +46,10 @@ dmg:
 # Linux 配置
 linux:
     target:
+        - { target: pacman, arch: x64 }
         - { target: AppImage, arch: x64 }
-        - { target: AppImage, arch: arm64 }
         - { target: deb, arch: x64 }
-        - { target: deb, arch: arm64 }
         - { target: tar.gz, arch: x64 }
-        - { target: tar.gz, arch: arm64 }
     maintainer: Stapx Steve [林槐]
     vendor: Stapxs Steve Team
     synopsis: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。

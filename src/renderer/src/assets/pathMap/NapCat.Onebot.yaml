@@ -149,9 +149,6 @@ group_member_info:
         is_robot: /is_robot
         shut_up_timestamp: /shut_up_timestamp
         role: /role
-# 退出群聊
-leave_group:
-    name: set_group_leave
 # 获取收藏表情
 roaming_stamp:
     name: fetch_custom_face
@@ -200,3 +197,17 @@ file_download:
     source: $.data
     list:
         file_url: /url
+
+## 群操作
+# 退出群聊
+leave_group:
+    name: set_group_leave
+# 设置群昵称（包括成员）
+set_group_nickname:
+    name: set_group_card
+# 设置群头衔（包括成员）
+set_group_title:
+    name: set_group_special_title
+# 禁言成员
+ban_mumber:
+    name: set_group_ban

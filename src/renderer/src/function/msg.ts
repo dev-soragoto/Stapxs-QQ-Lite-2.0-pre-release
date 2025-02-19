@@ -300,6 +300,34 @@ const noticeFunctions = {
 
 const msgFunctons = {
     /**
+     * 修改群成员信息回调
+     */
+    updateGroupMemberInfo: () => {
+        const $t = app.config.globalProperties.$t
+        const popInfo = {
+            title: $t('操作'),
+            html: `<span>${$t('正在确认操作……')}</span>`
+        }
+        runtimeData.popBoxList.push(popInfo)
+        // 稍微等一下再刷新成员列表
+        setTimeout(() => {
+            Connector.send(
+                'get_group_member_list',
+                { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                'getGroupMemberList',
+            )
+            setTimeout(() => {
+                Connector.send(
+                    'get_group_member_list',
+                    { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                    'getGroupMemberList',
+                )
+                runtimeData.popBoxList.shift()
+            }, 1000)
+        }, 1000)
+    },
+
+    /**
      * 保存 Bot 信息
      */
     getVersionInfo: (_: string, msg: { [key: string]: any }) => {
@@ -764,9 +792,8 @@ const msgFunctons = {
         if (msgItem && bodyIndex != -1) {
             const onProcess = function (event: ProgressEvent): undefined {
                 if (!event.lengthComputable) return
-                msgItem.message[bodyIndex].downloadingPercentage = Math.floor(
-                    (event.loaded / event.total) * 100,
-                )
+                const percent = Math.floor((event.loaded / event.total) * 100)
+                msgItem.message[bodyIndex].download_percent = percent
             }
             downloadFile(url, fileName, onProcess)
         }

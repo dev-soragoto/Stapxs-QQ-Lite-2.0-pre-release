@@ -159,6 +159,12 @@ jobs:
               run: yarn build:win
               env:
                   GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            # 安装打包依赖（Linux）
+            - name: Install Dependencies for Packaging (Linux)
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                  sudo apt update
+                  sudo apt install -y libarchive-tools
             # 构建 electron 版本（Linux）
             - name: Build Electron (Linux)
               if: matrix.os == 'ubuntu-latest'

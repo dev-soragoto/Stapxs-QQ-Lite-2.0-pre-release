@@ -567,13 +567,14 @@ input {
     width: 100%;
 }
 .card-info-pan-bg {
-    background: var(--color-card-2);
     height: 100%;
     opacity: 0.7;
     width: 100%;
 }
 .chat-info {
+    overflow: hidden;
     margin: 50vh 0 0 50%;
+    box-shadow: 0 0 10px var(--color-shader);
     transform: translate(-50%, -50%);
     flex-direction: column;
     position: absolute;
@@ -735,6 +736,28 @@ input {
 }
 .chat-info-tab-member > div > span {
     color: var(--color-font-2);
+    transition: all .2s;
+    opacity: 1;
+}
+.chat-info-tab-member > div.edit:hover > span {
+    transform: translateX(-10px);
+    opacity: 0;
+}
+.chat-info-tab-member > div > svg {
+    color: var(--color-font-2);
+    transition: all .2s;
+    margin-right: -25px;
+    margin-left: 10px;
+    width: 15px;
+    opacity: 0;
+}
+.chat-info-tab-member > div > svg:hover {
+    color: var(--color-main);
+}
+.chat-info-tab-member > div.edit:hover > svg {
+    margin-right: 5px;
+    display: block;
+    opacity: 1;
 }
 
 .chat-info-tab {
@@ -756,6 +779,77 @@ input {
 }
 .chat-info-tab .tab-body {
     overflow-y: scroll;
+}
+
+.user-config {
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s;
+    transform: translateY(calc(100% + 20px));
+    box-shadow: 0 -3px 3px var(--color-shader);
+    background: var(--color-card);
+    height: 70%;
+    position: absolute;
+    width: calc(100% - 30px);
+    margin-left: -15px;
+    height: auto;
+    top: 0;
+    bottom: 0;
+    margin-top: 50px;
+}
+.user-config.show {
+    transform: translateY(0);
+}
+.user-config:hover {
+    box-shadow: 0 -3px 3px var(--color-shader) !important;
+}
+
+.user-config > div:first-child {
+    background: var(--color-card-1);
+    border-radius: 7px 7px 0 0;
+    align-items: center;
+    padding: 15px;
+    margin: -15px;
+    display: flex;
+}
+.user-config > div:first-child > img {
+    border-radius: 7px;
+    width: 40px;
+}
+.user-config > div:first-child > svg {
+    cursor: pointer;
+    width: 17px;
+    height: 17px;
+}
+.user-config > div:first-child > div {
+    flex-direction: column;
+    margin-left: 10px;
+    display: flex;
+    flex: 1;
+}
+.user-config > div:first-child > div > a {
+    font-size: 1rem;
+}
+.user-config > div:first-child > div > span {
+    color: var(--color-font-1);
+}
+.user-config > div:last-child {
+    flex: 1;
+    overflow-y: scroll;
+    padding: 0 15px 0 20px;
+    margin-top: 25px;
+}
+.user-config > div:last-child > div:hover {
+    background: var(--color-card-1);
+}
+.user-config > div:last-child > header {
+    font-weight: normal;
+    font-size: 0.9rem;
+    padding: 10px 0 0 0;
+}
+.user-config > div:last-child > div:hover input {
+    background: var(--color-card-2);
+    transition: all 0.3s;
 }
 
 .bulletins {
@@ -915,15 +1009,6 @@ input {
 }
 .group-files > div > div > div > div > span:last-child::after {
     content: '';
-}
-
-.group-files-loader {
-    justify-content: center;
-    display: flex;
-}
-.group-files-loader > svg {
-    color: var(--color-font-1);
-    width: 1rem;
 }
 
 .info-pan-set {

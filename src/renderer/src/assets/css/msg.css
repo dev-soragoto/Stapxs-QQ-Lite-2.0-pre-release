@@ -344,8 +344,9 @@
     width: 27px;
 }
 .msg-file > div:nth-child(2) svg.download-bar {
-    --main-size: 40px;
+    --main-size: 24px;
     margin: 3px 1px -4px 0 !important;
+    padding: 10px;
 }
 .msg-file.me > div:nth-child(2) svg.download-bar > circle:last-child {
     stroke: var(--color-card-2);

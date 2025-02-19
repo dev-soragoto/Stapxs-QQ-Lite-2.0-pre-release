@@ -728,11 +728,22 @@
                     </div>
                     <a>{{ $t('移出群聊') }}</a>
                 </div>
+                <div
+                    v-show="tags.menuDisplay.config"
+                    @click="openChatInfoPan();
+                            $refs.infoRef?.openMoreConfig(selectedMsg?.sender.user_id);
+                            closeMsgMenu();">
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'cog']" />
+                    </div>
+                    <a>{{ $t('成员设置') }}</a>
+                </div>
             </div>
         </div>
         <!-- 群 / 好友信息弹窗 -->
         <Transition>
             <Info
+                ref="infoRef"
                 :chat="chat"
                 :tags="tags"
                 @close="openChatInfoPan" />
@@ -942,6 +953,7 @@
                         remove: false,
                         respond: false,
                         showRespond: true,
+                        config: false,
                     },
                     search: {
                         userId: -1,
@@ -1377,6 +1389,11 @@
                             // 自己不显示提及
                             this.tags.menuDisplay.at = false
                         }
+                        // 群成员设置
+                        if(runtimeData.chatInfo.show.type == 'group' &&
+                        runtimeData.chatInfo.info.me_info.role != 'member') {
+                            this.tags.menuDisplay.config = true
+                        }
                     } else {
                         // 检查消息，确认菜单显示状态
                         if (
@@ -1511,6 +1528,7 @@
                     remove: false,
                     respond: false,
                     showRespond: true,
+                    config: false,
                 }
             },
 
