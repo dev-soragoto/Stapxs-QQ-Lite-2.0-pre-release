@@ -3,7 +3,7 @@ import Store from 'electron-store'
 import fs from 'fs'
 
 import windowStateKeeper from 'electron-window-state'
-import packageInfo from '../../package.json'
+import packageInfo from '../../package.json' assert { type: 'json' }
 import { regIpcListener } from './function/ipc.ts'
 import { Menu, session, app, protocol, BrowserWindow } from 'electron'
 import { touchBar } from './function/touchbar.ts'

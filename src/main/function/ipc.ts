@@ -75,33 +75,6 @@ export function regIpcListener() {
         }
         return null
     })
-    // 代理请求 HTTP
-    // ipcMain.on('sys:requestHttp', (event, args) => {
-    // console.log(args)
-
-    // const cookies = JSON.parse(args.cookies)
-    // console.log(cookies)
-    // const cookieStrs = Object.keys(cookies).map((key) => {
-    //     return key + '=' + cookies[key]
-    // })
-    // console.log(cookieStrs.join('; '))
-    // // 异步请求，不需要立即返回
-    // axios({
-    //     method: args.type,
-    //     url: args.url,
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Cookie': cookieStrs.join('; '),
-    //     },
-    //     data: args.data
-    // }).then((res) => {
-    //     // res.data
-    //     console.log(res.data)
-    // }).catch((err) => {
-    //     // err
-    //     console.error(err)
-    // })
-    // })
     // 关闭窗口
     ipcMain.on('win:close', () => {
         if (win) win.close()

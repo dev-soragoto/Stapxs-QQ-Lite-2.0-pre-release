@@ -298,11 +298,6 @@ export default defineComponent({
     mounted() {
         const logger = new Logger()
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
-        window.onbeforeunload = () => {
-            if (runtimeData.tags.isElectron) {
-                Connector.close()
-            }
-        }
         // 页面加载完成后
         window.onload = async () => {
             // 初始化全局参数
@@ -490,10 +485,25 @@ export default defineComponent({
                     runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
                 })
             }
+            // 更新标题
+            const titleList = [
+                '也试试 Lcalingua Plus Plus 吧！',
+                '点击阅读《社交功能限制提醒》',
+                '登录失败，Code 45',
+                '你好世界！',
+                '这只是个普通的彩蛋！'
+            ]
+            document.title = titleList[Math.floor(Math.random() * titleList.length)]
+            if(runtimeData.tags.platform == 'web') {
+                document.title = titleList[Math.floor(Math.random() * titleList.length)] + '- Stapxs QQ Lite'
+            }
         }
         // 页面关闭前
         window.onbeforeunload = () => {
             new Notify().clear()
+            if(import.meta.env.DEV) {
+                Connector.close()
+            }
         }
     },
     methods: {

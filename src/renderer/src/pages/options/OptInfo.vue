@@ -46,7 +46,7 @@
                     class="ss-input"
                     style="width: 150px"
                     type="text"
-                    @keyup="setGroupCard">
+                    @change="setGroupCard">
             </div>
 
             <button
@@ -68,6 +68,7 @@
     export default defineComponent({
         name: 'ViewOptInfo',
         props: ['type', 'chat'],
+        emits: ['update_mumber_card'],
         data() {
             return {
                 runtimeData: runtimeData,
@@ -78,18 +79,8 @@
              * 设置群名片
              * @param event 按键事件
              */
-            setGroupCard(event: KeyboardEvent) {
-                if (event.key === 'Enter') {
-                    Connector.send(
-                        'set_group_card',
-                        {
-                            group_id: this.chat.show.id,
-                            user_id: runtimeData.loginInfo.uin,
-                            card: runtimeData.chatInfo.info.me_info.card,
-                        },
-                        'setGroupCard',
-                    )
-                }
+            setGroupCard(event: Event) {
+                this.$emit('update_mumber_card', event, runtimeData.chatInfo.info.me_info)
             },
 
             /**

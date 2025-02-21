@@ -163,7 +163,8 @@
                     <div style="padding: 0 20px">
                         <OptInfo
                             :type="'group'"
-                            :chat="chat" />
+                            :chat="chat"
+                            @update_mumber_card="updateMumberCard" />
                     </div>
                 </div>
             </BcTab>
@@ -210,23 +211,25 @@
                             type="text"
                             @change="updateMumberTitle($event, showUserConfig)">
                     </div>
-                    <header>{{ $t('操作') }}</header>
-                    <div class="opt-item">
-                        <font-awesome-icon :icon="['fas', 'clipboard-list']" />
-                        <div>
-                            <span>{{ $t('禁言成员') }}</span>
-                            <span>{{
-                                $t('要让小猫咪不许说话几分钟呢？')
-                            }}</span>
+                    <template v-if="showUserConfig.role === 'member'">
+                        <header>{{ $t('操作') }}</header>
+                        <div class="opt-item">
+                            <font-awesome-icon :icon="['fas', 'clipboard-list']" />
+                            <div>
+                                <span>{{ $t('禁言成员') }}</span>
+                                <span>{{
+                                    $t('要让小猫咪不许说话几分钟呢？')
+                                }}</span>
+                            </div>
+                            <input
+                                v-model="mumberInfo.banMin"
+                                style="width: 50%"
+                                class="ss-input"
+                                type="text"
+                                @input="checkNumber"
+                                @change="banMumber($event, showUserConfig)">
                         </div>
-                        <input
-                            v-model="mumberInfo.banMin"
-                            style="width: 50%"
-                            class="ss-input"
-                            type="text"
-                            @input="checkNumber"
-                            @change="banMumber($event, showUserConfig)">
-                    </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -276,7 +279,7 @@ import { Connector } from '@renderer/function/connect'
                     if (num > 0) {
                         const popInfo = {
                             title: this.$t('操作'),
-                            html: `<span>${this.$t('确认禁言成员？')}</span>`,
+                            html: `<span>${this.$t('确认禁言？')}</span>`,
                             button: [
                                 {
                                     text: this.$t('确认'),
@@ -312,7 +315,7 @@ import { Connector } from '@renderer/function/connect'
                 if (this.showUserConfig.card !== value) {
                     const popInfo = {
                         title: this.$t('操作'),
-                        html: `<span>${this.$t('确认修改成员昵称？')}</span>`,
+                        html: `<span>${this.$t('确认修改昵称？')}</span>`,
                         button: [
                             {
                                 text: this.$t('确认'),
@@ -347,7 +350,7 @@ import { Connector } from '@renderer/function/connect'
                 if (this.showUserConfig.card !== value) {
                     const popInfo = {
                         title: this.$t('操作'),
-                        html: `<span>${this.$t('确认修改成员头衔？')}</span>`,
+                        html: `<span>${this.$t('确认修改头衔？')}</span>`,
                         button: [
                             {
                                 text: this.$t('确认'),
