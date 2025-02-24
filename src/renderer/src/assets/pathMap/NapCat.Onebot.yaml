@@ -149,9 +149,6 @@ group_member_info:
         is_robot: /is_robot
         shut_up_timestamp: /shut_up_timestamp
         role: /role
-# 退出群聊
-leave_group:
-    name: set_group_leave
 # 获取收藏表情
 roaming_stamp:
     name: fetch_custom_face
@@ -169,3 +166,48 @@ recent_contact:
 poke:
     name: group_poke
     private_name: friend_poke
+
+## 文件
+# 获取群文件主列表
+group_files:
+    name: get_group_root_files
+    source: $.data.*[*]
+    list:
+        # 文件类型
+        file_id: /file_id                   # 文件 ID
+        file_name: /file_name               # 文件名
+        size: /size                         # 文件大小
+        download_times: /download_times     # 下载次数
+        dead_time: /dead_time               # 过期时间
+        upload_time: /modify_time           # 上传时间
+        uploader_name: /uploader_name       # 上传者
+        # 文件夹类型
+        folder_id: /folder_id               # 文件夹 ID
+        folder_name: /folder_name           # 文件夹名
+        count: /total_file_count            # 文件数量
+        create_time: /create_time           # 创建时间
+        creater_name: /creator_name         # 创建者
+# 获取群文件夹内文件
+group_folder_files:
+    name: get_group_files_by_folder
+# 获取文件下载信息
+file_download:
+    name: get_group_file_url
+    private_name: get_private_file_url
+    source: $.data
+    list:
+        file_url: /url
+
+## 群操作
+# 退出群聊
+leave_group:
+    name: set_group_leave
+# 设置群昵称（包括成员）
+set_group_nickname:
+    name: set_group_card
+# 设置群头衔（包括成员）
+set_group_title:
+    name: set_group_special_title
+# 禁言成员
+ban_mumber:
+    name: set_group_ban

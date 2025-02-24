@@ -410,6 +410,7 @@ export function sendMsgRaw(
     type: string,
     msg: string | any[] | undefined,
     preShow = false,
+    echo = 'sendMsgBack',
 ) {
     // 如果消息为空则不发送
     if(msg == undefined || msg == '' || (Array.isArray(msg) && msg.length == 0)) {
@@ -474,7 +475,7 @@ export function sendMsgRaw(
                     runtimeData.jsonMap.message_list.name_group_send ??
                         'send_msg',
                     { group_id: id, message: msg },
-                    'sendMsgBack_uuid_' + msgUUID,
+                    echo + '_uuid_' + msgUUID,
                 )
                 break
             case 'user': {
@@ -487,14 +488,14 @@ export function sendMsgRaw(
                             group_id: id.split('/')[1],
                             message: msg,
                         },
-                        'sendMsgBack_uuid_' + msgUUID,
+                        echo + '_uuid_' + msgUUID,
                     )
                 } else {
                     Connector.send(
                         runtimeData.jsonMap.message_list.name_user_send ??
                             'send_msg',
                         { user_id: id, message: msg },
-                        'sendMsgBack_uuid_' + msgUUID,
+                        echo + '_uuid_' + msgUUID,
                     )
                 }
                 break

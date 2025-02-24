@@ -176,7 +176,9 @@
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
                         </div>
                         <a>{{ runtimeData.popBoxList[0].title }}</a>
-                        <font-awesome-icon :icon="['fas', 'xmark']" @click="removePopBox" />
+                        <font-awesome-icon v-show="runtimeData.popBoxList[0].button"
+                            :icon="['fas', 'xmark']"
+                            @click="removePopBox" />
                     </header>
                     <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html" />
                     <component :is="runtimeData.popBoxList[0].template" v-else :data="runtimeData.popBoxList[0].data"
@@ -296,11 +298,6 @@ export default defineComponent({
     mounted() {
         const logger = new Logger()
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
-        window.onbeforeunload = () => {
-            if (runtimeData.tags.isElectron) {
-                Connector.close()
-            }
-        }
         // 页面加载完成后
         window.onload = async () => {
             // 初始化全局参数
@@ -488,10 +485,25 @@ export default defineComponent({
                     runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
                 })
             }
+            // 更新标题
+            const titleList = [
+                '也试试 Lcalingua Plus Plus 吧！',
+                '点击阅读《社交功能限制提醒》',
+                '登录失败，Code 45',
+                '你好世界！',
+                '这只是个普通的彩蛋！'
+            ]
+            document.title = titleList[Math.floor(Math.random() * titleList.length)]
+            if(runtimeData.tags.platform == 'web') {
+                document.title = titleList[Math.floor(Math.random() * titleList.length)] + '- Stapxs QQ Lite'
+            }
         }
         // 页面关闭前
         window.onbeforeunload = () => {
             new Notify().clear()
+            if(import.meta.env.DEV) {
+                Connector.close()
+            }
         }
     },
     methods: {
@@ -648,7 +660,7 @@ export default defineComponent({
                 // PS：部分功能不返回用户名需要进来查找所以提前获取
                 Connector.send(
                     'get_group_member_list',
-                    { group_id: data.id },
+                    { group_id: data.id, no_cache: true },
                     'getGroupMemberList',
                 )
             }

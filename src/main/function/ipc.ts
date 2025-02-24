@@ -6,12 +6,12 @@ import axios from 'axios'
 
 import {
     ipcMain,
-    shell,
     systemPreferences,
     app,
     Menu,
     MenuItemConstructorOptions,
     Notification as ELNotification,
+    shell,
 } from 'electron'
 import { linkView, runCommand } from './util.ts'
 import { win, touchBarInstance } from '../index.ts'
@@ -75,33 +75,6 @@ export function regIpcListener() {
         }
         return null
     })
-    // 代理请求 HTTP
-    // ipcMain.on('sys:requestHttp', (event, args) => {
-    // console.log(args)
-
-    // const cookies = JSON.parse(args.cookies)
-    // console.log(cookies)
-    // const cookieStrs = Object.keys(cookies).map((key) => {
-    //     return key + '=' + cookies[key]
-    // })
-    // console.log(cookieStrs.join('; '))
-    // // 异步请求，不需要立即返回
-    // axios({
-    //     method: args.type,
-    //     url: args.url,
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Cookie': cookieStrs.join('; '),
-    //     },
-    //     data: args.data
-    // }).then((res) => {
-    //     // res.data
-    //     console.log(res.data)
-    // }).catch((err) => {
-    //     // err
-    //     console.error(err)
-    // })
-    // })
     // 关闭窗口
     ipcMain.on('win:close', () => {
         if (win) win.close()
@@ -184,18 +157,17 @@ export function regIpcListener() {
     })
     // 下载文件
     ipcMain.on('sys:download', (_, args) => {
+        logger.level = logLevel
+        logger.info('下载文件：' + args.downloadPath)
+
         const downloadPath = args.downloadPath
         const fileName = args.fileName
-        const ext = path.extname(fileName)
-        const filters = [{ name: '全部文件', extensions: ['*'] }]
-        if (ext && ext !== '.' && ext != null) {
-            const array = ext.match(/[a-zA-Z]+$/)
-            if (array) {
-                filters.unshift({ name: '', extensions: [array[0]] })
-            }
-        }
         if (win) {
             win.webContents.session.on('will-download', (_, item) => {
+                item.setSaveDialogOptions({
+                    defaultPath: path.join(app.getPath('downloads'), fileName)
+                })
+
                 item.on('updated', (_, state) => {
                     if (state === 'progressing') {
                         if (!item.isPaused()) {
@@ -205,18 +177,15 @@ export function regIpcListener() {
                                     loaded: item.getReceivedBytes(),
                                     total: item.getTotalBytes(),
                                 })
-                                win.setProgressBar(
-                                    item.getReceivedBytes() /
-                                        item.getTotalBytes(),
-                                )
+                                win.setProgressBar( item.getReceivedBytes() / item.getTotalBytes())
                             }
                         }
                     }
                 })
-                item.on('done', (event) => {
+                item.on('done', () => {
                     win?.setProgressBar(-1)
-                    const sender = (event as any).sender
-                    if (sender) shell.showItemInFolder(sender.getSavePath())
+                    logger.info('下载完成')
+                    shell.showItemInFolder(item.getSavePath())
                 })
             })
             win.webContents.downloadURL(downloadPath)

@@ -120,27 +120,23 @@
                                 :placeholder="$t('搜索 ……')"
                                 @input="searchList">
                         </div>
-                        <div
-                            v-for="item in number_cache.length > 0
-                                ? number_cache
-                                : chat.info.group_members"
+                        <div v-for="item in number_cache.length > 0 ? number_cache : chat.info.group_members"
                             :key="'chatinfomlist-' + item.user_id"
-                            @click="startChat(item)">
+                            :class="canEditMember(item.role) ? 'edit' : ''">
                             <img
+                                alt="nk"
                                 loading="lazy"
                                 :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
                             <div>
-                                <a>{{
+                                <a @click="startChat(item)">{{
                                     item.card ? item.card : item.nickname
                                 }}</a>
-                                <font-awesome-icon
-                                    v-if="item.role === 'owner'"
-                                    :icon="['fas', 'crown']" />
-                                <font-awesome-icon
-                                    v-if="item.role === 'admin'"
-                                    :icon="['fas', 'star']" />
+                                <font-awesome-icon v-if="item.role === 'owner'" :icon="['fas', 'crown']" />
+                                <font-awesome-icon v-if="item.role === 'admin'" :icon="['fas', 'star']" />
                             </div>
-                            <span>{{ item.user_id }}</span>
+                            <!-- 在手机端戳 id 就能触发 -->
+                            <span @click="moreConfig(item)">{{ item.user_id }}</span>
+                            <font-awesome-icon :icon="['fas', 'wrench']" @click="moreConfig(item)" />
                         </div>
                     </div>
                 </div>
@@ -156,24 +152,13 @@
                 </div>
                 <div :name="$t('文件')">
                     <div
-                        class="group-files"
-                        @scroll="fileLoad">
+                        class="group-files">
                         <div
-                            v-for="item in chat.info.group_files.file_list"
-                            :key="'file-' + item.id">
+                            v-for="item in chat.info.group_files"
+                            :key="'file-' + (item.folder_id ?? item.file_id)">
                             <FileBody
                                 :chat="chat"
                                 :item="item" />
-                        </div>
-                        <div
-                            v-show="
-                                chat.info.group_files !== undefined &&
-                                    chat.info.group_files.next_index !==
-                                    undefined &&
-                                    chat.info.group_files.next_index !== 0
-                            "
-                            class="group-files-loader">
-                            <font-awesome-icon :icon="['fas', 'ellipsis']" />
                         </div>
                     </div>
                 </div>
@@ -181,10 +166,77 @@
                     <div style="padding: 0 20px">
                         <OptInfo
                             :type="'group'"
-                            :chat="chat" />
+                            :chat="chat"
+                            @update_mumber_card="updateMumberCard" />
                     </div>
                 </div>
             </BcTab>
+            <div :class="'ss-card user-config' + (Object.keys(showUserConfig).length > 0 ? ' show' : '')">
+                <div>
+                    <img
+                        alt="nk"
+                        :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${showUserConfig.user_id}`">
+                    <div>
+                        <a>{{ showUserConfig.card != '' ? showUserConfig.card : showUserConfig.nickname }}</a>
+                        <span>{{ showUserConfig.user_id }}</span>
+                    </div>
+                    <font-awesome-icon
+                        :icon="['fas', 'angle-down']"
+                        @click="showUserConfig = {}" />
+                </div>
+                <div>
+                    <header>{{ $t('成员信息') }}</header>
+                    <div class="opt-item">
+                        <font-awesome-icon :icon="['fas', 'clipboard-list']" />
+                        <div>
+                            <span>{{ $t('成员昵称') }}</span>
+                            <span>{{
+                                $t('啊吧啊吧……')
+                            }}</span>
+                        </div>
+                        <input v-model="showUserConfigRaw.card"
+                            style="width: 50%"
+                            class="ss-input"
+                            type="text"
+                            @change="updateMumberCard($event, showUserConfig)">
+                    </div>
+                    <div v-if="chat.info.me_info.role === 'owner'"
+                        class="opt-item">
+                        <font-awesome-icon :icon="['fas', 'clipboard-list']" />
+                        <div>
+                            <span>{{ $t('成员头衔') }}</span>
+                            <span>{{
+                                $t('猪咪猪咪')
+                            }}</span>
+                        </div>
+                        <input
+                            v-model="showUserConfigRaw.title"
+                            style="width: 50%"
+                            class="ss-input"
+                            type="text"
+                            @change="updateMumberTitle($event, showUserConfig)">
+                    </div>
+                    <template v-if="showUserConfig.role === 'member'">
+                        <header>{{ $t('操作') }}</header>
+                        <div class="opt-item">
+                            <font-awesome-icon :icon="['fas', 'clipboard-list']" />
+                            <div>
+                                <span>{{ $t('禁言成员') }}</span>
+                                <span>{{
+                                    $t('要让小猫咪不许说话几分钟呢？')
+                                }}</span>
+                            </div>
+                            <input
+                                v-model="mumberInfo.banMin"
+                                style="width: 50%"
+                                class="ss-input"
+                                type="text"
+                                @input="checkNumber"
+                                @change="banMumber($event, showUserConfig)">
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
         <div class="card-info-pan-bg" />
     </div>
@@ -204,34 +256,167 @@
         UserFriendElem,
         UserGroupElem,
     } from '@renderer/function/elements/information'
+import { Connector } from '@renderer/function/connect'
 
     export default defineComponent({
         name: 'ViewInfo',
         components: { BulletinBody, FileBody, OptInfo, BcTab },
         props: ['tags', 'chat'],
-        emits: ['close', 'loadFile'],
+        emits: ['close'],
         data() {
             return {
                 runtimeData: runtimeData,
                 trueLang: getTrueLang(),
                 isTop: false,
                 number_cache: [] as any[],
+                showUserConfig: {} as any,
+                showUserConfigRaw: {} as any,
+                mumberInfo: {
+                    banMin: 0,
+                }
             }
         },
         methods: {
+            banMumber(event: Event, info: any) {
+                const value = (event.target as HTMLInputElement).value
+                if (value !== '') {
+                    const num = parseInt(value)
+                    if (num > 0) {
+                        const popInfo = {
+                            title: this.$t('操作'),
+                            html: `<span>${this.$t('确认禁言？')}</span>`,
+                            button: [
+                                {
+                                    text: this.$t('确认'),
+                                    fun: () => {
+                                        const name = runtimeData.jsonMap.ban_mumber?.name
+                                        if (name)
+                                            Connector.send(name, {
+                                                group_id: runtimeData.chatInfo.show.id,
+                                                user_id: info.user_id,
+                                                duration: num * 60,
+                                            }, 'updateGroupMemberInfo')
+                                        runtimeData.popBoxList.shift()
+                                        this.closeChatInfoPan()
+                                    },
+                                },
+                                {
+                                    text: this.$t('取消'),
+                                    master: true,
+                                    fun: () => {
+                                        this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
+                                        runtimeData.popBoxList.shift()
+                                    },
+                                },
+                            ],
+                        }
+                        runtimeData.popBoxList.push(popInfo)
+                    }
+                }
+            },
+
+            updateMumberCard(event: Event, info: any) {
+                const value = (event.target as HTMLInputElement).value
+                if (this.showUserConfig.card !== value) {
+                    const popInfo = {
+                        title: this.$t('操作'),
+                        html: `<span>${this.$t('确认修改昵称？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('确认'),
+                                fun: () => {
+                                    const name = runtimeData.jsonMap.set_group_nickname?.name
+                                        if(name)
+                                        Connector.send(name, {
+                                            group_id: runtimeData.chatInfo.show.id,
+                                            user_id: info.user_id,
+                                            card: value,
+                                        }, 'updateGroupMemberInfo')
+                                    runtimeData.popBoxList.shift()
+                                    this.closeChatInfoPan()
+                                },
+                            },
+                            {
+                                text: this.$t('取消'),
+                                master: true,
+                                fun: () => {
+                                    this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
+                                    runtimeData.popBoxList.shift()
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                }
+            },
+
+            updateMumberTitle(event: Event, info: any) {
+                const value = (event.target as HTMLInputElement).value
+                if (this.showUserConfig.card !== value) {
+                    const popInfo = {
+                        title: this.$t('操作'),
+                        html: `<span>${this.$t('确认修改头衔？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('确认'),
+                                fun: () => {
+                                    const name = runtimeData.jsonMap.set_group_title?.name
+                                        if(name)
+                                        Connector.send(name, {
+                                            group_id: runtimeData.chatInfo.show.id,
+                                            user_id: info.user_id,
+                                            special_title: value,
+                                        }, 'updateGroupMemberInfo')
+                                    runtimeData.popBoxList.shift()
+                                    this.closeChatInfoPan()
+                                },
+                            },
+                            {
+                                text: this.$t('取消'),
+                                master: true,
+                                fun: () => {
+                                    this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
+                                    runtimeData.popBoxList.shift()
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                }
+            },
+
+            getBanTimeMin(endTime: number) {
+                // endTime 可能是精确到秒的时间戳
+                if(endTime < 10000000000) {
+                    endTime *= 1000
+                }
+                const now = new Date().getTime()
+                const time = endTime - now
+                if (time > 0) {
+                    return Math.floor(time / 1000 / 60)
+                } else {
+                    return 0
+                }
+            },
+
+            checkNumber(event: Event) {
+                const value = (event.target as HTMLInputElement).value
+                if (value !== '') {
+                    const num = parseInt(value)
+                    if (isNaN(num)) {
+                        (event.target as HTMLInputElement).value = ''
+                    } else if (num < 0) {
+                        (event.target as HTMLInputElement).value = '0'
+                    }
+                }
+            },
+
             /**
              * 关闭面板
              */
             closeChatInfoPan() {
+                this.showUserConfig = {}
                 this.$emit('close', null)
-            },
-
-            /**
-             * 加载更多文件
-             * @param event 滚动事件
-             */
-            fileLoad(event: Event) {
-                this.$emit('loadFile', event)
             },
 
             /**
@@ -285,6 +470,21 @@
                 }
             },
 
+            openMoreConfig(id: number) {
+                const info = this.chat.info.group_members.find(
+                    (item) => item.user_id === id,
+                )
+                if(info) this.moreConfig(info)
+            },
+            moreConfig(info: any) {
+                if(this.canEditMember(info.role)) {
+                    this.showUserConfig = info
+                    this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
+                }
+                // 初始化一些内容
+                this.mumberInfo.banMin = this.getBanTimeMin(info.shut_up_timestamp)
+            },
+
             searchList(event: Event) {
                 const value = (event.target as HTMLInputElement).value
                 if (value !== '') {
@@ -305,6 +505,14 @@
                     this.number_cache = [] as any[]
                 }
             },
+
+            canEditMember(role: string) {
+                return (
+                    this.chat.info.me_info.role === 'owner' ||
+                    (this.chat.info.me_info.role === 'admin'
+                     && role !== 'owner') // 管理员不能编辑群主
+                )
+            }
         },
     })
 </script>

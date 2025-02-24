@@ -515,8 +515,8 @@ textarea:focus {
     transition:
         background 0.3s,
         color 0.3s;
-    background: var(--color-main);
-    color: var(--color-font-1-r);
+    background: var(--color-card-2);
+    color: var(--color-font);
     pointer-events: none;
     border-radius: 7px;
     padding: 15px;

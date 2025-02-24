@@ -117,7 +117,7 @@
                                 key !== 'app_version' &&
                                 key !== 'version'
                         ">
-                        <span>{{ $t('botinfo_' + key) + ': ' }}</span>
+                        <span>{{ key + ': ' }}</span>
                         <span
                             v-if="typeof runtimeData.botInfo[key] !== 'object'">
                             {{ paseBotInfo(key, runtimeData.botInfo[key]) }}
@@ -133,18 +133,7 @@
                             "
                             :key="'botinfo-' + key + item">
                             {{
-                                (typeof runtimeData.botInfo[key][item] ==
-                                    'number'
-                                    ? $t(
-                                        'botinfo_' + item,
-                                        runtimeData.botInfo[key][item],
-                                    )
-                                    : $t('botinfo_' + item)) +
-                                    ': ' +
-                                    paseBotInfo(
-                                        item,
-                                        runtimeData.botInfo[key][item],
-                                    )
+                                item + ': ' + paseBotInfo(item, runtimeData.botInfo[key][item])
                             }}
                         </span>
                     </span>

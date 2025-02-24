@@ -15,7 +15,6 @@ import qed from '@renderer/assets/qed.txt?raw'
 
 import app from '@renderer/main'
 import Option from './option'
-import xss from 'xss'
 import pinyin from 'tiny-pinyin'
 
 import Umami from '@stapxs/umami-logger-typescript'
@@ -30,8 +29,8 @@ import {
     orderOnMsgList,
 } from '@renderer/function/utils/msgUtil'
 import {
+    delay,
     getViewTime,
-    escape2Html,
     randomNum,
 } from '@renderer/function/utils/systemUtil'
 import {
@@ -46,6 +45,8 @@ import { reactive, markRaw, defineAsyncComponent } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import {
+    GroupFileElem,
+    GroupFileFolderElem,
     GroupMemberInfoElem,
     UserFriendElem,
     UserGroupElem,
@@ -300,14 +301,40 @@ const noticeFunctions = {
 
 const msgFunctons = {
     /**
+     * 修改群成员信息回调
+     */
+    updateGroupMemberInfo: () => {
+        const { $t } = app.config.globalProperties
+        const popInfo = {
+            title: $t('操作'),
+            html: `<span>${$t('正在确认操作……')}</span>`
+        }
+        runtimeData.popBoxList.push(popInfo)
+        // 稍微等一下再刷新成员列表
+        delay(1000).then(() => {
+            Connector.send(
+                'get_group_member_list',
+                { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                'getGroupMemberList',
+            )
+            return delay(1000)
+        }).then(() => {
+            Connector.send(
+                'get_group_member_list',
+                { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                'getGroupMemberList',
+            )
+            runtimeData.popBoxList.shift()
+        })
+    },
+
+    /**
      * 保存 Bot 信息
      */
     getVersionInfo: (_: string, msg: { [key: string]: any }) => {
-        const msgBody = getMsgData('version_info', msg, msgPath.version_info)
+        const data = getMsgData('version_info', msg, msgPath.version_info)[0]
 
-        if (msgBody) {
-            const data = msgBody[0]
-
+        if (data) {
             // 如果 runtime 存在（即不是第一次连接），且 app_name 不同，重置 runtime
             resetRimtime(
                 runtimeData.botInfo.app_name != data.app_name && !login.status,
@@ -353,20 +380,15 @@ const msgFunctons = {
                 action: 'label',
                 value: data.nickname,
             })
+            document.title = `${data.nickname}（${data.uin}）`
+            if(runtimeData.tags.platform == 'web') {
+                document.title = `${data.nickname}（${data.uin}）- Stapxs QQ Lite`
+            }
             // 结束登录页面的水波动画
             clearInterval(runtimeData.tags.loginWaveTimer)
             // 跳转标签卡
             const barMsg = document.getElementById('bar-msg')
             if (barMsg != null) barMsg.click()
-            // 获取更详细的信息
-            const url =
-                'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-            const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
-            Connector.send(
-                'http_proxy',
-                { url: url, method: 'post', data: info },
-                'getMoreLoginInfo',
-            )
             // 加载列表消息
             reloadUsers()
             reloadCookies()
@@ -610,6 +632,14 @@ const msgFunctons = {
             )
         }
     },
+    sendFileBack: (
+        _: string,
+        msg: { [key: string]: any },
+        echoList: string[],
+    ) => {
+        runtimeData.popBoxList.shift()
+        msgFunctons['sendMsgBack'](_, msg, echoList)
+    },
 
     /**
      * 获取收藏表情
@@ -671,183 +701,139 @@ const msgFunctons = {
 
     /**
      * 获取群文件列表
-     * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
     getGroupFiles: (_: string, msg: { [key: string]: any }) => {
-        const data = msg.data.data
-        const div = document.createElement('div')
-        div.innerHTML = data.em
-        if (data.ec !== 0) {
-            popInfo.add(
-                PopType.ERR,
-                app.config.globalProperties.$t('加载群文件失败（{code}）', {
-                    code: xss(div.innerHTML),
-                }),
-            )
-        } else {
-            runtimeData.chatInfo.info.group_files = data
-        }
+        const list = getMsgData('group_files', msg, msgPath.group_files) as (GroupFileElem & GroupFileFolderElem)[]
+        // 排序；文件夹在前，文件在后
+        const folderList = list.filter((item) => {
+            return item.folder_id
+        })
+        const fileList = list.filter((item) => {
+            return item.file_id
+        })
+        // 对它们各自排序，文件夹按照 create_time 降序，文件按照 upload_time 降序
+        folderList.sort((a, b) => {
+            return b.create_time - a.create_time
+        })
+        fileList.sort((a, b) => {
+            return b.upload_time - a.upload_time
+        })
+        // 合并
+        runtimeData.chatInfo.info.group_files = folderList.concat(fileList)
     },
 
     /**
-     * 获取群文件列表（分页）
-     * @deprecated 功能在后期更新中未被重构检查，可能存在问题
+     * 获取群文件文件夹文件
      */
-    getMoreGroupFiles: (_: string, msg: { [key: string]: any }) => {
-        const data = msg.data.data
-        if (
-            runtimeData.chatInfo.info !== undefined &&
-            runtimeData.chatInfo.info.group_files !== undefined
-        ) {
-            // 追加文件列表
-            runtimeData.chatInfo.info.group_files.file_list =
-                runtimeData.chatInfo.info.group_files.file_list.concat(
-                    data.file_list,
-                )
-            // 设置最大值位置
-            runtimeData.chatInfo.info.group_files.next_index = data.next_index
+    getGroupDirFiles: (_: string, msg: { [key: string]: any }, echoList: string[]) => {
+        // TODO: 有分页
+
+        // 默认使用主目录相同的结构，如果存在子目录结构的定义则使用子目录的结构
+        let map = msgPath.group_files
+        if(msgPath.group_folder_files.source) {
+            map = msgPath.group_folder
+        }
+        const list = getMsgData('group_files', msg, map) as (GroupFileElem & GroupFileFolderElem)[]
+        // 排序；文件夹在前，文件在后
+        const folderList = list.filter((item) => {
+            return item.folder_id
+        })
+        const fileList = list.filter((item) => {
+            return item.file_id
+        })
+        // 对它们各自排序，文件夹按照 create_time 降序，文件按照 upload_time 降序
+        folderList.sort((a, b) => {
+            return b.create_time - a.create_time
+        })
+        fileList.sort((a, b) => {
+            return b.upload_time - a.upload_time
+        })
+        // 寻找 item
+        const folderId = echoList[1]
+        const folder = runtimeData.chatInfo.info.group_files.find((item) => {
+            return item.folder_id == folderId
+        })
+        if (folder) {
+            folder.items = fileList
         }
     },
 
     /**
      * 下载文件（聊天中）
-     * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
-    downloadFile: (_: string, msg: { [key: string]: any }) => {
-        const info = msg.echo.split('_')
-        const msgId = info[1]
-        const url = msg.data.url
-        // 在消息列表内寻找这条消息（从后往前找）
-        let index = -1
-        let indexMsg = -1
-        for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
-            if (runtimeData.messageList[i].message_id == msgId) {
-                index = i
-                for (
-                    let j = 0;
-                    j < runtimeData.messageList[i].message.length;
-                    j++
-                ) {
-                    if (runtimeData.messageList[i].message[j].type == 'file') {
-                        indexMsg = j
-                        break
-                    }
+    downloadFile: (_: string, msg: { [key: string]: any }, echoList: string[]) => {
+        const data = getMsgData('file_download', msg, msgPath.file_download)[0]
+        const url = data.file_url
+
+        const msgId = echoList[1]
+        const fileName = decodeURIComponent(atob(echoList[2]))
+
+        // 寻找消息（逆序）
+        const msgItem = runtimeData.messageList.find((item) => {
+            return item.message_id == msgId
+        })
+        // 寻找 file 类型消息（一般是第一个）
+        let bodyIndex = -1
+        if (msgItem) {
+            msgItem.message.forEach((item, index) => {
+                if (item.type == 'file') {
+                    bodyIndex = index
                 }
-                break
-            }
+            })
         }
+
         // 下载文件
-        if (index != -1 && indexMsg != -1) {
+        if (msgItem && bodyIndex != -1) {
             const onProcess = function (event: ProgressEvent): undefined {
                 if (!event.lengthComputable) return
-                runtimeData.messageList[index].message[
-                    indexMsg
-                ].downloadingPercentage = Math.floor(
-                    (event.loaded / event.total) * 100,
-                )
+                const percent = Math.floor((event.loaded / event.total) * 100)
+                msgItem.message[bodyIndex].download_percent = percent
             }
-            downloadFile(
-                url,
-                msg.echo.substring(
-                    msg.echo.lastIndexOf('_') + 1,
-                    msg.echo.length,
-                ),
-                onProcess,
-            )
+            downloadFile(url, fileName, onProcess)
         }
     },
 
     /**
      * 下载文件（群文件）
-     * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
-    downloadGroupFile: (_: string, msg: { [key: string]: any }) => {
-        // 基本信息
-        const info = msg.echo.split('_')
-        const id = info[1]
-        // 文件信息
-        let fileName = 'new-file'
-        let fileIndex = -1
-        let subFileIndex = -1
-        runtimeData.chatInfo.info.group_files.file_list.forEach(
-            (item: any, index: number) => {
-                if (item.id === id) {
-                    fileName = escape2Html(item.name)
-                    fileIndex = index
-                }
-            },
-        )
-        // 特殊情况：这是个子文件
-        if (info[2] !== undefined) {
-            runtimeData.chatInfo.info.group_files.file_list[
-                fileIndex
-            ].sub_list.forEach((item: any, index: number) => {
-                if (item.id === info[2]) {
-                    fileName = escape2Html(item.name)
-                    subFileIndex = index
-                }
-            })
-        }
+    downloadGroupFile: (_: string, msg: { [key: string]: any }, echoList: string[]) => {
+        const data = getMsgData('file_download', msg, msgPath.file_download)[0]
+        const url = data.file_url
+
+        const fileId = echoList[1]
+        const fileName = decodeURIComponent(atob(echoList[2]))
+
+        const fileList = runtimeData.chatInfo.info.group_files as (GroupFileElem & GroupFileFolderElem)[]
+
+        let listItem = undefined as GroupFileElem | undefined
+        // 寻找文件列表位置
+        fileList.forEach((item, index) => {
+            if (item.file_id == fileId) {
+                listItem = fileList[index]
+            }
+            if (item.items) {
+                item.items.forEach((subItem, subIndex) => {
+                    if (subItem.file_id == fileId && fileList[index]?.items) {
+                        listItem = fileList[index].items[subIndex]
+                    }
+                })
+            }
+        })
+
         // 下载事件
         const onProcess = function (event: ProgressEvent): undefined {
             if (!event.lengthComputable) return
-            const downloadingPercentage = Math.floor(
-                (event.loaded / event.total) * 100,
-            )
-            if (fileIndex !== -1) {
-                if (subFileIndex === -1) {
-                    if (
-                        runtimeData.chatInfo.info.group_files.file_list[
-                            fileIndex
-                        ].downloadingPercentage === undefined
-                    ) {
-                        runtimeData.chatInfo.info.group_files.file_list[
-                            fileIndex
-                        ].downloadingPercentage = 0
-                    }
-                    runtimeData.chatInfo.info.group_files.file_list[
-                        fileIndex
-                    ].downloadingPercentage = downloadingPercentage
-                } else {
-                    if (
-                        runtimeData.chatInfo.info.group_files.file_list[
-                            fileIndex
-                        ].sub_list[subFileIndex].downloadingPercentage ===
-                        undefined
-                    ) {
-                        runtimeData.chatInfo.info.group_files.file_list[
-                            fileIndex
-                        ].sub_list[subFileIndex].downloadingPercentage = 0
-                    }
-                    runtimeData.chatInfo.info.group_files.file_list[
-                        fileIndex
-                    ].sub_list[subFileIndex].downloadingPercentage =
-                        downloadingPercentage
+            const percent = Math.floor((event.loaded / event.total) * 100)
+            if(listItem) {
+                if(listItem.download_percent == undefined) {
+                    listItem.download_percent = 0
                 }
+                listItem.download_percent = percent
             }
         }
 
         // 下载文件
-        downloadFile(msg.data.url, fileName, onProcess)
-    },
-
-    /**
-     * 获取群文件文件夹文件
-     * @deprecated 功能在后期更新中未被重构检查，可能存在问题
-     */
-    getGroupDirFiles: (_: string, msg: { [key: string]: any }) => {
-        // TODO: 这边不分页直接拿全，还没写
-        const id = msg.echo.split('_')[1]
-        let fileIndex = -1
-        runtimeData.chatInfo.info.group_files.file_list.forEach(
-            (item: any, index: number) => {
-                if (item.id === id) {
-                    fileIndex = index
-                }
-            },
-        )
-        runtimeData.chatInfo.info.group_files.file_list[fileIndex].sub_list =
-            msg.data.data.file_list
+        downloadFile(url, fileName, onProcess)
     },
 
     /**
@@ -858,18 +844,16 @@ const msgFunctons = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
-        let url = msg.data.url
+        const data = getMsgData('file_download', msg, msgPath.file_download)[0]
+        let url = data.file_url
         const msgId = echoList[1]
         const ext = echoList[2]
         if (url) {
-            // 寻找消息位置
-            let msgIndex = -1
-            runtimeData.messageList.forEach((item, index) => {
-                if (item.message_id === msgId) {
-                    msgIndex = index
-                }
+            // 寻找消息
+            const msg = runtimeData.messageList.find((item) => {
+                return item.message_id == msgId
             })
-            if (msgIndex !== -1) {
+            if (msg) {
                 if (document.location.protocol == 'https:') {
                     // 判断文件 URL 的协议
                     // PS：Chrome 不会对 http 文件进行协议升级
@@ -877,8 +861,8 @@ const msgFunctons = {
                         url = 'https' + url.substring(url.indexOf('://'))
                     }
                 }
-                runtimeData.messageList[msgIndex].fileView.url = url
-                runtimeData.messageList[msgIndex].fileView.ext = ext
+                msg.fileView.url = url
+                msg.fileView.ext = ext
             }
         }
     },
