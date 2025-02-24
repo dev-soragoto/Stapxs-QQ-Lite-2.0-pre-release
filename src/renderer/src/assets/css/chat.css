@@ -788,7 +788,6 @@ input {
     transform: translateY(calc(100% + 20px));
     box-shadow: 0 -3px 3px var(--color-shader);
     background: var(--color-card);
-    height: 70%;
     position: absolute;
     width: calc(100% - 30px);
     margin-left: -15px;

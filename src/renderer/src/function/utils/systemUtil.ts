@@ -4,6 +4,15 @@ import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
 
 /**
+ * 异步延迟
+ * @param ms 延迟时间
+ * @returns Promise<void>
+ */
+export function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * 区分安卓、iOS、MacOS 和其他
  */
 export function getDeviceType() {

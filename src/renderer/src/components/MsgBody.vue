@@ -732,7 +732,7 @@
                     file_id: data.file_id,
                     group_id: runtimeData.chatInfo.show.type == 'group' ? runtimeData.chatInfo.show.id : undefined,
                 },
-                    'downloadFile_' + message_id + '_' + btoa(unescape(encodeURIComponent(data.name))),
+                    'downloadFile_' + message_id + '_' + btoa(encodeURIComponent(data.name)),
                 )
             },
 

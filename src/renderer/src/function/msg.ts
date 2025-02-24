@@ -29,6 +29,7 @@ import {
     orderOnMsgList,
 } from '@renderer/function/utils/msgUtil'
 import {
+    delay,
     getViewTime,
     randomNum,
 } from '@renderer/function/utils/systemUtil'
@@ -303,28 +304,28 @@ const msgFunctons = {
      * 修改群成员信息回调
      */
     updateGroupMemberInfo: () => {
-        const $t = app.config.globalProperties.$t
+        const { $t } = app.config.globalProperties
         const popInfo = {
             title: $t('操作'),
             html: `<span>${$t('正在确认操作……')}</span>`
         }
         runtimeData.popBoxList.push(popInfo)
         // 稍微等一下再刷新成员列表
-        setTimeout(() => {
+        delay(1000).then(() => {
             Connector.send(
                 'get_group_member_list',
                 { group_id: runtimeData.chatInfo.show.id, no_cache: true },
                 'getGroupMemberList',
             )
-            setTimeout(() => {
-                Connector.send(
-                    'get_group_member_list',
-                    { group_id: runtimeData.chatInfo.show.id, no_cache: true },
-                    'getGroupMemberList',
-                )
-                runtimeData.popBoxList.shift()
-            }, 1000)
-        }, 1000)
+            return delay(1000)
+        }).then(() => {
+            Connector.send(
+                'get_group_member_list',
+                { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                'getGroupMemberList',
+            )
+            runtimeData.popBoxList.shift()
+        })
     },
 
     /**
@@ -765,7 +766,7 @@ const msgFunctons = {
         const url = data.file_url
 
         const msgId = echoList[1]
-        const fileName = decodeURIComponent(escape(atob(echoList[2])))
+        const fileName = decodeURIComponent(atob(echoList[2]))
 
         // 寻找消息（逆序）
         const msgItem = runtimeData.messageList.find((item) => {
@@ -800,7 +801,7 @@ const msgFunctons = {
         const url = data.file_url
 
         const fileId = echoList[1]
-        const fileName = decodeURIComponent(escape(atob(echoList[2])))
+        const fileName = decodeURIComponent(atob(echoList[2]))
 
         const fileList = runtimeData.chatInfo.info.group_files as (GroupFileElem & GroupFileFolderElem)[]
 

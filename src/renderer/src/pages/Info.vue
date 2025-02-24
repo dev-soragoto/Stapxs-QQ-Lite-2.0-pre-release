@@ -123,7 +123,10 @@
                         <div v-for="item in number_cache.length > 0 ? number_cache : chat.info.group_members"
                             :key="'chatinfomlist-' + item.user_id"
                             :class="canEditMember(item.role) ? 'edit' : ''">
-                            <img loading="lazy" :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
+                            <img
+                                alt="nk"
+                                loading="lazy"
+                                :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
                             <div>
                                 <a @click="startChat(item)">{{
                                     item.card ? item.card : item.nickname
@@ -170,7 +173,9 @@
             </BcTab>
             <div :class="'ss-card user-config' + (Object.keys(showUserConfig).length > 0 ? ' show' : '')">
                 <div>
-                    <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${showUserConfig.user_id}`">
+                    <img
+                        alt="nk"
+                        :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${showUserConfig.user_id}`">
                     <div>
                         <a>{{ showUserConfig.card != '' ? showUserConfig.card : showUserConfig.nickname }}</a>
                         <span>{{ showUserConfig.user_id }}</span>
@@ -400,10 +405,8 @@ import { Connector } from '@renderer/function/connect'
                     const num = parseInt(value)
                     if (isNaN(num)) {
                         (event.target as HTMLInputElement).value = ''
-                    } else {
-                        if (num < 0) {
-                            (event.target as HTMLInputElement).value = '0'
-                        }
+                    } else if (num < 0) {
+                        (event.target as HTMLInputElement).value = '0'
                     }
                 }
             },

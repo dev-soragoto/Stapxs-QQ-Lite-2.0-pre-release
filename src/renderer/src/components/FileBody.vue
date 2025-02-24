@@ -128,7 +128,7 @@
                             group_id: runtimeData.chatInfo.show.id,
                             file_id: item.file_id,
                         },
-                        'downloadGroupFile_' + item.file_id + '_' + btoa(unescape(encodeURIComponent(item.file_name))),
+                        'downloadGroupFile_' + item.file_id + '_' + btoa(encodeURIComponent(item.file_name)),
                     )
                     // PS：在发起下载后就要将百分比设置好 …… 因为下载部分不一定立刻会开始
                     // 这时候如果用户疑惑为什么点了没反应会多次操作的（用户竟是我自己）

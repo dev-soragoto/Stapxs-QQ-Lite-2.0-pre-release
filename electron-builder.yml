@@ -49,6 +49,7 @@ linux:
         - { target: pacman, arch: x64 }
         - { target: AppImage, arch: x64 }
         - { target: deb, arch: x64 }
+        - { target: deb, arch: arm64 }
         - { target: tar.gz, arch: x64 }
     maintainer: Stapx Steve [林槐]
     vendor: Stapxs Steve Team

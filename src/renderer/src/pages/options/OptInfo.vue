@@ -146,7 +146,7 @@
                     ],
                 }
                 runtimeData.popBoxList.push(popInfo)
-            },
+            }
         },
     })
 </script>
