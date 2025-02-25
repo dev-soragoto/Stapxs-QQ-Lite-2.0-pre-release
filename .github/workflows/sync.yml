@@ -62,12 +62,7 @@ jobs:
             exit 0
           fi
 
-          if [ "$latest_branch" = "upstream/next" ]
-          then
-            echo "upstream latest branch is release branch"
-          else
-            sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\\1\\2-pre.$latest_time\\3/g" package.json
-          fi
+          sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\\1\\2-pre.$latest_time\\3/g" package.json
 
           find . -type f -exec sed -i 's#https://api.github.com/repos/Stapxs/Stapxs-QQ-Lite-2.0/releases/latest#https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest#gI' {} +
           sed -i 's#/Stapxs-QQ-Lite-2.0#/Stapxs-QQ-Lite-2.0-pre-release#gI' vite.config.ts

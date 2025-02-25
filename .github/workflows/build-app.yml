@@ -23,6 +23,11 @@ jobs:
         id: step_init
         run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
 
+      # 获取上一个提交的信息
+      - name: Get prev commit
+        id: prev_commit
+        run: echo PREV_COMMIT_MESSAGE=$(git log -1 --pretty=%B HEAD) >> $GITHUB_OUTPUT
+
   # ========================= 构建 Web 版本 =========================
 
   build-root-web:
@@ -169,7 +174,11 @@ jobs:
           files: ./${{ needs.build-electron.outputs.version }}/*
           tag_name: v${{ needs.build-electron.outputs.version }}
           body: |
-            这是一个自动构建版本，由 GitHub Actions 自动构建并发布。
+            由 GitHub Actions 自动构建并发布。
+            - 来自上游的更新内容:
+            ```
+            ${{ steps.prev_commit.outputs.PREV_COMMIT_MESSAGE }}
+            ```
             - 构建时间：${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
