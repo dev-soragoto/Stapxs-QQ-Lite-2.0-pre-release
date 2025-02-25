@@ -190,9 +190,9 @@ jobs:
           body: |
             由 GitHub Actions 自动构建并发布。
             - 来自上游的更新内容:
-            ```
+            ---
             ${{ needs.init.outputs.message }}
-            ```
+            ---
             - 构建时间：${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
