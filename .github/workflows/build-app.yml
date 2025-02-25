@@ -6,9 +6,21 @@ on:
       - pre-release
 
 jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: clean deployment
+        uses: strumwolf/delete-deployment-environment@v2
+        with:
+          token: ${{ secrets.TOKEN }}
+          environment: github-pages
+          onlyRemoveDeployments: true
+
   init:
     name: 初始化构建
     runs-on: ubuntu-latest
+    needs: cleanup
     outputs:
       version: ${{ steps.step_init.outputs.VERSION }}
       message: ${{ steps.prev_commit.outputs.PREV_COMMIT_MESSAGE }}
