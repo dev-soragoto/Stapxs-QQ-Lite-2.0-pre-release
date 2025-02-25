@@ -188,12 +188,12 @@ jobs:
           files: ./${{ needs.build-electron.outputs.version }}/*
           tag_name: v${{ needs.build-electron.outputs.version }}
           body: |
+            ## 自动构建
             由 GitHub Actions 自动构建并发布。
-            - 来自上游的更新内容:
-            ---
+            ## 来自上游的更新内容
             ${{ needs.init.outputs.message }}
-            ---
-            - 构建时间：${{ github.event.head_commit.timestamp }}
+            ## 构建时间
+            ${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
           token: ${{ secrets.TOKEN }}
