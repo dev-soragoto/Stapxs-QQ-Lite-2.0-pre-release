@@ -131,7 +131,7 @@ export function loadHistoryMessage(
     count = 20,
     echo = 'getChatHistoryFist',
 ) {
-    let name
+    let name: string
     const fullPage = runtimeData.jsonMap.message_list?.pagerType == 'full'
     if (runtimeData.jsonMap.message_list && type != 'group') {
         name = runtimeData.jsonMap.message_list.private_name
@@ -176,11 +176,14 @@ export function reloadUsers() {
     }
 }
 
-export function reloadCookies() {
+/**
+* 获取 Cookie
+*/
+export function reloadCookies(domain = 'qun.qq.com') {
     Connector.send(
         'get_cookies',
-        { domain: 'qun.qq.com' },
-        'getCookies_qun.qq.com',
+        { domain: domain },
+        'getCookies' + domain,
     )
 }
 
@@ -267,13 +270,10 @@ export function downloadFile(
     }
 }
 
-export async function loadWinColor() {
-    if (runtimeData.plantform.reader) {
-        // 获取系统主题色
-        updateWinColor(await runtimeData.plantform.reader.invoke('sys:getWinColor'))
-    }
-}
-
+/**
+* Windows：获取加载系统主题色
+* @param color 颜色
+*/
 export function updateWinColor(color: string) {
     const process = window.electron?.process
     if (process && process.platform == 'win32') {
@@ -311,7 +311,16 @@ export function updateWinColor(color: string) {
         )
     }
 }
+export async function loadWinColor() {
+    if (runtimeData.plantform.reader) {
+        // 获取系统主题色
+        updateWinColor(await runtimeData.plantform.reader.invoke('sys:getWinColor'))
+    }
+}
 
+/**
+* macOS：创建应用菜单
+*/
 export function createMenu() {
     const { $t } = app.config.globalProperties
     // MacOS：初始化菜单
@@ -357,7 +366,6 @@ export function createMenu() {
         runtimeData.plantform.reader.send('sys:createMenu', menuTitles)
     }
 }
-
 export function updateMenu(config: { id: string; action: string; value: any }) {
     // MacOS：更新菜单
     if (runtimeData.plantform.reader) {
@@ -365,6 +373,9 @@ export function updateMenu(config: { id: string; action: string; value: any }) {
     }
 }
 
+/**
+* Electron：注册系统 IPC
+*/
 export function createIpc() {
     if (runtimeData.plantform.reader) {
         runtimeData.plantform.reader.on('sys:serviceFound', (_, data) => {
@@ -447,121 +458,9 @@ export function createIpc() {
     }
 }
 
-
-import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
-import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
-// import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
-export async function loadAppendStyle() {
-    const platform = runtimeData.tags.platform
-    logger.info('正在装载补充样式……')
-    if(platform != undefined) {
-        import(`@renderer/assets/css/append/append_${platform}.css`)
-            .then(() => {
-                logger.info(`${platform} 平台附加样式加载完成`)
-            })
-            .catch(() => {
-                logger.info('未找到对应平台的附加样式')
-            })
-    }
-
-    // 添加手机端样式
-    const updateCss = (appendCss = '') => {
-        const cssStype = document.getElementById('mobile-css')
-
-        const width = window.innerWidth
-        const height = window.innerHeight
-        if(cssStype) {
-            if(width > 600) {
-                cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
-            } else {
-                cssStype.innerHTML = horizontalCss + verticalCss + appendCss
-            }
-        }
-
-        if(runtimeData.tags.isElectron) {
-            runtimeData.plantform.reader?.send('win:maximize')
-            const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
-            if(topBar) {
-                topBar.style.display = 'none'
-            }
-        }
-    }
-    if(runtimeData.tags.isCapacitor) {
-        const styleTag = document.createElement('style')
-        styleTag.id = 'mobile-css'
-        document.head.appendChild(styleTag)
-        updateCss()
-        // 屏幕旋转事件处理
-        window.addEventListener('resize', () => {
-            updateCss()
-        })
-    }
-    // if((runtimeData.tags.isElectron && runtimeData.tags.platform == 'win32')) {
-    //     runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
-    //         if(isTabletMode) {
-    //             const styleTag = document.createElement('style')
-    //             styleTag.id = 'mobile-css'
-    //             document.head.appendChild(styleTag)
-    //             updateCss(windowsCss)
-    //         }
-    //     })
-    //     // 屏幕旋转事件处理
-    //     window.addEventListener('resize', () => {
-    //         runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
-    //             if(isTabletMode) {
-    //                 updateCss(windowsCss)
-    //             }
-    //         })
-    //     })
-    // }
-
-    // UI 2.0 附加样式
-    if (runtimeData.tags.isElectron) {
-        import('@renderer/assets/css/append/append_new.css').then(() => {
-            logger.info('UI 2.0 附加样式加载完成')
-        })
-    }
-    // 透明 UI 附加样式
-    let subVersion = runtimeData.tags.release?.split('.') as any
-    subVersion = subVersion ? Number(subVersion[2]) : 0
-    if (
-        runtimeData.tags.isElectron &&
-        (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))
-    ) {
-        import('@renderer/assets/css/append/append_vibrancy.css').then(() => {
-            logger.info('透明 UI 附加样式加载完成')
-        })
-    }
-    if (runtimeData.tags.isElectron && platform == 'linux') {
-        const gnomeExtInfo = runtimeData.plantform.reader?.invoke('sys:getGnomeExt')
-        if (gnomeExtInfo) {
-            gnomeExtInfo.then((info: any) => {
-                if (
-                    info['enable-all'] == 'true' ||
-                    (info['whitelist'] != undefined &&
-                        info['whitelist'].indexOf('stapxs-qq-lite')) > 0
-                ) {
-                    import(
-                        '@renderer/assets/css/append/append_vibrancy.css'
-                    ).then(() => {
-                        logger.info('透明 UI 附加样式加载完成')
-                    })
-                    import(
-                        '@renderer/assets/css/append/append_linux_vibrancy.css'
-                    ).then(() => {
-                        logger.info('Linux 透明 UI 附加样式加载完成')
-                    })
-                }
-            })
-        }
-    }
-}
-
-function setQuickLogin(address: string, port: number) {
-    if(login.quickLogin != null)
-        login.quickLogin.push({ address: address, port: port })
-}
-
+/**
+* Capacitor：初始化移动平台
+*/
 export async function loadMobile() {
     const { $t } = app.config.globalProperties
     // Capacitor：相关初始化
@@ -724,6 +623,131 @@ export async function loadMobile() {
     }
 }
 
+import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
+import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
+// import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
+/**
+* 装载补充样式
+*/
+export async function loadAppendStyle() {
+    const platform = runtimeData.tags.platform
+    logger.info('正在装载补充样式……')
+    if(platform != undefined) {
+        import(`@renderer/assets/css/append/append_${platform}.css`)
+            .then(() => {
+                logger.info(`${platform} 平台附加样式加载完成`)
+            })
+            .catch(() => {
+                logger.info('未找到对应平台的附加样式')
+            })
+    }
+
+    // 添加手机端样式
+    const updateCss = (appendCss = '') => {
+        const cssStype = document.getElementById('mobile-css')
+
+        const width = window.innerWidth
+        const height = window.innerHeight
+        if(cssStype) {
+            if(width > 600) {
+                cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
+            } else {
+                cssStype.innerHTML = horizontalCss + verticalCss + appendCss
+            }
+        }
+
+        if(runtimeData.tags.isElectron) {
+            runtimeData.plantform.reader?.send('win:maximize')
+            const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
+            if(topBar) {
+                topBar.style.display = 'none'
+            }
+        }
+    }
+    if(runtimeData.tags.isCapacitor) {
+        const styleTag = document.createElement('style')
+        styleTag.id = 'mobile-css'
+        document.head.appendChild(styleTag)
+        updateCss()
+        // 屏幕旋转事件处理
+        window.addEventListener('resize', () => {
+            updateCss()
+        })
+    }
+    // if((runtimeData.tags.isElectron && runtimeData.tags.platform == 'win32')) {
+    //     runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
+    //         if(isTabletMode) {
+    //             const styleTag = document.createElement('style')
+    //             styleTag.id = 'mobile-css'
+    //             document.head.appendChild(styleTag)
+    //             updateCss(windowsCss)
+    //         }
+    //     })
+    //     // 屏幕旋转事件处理
+    //     window.addEventListener('resize', () => {
+    //         runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
+    //             if(isTabletMode) {
+    //                 updateCss(windowsCss)
+    //             }
+    //         })
+    //     })
+    // }
+
+    // UI 2.0 附加样式
+    if (runtimeData.tags.isElectron) {
+        import('@renderer/assets/css/append/append_new.css').then(() => {
+            logger.info('UI 2.0 附加样式加载完成')
+        })
+    }
+    // 透明 UI 附加样式
+    let subVersion = runtimeData.tags.release?.split('.') as any
+    subVersion = subVersion ? Number(subVersion[2]) : 0
+    if (
+        runtimeData.tags.isElectron &&
+        (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))
+    ) {
+        import('@renderer/assets/css/append/append_vibrancy.css').then(() => {
+            logger.info('透明 UI 附加样式加载完成')
+        })
+    }
+    if (runtimeData.tags.isElectron && platform == 'linux') {
+        const gnomeExtInfo = runtimeData.plantform.reader?.invoke('sys:getGnomeExt')
+        if (gnomeExtInfo) {
+            gnomeExtInfo.then((info: any) => {
+                if (
+                    info['enable-all'] == 'true' ||
+                    (info['whitelist'] != undefined &&
+                        info['whitelist'].indexOf('stapxs-qq-lite')) > 0
+                ) {
+                    import(
+                        '@renderer/assets/css/append/append_vibrancy.css'
+                    ).then(() => {
+                        logger.info('透明 UI 附加样式加载完成')
+                    })
+                    import(
+                        '@renderer/assets/css/append/append_linux_vibrancy.css'
+                    ).then(() => {
+                        logger.info('Linux 透明 UI 附加样式加载完成')
+                    })
+                }
+            })
+        }
+    }
+}
+
+/**
+* 初始化快速连接信息
+* @param address 地址
+* @param port 端口
+*/
+function setQuickLogin(address: string, port: number) {
+    if(login.quickLogin != null)
+        login.quickLogin.push({ address: address, port: port })
+}
+
+/**
+* 检查更新
+*/
 export function checkUpdate() {
     // 获取最新的 release 信息
     const packageUrl =
@@ -738,6 +762,10 @@ export function checkUpdate() {
     localStorage.setItem('version', appInfo.version)
 }
 
+/**
+* 展示更新弹窗
+* @param data 更新数据
+*/
 function showUpadteLog(data: any) {
     const appVersion = appInfo.version // 当前版本
     const cacheVersion = localStorage.getItem('version') // 缓存版本
@@ -759,7 +787,6 @@ function showUpadteLog(data: any) {
         showReleaseLog(data, true)
     }
 }
-
 function showReleaseLog(data: any, isUpdated: boolean) {
     const { $t } = app.config.globalProperties
     let msg = data.body
@@ -829,6 +856,9 @@ function showReleaseLog(data: any, isUpdated: boolean) {
     runtimeData.popBoxList.push(popInfo)
 }
 
+/**
+* 显示使用次数弹窗
+*/
 export function checkOpenTimes() {
     const { $t } = app.config.globalProperties
     const times = localStorage.getItem('times')
@@ -888,6 +918,9 @@ export function checkOpenTimes() {
     }
 }
 
+/**
+* 显示全局公告弹窗
+*/
 export function checkNotice() {
     const url =
         'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
@@ -968,6 +1001,13 @@ export function checkNotice() {
         })
 }
 
+/**
+* TODO：后端代理请求模式（暂未使用）
+* @param type 请求类型
+* @param url 地址
+* @param cookies Cookies
+* @param data 数据
+*/
 export function BackendRequest(
     type: 'GET' | 'POST',
     url: string,
@@ -984,6 +1024,11 @@ export function BackendRequest(
     }
 }
 
+/**
+* 加载数据解析映射表（JSON Path）
+* @param name 配置名称
+* @returns 映射表
+*/
 export function loadJsonMap(name: string) {
     let msgPath = undefined as { [key: string]: any } | undefined
     if (name !== undefined) {
@@ -1027,9 +1072,67 @@ export function loadJsonMap(name: string) {
     return msgPath
 }
 
-// UM：统计事件统一上传方法
+/**
+* UM：统计事件统一上传方法
+* @param event 事件名
+* @param data 数据
+*/
 export function sendStatEvent(event: string, data: any) {
     if (!option.get('close_ga') && !import.meta.env.DEV) {
         Umami.trackEvent(event, data)
+    }
+}
+
+/**
+* 切换群组通知状态
+* @param group_id 群组 ID
+* @param open 是否开启通知
+*/
+export function changeGroupNotice(group_id: number, open: boolean) {
+    const noticeInfo = option.get('notice_group') ?? {}
+    const list = noticeInfo[runtimeData.loginInfo.uin]
+    if(open) {
+        if (list) {
+            list.push(group_id)
+        } else {
+            noticeInfo[runtimeData.loginInfo.uin] = [group_id]
+        }
+        option.save('notice_group', noticeInfo)
+        // 如果它在 groupAssistList 里面，移到 onMsgList
+        // 找到它和它的位置
+        const item = runtimeData.groupAssistList.find(
+            (item) => item.group_id == group_id,
+        )
+        if (item) {
+            runtimeData.onMsgList.push(item)
+            runtimeData.groupAssistList.splice(
+                runtimeData.groupAssistList.indexOf(item),
+                1,
+            )
+        }
+    } else {
+        if (list) {
+            const index = list.indexOf(group_id)
+            if (index >= 0) {
+                list.splice(index, 1)
+            }
+        }
+        option.save('notice_group', noticeInfo)
+        // 如果它在 onMsgList 里面，移到 groupAssistList
+        if(!runtimeData.sysConfig.bubble_sort_user) {
+            const item = runtimeData.onMsgList.find(
+                (item) => item.group_id == group_id,
+            )
+
+            if (item && !item.always_top) {
+                item.new_msg = false
+
+                runtimeData.groupAssistList.push(item)
+                runtimeData.onMsgList.splice(
+                    runtimeData.onMsgList.indexOf(item),
+                    1,
+                )
+            }
+        }
     }
 }

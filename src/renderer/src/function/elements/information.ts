@@ -101,6 +101,7 @@ export interface BaseChatInfoElem {
     id: number
     name: string
     avatar: string
+    appendInfo?: string
     jump?: string
 }
 

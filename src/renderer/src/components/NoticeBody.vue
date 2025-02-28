@@ -117,7 +117,9 @@
                 }
             }
             // poke 通知创建对应的动画
-            if (this.info.sub_type === 'poke' && this.info.pokeMe) {
+            // PS：只有最后一条 poke 通知会触发动画，避免反复触发动画
+            if (this.info.sub_type === 'poke' && this.info.pokeMe &&
+                this.info == runtimeData.messageList[runtimeData.messageList.length - 1]) {
                 // 给 body 创建一个三段的动画
                 let item = document.getElementById('app')
                 if (runtimeData.tags.isElectron) {

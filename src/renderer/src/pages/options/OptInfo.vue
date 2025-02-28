@@ -38,7 +38,7 @@
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'note-sticky']" />
                 <div>
-                    <span>{{ $t('我的本群昵称') }}</span>
+                    <span>{{ $t('我的群昵称') }}</span>
                     <span>{{ $t('￡爺↘僞ηι慹著彡') }}</span>
                 </div>
                 <input
@@ -47,6 +47,23 @@
                     style="width: 150px"
                     type="text"
                     @change="setGroupCard">
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'bell']" />
+                <div>
+                    <span>{{ $t('通知群消息') }}</span>
+                    <span>{{ $t('快来水群快来水群！') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input
+                        v-model="canGroupNotice"
+                        type="checkbox"
+                        name="opt_dark"
+                        @change="setGroupNotice">
+                    <div>
+                        <div />
+                    </div>
+                </label>
             </div>
 
             <button
@@ -63,7 +80,9 @@
     import { defineComponent } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
-    import { reloadUsers } from '@renderer/function/utils/appUtil'
+    import { changeGroupNotice, reloadUsers } from '@renderer/function/utils/appUtil'
+
+    import Option from '@renderer/function/option'
 
     export default defineComponent({
         name: 'ViewOptInfo',
@@ -75,6 +94,29 @@
             }
         },
         methods: {
+            /**
+            * 判断是否可以通知群消息
+            * @param id 群聊ID
+            */
+            canGroupNotice() {
+                const id = this.chat.show.id
+                const noticeInfo = Option.get('notice_group') ?? {}
+                const list = noticeInfo[runtimeData.loginInfo.uin]
+                if (list) {
+                    return list.indexOf(id) >= 0
+                }
+                return false
+            },
+
+            /**
+            * 设置群消息通知
+            * @param event 输入事件
+            */
+            setGroupNotice(event: Event) {
+                const status = (event.target as HTMLInputElement).checked
+                changeGroupNotice(this.chat.show.id, status)
+            },
+
             /**
              * 设置群名片
              * @param event 按键事件

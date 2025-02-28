@@ -169,7 +169,7 @@
         UserGroupElem,
     } from '@renderer/function/elements/information'
     import { getRaw as getOpt, run as runOpt } from '@renderer/function/option'
-    import { loadHistoryMessage } from '@renderer/function/utils/appUtil'
+    import { changeGroupNotice, loadHistoryMessage } from '@renderer/function/utils/appUtil'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { MenuStatue } from 'vue3-bcui/packages/dist/types'
     import { library } from '@fortawesome/fontawesome-svg-core'
@@ -285,8 +285,6 @@
                         if (!has) {
                             runtimeData.groupAssistList.push(data)
                         }
-                        // 打开群收纳盒
-                        this.showGroupAssist = true
                     }
                 }
             },
@@ -394,51 +392,11 @@
                             this.saveTop(item, false)
                             break
                         case 'notice_open': {
-                            const noticeInfo = Option.get('notice_group') ?? {}
-                            const list = noticeInfo[runtimeData.loginInfo.uin]
-                            if (list) {
-                                list.push(item.group_id)
-                            } else {
-                                noticeInfo[runtimeData.loginInfo.uin] = [
-                                    item.group_id,
-                                ]
-                            }
-                            Option.save('notice_group', noticeInfo)
-                            // 如果它在 groupAssistList 里面，移到 onMsgList
-                            const index = runtimeData.groupAssistList.findIndex(
-                                (get) => {
-                                    return item == get
-                                },
-                            )
-                            if (index >= 0) {
-                                runtimeData.groupAssistList.splice(index, 1)
-                                runtimeData.onMsgList.push(item)
-                            }
+                            changeGroupNotice(item.group_id, true)
                             break
                         }
                         case 'notice_close': {
-                            const noticeInfo = Option.get('notice_group') ?? {}
-                            const list = noticeInfo[runtimeData.loginInfo.uin]
-                            if (list) {
-                                const index = list.indexOf(item.group_id)
-                                if (index >= 0) {
-                                    list.splice(index, 1)
-                                }
-                            }
-                            Option.save('notice_group', noticeInfo)
-                            // 如果它在 onMsgList 里面，移到 groupAssistList
-                            if(!runtimeData.sysConfig.bubble_sort_user) {
-                                const index = runtimeData.onMsgList.findIndex(
-                                    (get) => {
-                                        return item == get
-                                    },
-                                )
-
-                                if (index >= 0 && !item.always_top) {
-                                    runtimeData.onMsgList.splice(index, 1)
-                                    runtimeData.groupAssistList.push(item)
-                                }
-                            }
+                            changeGroupNotice(item.group_id, false)
                             break
                         }
                     }

@@ -212,7 +212,7 @@ msgstr "大力出奇迹喵！"
 msgid "消息类型"
 msgstr "喵喵类型"
 
-msgid "我的本群昵称"
+msgid "我的群昵称"
 msgstr "我的喵圈昵称"
 
 msgid "￡爺↘僞ηι慹著彡"

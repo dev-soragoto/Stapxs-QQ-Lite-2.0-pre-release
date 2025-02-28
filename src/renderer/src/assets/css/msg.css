@@ -33,14 +33,22 @@
 .message > div.sending {
     width: 13px;
     height: auto;
-    display: flex;
+    display: none;
     align-items: flex-end;
     margin-left: 10px;
+    margin-right: 10px;
     margin-bottom: 3px;
 }
-.message > div.sending > svg {
+.message > div.sending.me {
+    display: flex;
+}
+.message > div.sending.right.me {
+    display: none;
+}
+.message > div.sending.left.me > svg {
     animation: rotate 1.5s linear infinite;
-    color: var(--color-main);
+    color: var(--color-font-2);
+    width: 0.8rem;
 }
 
 .message-body {
@@ -525,23 +533,6 @@
     border: 1px solid var(--color-main);
 }
 
-@media (max-width: 992px) {
-    /* 消息体 */
-    .message > img {
-        display: unset !important;
-    }
-    .message-space {
-        display: none;
-    }
-    .message-body {
-        max-width: calc(100% - 50px);
-    }
-    .message-body > a:first-child {
-        color: var(--color-font-1) !important;
-        display: unset !important;
-    }
-}
-
 .file-view {
     background: rgba(var(--color-card-rgb), 0.2);
     justify-content: center;
@@ -572,4 +563,33 @@
 .file-view > span.txt > a {
     display: block;
     width: 100%;
+}
+
+@media (max-width: 992px) {
+    /* 消息体 */
+    .message > img {
+        display: unset !important;
+    }
+    .message-space {
+        display: none;
+    }
+    .message-body {
+        max-width: calc(100% - 50px);
+    }
+    .message-body > a:first-child {
+        color: var(--color-font-1) !important;
+        display: unset !important;
+    }
+
+    .message > div.sending.right.me {
+        display: flex;
+    }
+    .message > div.sending.left.me {
+        display: none;
+    }
+    .message > div.sending.right.me > svg {
+        animation: rotate 1.5s linear infinite;
+        color: var(--color-font-2);
+        width: 0.75rem;
+    }
 }

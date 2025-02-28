@@ -588,7 +588,7 @@ msgstr "[CQ:face,id=1] 嗨👋，這個選項將會強制取代預設設定"
 msgid "自动检测"
 msgstr "自動偵測"
 
-msgid "我的本群昵称"
+msgid "我的群昵称"
 msgstr "我在本群組的暱稱"
 
 msgid "￡爺↘僞ηι慹著彡"

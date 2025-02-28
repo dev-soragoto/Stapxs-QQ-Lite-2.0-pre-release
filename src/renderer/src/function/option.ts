@@ -65,15 +65,7 @@ const configFunction: { [key: string]: (value: any) => void } = {
 }
 
 function clearGroupAssist(value: boolean) {
-    if(value) {
-        // 如果 GroupAssistList 里有东西，把它们全部挪到 OnMsgList 里然后清空
-        if (runtimeData.groupAssistList.length > 0) {
-            runtimeData.onMsgList.push(...runtimeData.groupAssistList)
-            runtimeData.groupAssistList = []
-            const newList = orderOnMsgList(runtimeData.onMsgList)
-            runtimeData.onMsgList = newList
-        }
-    } else {
+    if(!value) {
         // 将 onMsgList 中的非置顶、没有开启消息通知的群挪到 GroupAssistList 里
         const noticeInfo = OptionFun.get('notice_group') ?? {}
         const noticeGroupIdList = noticeInfo[runtimeData.loginInfo.uin]
