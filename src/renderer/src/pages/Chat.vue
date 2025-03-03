@@ -1844,7 +1844,7 @@
                 const msg = this.selectedMsg
                 if (msg !== null) {
                     const msgId = msg.message_id
-                    Connector.send('delete_msg', { message_id: msgId })
+                    Connector.send('delete_msg', { message_id: msgId }, 'deleteMsg')
                     // 关闭消息菜单
                     this.closeMsgMenu()
                 }

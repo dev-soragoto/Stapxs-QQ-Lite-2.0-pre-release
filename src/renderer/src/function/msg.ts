@@ -1334,6 +1334,10 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
                 return
             }
         }
+        // 将消息中 message 字段为空数组的消息过滤掉
+        list = list.filter((item: any) => {
+            return item.message.length > 0
+        })
         // 如果分页不是增量的，就不使用追加
         if (
             append == 'top' &&

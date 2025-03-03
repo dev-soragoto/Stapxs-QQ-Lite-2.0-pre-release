@@ -2,7 +2,7 @@
   <a href="https://blog.stapxs.cn" target="blank">
     <img src="src/renderer/public/img/icons/icon.svg" alt="Logo" width="156" height="156">
   </a>
-  <h2 align="center" style="font-weight: 600">Stapxs QQ Lite 2.0</h2>
+  <h2 align="center" style="font-weight: 600">Stapxs QQ Lite</h2>
  <p align="center">
   <img src="README/gitcode.png" width="400">
  </p>
@@ -40,7 +40,9 @@
 
 ### > 运行服务
 
-Stapxs QQ Lite 需要一个 QQ Bot 后端提供服务，你可以参考 [📖 这个文档](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/wiki/%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B) 布置它。
+Stapxs QQ Lite 需要一个 QQ Bot 后端提供服务，由于简单的文档已经没法快速的描述 QQ Bot 的部署；所以请移步 [Bot 适配情况](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/76) issue 查看目前支持的 Bot 并选择一个自行查看它的部署文档。
+
+<img alt="image" src="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/assets/42486439/c92ebf66-e11e-41bd-9faa-7399aac2d1a8">
 
 ### > 访问网页
 
@@ -63,19 +65,16 @@ npx ssqq-web hostname=127.0.0.1 port=8081
 ```
 
 ## 💬 提醒和问题
-
-### > 关于不安全连接
-
-- 当使用 https 页面连接 ws 服务（反之相同）的情况下，连接将会失败；这是由于其中某一者是不安全的。在这种情况下，你可以选择将 ws 提升为 wss 或者将 https 降级为 http（不安全）来解决问题，此处不提供解决方案。>> [Stapxs-QQ-Lite#32](https://github.com/Stapxs/Stapxs-QQ-Lite/issues/32)
+这儿有一些关于使用 QQ Bot 和第三方客户端的常见疑问，你也可以查看 [常见问题](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/117) issue 来获取更多使用部署相关的问题。
 
 ### > 我能使用其他 QQ Http Bot 吗
 
-- 如果它兼容 [OneBot 11 协议](<https://github.com/botuniverse/onebot-11>), 你可以尝试连接它, 但是由于消息体格式和接口扩展的差异，大部分情况下都不能完全正常使用。
+- 如果它兼容 [OneBot 11 协议](https://github.com/botuniverse/onebot-11), 你可以尝试连接它, 但是由于消息体格式和接口扩展的差异，大部分情况下都不能完全正常使用。
   已经兼容的 Bot 都写在了文档里，可以去 [这里](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/wiki) 查看。
 
 ### > 使用 Bot 是否有风险
 
-- 如果你使用的是 oicq-http, 可以查看此处了解 [使用风险](<https://github.com/takayama-lily/oicq/wiki/98.%E5%85%B3%E4%BA%8E%E8%B4%A6%E5%8F%B7%E5%86%BB%E7%BB%93%E5%92%8C%E9%A3%8E%E6%8E%A7>), 如果你尝试使用其他 QQ Bot (参见上一条问题), 请自行参考它的文档。
+- 使用 QQ Bot 服务可能会有一定的风险，此风险并不由 Stapxs QQ Lite 所造成，而是使用 QQ Bot 服务本身的风险。请自行检查你使用的 QQ Bot 的相关文档以了解关于风险的信息。
 
 ### > 我遇到了问题
 
@@ -83,10 +82,10 @@ npx ssqq-web hostname=127.0.0.1 port=8081
 
 ## 📦️ 构建应用
 
-为了规范对其他仓库的引用，Stapxs QQ Lite 2.0 仓库含有一些子模块，这意味着你需要在克隆仓库的时候包含子模块：
+为了规范对其他仓库的引用，Stapxs QQ Lite 仓库含有一些子模块，这意味着你需要在克隆仓库的时候包含子模块：
 
 ``` bash
-git clone https://github.com/Stapxs/Stapxs-QQ-Lite-2.0 --recursive
+git clone https://github.com/Stapxs/Stapxs-QQ-Lite-2.0.git --recursive
 ```
 
 如果你已经克隆了仓库，也可以使用这个来补全子模块：
@@ -99,19 +98,15 @@ git submodule update --init
 
 ``` bash
 # 安装依赖
-yarn
-
-or
-
 yarn install
 ```
-最后，Stapxs QQ Lite 2.0 使用了高德地图的部分 API 来显示位置共享的地图。在 `.env` 文件中提供了一个默认的高德地图 API Key，如果你打算自行部署，你可以在 [这里](https://lbs.amap.com/dev/key/app) 申请一个属于你自己的 API Key 并替换掉默认的 API Key。
+最后，在构建前 Stapxs QQ Lite 使用了高德地图的部分 API 来显示位置共享的地图。在 `.env` 文件中提供了一个默认的高德地图 API Key，如果你打算自行部署，你可以在 [这里](https://lbs.amap.com/dev/key/app) 申请一个属于你自己的 API Key 并替换掉默认的 API Key。
 
 我们非常建议你使用自己的 API Key，因为默认的 API Key 有使用次数限制。
 
 ### > 构建 Web 页面
 
-Stapxs QQ Lite 2.0 是一个基于 Vue 的单页应用，这意味着如果你想自行部署到网页服务需要进行构建。当然你同样可以前往 [这儿](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/releases) 来下载预构建好的根目录文件包。
+Stapxs QQ Lite 是一个基于 Vue 的单页应用，这意味着如果你想自行部署到网页服务需要进行构建。当然你同样可以前往 [这儿](https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/releases) 来下载预构建好的根目录文件包。
 
 下面是构建该项目的命令，构建结果将最终输出在 `dist` 目录下：
 
@@ -127,7 +122,7 @@ yarn build
 ```
 
 #### SSE 模式
-Stapxs QQ Lite 2.0 支持 SSE 模式。在此模式下本应用将以 HTTP SSE + HTTP API 的方式连接到 QQ Bot 后端以提供更快速和轻量化的连接；甚至可以直接抛弃 SSE 通知推送，仅使用 HTTP API 进行通信。
+Stapxs QQ Lite 支持 SSE 模式。在此模式下本应用将以 HTTP SSE + HTTP API 的方式连接到 QQ Bot 后端以提供更快速和轻量化的连接；甚至可以直接抛弃 SSE 通知推送，仅使用 HTTP API 进行通信。
 
 SSE 模式不支持动态切换，你需要在构建前修改 `.env` 环境变量中 `VITE_APP_SSE` 开头的项来启用 SSE 模式。启用了 SSE 模式后页面将不能使用其他模式。
 
@@ -147,7 +142,9 @@ SSE_SUPPORT 指定了是否支持 SSE 模式。为 false 时将仅使用 HTTP AP
 
 ### > 构建 Electron 客户端
 
-在 `2.3.0` 版本后，Stapxs QQ Lite 2.0 支持构建为 Electron 应用并补充部分平台特性的功能，你也可以自行构建。
+在 `2.3.0` 版本后，Stapxs QQ Lite 支持构建为 Electron 应用并补充部分平台特性的功能，你也可以自行构建。
+
+> 如果 Electron CLI 无法找到 Python bin，你可以将 `PYTHON_PATH` 导出到环境变量中，指向 Python 的可执行文件路径。
 
 下面是构建 Electron 应用的命令，构建结果将最终输出在 `dist_electron/out` 目录下：
 
@@ -159,12 +156,13 @@ yarn dev:electron
 yarn build:win
 ```
 
-更多功能查看 [命令列表](#-命令列表)
-
 ### > 构建 Capacitor 应用
 在 `3.0.0` 版本及以后，Stapxs QQ Lite 2.0 支持通过 Capacitor 构建为移动端应用并补充部分平台特性的功能，你也可以自行构建。
 
 #### Android
+> 如果 Capacitor CLI 无法寻找到 Android Studio 以及 Android SDK，你可以将 `CAPACITOR_ANDROID_STUDIO_PATH` 和 `ANDROID_HOME` 导出到环境变量中；
+它们分别指向 Android Studio 的可执行文件路径和 Android SDK 的路径。
+
 你可以使用 `yarn open:android` 来打开 Android Studio。通过 Build -> Generate Signed Bundle or APK 来构建 APK 文件。
 
 你也可以直接使用 `yarn build:android` 来构建 APK 文件。请检查修改 `capacitor.config.ts` 文件中的 `android.buildOptions` 中的 keyStore 配置。
@@ -179,6 +177,7 @@ yarn build:win
 XCode 的构建结果将最终输出在 `src/mobile/ios/build` 目录下，脚本构建结果将输出在 `dist_capacitor` 目录下。
 
 ### > 命令列表
+这儿是本项目的完整命令列表，你可以使用这些命令来快速构建和调试 Stapxs QQ Lite。
 
 **命令格式为`yarn <命令>`，其中`<命令>`为列表中的一个：**
 
@@ -200,12 +199,6 @@ XCode 的构建结果将最终输出在 `src/mobile/ios/build` 目录下，脚�
 | build:linux    | 构建 Liunx 应用     |
 | build:ios      | 构建 iOS 应用       |
 | build:android  | 构建 Android 应用   |
-
-### > Github Actions
-
-*为什么会有人对自动构建感兴趣，总之自动构建脚本我写了好久。感兴趣就自己去看好了（无端）。*
-
-![auto-build](README/auto-build.png)
 
 ## 🎉 鸣谢
 
