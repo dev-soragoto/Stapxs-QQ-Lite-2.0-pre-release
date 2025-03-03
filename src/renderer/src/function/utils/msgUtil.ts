@@ -405,6 +405,14 @@ export function parseCQ(data: any) {
     return data
 }
 
+/**
+* 发送消息
+* @param id 发送对象的 id
+* @param type 发送对象的类型
+* @param msg 消息体
+* @param preShow 是否消息预显
+* @param echo 回显的事件名
+*/
 export function sendMsgRaw(
     id: string,
     type: string,

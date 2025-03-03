@@ -588,7 +588,7 @@ msgstr ""
 msgid "自动检测"
 msgstr ""
 
-msgid "我的本群昵称"
+msgid "我的群昵称"
 msgstr ""
 
 msgid "￡爺↘僞ηι慹著彡"
@@ -1045,4 +1045,10 @@ msgid "成员头衔"
 msgstr ""
 
 msgid "猪咪猪咪"
+msgstr ""
+
+msgid "通知群消息"
+msgstr ""
+
+msgid "快来水群快来水群！"
 msgstr ""

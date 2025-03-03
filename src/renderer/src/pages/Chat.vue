@@ -39,21 +39,28 @@
                     {{ $t('来自群聊：{group}', { group: chat.show.temp }) }}
                 </span>
                 <span v-else>
-                    {{
-                        list[list.length - 1]
-                            ? $t('上次消息 - {time}', {
-                                time: Intl.DateTimeFormat(trueLang, {
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    second: 'numeric',
-                                }).format(
-                                    new Date(
-                                        list[list.length - 1].time * 1000,
+                    <template v-if="chat.show.appendInfo">
+                        {{
+                            chat.show.appendInfo
+                        }}
+                    </template>
+                    <template v-else>
+                        {{
+                            list[list.length - 1]
+                                ? $t('上次消息 - {time}', {
+                                    time: Intl.DateTimeFormat(trueLang, {
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        second: 'numeric',
+                                    }).format(
+                                        new Date(
+                                            list[list.length - 1].time * 1000,
+                                        ),
                                     ),
-                                ),
-                            })
-                            : $t('暂无消息')
-                    }}
+                                })
+                                : $t('暂无消息')
+                        }}
+                    </template>
                 </span>
             </div>
             <div class="space" />
@@ -149,14 +156,8 @@
                 <template v-for="(msgIndex, index) in tags.search.list">
                     <!-- 时间戳 -->
                     <NoticeBody
-                        v-if="
-                            isShowTime(
-                                list[index - 1]
-                                    ? list[index - 1].time
-                                    : undefined,
-                                msgIndex.time,
-                            )
-                        "
+                        v-if="isShowTime(list[index - 1] ? list[index - 1].time :
+                            undefined, msgIndex.time)"
                         :key="'notice-time-' + index"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
                     <!-- 消息体 -->
@@ -178,12 +179,6 @@
                         @touchstart="msgStartMove($event, msgIndex)"
                         @touchmove="msgOnMove"
                         @touchend="msgMoveEnd($event, msgIndex)" />
-                    <!-- 其他通知消息 -->
-                    <NoticeBody
-                        v-if="msgIndex.post_type === 'notice'"
-                        :id="uuid()"
-                        :key="'notice-' + index"
-                        :data="msgIndex" />
                 </template>
             </TransitionGroup>
         </div>
@@ -1849,7 +1844,7 @@
                 const msg = this.selectedMsg
                 if (msg !== null) {
                     const msgId = msg.message_id
-                    Connector.send('delete_msg', { message_id: msgId })
+                    Connector.send('delete_msg', { message_id: msgId }, 'deleteMsg')
                     // 关闭消息菜单
                     this.closeMsgMenu()
                 }

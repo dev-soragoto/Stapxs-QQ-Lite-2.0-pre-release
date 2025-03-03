@@ -31,6 +31,10 @@
         <div
             v-if="isMe && type != 'merge'"
             class="message-space" />
+        <div v-if="data.fake_msg == true"
+            :class="'sending left' + (isMe ? ' me' : '')">
+            <font-awesome-icon :icon="['fas', 'spinner']" />
+        </div>
         <div
             :class="
                 isMe
@@ -309,9 +313,8 @@
                 </div>
             </div>
         </div>
-        <div
-            v-if="data.fake_msg == true"
-            class="sending">
+        <div v-if="data.fake_msg == true"
+            :class="'sending right' + (isMe ? ' me' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
         <div

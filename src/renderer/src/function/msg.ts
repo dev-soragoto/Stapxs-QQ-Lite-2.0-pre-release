@@ -103,7 +103,8 @@ export function parse(str: string) {
             } else {
                 let type = msg.post_type
                 if (type == 'notice') {
-                    type = msg.notice_type ?? msg.sub_type
+                    // 通知类型，如果没有 sub_type 则使用 notice_type
+                    type = msg.sub_type ?? msg.notice_type
                 }
                 name = type
                 noticeFunctions[type](type, msg)
@@ -241,9 +242,9 @@ const noticeFunctions = {
     },
 
     /**
-     * 群戳一戳
+     * 戳一戳
      */
-    notify: (_: string, msg: { [key: string]: any }) => {
+    poke: (_: string, msg: { [key: string]: any }) => {
         const { $t } = app.config.globalProperties
 
         const groupId = msg.group_id
@@ -295,6 +296,17 @@ const noticeFunctions = {
             msg.str = str
             msg.pokeMe = userInfo[1].isMe
             runtimeData.messageList.push(msg)
+        }
+    },
+
+    input_status: (_: string, msg: { [key: string]: any }) => {
+        const { $t } = app.config.globalProperties
+        const sender = msg.user_id
+        if(runtimeData.chatInfo.show.id == sender) {
+            runtimeData.chatInfo.show.appendInfo = $t('对方正在输入……')
+            setTimeout(() => {
+                runtimeData.chatInfo.show.appendInfo = undefined
+            }, 10000)
         }
     },
 } as { [key: string]: (name: string, msg: { [key: string]: any }) => void }
@@ -1322,6 +1334,10 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
                 return
             }
         }
+        // 将消息中 message 字段为空数组的消息过滤掉
+        list = list.filter((item: any) => {
+            return item.message.length > 0
+        })
         // 如果分页不是增量的，就不使用追加
         if (
             append == 'top' &&
@@ -1498,6 +1514,8 @@ function newMsg(_: string, data: any) {
 
         // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
+            // 如果有正在输入的提示，清除它
+            runtimeData.chatInfo.show.appendInfo = undefined
             // 保存消息
             saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
