@@ -15,7 +15,7 @@
     "update:version": "npx @stapxs/capacitor-sync-version android ios",
     "dev": "vite dev",
     "dev:electron": "electron-vite dev",
-    "dev:tauri": "tauri dev -c src/tarui/tauri.conf.json",
+    "dev:tauri": "tauri dev -c src/tauri/tauri.conf.json",
     "dev:ios": "vite build && capacitor sync ios && capacitor run ios",
     "dev:android": "vite build && capacitor sync android && capacitor run android",
     "open:ios": "vite build && capacitor sync ios && capacitor open ios",
