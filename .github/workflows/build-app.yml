@@ -156,7 +156,7 @@ jobs:
             # 构建 electron 版本（Windows）
             - name: Build Electron (Windows)
               if: matrix.os == 'windows-2019'
-              run: yarn build:win
+              run: yarn build:electron
               env:
                   GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             # 安装打包依赖（Linux）
@@ -168,7 +168,7 @@ jobs:
             # 构建 electron 版本（Linux）
             - name: Build Electron (Linux)
               if: matrix.os == 'ubuntu-latest'
-              run: yarn build:linux
+              run: yarn build:electron
               env:
                   GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 

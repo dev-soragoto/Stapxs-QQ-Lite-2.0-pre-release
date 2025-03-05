@@ -194,9 +194,7 @@ XCode 的构建结果将最终输出在 `src/mobile/ios/build` 目录下，脚�
 | open:ios       | 在 XCode 中打开项目  |
 | open:android   | 在 Android Studio 中打开项目  |
 | build          | 网页构建            |
-| build:win      | 构建 Windows 应用   |
-| build:mac      | 构建 macOS 应用    |
-| build:linux    | 构建 Liunx 应用     |
+| build:electron | 构建当前平台的应用    |
 | build:ios      | 构建 iOS 应用       |
 | build:android  | 构建 Android 应用   |
 

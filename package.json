@@ -20,9 +20,7 @@
     "open:ios": "vite build && capacitor sync ios && capacitor open ios",
     "open:android": "vite build && capacitor sync android && capacitor open android",
     "build": "vite build",
-    "build:win": "electron-vite build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux",
+    "build:electron": "electron-vite build && electron-builder",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
     "build:android": "vite build && capacitor sync android && capacitor build android"
   },
