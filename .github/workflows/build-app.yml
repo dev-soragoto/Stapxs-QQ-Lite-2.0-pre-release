@@ -141,7 +141,7 @@ jobs:
       # 构建 electron 版本（Windows）
       - name: Build Electron (Windows)
         if: matrix.os == 'windows-2019'
-        run: yarn build:win
+        run: yarn build:electron
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
       # 构建 electron 版本（Linux）
@@ -152,7 +152,7 @@ jobs:
           sudo apt install -y libarchive-tools
       - name: Build Electron (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: yarn build:linux
+        run: yarn build:electron
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
 
