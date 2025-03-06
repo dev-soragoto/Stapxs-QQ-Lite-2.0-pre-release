@@ -183,7 +183,7 @@ html {
     padding-top: 10px !important;
 }
 .base-face, .face-stickers {
-    height: 300px;
+    height: 290px;
 }
 .img-sender {
     height: calc(100% - var(--safe-area-top) - calc(var(--safe-area-bottom) + 15px));

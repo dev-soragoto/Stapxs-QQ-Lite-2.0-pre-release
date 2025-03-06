@@ -43,14 +43,10 @@
                         : 'message-body me'
                     : 'message-body'
             ">
-            <template
-                v-if="
-                    runtimeData.chatInfo.show.type == 'group' &&
-                        !isMe &&
-                        senderInfo?.title &&
-                        senderInfo?.title != ''
-                ">
-                <span>{{ senderInfo?.title }}</span>
+            <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
+                <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
+                <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
+                <span v-else-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
             </template>
             <a
                 v-if="data.sender.card || data.sender.nickname"

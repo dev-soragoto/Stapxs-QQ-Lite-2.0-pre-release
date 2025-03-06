@@ -2132,7 +2132,8 @@
                         // 提示
                         const popInfo = {
                             title: this.$t('提醒'),
-                            html: `<span>${this.$t('正在发送文件中……')}</span>`
+                            html: `<span>${this.$t('正在发送文件中……')}</span>`,
+                            allowClose: false
                         }
                         runtimeData.popBoxList.push(popInfo)
                     }

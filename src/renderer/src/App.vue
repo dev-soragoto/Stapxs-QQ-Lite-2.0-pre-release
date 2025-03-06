@@ -176,7 +176,7 @@
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
                         </div>
                         <a>{{ runtimeData.popBoxList[0].title }}</a>
-                        <font-awesome-icon v-show="runtimeData.popBoxList[0].button"
+                        <font-awesome-icon v-if="runtimeData.popBoxList[0].allowClose != false"
                             :icon="['fas', 'xmark']"
                             @click="removePopBox" />
                     </header>
@@ -208,7 +208,7 @@
                     </div>
                 </div>
                 <div @click="
-                    popQuickClose(runtimeData.popBoxList[0].allowQuickClose)
+                    popQuickClose(runtimeData.popBoxList[0].allowQuickClose && runtimeData.popBoxList[0].allowClose)
                 " />
             </div>
         </Transition>
