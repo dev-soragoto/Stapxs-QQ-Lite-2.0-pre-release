@@ -128,6 +128,50 @@
                 </label>
             </div>
             <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'square-xmark']" />
+                <div>
+                    <span>{{ $t('默认功能按钮') }}</span>
+                    <span>{{ $t('你可以始终右击显示所有功能') }}</span>
+                </div>
+                <select
+                    v-model="runtimeData.sysConfig.quick_send"
+                    name="quick_send"
+                    title="quick_send"
+                    @change="save">
+                    <option value="default">
+                        {{ $t('默认') }}
+                    </option>
+                    <option value="img">
+                        {{ $t('图片') }}
+                    </option>
+                    <option value="file">
+                        {{ $t('文件') }}
+                    </option>
+                    <option value="face">
+                        {{ $t('表情') }}
+                    </option>
+                </select>
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'square-arrow-up-right']" />
+                <div>
+                    <span>{{ $t('直接发送表情') }}</span>
+                    <span>{{
+                        $t('收藏表情将不会插入到输入框中，而是直接发送')
+                    }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input
+                        v-model="runtimeData.sysConfig.send_face"
+                        type="checkbox"
+                        name="send_face"
+                        @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'fish-fins']" />
                 <div>
                     <span>{{ $t('小尾巴') }}</span>

@@ -10,7 +10,6 @@
         <BcTab>
             <div icon="fa-solid fa-face-laugh-squint">
                 <div class="title">
-                    <div />
                     <span>{{ $t('小黄脸表情') }}</span>
                 </div>
                 <div class="base-face">
@@ -28,7 +27,6 @@
             </div>
             <div icon="fa-solid fa-heart">
                 <div class="title">
-                    <div />
                     <span>{{ $t('收藏的表情') }}</span>
                     <font-awesome-icon
                         :icon="['fas', 'fa-rotate-right']"
@@ -78,7 +76,7 @@
             BcTab,
         },
         props: ['display'],
-        emits: ['addSpecialMsg'],
+        emits: ['addSpecialMsg', 'sendMsg'],
         data() {
             return {
                 getFace: getFace,
@@ -131,6 +129,10 @@
                     { type: 'image', file: url, subType: 1 },
                     true,
                 )
+                // 直接发送表情
+                if(runtimeData.sysConfig.send_face == true) {
+                    this.$emit('sendMsg')
+                }
             },
 
             stickersScroll(e: Event) {

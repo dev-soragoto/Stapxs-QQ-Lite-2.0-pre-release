@@ -203,7 +203,8 @@
                     <Transition name="pan">
                         <FacePan
                             v-show="details[1].open"
-                            @add-special-msg="addSpecialMsg" />
+                            @add-special-msg="addSpecialMsg"
+                            @send-msg="sendMsg" />
                     </Transition>
                     <!-- 精华消息 -->
                     <Transition name="pan">
@@ -439,8 +440,11 @@
             </div>
             <!-- 消息发送框 -->
             <div>
-                <div @click="moreFunClick">
-                    <font-awesome-icon :icon="['fas', 'plus']" />
+                <div @click="moreFunClick(runtimeData.sysConfig.quick_send)" @contextmenu="moreFunClick()">
+                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'default'" :icon="['fas', 'plus']" />
+                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'img'" :icon="['fas', 'image']" />
+                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'file'" :icon="['fas', 'folder']" />
+                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'face'" :icon="['fas', 'face-laugh']" />
                 </div>
                 <div>
                     <form @submit.prevent="mainSubmit">
@@ -2685,7 +2689,7 @@
             /**
              * 更多功能按钮被点击
              */
-            moreFunClick() {
+            moreFunClick(type = 'default') {
                 let hasOpen = false
                 // 关闭所有其他的已打开的更多功能弹窗
                 this.details.forEach((item) => {
@@ -2693,8 +2697,16 @@
                     item.open = false
                 })
                 // 如果有关闭操作，就不打开更多功能菜单
-                if (!hasOpen) {
+                if (!hasOpen && type == 'default') {
                     this.tags.showMoreDetail = !this.tags.showMoreDetail
+                } else {
+                    this.tags.showMoreDetail = false
+                    // 打开指定的更多功能菜单
+                    switch(type) {
+                        case 'img': this.runSelectImg(); break
+                        case 'file': this.runSelectFile(); break
+                        case 'face': this.details[1].open = !this.details[1].open; break
+                    }
                 }
             },
 

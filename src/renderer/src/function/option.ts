@@ -45,6 +45,7 @@ const optDefault: { [key: string]: any } = {
     msg_type: 2,
     store_face: '[]',
     group_notice_type: 'none',
+    quick_send: 'default',
 }
 
 // =============== 设置项事件 ===============
