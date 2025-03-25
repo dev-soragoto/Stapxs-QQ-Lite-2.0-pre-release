@@ -131,7 +131,7 @@
                 <font-awesome-icon :icon="['fas', 'square-xmark']" />
                 <div>
                     <span>{{ $t('默认功能按钮') }}</span>
-                    <span>{{ $t('你可以始终右击显示所有功能') }}</span>
+                    <span>{{ $t('可以右击试试哦') }}</span>
                 </div>
                 <select
                     v-model="runtimeData.sysConfig.quick_send"
@@ -157,7 +157,7 @@
                 <div>
                     <span>{{ $t('直接发送表情') }}</span>
                     <span>{{
-                        $t('收藏表情将不会插入到输入框中，而是直接发送')
+                        $t('咻！点击发送！')
                     }}</span>
                 </div>
                 <label class="ss-switch">

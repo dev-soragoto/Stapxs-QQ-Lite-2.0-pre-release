@@ -90,6 +90,12 @@ msgstr "管理员"
 msgid "成员类型_owner"
 msgstr "群主"
 
+msgid "管理员"
+msgstr ""
+
+msgid "群主"
+msgstr ""
+
 msgid "合并消息"
 msgstr ""
 
@@ -1051,4 +1057,22 @@ msgid "通知群消息"
 msgstr ""
 
 msgid "快来水群快来水群！"
+msgstr ""
+
+msgid "默认功能按钮"
+msgstr ""
+
+msgid "可以右击试试哦"
+msgstr ""
+
+msgid "直接发送表情"
+msgstr ""
+
+msgid "咻！点击发送！"
+msgstr ""
+
+msgid "小黄脸表情"
+msgstr ""
+
+msgid "收藏的表情"
 msgstr ""

@@ -730,7 +730,7 @@
                 <div
                     v-show="tags.menuDisplay.config"
                     @click="openChatInfoPan();
-                            $refs.infoRef?.openMoreConfig(selectedMsg?.sender.user_id);
+                            ($refs.infoRef as any).openMoreConfig(selectedMsg?.sender.user_id);
                             closeMsgMenu();">
                     <div>
                         <font-awesome-icon :icon="['fas', 'cog']" />
@@ -2697,15 +2697,17 @@
                     item.open = false
                 })
                 // 如果有关闭操作，就不打开更多功能菜单
-                if (!hasOpen && type == 'default') {
-                    this.tags.showMoreDetail = !this.tags.showMoreDetail
-                } else {
-                    this.tags.showMoreDetail = false
-                    // 打开指定的更多功能菜单
-                    switch(type) {
-                        case 'img': this.runSelectImg(); break
-                        case 'file': this.runSelectFile(); break
-                        case 'face': this.details[1].open = !this.details[1].open; break
+                if(!hasOpen) {
+                    if (type == 'default') {
+                        this.tags.showMoreDetail = !this.tags.showMoreDetail
+                    } else {
+                        this.tags.showMoreDetail = false
+                        // 打开指定的更多功能菜单
+                        switch(type) {
+                            case 'img': this.runSelectImg(); break
+                            case 'file': this.runSelectFile(); break
+                            case 'face': this.details[1].open = !this.details[1].open; break
+                        }
                     }
                 }
             },

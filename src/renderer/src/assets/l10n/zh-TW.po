@@ -90,6 +90,12 @@ msgstr "管理員"
 msgid "成员类型_owner"
 msgstr "群組擁有者"
 
+msgid "管理员"
+msgstr "管理員"
+
+msgid "群主"
+msgstr "群組擁有者"
+
 msgid "合并消息"
 msgstr "合併訊息"
 
@@ -967,4 +973,106 @@ msgid "截图"
 msgstr ""
 
 msgid "“{body}” 以及 {num} 条消息"
+msgstr ""
+
+msgid "信息"
+msgstr ""
+
+msgid "列表"
+msgstr ""
+
+msgid "群收纳盒"
+msgstr ""
+
+msgid "来自局域网的服务"
+msgstr ""
+
+msgid "更快的动画速度"
+msgstr ""
+
+msgid "咻咻！此选项将使动画加速到 100ms 并去除部分浪费时间的组动画"
+msgstr ""
+
+msgid "别划了别划了被看见了啦"
+msgstr ""
+
+msgid "[有人@你]"
+msgstr "[有人{'@'}你]"
+
+msgid "[@全体]"
+msgstr "[{'@'}全体]"
+
+msgid "[特別关心]"
+msgstr ""
+
+msgid "离线文件"
+msgstr ""
+
+msgid "正在发送文件中……"
+msgstr ""
+
+msgid "群消息通知方式"
+msgstr ""
+
+msgid "重要消息将始终发起应用内通知和系统通知"
+msgstr ""
+
+msgid "不通知（默认）"
+msgstr ""
+
+msgid "仅应用内通知"
+msgstr ""
+
+msgid "应用内通知和系统通知"
+msgstr ""
+
+msgid "成员设置"
+msgstr ""
+
+msgid "成员信息"
+msgstr ""
+
+msgid "成员昵称"
+msgstr ""
+
+msgid "啊吧啊吧……"
+msgstr ""
+
+msgid "操作"
+msgstr ""
+
+msgid "禁言成员"
+msgstr ""
+
+msgid "要让小猫咪不许说话几分钟呢？"
+msgstr ""
+
+msgid "成员头衔"
+msgstr ""
+
+msgid "猪咪猪咪"
+msgstr ""
+
+msgid "通知群消息"
+msgstr ""
+
+msgid "快来水群快来水群！"
+msgstr ""
+
+msgid "默认功能按钮"
+msgstr ""
+
+msgid "可以右击试试哦"
+msgstr ""
+
+msgid "直接发送表情"
+msgstr ""
+
+msgid "咻！点击发送！"
+msgstr ""
+
+msgid "小黄脸表情"
+msgstr ""
+
+msgid "收藏的表情"
 msgstr ""

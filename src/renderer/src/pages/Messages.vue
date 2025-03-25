@@ -249,15 +249,17 @@
                         }
                     }
                     // 清除新消息标记
-                    runtimeData.onMsgList[index].new_msg = false
-                    runtimeData.onMsgList[index].highlight = undefined
-                    // 关闭所有通知
-                    new Notify().closeAll(
-                        (
-                            runtimeData.onMsgList[index].group_id ??
-                            runtimeData.onMsgList[index].user_id
-                        ).toString(),
-                    )
+                    if(runtimeData.onMsgList[index]) {
+                        runtimeData.onMsgList[index].new_msg = false
+                        runtimeData.onMsgList[index].highlight = undefined
+                        // 关闭所有通知
+                        new Notify().closeAll(
+                            (
+                                runtimeData.onMsgList[index].group_id ??
+                                runtimeData.onMsgList[index].user_id
+                            ).toString(),
+                        )
+                    }
                 }
 
                 // 判断一下群是否应该在群收纳盒内
