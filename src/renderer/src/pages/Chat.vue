@@ -599,34 +599,19 @@
             </div>
         </div>
         <!-- 消息右击菜单 -->
-        <div
-            :class="
-                'msg-menu' +
-                    (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-            ">
-            <div
-                v-show="tags.showMsgMenu"
+        <div :class="'msg-menu' + (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')">
+            <div v-show="tags.showMsgMenu"
                 class="msg-menu-bg"
                 @click="closeMsgMenu" />
-            <div
-                id="msgMenu"
-                :class="
-                    tags.showMsgMenu
-                        ? 'ss-card msg-menu-body show'
-                        : 'ss-card msg-menu-body'
-                ">
-                <div
-                    v-if="runtimeData.chatInfo.show.type == 'group'"
+            <div id="msgMenu"
+                :class="tags.showMsgMenu ? 'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
+                <div v-if="runtimeData.chatInfo.show.type == 'group'"
                     v-show="tags.menuDisplay.showRespond"
-                    :class="
-                        'ss-card respond' +
-                            (tags.menuDisplay.respond ? ' open' : '')
-                    ">
+                    :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
                     <template
                         v-for="(num, index) in respondIds"
                         :key="'respond-' + num">
-                        <img
-                            v-if="getFace(num) != ''"
+                        <img v-if="getFace(num) != ''"
                             loading="lazy"
                             :src="getFace(num) as any"
                             @click="sendRespond(num)">
@@ -636,106 +621,74 @@
                             @click="tags.menuDisplay.respond = true" />
                     </template>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.add"
+                <div v-show="tags.menuDisplay.add"
                     @click="forwardSelf()">
                     <div><font-awesome-icon :icon="['fas', 'plus']" /></div>
                     <a>{{ $t('+ 1') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.relpy"
+                <div v-show="tags.menuDisplay.relpy"
                     @click="replyMsg(true)">
                     <div><font-awesome-icon :icon="['fas', 'message']" /></div>
                     <a>{{ $t('回复') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.forward"
+                <div v-show="tags.menuDisplay.forward"
                     @click="showForWard()">
                     <div><font-awesome-icon :icon="['fas', 'share']" /></div>
                     <a>{{ $t('转发') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.select"
+                <div v-show="tags.menuDisplay.select"
                     @click="intoMultipleSelect()">
-                    <div>
-                        <font-awesome-icon :icon="['fas', 'circle-check']" />
-                    </div>
+                    <div><font-awesome-icon :icon="['fas', 'circle-check']" /></div>
                     <a>{{ $t('多选') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.copy"
+                <div v-show="tags.menuDisplay.copy"
                     @click="copyMsg">
-                    <div>
-                        <font-awesome-icon :icon="['fas', 'clipboard']" />
-                    </div>
+                    <div><font-awesome-icon :icon="['fas', 'clipboard']" /></div>
                     <a>{{ $t('复制') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.copySelect"
+                <div v-show="tags.menuDisplay.copySelect"
                     @click="copySelectMsg">
                     <div><font-awesome-icon :icon="['fas', 'code']" /></div>
                     <a>{{ $t('复制选中文本') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.downloadImg != false"
+                <div v-show="tags.menuDisplay.downloadImg != false"
                     @click="downloadImg">
-                    <div>
-                        <font-awesome-icon :icon="['fas', 'floppy-disk']" />
-                    </div>
+                    <div><font-awesome-icon :icon="['fas', 'floppy-disk']" /></div>
                     <a>{{ $t('下载图片') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.revoke"
+                <div v-show="tags.menuDisplay.revoke"
                     @click="revokeMsg">
                     <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
                     <a>{{ $t('撤回') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.at"
-                    @click="
-                        selectedMsg
-                            ? addSpecialMsg({
-                                msgObj: { type: 'at', qq: selectedMsg.sender.user_id },
-                                addText: true,
-                            }): '';
-                        toMainInput();
-                        closeMsgMenu()
-                    ">
+                <div v-show="tags.menuDisplay.at"
+                    @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: selectedMsg.sender.user_id }, addText: true, }): '';
+                            toMainInput();
+                            closeMsgMenu()">
                     <div><font-awesome-icon :icon="['fas', 'at']" /></div>
                     <a>{{ $t('提及') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.poke"
-                    @click="
-                        sendPoke(
-                            selectedMsg
-                                ? selectedMsg.sender.user_id
-                                : undefined,
-                        )
-                    ">
-                    <div>
-                        <font-awesome-icon
-                            :icon="['fas', 'fa-hand-point-up']" />
-                    </div>
+                <div v-show="tags.menuDisplay.poke"
+                    @click="sendPoke(selectedMsg ? selectedMsg.sender.user_id : undefined)">
+                    <div><font-awesome-icon :icon="['fas', 'fa-hand-point-up']" /></div>
                     <a>{{ $t('戳一戳') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.remove"
+                <div v-show="tags.menuDisplay.remove"
                     @click="removeUser">
-                    <div>
-                        <font-awesome-icon :icon="['fas', 'trash-can']" />
-                    </div>
+                    <div><font-awesome-icon :icon="['fas', 'trash-can']" /></div>
                     <a>{{ $t('移出群聊') }}</a>
                 </div>
-                <div
-                    v-show="tags.menuDisplay.config"
+                <div v-show="tags.menuDisplay.config"
                     @click="openChatInfoPan();
                             ($refs.infoRef as any).openMoreConfig(selectedMsg?.sender.user_id);
                             closeMsgMenu();">
-                    <div>
-                        <font-awesome-icon :icon="['fas', 'cog']" />
-                    </div>
+                    <div><font-awesome-icon :icon="['fas', 'cog']" /></div>
                     <a>{{ $t('成员设置') }}</a>
+                </div>
+                <div v-show="tags.menuDisplay.jumpToMsg"
+                    @click="jumpSearchMsg">
+                    <div><font-awesome-icon :icon="['fas', 'arrow-up-right-from-square']" /></div>
+                    <a>{{ $t('跳转到消息') }}</a>
                 </div>
             </div>
         </div>
@@ -939,6 +892,7 @@
                     isJinLoading: false,
                     onAtFind: false,
                     menuDisplay: {
+                        jumpToMsg: false,
                         add: true,
                         relpy: true,
                         forward: true,
@@ -1055,6 +1009,14 @@
             })
         },
         methods: {
+            jumpSearchMsg() {
+                this.closeSearch()
+                setTimeout(() => {
+                    this.scrollToMsg(this.tags.openedMenuMsg?.id)
+                    this.closeMsgMenu()
+                }, 100)
+            },
+
             /**
              * 判断是否需要显示时间戳（上下超过五分钟的消息）
              * @param timePrv 上条消息的时间戳（10 位）
@@ -1411,6 +1373,15 @@
                             this.tags.menuDisplay.revoke = false
                             this.tags.menuDisplay.select = false
                         }
+                        // 如果在搜索状态，只显示跳转到消息的菜单
+                        if (this.details[3].open) {
+                            Object.keys(this.tags.menuDisplay).forEach(
+                                (name: string) => {
+                                    (this.tags.menuDisplay as any)[name] = false
+                                },
+                            )
+                            this.tags.menuDisplay.jumpToMsg = true
+                        }
                         const selection = document.getSelection()
                         const textBody = selection?.anchorNode?.parentElement
                         let textMsg = null as HTMLElement | null
@@ -1514,6 +1485,7 @@
              */
             initMenuDisplay() {
                 this.tags.menuDisplay = {
+                    jumpToMsg: false,
                     add: true,
                     relpy: true,
                     forward: true,

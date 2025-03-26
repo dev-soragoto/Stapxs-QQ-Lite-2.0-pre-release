@@ -854,6 +854,11 @@ input {
     transition: all 0.3s;
 }
 
+.user-config button {
+    width: calc(100% - 60px);
+    margin: 25px 30px 0 30px;
+}
+
 .bulletins {
     padding: 0 20px;
 }
@@ -1457,11 +1462,6 @@ input {
     color: var(--color-font-2);
     font-size: 0.75rem;
     margin-top: 5px;
-}
-
-.msg-select-tag {
-}
-msg-select-tag > svg {
 }
 
 .replay-tag {

@@ -26,6 +26,10 @@
                         <a>{{ chat.show.name }}</a>
                         <span>{{ chat.show.id }}</span>
                     </div>
+                    <div style="display: flex;align-items: center;justify-content: center;cursor: pointer;"
+                        @click="copyText(chat.show.id)">
+                        <font-awesome-icon :icon="['fas', 'copy']" />
+                    </div>
                 </div>
                 <div
                     v-if="chat.show.type === 'group'"
@@ -122,7 +126,7 @@
                         </div>
                         <div v-for="item in number_cache.length > 0 ? number_cache : chat.info.group_members"
                             :key="'chatinfomlist-' + item.user_id"
-                            :class="canEditMember(item.role) ? 'edit' : ''">
+                            class="edit">
                             <img
                                 alt="nk"
                                 loading="lazy"
@@ -136,7 +140,8 @@
                             </div>
                             <!-- 在手机端戳 id 就能触发 -->
                             <span @click="moreConfig(item)">{{ item.user_id }}</span>
-                            <font-awesome-icon :icon="['fas', 'wrench']" @click="moreConfig(item)" />
+                            <font-awesome-icon v-if="canEditMember(item.role)" :icon="['fas', 'wrench']" @click="moreConfig(item)" />
+                            <font-awesome-icon v-else :icon="['fas', 'copy']" @click="moreConfig(item.user_id)" />
                         </div>
                     </div>
                 </div>
@@ -180,6 +185,10 @@
                         <a>{{ showUserConfig.card != '' ? showUserConfig.card : showUserConfig.nickname }}</a>
                         <span>{{ showUserConfig.user_id }}</span>
                     </div>
+                    <font-awesome-icon
+                        style="margin-right: 20px;"
+                        :icon="['fas', 'copy']"
+                        @click="copyText(showUserConfig.user_id)" />
                     <font-awesome-icon
                         :icon="['fas', 'angle-down']"
                         @click="showUserConfig = {}" />
@@ -234,6 +243,10 @@
                                 @input="checkNumber"
                                 @change="banMumber($event, showUserConfig)">
                         </div>
+                        <button class="ss-button"
+                            @click="removeUser(showUserConfig.nickname, chat.show.id, showUserConfig.user_id)">
+                            {{ $t('移出群聊') }}
+                        </button>
                     </template>
                 </div>
             </div>
@@ -249,6 +262,8 @@
     import OptInfo from './options/OptInfo.vue'
     import BcTab from 'vue3-bcui/packages/bc-tab'
 
+    import { Connector } from '@renderer/function/connect'
+    import { PopInfo, PopType } from '@renderer/function/base'
     import { defineComponent, toRaw } from 'vue'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { runtimeData } from '@renderer/function/msg'
@@ -256,7 +271,6 @@
         UserFriendElem,
         UserGroupElem,
     } from '@renderer/function/elements/information'
-import { Connector } from '@renderer/function/connect'
 
     export default defineComponent({
         name: 'ViewInfo',
@@ -277,6 +291,52 @@ import { Connector } from '@renderer/function/connect'
             }
         },
         methods: {
+            /**
+             * 移出群聊
+             */
+            removeUser(nickname: string, group_id: number, user_id: number) {
+                const popInfo = {
+                    title: this.$t('提醒'),
+                    html: `<span>${this.$t('真的要将 {user} 移出群聊吗', { user: nickname })}</span>`,
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('确定'),
+                            fun: () => {
+                                Connector.send(
+                                    'set_group_kick',
+                                    {
+                                        group_id: group_id,
+                                        user_id: user_id,
+                                    },
+                                    'setGroupKick',
+                                )
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                        {
+                            text: app.config.globalProperties.$t('取消'),
+                            master: true,
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+
+            copyText(text: any) {
+                const popInfo = new PopInfo()
+                app.config.globalProperties.$copyText(String(text)).then(
+                    () => {
+                        popInfo.add(PopType.INFO, this.$t('复制成功'), true)
+                    },
+                    () => {
+                        popInfo.add(PopType.ERR, this.$t('复制失败'), true)
+                    },
+                )
+            },
+
             banMumber(event: Event, info: any) {
                 const value = (event.target as HTMLInputElement).value
                 if (value !== '') {
@@ -480,9 +540,11 @@ import { Connector } from '@renderer/function/connect'
                 if(this.canEditMember(info.role)) {
                     this.showUserConfig = info
                     this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
+                    // 初始化一些内容
+                    this.mumberInfo.banMin = this.getBanTimeMin(info.shut_up_timestamp)
+                } else {
+                    this.copyText(info.user_id)
                 }
-                // 初始化一些内容
-                this.mumberInfo.banMin = this.getBanTimeMin(info.shut_up_timestamp)
             },
 
             searchList(event: Event) {

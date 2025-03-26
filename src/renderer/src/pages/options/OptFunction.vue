@@ -128,6 +128,20 @@
                 </label>
             </div>
             <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'fish-fins']" />
+                <div>
+                    <span>{{ $t('小尾巴') }}</span>
+                    <span>{{ $t('只会追加在最后一段话后面') }}</span>
+                </div>
+                <input
+                    v-model="runtimeData.sysConfig.msg_taill"
+                    class="ss-input"
+                    style="width: 150px"
+                    type="text"
+                    name="msg_taill"
+                    @keyup="save">
+            </div>
+            <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'square-xmark']" />
                 <div>
                     <span>{{ $t('默认功能按钮') }}</span>
@@ -170,20 +184,6 @@
                         <div />
                     </div>
                 </label>
-            </div>
-            <div class="opt-item">
-                <font-awesome-icon :icon="['fas', 'fish-fins']" />
-                <div>
-                    <span>{{ $t('小尾巴') }}</span>
-                    <span>{{ $t('只会追加在最后一段话后面') }}</span>
-                </div>
-                <input
-                    v-model="runtimeData.sysConfig.msg_taill"
-                    class="ss-input"
-                    style="width: 150px"
-                    type="text"
-                    name="msg_taill"
-                    @keyup="save">
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'keyboard']" />

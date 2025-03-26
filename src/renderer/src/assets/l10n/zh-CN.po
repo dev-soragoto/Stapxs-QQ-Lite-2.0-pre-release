@@ -1076,3 +1076,6 @@ msgstr ""
 
 msgid "收藏的表情"
 msgstr ""
+
+msgid "跳转到消息"
+msgstr ""

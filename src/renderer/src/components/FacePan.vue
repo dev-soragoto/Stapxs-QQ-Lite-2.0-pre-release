@@ -97,7 +97,7 @@
         },
         methods: {
             reloadRoamingStamp() {
-                runtimeData.stickerCache == undefined
+                runtimeData.stickerCache = undefined
                 if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full') {
                     // 全量分页，返回所有内容
                     Connector.send(

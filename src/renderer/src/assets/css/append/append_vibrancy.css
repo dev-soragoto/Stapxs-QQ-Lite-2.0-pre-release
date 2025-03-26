@@ -38,8 +38,8 @@ body {
     background: rgba(var(--color-card-2-rgb), 0.7) !important;
 }
 .friend-list > div:last-child {
-    width: 100%;
-    padding: 0 12px 0 0;
+    width: calc(100% - 6px);
+    padding: 0 6px 0 0;
 }
 .friend-list > div:last-child > div:last-child {
     margin-bottom: 10px;
