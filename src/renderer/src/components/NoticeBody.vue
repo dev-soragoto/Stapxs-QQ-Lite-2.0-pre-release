@@ -6,19 +6,14 @@
 -->
 
 <template>
-    <div
-        :id="'notice-' + id"
+    <div :id="'notice-' + id"
         class="note">
-        <div
-            v-if="data.notice_type && data.notice_type.indexOf('recall') >= 0"
-            class="note-recall note-base">
+        <div v-if="data.notice_type && data.notice_type.indexOf('recall') >= 0" class="note-recall note-base">
             <a>{{ info.name }}</a>
             <span>{{ $t('撤回了一条消息') }}</span>
             <div />
         </div>
-        <div
-            v-if="data.notice_type == 'group_ban'"
-            class="note-ban note-base">
+        <div v-if="data.notice_type == 'group_ban'" class="note-ban note-base">
             <template v-if="data.sub_type === 'ban'">
                 <template v-if="isMe(data.user_id)">
                     <span>{{ $t('成员类型_admin') }}</span>
@@ -33,23 +28,18 @@
                 </template>
             </template>
             <span v-else>{{
-                $t('管理员解除了 {name} 的禁言', {
-                    name: isMe(data.user_id) ? $t('你') : getName(data.user_id),
-                })
+                $t('管理员解除了 {name} 的禁言', { name: isMe(data.user_id) ? $t('你') : getName(data.user_id)})
             }}</span>
         </div>
-        <div
-            v-if="data.sub_type === 'poke'"
+        <div v-if="data.sub_type === 'poke'"
             class="note-notify note-base"
             v-html="data.str + '<div class=\'space\'</div>'" />
-        <div
-            v-if="data.sub_type === 'time'"
+        <div v-if="data.sub_type === 'time'"
             class="note-time note-base">
-            <a>{{
-                Intl.DateTimeFormat(
-                    trueLang,
-                    getTimeConfig(new Date(data.time * 1000)),
-                ).format(new Date(data.time * 1000))
+            <a>{{ Intl.DateTimeFormat(
+                trueLang,
+                getTimeConfig(new Date(data.time * 1000)),
+            ).format(new Date(data.time * 1000))
             }}</a>
         </div>
     </div>
@@ -135,49 +125,20 @@
                         500
                     ) {
                         navigator.vibrate([10, 740, 10])
-                        timeLine
-                            .add({
-                                translateX: 30,
-                                duration: 600,
-                                easing: 'cubicBezier(.44,.09,.53,1)',
-                            })
-                            .add({
-                                translateX: 0,
-                                duration: 150,
-                                easing: 'cubicBezier(.44,.09,.53,1)',
-                            })
-                            .add({
-                                translateX: [0, 25, 0],
-                                duration: 500,
-                                easing: 'cubicBezier(.21,.27,.82,.67)',
-                            })
+                        timeLine.add({ translateX: 30, duration: 600, easing: 'cubicBezier(.44,.09,.53,1)' })
+                            .add({ translateX: 0, duration: 150, easing: 'cubicBezier(.44,.09,.53,1)' })
+                            .add({ translateX: [0, 25, 0], duration: 500, easing: 'cubicBezier(.21,.27,.82,.67)' })
                             .add({ targets: {}, duration: 1000 })
-                            .add({
-                                translateX: 70,
-                                duration: 1300,
-                                easing: 'cubicBezier(.89,.72,.72,1.13)',
-                            })
-                            .add({
-                                translateX: 0,
-                                duration: 100,
-                                easing: 'easeOutSine',
-                            })
+                            .add({ translateX: 70, duration: 1300, easing: 'cubicBezier(.89,.72,.72,1.13)' })
+                            .add({ translateX: 0, duration: 100, easing: 'easeOutSine' })
                     }
-                    timeLine.add({
-                        translateX: [-10, 10, -5, 5, 0],
-                        duration: 500,
-                        easing: 'cubicBezier(.44,.09,.53,1)',
-                    })
+                    timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
                     timeLine.change = () => {
                         if (item) {
-                            item.parentElement?.parentElement?.classList.add(
-                                'poking',
-                            )
+                            item.parentElement?.parentElement?.classList.add( 'poking')
                             const teansformX = item.style.transform
                             // teansformX 的数字可能是科学计数法，需要转换为普通数字
-                            let num = Number(
-                                (teansformX.match(/-?\d+\.?\d*/g) ?? [0])[0],
-                            )
+                            let num = Number((teansformX.match(/-?\d+\.?\d*/g) ?? [0])[0])
                             // 取整
                             num = Math.round(num)
                             // 输出 translateX
@@ -194,9 +155,7 @@
                     }
                     timeLine.changeComplete = () => {
                         if (item) {
-                            item.parentElement?.parentElement?.classList.remove(
-                                'poking',
-                            )
+                            item.parentElement?.parentElement?.classList.remove('poking')
                         }
                     }
                 }

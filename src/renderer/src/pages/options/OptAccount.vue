@@ -11,11 +11,7 @@
     <div class="opt-page">
         <template v-if="Object.keys(runtimeData.loginInfo).length > 0">
             <div class="ss-card account-info">
-                <img
-                    :src="
-                        'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                            runtimeData.loginInfo.uin
-                    ">
+                <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + runtimeData.loginInfo.uin">
                 <div>
                     <div>
                         <span>{{ runtimeData.loginInfo.nickname }}</span>
@@ -24,13 +20,10 @@
                     <span>{{
                         runtimeData.loginInfo.info &&
                             Object.keys(runtimeData.loginInfo.info).length > 0
-                            ? runtimeData.loginInfo.info.lnick
-                            : ''
+                            ? runtimeData.loginInfo.info.lnick : ''
                     }}</span>
                 </div>
-                <font-awesome-icon v-if="!sse"
-                    :icon="['fas', 'right-from-bracket']"
-                    @click="exitConnect" />
+                <font-awesome-icon v-if="!sse" :icon="['fas', 'right-from-bracket']" @click="exitConnect" />
             </div>
             <div class="ss-card">
                 <header>{{ $t('账号设置') }}</header>
@@ -40,26 +33,20 @@
                         <span>{{ $t('昵称') }}</span>
                         <span>{{ $t('就只是个名字而已 ……') }}</span>
                     </div>
-                    <input
-                        v-model="runtimeData.loginInfo.nickname"
+                    <input v-model="runtimeData.loginInfo.nickname"
                         class="ss-input"
                         style="width: 150px"
                         type="text"
                         @keyup="setNick">
                 </div>
-                <div
-                    v-if="
-                        runtimeData.loginInfo.info &&
-                            Object.keys(runtimeData.loginInfo.info).length > 0
-                    "
+                <div v-if="runtimeData.loginInfo.info && Object.keys(runtimeData.loginInfo.info).length > 0"
                     class="opt-item">
                     <font-awesome-icon :icon="['fas', 'pen']" />
                     <div>
                         <span>{{ $t('签名') }}</span>
                         <span>{{ $t('啊吧啊吧（智慧的眼神）') }}</span>
                     </div>
-                    <input
-                        v-model="runtimeData.loginInfo.info.lnick"
+                    <input v-model="runtimeData.loginInfo.info.lnick"
                         class="ss-input"
                         style="width: 150px"
                         type="text"
@@ -71,15 +58,12 @@
             <div class="ss-card account-not-login">
                 <font-awesome-icon :icon="['fas', 'fish']" />
                 <span>{{ $t('还没有连接到 OneBot 耶') }}</span>
-                <button
-                    class="ss-button"
-                    @click="goLogin">
+                <button class="ss-button" @click="goLogin">
                     {{ $t('去连接') }}
                 </button>
             </div>
         </template>
-        <div
-            v-if="Object.keys(runtimeData.botInfo).length > 0"
+        <div v-if="Object.keys(runtimeData.botInfo).length > 0"
             class="ss-card">
             <header>{{ $t('后端信息') }}</header>
             <div class="l10n-info">
@@ -94,8 +78,7 @@
                     <span>{{ $t('这是你连接的 QQ Bot 的相关信息') }}</span>
                 </div>
             </div>
-            <div
-                v-if="getRunStatus() != 'unknown'"
+            <div v-if="getRunStatus() != 'unknown'"
                 :class="'bot-status ' + getRunStatus()">
                 <div />
                 <span>{{
@@ -108,29 +91,18 @@
                 }}</span>
             </div>
             <div class="bot-info">
-                <div
-                    v-for="key in Object.keys(runtimeData.botInfo)"
+                <div v-for="key in Object.keys(runtimeData.botInfo)"
                     :key="'botinfo-' + key">
                     <span
-                        v-if="
-                            key !== 'app_name' &&
-                                key !== 'app_version' &&
-                                key !== 'version'
-                        ">
+                        v-if="key !== 'app_name' &&
+                            key !== 'app_version' &&
+                            key !== 'version'">
                         <span>{{ key + ': ' }}</span>
-                        <span
-                            v-if="typeof runtimeData.botInfo[key] !== 'object'">
+                        <span v-if="typeof runtimeData.botInfo[key] !== 'object'">
                             {{ paseBotInfo(key, runtimeData.botInfo[key]) }}
                         </span>
-                        <span
-                            v-for="item in Object.keys(
-                                runtimeData.botInfo[key],
-                            )"
-                            v-else
-                            v-show="
-                                typeof runtimeData.botInfo[key][item] !==
-                                    'object'
-                            "
+                        <span v-for="item in Object.keys(runtimeData.botInfo[key])"
+                            v-else v-show="typeof runtimeData.botInfo[key][item] !== 'object'"
                             :key="'botinfo-' + key + item">
                             {{
                                 item + ': ' + paseBotInfo(item, runtimeData.botInfo[key][item])
@@ -206,10 +178,7 @@
              */
             setNick(event: KeyboardEvent) {
                 // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-                if (
-                    event.key === 'Enter' &&
-                    runtimeData.loginInfo.nickname !== ''
-                ) {
+                if (event.key === 'Enter' && runtimeData.loginInfo.nickname !== '') {
                     Connector.send(
                         'set_nickname',
                         { nickname: runtimeData.loginInfo.nickname },
@@ -224,10 +193,7 @@
              */
             setLNick(event: KeyboardEvent) {
                 // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-                if (
-                    event.key === 'Enter' &&
-                    runtimeData.loginInfo.info.lnick !== ''
-                ) {
+                if (event.key === 'Enter' && runtimeData.loginInfo.info.lnick !== '') {
                     Connector.send(
                         'set_signature',
                         { signature: runtimeData.loginInfo.info.lnick },

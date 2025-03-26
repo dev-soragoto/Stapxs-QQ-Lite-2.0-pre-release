@@ -13,14 +13,12 @@
                     <span>{{ $t('小黄脸表情') }}</span>
                 </div>
                 <div class="base-face">
-                    <div
-                        v-for="num in baseFaceMax"
+                    <div v-for="num in baseFaceMax"
                         v-show="getFace(num) != ''"
                         :key="'base-face-' + num"
                         :data-id="num"
                         @click="addBaseFace(num)">
-                        <img
-                            loading="lazy"
+                        <img loading="lazy"
                             :src="getFace(num) as any">
                     </div>
                 </div>
@@ -34,18 +32,13 @@
                 </div>
                 <div class="face-stickers"
                     @scroll="stickersScroll">
-                    <img
-                        v-for="(url, index) in runtimeData.stickerCache"
+                    <img v-for="(url, index) in runtimeData.stickerCache"
                         v-show="url != 'end'"
                         :key="'stickers-' + index"
                         loading="lazy"
                         :src="url"
                         @click="addImgFace(url)">
-                    <div
-                        v-show="
-                            runtimeData.stickerCache &&
-                                runtimeData.stickerCache.length <= 0
-                        "
+                    <div v-show="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
                         class="ss-card">
                         <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                         <span>{{ $t('一无所有') }}</span>
@@ -143,13 +136,8 @@
                     target.clientHeight + 0.5
                 ) {
                     if (runtimeData.stickerCache) {
-                        if (
-                            runtimeData.jsonMap.roaming_stamp.pagerType ==
-                                'full' &&
-                            runtimeData.stickerCache[
-                                runtimeData.stickerCache.length - 1
-                            ] != 'end'
-                        ) {
+                        if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full' &&
+                            runtimeData.stickerCache[runtimeData.stickerCache.length - 1] != 'end') {
                             const count = 48 + 48 * this.stickerPage
                             // 全量分页，返回所有内容（napcat 行为）
                             Connector.send(

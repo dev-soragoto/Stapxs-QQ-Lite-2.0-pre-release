@@ -15,24 +15,20 @@
 
 <template>
     <div>
-        <div
-            v-if="item.type == 'xml'"
+        <div v-if="item.type == 'xml'"
             @click="View.cardClick('xml-' + id)"
             v-html="View.buildXML(item.data, item.id, id)" />
         <div v-else>
-            <div
-                v-if="info?.type == 'default'"
+            <div v-if="info?.type == 'default'"
                 @click="View.cardClick('json-' + id)"
                 v-html="buildJSON(info, id)" />
-            <div
-                v-else-if="info?.type == 'tencent.map'"
+            <div v-else-if="info?.type == 'tencent.map'"
                 v-once
                 class="msg-comp-map"
                 @click="View.cardClick('map-' + id)">
                 <p>{{ info.app.title }}</p>
                 <span>{{ info.app.desc }}</span>
-                <div
-                    :id="'map-' + id"
+                <div :id="'map-' + id"
                     class="map"
                     :data-url="createMap()"
                     data-urlOpenType="_self" />
@@ -68,24 +64,10 @@
                     const info = data.app
                     const div = document.createElement('div')
                     // 构建 HTML
-                    const html =
-                        '<p>' +
-                        info.title +
-                        '</p>' +
-                        '<span>' +
-                        info.desc +
-                        '</span>' +
-                        '<img style="' +
-                        (info.preview === undefined ? 'display:none' : '') +
-                        '" src="' +
-                        info.preview +
-                        '">' +
-                        (info.name? '<div><img src="' +
-                              info.icon +
-                              '"><span>' +
-                              info.name +
-                              '</span></div>': '')
-
+                    const html = '<p>' + info.title +
+                        '</p>' + '<span>' + info.desc + '</span>' +
+                        '<img style="' + (info.preview === undefined ? 'display:none' : '') + '" src="' + info.preview + '">' +
+                        (info.name? '<div><img src="' + info.icon + '"><span>' + info.name + '</span></div>': '')
                     div.className = 'msg-json'
                     div.id = 'json-' + id
                     div.dataset.url = info.url
@@ -101,11 +83,7 @@
                     // 返回
                     return div.outerHTML
                 } catch (ex) {
-                    return (
-                        '<span v-else class="msg-unknown">( ' +
-                        app.config.globalProperties.$t('解析消息错误') +
-                        ': json )</span>'
-                    )
+                    return ('<span v-else class="msg-unknown">( ' + app.config.globalProperties.$t('解析消息错误') + ': json )</span>')
                 }
             },
 

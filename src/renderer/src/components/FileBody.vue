@@ -6,30 +6,20 @@
 -->
 
 <template>
-    <div
-        :class="
-            (item.folder_id ? ' folder' : '') +
-                (item.items && item.items.length > 0 ? ' open' : '')
-        "
+    <div :class="(item.folder_id ? ' folder' : '') + (item.items && item.items.length > 0 ? ' open' : '')"
         @click="loadFileDir(item)">
         <font-awesome-icon v-if="item.folder_id" :icon="['fas', 'folder']" />
         <font-awesome-icon v-else :icon="['fas', 'file']" />
         <div class="main">
-            <span>{{
-                toHtml(item.folder_name ?? item.file_name)
-            }}</span>
+            <span>{{ toHtml(item.folder_name ?? item.file_name) }}</span>
             <div>
+                <span>{{ toHtml(item.creater_name ?? item.uploader_name) }}</span>
                 <span>{{
-                    toHtml(item.creater_name ?? item.uploader_name)
-                }}</span>
-                <span>{{
-                    (item.create_time || item.upload_time)
-                        ? Intl.DateTimeFormat(trueLang, {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                        }).format(new Date((item.create_time ?? item.upload_time) * 1000))
-                        : '-'
+                    (item.create_time || item.upload_time) ? Intl.DateTimeFormat(trueLang, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    }).format(new Date((item.create_time ?? item.upload_time) * 1000)) : '-'
                 }}</span>
                 <span v-if="!item.dead_time && item.dead_time">{{
                     item.dead_time - item.create_time / 86400 - 1 + $t('天后')
@@ -46,17 +36,14 @@
                 @click="getFile(item)">
                 <font-awesome-icon :icon="['fas', 'angle-down']" />
             </div>
-            <svg
-                v-else-if="item.download_percent !== undefined && item.download_percent < 100"
+            <svg v-else-if="item.download_percent !== undefined && item.download_percent < 100"
                 class="download-bar"
                 xmlns="http://www.w3.org/2000/svg">
                 <circle cx="50%" cy="50%" r="40%"
                     stroke-width="15%" fill="none" stroke-linecap="round" />
                 <circle cx="50%" cy="50%" r="40%"
                     stroke-width="15%" fill="none"
-                    :stroke-dasharray="
-                        item.download_percent === undefined ? '0,10000' :
-                        `${(Math.floor(2 * Math.PI * 25) * item.download_percent) / 100},10000` " />
+                    :stroke-dasharray=" item.download_percent === undefined ? '0,10000' : `${(Math.floor(2 * Math.PI * 25) * item.download_percent) / 100},10000` " />
             </svg>
             <div v-else class="download">
                 <font-awesome-icon :icon="['fas', 'check']" />
@@ -64,11 +51,9 @@
         </template>
         <div v-show="item.show_items !== false && item.items !== undefined"
             :class="(item.items !== undefined ? 'sub_file ' : '') + 'group-files'">
-            <div
-                v-for="sub_item in item.items"
+            <div v-for="sub_item in item.items"
                 :key="'sub_file-' + sub_item.file_id">
-                <FileBody
-                    :chat="chat"
+                <FileBody :chat="chat"
                     :item="(sub_item as GroupFileElem & GroupFileFolderElem)"
                     :parent="item.folder_id" />
             </div>

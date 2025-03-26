@@ -18,22 +18,14 @@
         <div class="info">
             <span>{{ info.title }}</span>
             <div>
-                <div
-                    v-for="(item, index) in info.content"
+                <div v-for="(item, index) in info.content"
                     :key="'changelog-' + index">
                     <span>{{ item.text }}</span>
-                    <div
-                        v-if="item.issue"
+                    <div v-if="item.issue"
                         class="log-issue">
                         <span> -&gt; </span>
                         <div />
-                        <a
-                            @click="
-                                openLink(
-                                    `https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/${item.issue}`,
-                                    true,
-                                )
-                            ">#{{ item.issue }}</a>
+                        <a @click="openLink(`https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/${item.issue}`, true)">#{{ item.issue }}</a>
                     </div>
                 </div>
             </div>

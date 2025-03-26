@@ -10,129 +10,88 @@
  -->
 
 <template>
-    <div
-        :id="'chat-' + data.message_id"
-        :class="
-            'message' +
-                (type ? ' ' + type : '') +
-                (data.revoke ? ' revoke' : '') +
-                (isMe ? ' me' : '') +
-                (selected ? ' selected' : '')
-        "
+    <div :id="'chat-' + data.message_id"
+        :class="'message' +
+            (type ? ' ' + type : '') +
+            (data.revoke ? ' revoke' : '') +
+            (isMe ? ' me' : '') +
+            (selected ? ' selected' : '')"
         :data-raw="getMsgRawTxt(data)"
         :data-sender="data.sender.user_id"
         :data-time="data.time"
         @mouseleave="hiddenUserInfo">
-        <img
-            v-show="!isMe || type == 'merge'"
+        <img v-show="!isMe || type == 'merge'"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
             @dblclick="sendPoke">
-        <div
-            v-if="isMe && type != 'merge'"
+        <div v-if="isMe && type != 'merge'"
             class="message-space" />
         <div v-if="data.fake_msg == true"
             :class="'sending left' + (isMe ? ' me' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
-        <div
-            :class="
-                isMe
-                    ? type == 'merge'
-                        ? 'message-body'
-                        : 'message-body me'
-                    : 'message-body'
-            ">
+        <div :class="isMe ? type == 'merge' ? 'message-body' : 'message-body me' : 'message-body'">
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
                 <span v-else-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
             </template>
-            <a
-                v-if="data.sender.card || data.sender.nickname"
+            <a v-if="data.sender.card || data.sender.nickname"
                 v-show="!isMe || type == 'merge'">
                 {{ data.sender.card ? data.sender.card : data.sender.nickname }}
             </a>
-            <a
-                v-else
-                v-show="!isMe || type == 'merge'">
-                {{
-                    isMe
-                        ? runtimeData.loginInfo.nickname
-                        : runtimeData.chatInfo.show.name
-                }}
+            <a v-else v-show="!isMe || type == 'merge'">
+                {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
             </a>
             <div>
                 <!-- 消息体 -->
                 <template v-if="!hasCard()">
-                    <div
-                        v-for="(item, index) in data.message"
+                    <div v-for="(item, index) in data.message"
                         :key="data.message_id + '-m-' + index"
                         :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
                         <div v-if="item.type === undefined" />
-                        <span
-                            v-else-if="isDebugMsg"
-                            class="msg-text">{{
-                            item
-                        }}</span>
-                        <span
-                            v-else-if="item.type == 'text'"
+                        <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
+                        <span v-else-if="item.type == 'text'"
                             v-show="item.text !== ''"
                             class="msg-text"
                             @click="textClick"
                             v-html="parseText(item.text)" />
-                        <img
-                            v-else-if="
-                                item.type == 'image' &&
-                                    item.file == 'marketface'
-                            "
-                            :class="
-                                imgStyle(
-                                    data.message.length,
-                                    index,
-                                    item.asface,
-                                ) + ' msg-mface'
-                            "
+                        <img v-else-if="item.type == 'image' && item.file == 'marketface'"
+                            :class=" imgStyle(
+                                data.message.length,
+                                index,
+                                item.asface,
+                            ) + ' msg-mface'"
                             :src="item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail">
-                        <img
-                            v-else-if="item.type == 'image'"
+                        <img v-else-if="item.type == 'image'"
                             :title="$t('预览图片')"
                             :alt="$t('图片')"
-                            :class="
-                                imgStyle(
-                                    data.message.length,
-                                    index,
-                                    item.asface,
-                                )
-                            "
+                            :class=" imgStyle(
+                                data.message.length,
+                                index,
+                                item.asface,
+                            )"
                             :src="item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
                         <template v-else-if="item.type == 'face'">
-                            <img
-                                v-if="getFace(item.id)"
+                            <img v-if="getFace(item.id)"
                                 :alt="item.text"
                                 class="msg-face"
                                 :src="getFace(item.id)"
                                 :title="item.text">
-                            <font-awesome-icon
-                                v-else
-                                :class="'msg-face-svg' + (isMe ? ' me' : '')"
-                                :icon="['fas', 'face-grin-wide']" />
+                            <font-awesome-icon v-else :class="'msg-face-svg' + (isMe ? ' me' : '')" :icon="['fas', 'face-grin-wide']" />
                         </template>
-                        <span
-                            v-else-if="item.type == 'bface'"
+                        <span v-else-if="item.type == 'bface'"
                             style="font-style: italic; opacity: 0.7">
                             [ {{ $t('图片') }}：{{ item.text }} ]
                         </span>
-                        <div
-                            v-else-if="item.type == 'at'"
+                        <div v-else-if="item.type == 'at'"
                             :class="getAtClass(item.qq)">
-                            <a
-                                :data-id="item.qq"
+                            <a :data-id="item.qq"
                                 :data-group="data.group_id"
                                 @mouseenter="showUserInfo">{{ getAtName(item) }}</a>
                         </div>
@@ -142,8 +101,7 @@
                                 <div>
                                     <a>
                                         <font-awesome-icon :icon="['fas', 'file']" />
-                                        {{ runtimeData.chatInfo.show.type == 'group' ?
-                                            $t('群文件') : $t('离线文件') }}
+                                        {{ runtimeData.chatInfo.show.type == 'group' ? $t('群文件') : $t('离线文件') }}
                                     </a>
                                     <p>{{ loadFileBase( item, item.name, data.message_id) }}</p>
                                 </div>
@@ -154,8 +112,7 @@
                                     v-if="item.download_percent === undefined"
                                     :icon="['fas', 'angle-down']"
                                     @click="downloadFile(item, data.message_id)" />
-                                <svg
-                                    v-else-if="item.download_percent !== undefined && item.download_percent < 100"
+                                <svg v-else-if="item.download_percent !== undefined && item.download_percent < 100"
                                     class="download-bar"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="50%" cy="50%" r="40%"
@@ -167,99 +124,65 @@
                                 </svg>
                                 <font-awesome-icon v-else :icon="['fas', 'check']" />
                             </div>
-                            <div
-                                v-if="data.fileView && Object.keys(data.fileView).length > 0"
+                            <div v-if="data.fileView && Object.keys(data.fileView).length > 0"
                                 class="file-view">
-                                <img
-                                    v-if="['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
-                                        .includes(data.fileView.ext)"
+                                <img v-if="['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(data.fileView.ext)"
                                     :src="data.fileView.url">
-                                <video
-                                    v-else-if="['mp4', 'avi', 'mkv', 'flv']
-                                        .includes(data.fileView.ext)"
+                                <video v-else-if="['mp4', 'avi', 'mkv', 'flv'].includes(data.fileView.ext)"
                                     playsinline controls muted
                                     autoplay>
-                                    <source
-                                        :src="data.fileView.url"
+                                    <source :src="data.fileView.url"
                                         :type="'video/' + data.fileView.ext">
                                     现在还有不支持 video tag 的浏览器吗？
                                 </video>
-                                <span
-                                    v-else-if="['txt', 'md']
-                                        .includes(data.fileView.ext) && (item.size ?? item.file_size) < 2000000"
-                                    class="txt">
+                                <span v-else-if="['txt', 'md'].includes(data.fileView.ext) && (item.size ?? item.file_size) < 2000000" class="txt">
                                     <a>&gt; {{ item.name }} - {{ $t('文件预览') }}</a>
                                     {{ getTxtUrl(data.fileView) }}{{ data.fileView.txt }}
                                 </span>
                             </div>
                         </div>
-                        <div
-                            v-else-if="item.type == 'video'"
+                        <div v-else-if="item.type == 'video'"
                             class="msg-video">
-                            <video
-                                playsinline
-                                controls
-                                muted
+                            <video playsinline controls muted
                                 autoplay>
-                                <source
-                                    :src="item.url"
+                                <source :src="item.url"
                                     type="video/mp4">
                                 现在还有不支持 video tag 的浏览器吗？
                             </video>
                         </div>
-                        <span
-                            v-else-if="item.type == 'forward'"
+                        <span v-else-if="item.type == 'forward'"
                             class="msg-unknown"
                             style="cursor: pointer"
                             @click="View.getForwardMsg(item.id)">
                             {{ $t('（点击查看合并转发消息）') }}
                         </span>
-                        <div
-                            v-else-if="item.type == 'reply'"
-                            :class="
-                                isMe
-                                    ? type == 'merge'
-                                        ? 'msg-replay'
-                                        : 'msg-replay me'
-                                    : 'msg-replay'
-                            "
+                        <div v-else-if="item.type == 'reply'"
+                            :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
                             @click="scrollToMsg(item.id)">
                             <font-awesome-icon :icon="['fas', 'reply']" />
-                            <a
-                                :class="getRepMsg(item.id) ? '' : 'msg-unknown'"
+                            <a :class="getRepMsg(item.id) ? '' : 'msg-unknown'"
                                 style="cursor: pointer">
-                                {{
-                                    getRepMsg(item.id) ?? $t('（查看回复消息）')
-                                }}
+                                {{ getRepMsg(item.id) ?? $t('（查看回复消息）') }}
                             </a>
                         </div>
-
-                        <span
-                            v-else
-                            class="msg-unknown">{{
-                            '( ' + $t('不支持的消息') + ': ' + item.type + ' )'
-                        }}</span>
+                        <span v-else class="msg-unknown">{{ '( ' + $t('不支持的消息') + ': ' + item.type + ' )' }}</span>
                     </div>
                 </template>
                 <template v-else>
-                    <template
-                        v-for="(item, index) in data.message"
+                    <template v-for="(item, index) in data.message"
                         :key="data.message_id + '-m-' + index">
-                        <CardMessage
-                            v-if="item.type == 'xml' || item.type == 'json'"
+                        <CardMessage v-if="item.type == 'xml' || item.type == 'json'"
                             :id="data.message_id"
                             :item="item" />
                     </template>
                 </template>
                 <!-- 链接预览框 -->
-                <div
-                    v-if="pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"
+                <div v-if="pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"
                     :class="'msg-link-view ' + linkViewStyle">
                     <template v-if="pageViewInfo.type == undefined">
                         <div :class="'bar' + (isMe ? ' me' : '')" />
                         <div>
-                            <img
-                                v-if="pageViewInfo.img !== undefined"
+                            <img v-if="pageViewInfo.img !== undefined"
                                 :id="data.message_id + '-linkview-img'"
                                 alt="预览图片"
                                 title="查看图片"
@@ -313,17 +236,13 @@
             :class="'sending right' + (isMe ? ' me' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
-        <div
-            v-if="data.emoji_like"
+        <div v-if="data.emoji_like"
             :class="'emoji-like' + (isMe ? ' me' : '')">
             <div class="emoji-like-body">
-                <div
-                    v-for="info in data.emoji_like"
+                <div v-for="info in data.emoji_like"
                     v-show="getFace(info.emoji_id) != ''"
                     :key="'respond-' + data.message_id + '-' + info.emoji_id">
-                    <img
-                        loading="lazy"
-                        :src="getFace(info.emoji_id) as any">
+                    <img loading="lazy" :src="getFace(info.emoji_id) as any">
                     <span>{{ info.count }}</span>
                 </div>
             </div>
@@ -429,17 +348,10 @@
                 if (item.text != undefined) {
                     return item.text
                 } else {
-                    for (
-                        let i = 0;
-                        i < runtimeData.chatInfo.info.group_members.length;
-                        i++
-                    ) {
+                    for (let i = 0; i < runtimeData.chatInfo.info.group_members.length; i++) {
                         const user = runtimeData.chatInfo.info.group_members[i]
                         if (user.user_id == Number(item.qq)) {
-                            return (
-                                '@' +
-                                (user.card != '' && user.card != null? user.card: user.nickname)
-                            )
+                            return ('@' + (user.card != '' && user.card != null? user.card: user.nickname))
                         }
                     }
                     return '@' + item.qq
@@ -527,10 +439,7 @@
                 parent.style.margin = '10px 0'
                 parent.innerText = ''
                 // 新建 svg
-                const svg = document.createElementNS(
-                    'http://www.w3.org/2000/svg',
-                    'svg',
-                )
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
                 svg.setAttribute('viewBox', '0 0 512 512')
                 svg.innerHTML =
                     '<path d="M119.4 44.1c23.3-3.9 46.8-1.9 68.6 5.3l49.8 77.5-75.4 75.4c-1.5 1.5-2.4 3.6-2.3 5.8s1 4.2 2.6 5.7l112 104c2.9 2.7 7.4 2.9 10.5 .3s3.8-7 1.7-10.4l-60.4-98.1 90.7-75.6c2.6-2.1 3.5-5.7 2.4-8.8L296.8 61.8c28.5-16.7 62.4-23.2 95.7-17.6C461.5 55.6 512 115.2 512 185.1v5.8c0 41.5-17.2 81.2-47.6 109.5L283.7 469.1c-7.5 7-17.4 10.9-27.7 10.9s-20.2-3.9-27.7-10.9L47.6 300.4C17.2 272.1 0 232.4 0 190.9v-5.8c0-69.9 50.5-129.5 119.4-141z"/>'
@@ -573,12 +482,8 @@
                 const logger = new Logger()
                 text = ViewFuns.parseText(text)
                 // 链接判定
-                const reg =
-                    /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
-                text = text.replaceAll(
-                    reg,
-                    '<a href="" data-link="$&" onclick="return false">$&</a>',
-                )
+                const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
+                text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
                 const linkList = text.match(reg)
                 if (linkList !== null && !this.gotLink) {
                     this.gotLink = true
@@ -629,12 +534,9 @@
                                 imgUrl = new URL(imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl, domain).toString()
                             }
                             const pageData = {
-                                site:
-                                    res['og:site_name'] === undefined ? '' : res['og:site_name'],
-                                title:
-                                    res['og:title'] === undefined ? '' : res['og:title'],
-                                desc:
-                                    res['og:description'] === undefined ? '' : res['og:description'],
+                                site: res['og:site_name'] === undefined ? '' : res['og:site_name'],
+                                title: res['og:title'] === undefined ? '' : res['og:title'],
+                                desc: res['og:description'] === undefined ? '' : res['og:description'],
                                 img: imgUrl,
                                 link: res['og:url'],
                             }
@@ -707,11 +609,7 @@
                 })
                 if (list.length === 1) {
                     if (list[0].message.length > 0)
-                        return (
-                            list[0].sender.nickname +
-                            ': ' +
-                            getMsgRawTxt(list[0])
-                        )
+                        return ( list[0].sender.nickname + ': ' + getMsgRawTxt(list[0]))
                     else return this.$t('（获取回复消息失败）')
                 }
                 return null

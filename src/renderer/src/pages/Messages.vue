@@ -11,11 +11,8 @@
 
 <template>
     <div class="friend-view">
-        <div
-            id="message-list"
-            :class="
-                'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')
-            ">
+        <div id="message-list"
+            :class="'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')">
             <div>
                 <div class="base only">
                     <span v-if="showGroupAssist" style="cursor: pointer;"
@@ -25,9 +22,7 @@
                     </span>
                     <span v-else>{{ $t('消息') }}</span>
                     <div style="flex: 1" />
-                    <font-awesome-icon v-if="!showGroupAssist"
-                        :icon="['fas', 'trash-can']"
-                        @click="cleanList" />
+                    <font-awesome-icon v-if="!showGroupAssist" :icon="['fas', 'trash-can']" @click="cleanList" />
                 </div>
                 <div class="small">
                     <span v-if="showGroupAssist" style="cursor: pointer;">
@@ -46,39 +41,25 @@
                     </div>
                 </div>
             </div>
-            <BcMenu
-                :data="listMenu"
-                name="messages-menu"
+            <BcMenu :data="listMenu" name="messages-menu"
                 @close="listMenuClose">
                 <ul>
-                    <li
-                        id="top"
-                        icon="fa-solid fa-thumbtack">
+                    <li id="top" icon="fa-solid fa-thumbtack">
                         {{ $t('置顶') }}
                     </li>
-                    <li
-                        id="canceltop"
-                        icon="fa-solid fa-grip-lines">
+                    <li id="canceltop" icon="fa-solid fa-grip-lines">
                         {{ $t('取消置顶') }}
                     </li>
-                    <li
-                        id="remove"
-                        icon="fa-solid fa-trash-can">
+                    <li id="remove" icon="fa-solid fa-trash-can">
                         {{ $t('删除') }}
                     </li>
-                    <li
-                        id="readed"
-                        icon="fa-solid fa-check-to-slot">
+                    <li id="readed" icon="fa-solid fa-check-to-slot">
                         {{ $t('标记已读') }}
                     </li>
-                    <li
-                        id="notice_open"
-                        icon="fa-solid fa-volume-high">
+                    <li id="notice_open" icon="fa-solid fa-volume-high">
                         {{ $t('开启通知') }}
                     </li>
-                    <li
-                        id="notice_close"
-                        icon="fa-solid fa-volume-xmark">
+                    <li id="notice_close" icon="fa-solid fa-volume-xmark">
                         {{ $t('关闭通知') }}
                     </li>
                 </ul>
@@ -90,10 +71,9 @@
                 :class="runtimeData.tags.openSideBar ? ' open' : ''"
                 style="overflow-x: hidden">
                 <!-- 系统信息 -->
-                <FriendBody
-                    v-if="!showGroupAssist &&
-                        runtimeData.systemNoticesList &&
-                        Object.keys(runtimeData.systemNoticesList).length > 0"
+                <FriendBody v-if="!showGroupAssist &&
+                                runtimeData.systemNoticesList &&
+                                Object.keys(runtimeData.systemNoticesList).length > 0"
                     key="inMessage--10000"
                     :select="chat.show.id === -10000"
                     :data="{
@@ -123,15 +103,8 @@
                 <!-- 其他消息 -->
                 <FriendBody
                     v-for="item in showGroupAssist ? runtimeData.groupAssistList : runtimeData.onMsgList"
-                    :key="
-                        'inMessage-' +
-                            (item.user_id ? item.user_id : item.group_id)
-                    "
-                    :select="
-                        chat.show.id === item.user_id ||
-                            (chat.show.id === item.group_id &&
-                                chat.group_name != '')
-                    "
+                    :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
+                    :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
                     :menu="menu.select && menu.select == item"
                     :data="item"
                     from="message"
@@ -226,10 +199,7 @@
                         name: data.group_name? data.group_name: data.remark === data.nickname? data.nickname: data.remark + '（' + data.nickname + '）',
                         avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
                               data.user_id: 'https://p.qlogo.cn/gh/' +
-                              data.group_id +
-                              '/' +
-                              data.group_id +
-                              '/0',
+                              data.group_id + '/' + data.group_id + '/0',
                     }
                     if (this.chat.id != back.id) {
                         // 更新聊天框
