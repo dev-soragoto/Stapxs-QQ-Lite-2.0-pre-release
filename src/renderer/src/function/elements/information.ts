@@ -73,6 +73,7 @@ export interface RunTimeDataElem {
             text: string // 按钮文本
         }[]
         allowQuickClose?: boolean // 是否允许快速关闭
+        allowClose?: boolean // 是否允许关闭
     }[]
 }
 

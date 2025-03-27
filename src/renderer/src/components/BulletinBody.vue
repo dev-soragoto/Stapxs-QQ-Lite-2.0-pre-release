@@ -6,27 +6,22 @@
 -->
 
 <template>
-    <div
-        class="base"
+    <div class="base"
         @click="showAll = !showAll">
         <header>
             <font-awesome-icon :icon="['fas', 'bookmark']" />
             <span>{{ $t('公告') }}</span>
             <div style="flex: 1" />
-            <span>{{
-                Intl.DateTimeFormat(trueLang, {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric',
-                }).format(data.time)
-            }}</span>
+            <span>{{ Intl.DateTimeFormat(trueLang, {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+            }).format(data.time) }}</span>
         </header>
-        <div
-            :id="'bulletins-msg-' + index"
+        <div :id="'bulletins-msg-' + index"
             :class="'body' + (!showAll ? '' : ' all')">
-            <span
-                @click="textClick"
+            <span @click="textClick"
                 v-html="parseText(data.content[0])" />
         </div>
         <span v-show="needShow && !showAll">{{ $t('点击展开') }}</span>
@@ -87,18 +82,13 @@
         },
         methods: {
             parseText(text: string) {
-                text = text
-                    .replaceAll('\r', '\n')
+                text = text.replaceAll('\r', '\n')
                     .replaceAll('\n\n', '\n')
                     .replaceAll('&#10;', '\n')
                 text = xss(text, { whiteList: { a: ['href', 'target'] } })
                 // 匹配链接
-                const reg =
-                    /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
-                text = text.replaceAll(
-                    reg,
-                    '<a href="" data-link="$&" onclick="return false">$&</a>',
-                )
+                const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
+                text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
                 return text
             },
             textClick(event: Event) {

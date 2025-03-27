@@ -6,18 +6,13 @@
 -->
 
 <template>
-    <div
-        v-if="tags.openChatInfo"
+    <div v-if="tags.openChatInfo"
         class="chat-info-pan">
         <div class="ss-card chat-info">
             <header>
-                <span v-if="chat.show.type === 'group'">{{
-                    $t('群资料')
-                }}</span>
+                <span v-if="chat.show.type === 'group'">{{ $t('群资料') }}</span>
                 <span v-if="chat.show.type === 'user'">{{ $t('好友') }}</span>
-                <font-awesome-icon
-                    :icon="['fas', 'xmark']"
-                    @click="closeChatInfoPan" />
+                <font-awesome-icon :icon="['fas', 'xmark']" @click="closeChatInfoPan" />
             </header>
             <div :class="'chat-info-base ' + chat.show.type">
                 <div>
@@ -26,24 +21,20 @@
                         <a>{{ chat.show.name }}</a>
                         <span>{{ chat.show.id }}</span>
                     </div>
+                    <div style="display: flex;align-items: center;justify-content: center;cursor: pointer;"
+                        @click="copyText(chat.show.id)">
+                        <font-awesome-icon :icon="['fas', 'copy']" />
+                    </div>
                 </div>
-                <div
-                    v-if="chat.show.type === 'group'"
+                <div v-if="chat.show.type === 'group'"
                     v-show="Object.keys(chat.info.group_info).length > 0">
                     <header>
                         <span>{{ $t('介绍') }}</span>
                     </header>
-                    <span
-                        v-html="
-                            chat.info.group_info.gIntro === undefined ||
-                                chat.info.group_info.gIntro === ''
-                                ? $t('群主很懒，还没有群介绍哦～')
-                                : chat.info.group_info.gIntro
-                        " />
+                    <span v-html=" chat.info.group_info.gIntro === undefined || chat.info.group_info.gIntro === '' ?
+                        $t('群主很懒，还没有群介绍哦～') : chat.info.group_info.gIntro" />
                     <div class="tags">
-                        <div
-                            v-for="item in chat.info.group_info.tags"
-                            :key="item.md">
+                        <div v-for="item in chat.info.group_info.tags" :key="item.md">
                             {{ item.tag }}
                         </div>
                     </div>
@@ -60,13 +51,8 @@
                     <header v-if="chat.info.user_info.regTime">
                         <span>{{ $t('注册时间') }}</span>
                     </header>
-                    <span v-if="chat.info.user_info.regTime">{{ Intl.DateTimeFormat(trueLang, {
-                        year: 'numeric'
-                    }).format(
-                        new Date(
-                            chat.info.user_info.regTime * 1000,
-                        ),
-                    ) }}</span>
+                    <span v-if="chat.info.user_info.regTime">{{ Intl.DateTimeFormat(trueLang, { year: 'numeric' })
+                        .format(new Date(chat.info.user_info.regTime * 1000)) }}</span>
                     <header>
                         <span>{{ $t('签名') }}</span>
                     </header>
@@ -81,13 +67,11 @@
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric',
-                                }).format(
-                                    new Date(
-                                        `${chat.info.user_info.birthday_year}-${
-                                            chat.info.user_info.birthday_month}-${
-                                            chat.info.user_info.birthday_day}`,
-                                    ),
-                                ) }}
+                                }).format(new Date(
+                                    `${chat.info.user_info.birthday_year}-${
+                                        chat.info.user_info.birthday_month}-${
+                                        chat.info.user_info.birthday_day}`,
+                                )) }}
                             </span>
                         </span>
                         <span>{{ $t('地区') }}:
@@ -110,22 +94,16 @@
                     </template> -->
                 </div>
             </div>
-            <BcTab
-                v-if="chat.show.type === 'group'"
+            <BcTab v-if="chat.show.type === 'group'"
                 class="chat-info-tab">
                 <div :name="$t('成员')">
                     <div class="chat-info-tab-member">
                         <div class="search-view">
-                            <input
-                                :placeholder="$t('搜索 ……')"
-                                @input="searchList">
+                            <input :placeholder="$t('搜索 ……')" @input="searchList">
                         </div>
                         <div v-for="item in number_cache.length > 0 ? number_cache : chat.info.group_members"
-                            :key="'chatinfomlist-' + item.user_id"
-                            :class="canEditMember(item.role) ? 'edit' : ''">
-                            <img
-                                alt="nk"
-                                loading="lazy"
+                            :key="'chatinfomlist-' + item.user_id" class="edit">
+                            <img alt="nk" loading="lazy"
                                 :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
                             <div>
                                 <a @click="startChat(item)">{{
@@ -136,15 +114,15 @@
                             </div>
                             <!-- 在手机端戳 id 就能触发 -->
                             <span @click="moreConfig(item)">{{ item.user_id }}</span>
-                            <font-awesome-icon :icon="['fas', 'wrench']" @click="moreConfig(item)" />
+                            <font-awesome-icon v-if="canEditMember(item.role)" :icon="['fas', 'wrench']" @click="moreConfig(item)" />
+                            <font-awesome-icon v-else :icon="['fas', 'copy']" @click="moreConfig(item.user_id)" />
                         </div>
                     </div>
                 </div>
                 <div :name="$t('公告')">
                     <div class="bulletins">
                         <BulletinBody
-                            v-for="(item, index) in chat.info.group_notices ??
-                                []"
+                            v-for="(item, index) in chat.info.group_notices ?? []"
                             :key="'bulletins-' + index"
                             :data="item"
                             :index="index" />
@@ -153,36 +131,31 @@
                 <div :name="$t('文件')">
                     <div
                         class="group-files">
-                        <div
-                            v-for="item in chat.info.group_files"
+                        <div v-for="item in chat.info.group_files"
                             :key="'file-' + (item.folder_id ?? item.file_id)">
-                            <FileBody
-                                :chat="chat"
-                                :item="item" />
+                            <FileBody :chat="chat" :item="item" />
                         </div>
                     </div>
                 </div>
                 <div :name="$t('设置')">
                     <div style="padding: 0 20px">
-                        <OptInfo
-                            :type="'group'"
-                            :chat="chat"
+                        <OptInfo :type="'group'" :chat="chat"
                             @update_mumber_card="updateMumberCard" />
                     </div>
                 </div>
             </BcTab>
             <div :class="'ss-card user-config' + (Object.keys(showUserConfig).length > 0 ? ' show' : '')">
                 <div>
-                    <img
-                        alt="nk"
-                        :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${showUserConfig.user_id}`">
+                    <img alt="nk" :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${showUserConfig.user_id}`">
                     <div>
                         <a>{{ showUserConfig.card != '' ? showUserConfig.card : showUserConfig.nickname }}</a>
                         <span>{{ showUserConfig.user_id }}</span>
                     </div>
                     <font-awesome-icon
-                        :icon="['fas', 'angle-down']"
-                        @click="showUserConfig = {}" />
+                        style="margin-right: 20px;"
+                        :icon="['fas', 'copy']"
+                        @click="copyText(showUserConfig.user_id)" />
+                    <font-awesome-icon :icon="['fas', 'angle-down']" @click="showUserConfig = {}" />
                 </div>
                 <div>
                     <header>{{ $t('成员信息') }}</header>
@@ -200,8 +173,7 @@
                             type="text"
                             @change="updateMumberCard($event, showUserConfig)">
                     </div>
-                    <div v-if="chat.info.me_info.role === 'owner'"
-                        class="opt-item">
+                    <div v-if="chat.info.me_info.role === 'owner'" class="opt-item">
                         <font-awesome-icon :icon="['fas', 'clipboard-list']" />
                         <div>
                             <span>{{ $t('成员头衔') }}</span>
@@ -209,8 +181,7 @@
                                 $t('猪咪猪咪')
                             }}</span>
                         </div>
-                        <input
-                            v-model="showUserConfigRaw.title"
+                        <input v-model="showUserConfigRaw.title"
                             style="width: 50%"
                             class="ss-input"
                             type="text"
@@ -226,14 +197,17 @@
                                     $t('要让小猫咪不许说话几分钟呢？')
                                 }}</span>
                             </div>
-                            <input
-                                v-model="mumberInfo.banMin"
+                            <input v-model="mumberInfo.banMin"
                                 style="width: 50%"
                                 class="ss-input"
                                 type="text"
                                 @input="checkNumber"
                                 @change="banMumber($event, showUserConfig)">
                         </div>
+                        <button class="ss-button"
+                            @click="removeUser(showUserConfig.nickname, chat.show.id, showUserConfig.user_id)">
+                            {{ $t('移出群聊') }}
+                        </button>
                     </template>
                 </div>
             </div>
@@ -249,6 +223,8 @@
     import OptInfo from './options/OptInfo.vue'
     import BcTab from 'vue3-bcui/packages/bc-tab'
 
+    import { Connector } from '@renderer/function/connect'
+    import { PopInfo, PopType } from '@renderer/function/base'
     import { defineComponent, toRaw } from 'vue'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { runtimeData } from '@renderer/function/msg'
@@ -256,7 +232,6 @@
         UserFriendElem,
         UserGroupElem,
     } from '@renderer/function/elements/information'
-import { Connector } from '@renderer/function/connect'
 
     export default defineComponent({
         name: 'ViewInfo',
@@ -277,6 +252,52 @@ import { Connector } from '@renderer/function/connect'
             }
         },
         methods: {
+            /**
+             * 移出群聊
+             */
+            removeUser(nickname: string, group_id: number, user_id: number) {
+                const popInfo = {
+                    title: this.$t('提醒'),
+                    html: `<span>${this.$t('真的要将 {user} 移出群聊吗', { user: nickname })}</span>`,
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('确定'),
+                            fun: () => {
+                                Connector.send(
+                                    'set_group_kick',
+                                    {
+                                        group_id: group_id,
+                                        user_id: user_id,
+                                    },
+                                    'setGroupKick',
+                                )
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                        {
+                            text: app.config.globalProperties.$t('取消'),
+                            master: true,
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+
+            copyText(text: any) {
+                const popInfo = new PopInfo()
+                app.config.globalProperties.$copyText(String(text)).then(
+                    () => {
+                        popInfo.add(PopType.INFO, this.$t('复制成功'), true)
+                    },
+                    () => {
+                        popInfo.add(PopType.ERR, this.$t('复制失败'), true)
+                    },
+                )
+            },
+
             banMumber(event: Event, info: any) {
                 const value = (event.target as HTMLInputElement).value
                 if (value !== '') {
@@ -480,9 +501,11 @@ import { Connector } from '@renderer/function/connect'
                 if(this.canEditMember(info.role)) {
                     this.showUserConfig = info
                     this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
+                    // 初始化一些内容
+                    this.mumberInfo.banMin = this.getBanTimeMin(info.shut_up_timestamp)
+                } else {
+                    this.copyText(info.user_id)
                 }
-                // 初始化一些内容
-                this.mumberInfo.banMin = this.getBanTimeMin(info.shut_up_timestamp)
             },
 
             searchList(event: Event) {

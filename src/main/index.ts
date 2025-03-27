@@ -1,13 +1,14 @@
 import path from 'path'
 import Store from 'electron-store'
 import fs from 'fs'
+import log4js from 'log4js'
 
 import windowStateKeeper from 'electron-window-state'
-import packageInfo from '../../package.json' assert { type: 'json' }
+import packageInfo from '../../package.json' with { type: 'json' }
+
 import { regIpcListener } from './function/ipc.ts'
-import { Menu, session, app, protocol, BrowserWindow } from 'electron'
+import { Menu, session, app, protocol, BrowserWindow, Tray } from 'electron'
 import { touchBar } from './function/touchbar.ts'
-import log4js from 'log4js'
 import { join } from 'path'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
@@ -24,8 +25,9 @@ export let touchBarInstance = undefined as touchBar | undefined
 const isDev = import.meta.env.DEV
 
 async function createWindow() {
-    if(new Store().get('opt_log_level')) {
-        logLevel = (new Store().get('opt_log_level') ?? 'info') as string
+    const store = new Store()
+    if(store.get('opt_log_level')) {
+        logLevel = (store.get('opt_log_level') ?? 'info') as string
     }
     logger.level = logLevel
 
@@ -48,7 +50,6 @@ async function createWindow() {
         defaultWidth: 850,
         defaultHeight: 530
     })
-    const store = new Store()
     let windowConfig = {
         x: mainWindowState.x,
         y: mainWindowState.y,
@@ -109,6 +110,11 @@ async function createWindow() {
         win.loadURL('app://./index.html')
     }
 
+    win.on('close', (e) => {
+        e.preventDefault()
+        win?.hide()
+    })
+
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
         if (details.responseHeaders) {
             const imageAddress = [
@@ -157,19 +163,15 @@ app.on('open-url', (_, url) => {
 app.on('second-instance', (_, cmd, workingDirectory) => {
     sendUrlToWindow(workingDirectory, cmd)
 })
-function sendUrlToWindow(url: string ,args: string[] = []) {
-    win?.webContents.send('sys:handleUri', {
-        url: url,
-        args: args
-    })
-}
 
 app.on('window-all-closed', () => {
     if (process.platform === 'win32')
     {
         app.removeAsDefaultProtocolClient('stapx-qq-lite')   // 取消默认协议
     }
-    app.quit()
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
 })
 
 app.on('ready', async () => {
@@ -201,12 +203,46 @@ app.on('ready', async () => {
             return new Response('File not found', { status: 404 });
         }
     })
+    // 创建托盘
+    if (process.platform !== 'darwin') {
+        const icon = path.join(__dirname, 'assets/tray@2x.png')
+        const tray = new Tray(icon)
+        tray.setContextMenu(Menu.buildFromTemplate([
+            { label: '显示窗口', click: () => win?.show() },
+            { label: '退出', type: 'normal', click: () => { app.quit() }}
+        ]))
+        tray.on('click', () => {
+            win?.show()
+        })
+    }
+    // 创建窗口
     createWindow()
 })
 
 app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow()
+    }
+    if (win) {
+        win.show()
+    }
 })
+
+app.on('before-quit', () => {
+    logger.info('正在退出程序 ……')
+    if(win) {
+        win.destroy()
+    }
+})
+
+// ================================
+
+function sendUrlToWindow(url: string ,args: string[] = []) {
+    win?.webContents.send('sys:handleUri', {
+        url: url,
+        args: args
+    })
+}
 
 if (isDevelopment) {
     if (process.platform === 'win32') {
@@ -221,8 +257,6 @@ if (isDevelopment) {
         })
     }
 }
-
-// ================================
 
 const mimeTypes = {
     '.html': 'text/html',

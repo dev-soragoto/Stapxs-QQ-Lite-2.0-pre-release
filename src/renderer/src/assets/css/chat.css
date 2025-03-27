@@ -854,6 +854,11 @@ input {
     transition: all 0.3s;
 }
 
+.user-config button {
+    width: calc(100% - 60px);
+    margin: 25px 30px 0 30px;
+}
+
 .bulletins {
     padding: 0 20px;
 }
@@ -1197,9 +1202,30 @@ input {
 .face-pan div.tab-main > div:hover {
     box-shadow: unset;
 }
+.face-pan div.title {
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+.face-pan div.title > div {
+    margin-right: 10px;
+    background: var(--color-main);
+    width: 5px;
+    height: 1rem;
+    border-radius: 5px;
+}
+.face-pan div.title > span {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--color-font-2);
+}
+.face-pan div.title > svg {
+    cursor: pointer;
+}
 
 .base-face {
-    height: calc(300px - 135px);
+    height: calc(300px - 145px);
     justify-content: center;
     overflow-y: scroll;
     padding: 0 20px;
@@ -1220,7 +1246,7 @@ input {
     width: 20px;
 }
 .face-stickers {
-    height: calc(300px - 135px);
+    height: calc(300px - 145px);
     justify-content: center;
     align-items: center;
     flex-direction: row;
@@ -1436,11 +1462,6 @@ input {
     color: var(--color-font-2);
     font-size: 0.75rem;
     margin-top: 5px;
-}
-
-.msg-select-tag {
-}
-msg-select-tag > svg {
 }
 
 .replay-tag {
@@ -1723,7 +1744,7 @@ msg-select-tag > svg {
     }
     .base-face,
     .face-stickers {
-        height: calc(330px - 90px);
+        height: calc(330px - 120px);
     }
     .base-face > div {
         height: 50px;

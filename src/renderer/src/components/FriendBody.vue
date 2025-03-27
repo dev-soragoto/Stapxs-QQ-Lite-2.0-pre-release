@@ -6,32 +6,17 @@
 -->
 
 <template>
-    <div
-        :id="'user-' + (data.user_id ?? data.group_id)"
+    <div :id="'user-' + (data.user_id ?? data.group_id)"
         :class="'friend-body' + (select ? ' active' : menu ? ' onmenu' : '')"
         :data-name="data.user_id ? data.nickname : data.group_name"
         :data-nickname="data.user_id ? data.nickname : ''"
         :data-type="data.user_id ? 'friend' : 'group'">
         <div :class="data.new_msg === true ? 'new' : ''" />
-        <font-awesome-icon
-            v-if="data.user_id == -10000"
-            :icon="['fas', 'bell']" />
-        <font-awesome-icon
-            v-else-if="data.user_id == -10001"
-            :icon="['fas', 'user-group']" />
-        <img
-            v-else
-            loading="lazy"
-            :title="getShowName()"
-            :src="
-                data.user_id
-                    ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id
-                    : 'https://p.qlogo.cn/gh/' +
-                        data.group_id +
-                        '/' +
-                        data.group_id +
-                        '/0'
-            ">
+        <font-awesome-icon v-if="data.user_id == -10000" :icon="['fas', 'bell']" />
+        <font-awesome-icon v-else-if="data.user_id == -10001" :icon="['fas', 'user-group']" />
+        <img v-else loading="lazy" :title="getShowName()"
+            :src="data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id :
+                'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'">
         <div>
             <div>
                 <p>{{ getShowName() }}</p>
@@ -41,8 +26,7 @@
                         ? Intl.DateTimeFormat(trueLang, {
                             hour: 'numeric',
                             minute: 'numeric',
-                        }).format(new Date(data.time))
-                        : ''
+                        }).format(new Date(data.time)) : ''
                 }}</a>
             </div>
             <div>
@@ -52,12 +36,8 @@
                 <a :class="from == 'friend' ? 'nick' : ''">{{
                     from == 'friend' ? (data.longNick ?? '') : data.raw_msg
                 }}</a>
-                <div
-                    v-if="from == 'message'"
-                    style="margin-left: 10px; display: flex">
-                    <font-awesome-icon
-                        v-if="data.always_top === true"
-                        :icon="['fas', 'thumbtack']" />
+                <div v-if="from == 'message'" style="margin-left: 10px; display: flex">
+                    <font-awesome-icon v-if="data.always_top === true" :icon="['fas', 'thumbtack']" />
                 </div>
             </div>
         </div>

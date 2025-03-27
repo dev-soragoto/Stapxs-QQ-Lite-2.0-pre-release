@@ -12,28 +12,17 @@
         <!-- 公用设置 -->
         <!-- 群设置 -->
         <template v-if="type == 'group'">
-            <div
-                v-if="
-                    (chat.info.group_info.gOwner &&
-                        chat.info.group_info.gOwner ===
-                        runtimeData.loginInfo.uin) ||
-                        (chat.info.group_info.gAdmins &&
-                            chat.info.group_info.gAdmins.indexOf(
-                                runtimeData.loginInfo.uin,
-                            ) >= 0)
-                "
+            <div v-if=" (chat.info.group_info.gOwner &&
+                     chat.info.group_info.gOwner === runtimeData.loginInfo.uin) ||
+                     (chat.info.group_info.gAdmins && chat.info.group_info.gAdmins.indexOf(runtimeData.loginInfo.uin) >= 0)"
                 class="opt-item">
                 <font-awesome-icon :icon="['fas', 'pen']" />
                 <div>
                     <span>{{ $t('群聊名称') }}</span>
                     <span>{{ $t('“你们真是害人不浅呐你们这个群”') }}</span>
                 </div>
-                <input
-                    v-model="runtimeData.chatInfo.show.name"
-                    class="ss-input"
-                    style="width: 150px"
-                    type="text"
-                    @keyup="setGroupName">
+                <input v-model="runtimeData.chatInfo.show.name" class="ss-input"
+                    style="width: 150px" type="text" @keyup="setGroupName">
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'note-sticky']" />
@@ -41,12 +30,8 @@
                     <span>{{ $t('我的群昵称') }}</span>
                     <span>{{ $t('￡爺↘僞ηι慹著彡') }}</span>
                 </div>
-                <input
-                    v-model="runtimeData.chatInfo.info.me_info.card"
-                    class="ss-input"
-                    style="width: 150px"
-                    type="text"
-                    @change="setGroupCard">
+                <input v-model="runtimeData.chatInfo.info.me_info.card" class="ss-input"
+                    style="width: 150px" type="text" @change="setGroupCard">
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'bell']" />
@@ -55,19 +40,15 @@
                     <span>{{ $t('快来水群快来水群！') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input
-                        v-model="canGroupNotice"
-                        type="checkbox"
-                        name="opt_dark"
-                        @change="setGroupNotice">
+                    <input v-model="canGroupNotice" type="checkbox"
+                        name="opt_dark" @change="setGroupNotice">
                     <div>
                         <div />
                     </div>
                 </label>
             </div>
 
-            <button
-                class="ss-button"
+            <button class="ss-button"
                 style="width: calc(100% - 60px); margin: 30px 30px 0 30px"
                 @click="leaveGroup()">
                 {{ $t('退出群聊') }}

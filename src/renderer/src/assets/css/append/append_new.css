@@ -602,7 +602,7 @@ body {
     width: 17px;
 }
 .base-face {
-    height: calc(300px - 100px);
+    height: calc(300px - 110px);
     padding: 0;
 }
 .base-face > div {
@@ -616,7 +616,7 @@ body {
 }
 
 .face-stickers {
-    height: calc(300px - 90px);
+    height: calc(300px - 110px);
 }
 .face-stickers > img {
     height: 44px;

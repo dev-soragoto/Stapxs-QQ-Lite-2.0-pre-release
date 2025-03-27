@@ -11,9 +11,7 @@
             <header>{{ $t('兼容选项') }}</header>
             <div class="tip">
                 {{
-                    $t(
-                        '这儿是兼容性相关的高级选项，这些选项通常会自动识别，如果出现了不正确的情况你也可以手动调整。',
-                    )
+                    $t('这儿是兼容性相关的高级选项，这些选项通常会自动识别，如果出现了不正确的情况你也可以手动调整。')
                 }}
             </div>
             <div class="opt-item">
@@ -21,19 +19,15 @@
                 <div>
                     <span>{{ $t('消息类型') }}</span>
                     <span>{{
-                        $t(
-                            '[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测',
-                        )
+                        $t('[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测')
                     }}</span>
                 </div>
-                <select
-                    v-model="runtimeData.sysConfig.msgType"
+                <select v-model="runtimeData.sysConfig.msgType"
                     name="msg_type"
                     title="msg_type"
                     @change="save">
-                    <option
-                        v-for="item in Object.values(BotMsgType)
-                            .filter(value => typeof value === 'number')"
+                    <option v-for="item in Object.values(BotMsgType)
+                                .filter(value => typeof value === 'number')"
                         :key="item"
                         :value="item">
                         {{ getBotTypeName(item) }}
@@ -48,18 +42,11 @@
                         $t('不同框架之间的化学反应我们将其称之为达利园效应')
                     }}</span>
                 </div>
-                <select
-                    v-model="jsonMapName"
-                    @change="changeJsonMap">
-                    <option
-                        v-if="jsonMapName == ''"
-                        value="">
+                <select v-model="jsonMapName" @change="changeJsonMap">
+                    <option v-if="jsonMapName == ''" value="">
                         {{ $t('未连接') }}
                     </option>
-                    <option
-                        v-for="item in getPathMapList()"
-                        :key="item"
-                        :value="item">
+                    <option v-for="item in getPathMapList()" :key="item" :value="item">
                         {{ item.replace('Chat', '') }}
                     </option>
                 </select>
@@ -74,11 +61,8 @@
                     <span>{{ $t('日志等级') }}</span>
                     <span>{{ $t('ReferenceError: moYu is not defined') }}</span>
                 </div>
-                <select
-                    v-model="runtimeData.sysConfig.log_level"
-                    name="log_level"
-                    title="log_level"
-                    @change="save">
+                <select v-model="runtimeData.sysConfig.log_level"
+                    name="log_level" title="log_level" @change="save">
                     <option value="err">
                         {{ $t('错误') }}
                     </option>
@@ -97,18 +81,13 @@
                 <font-awesome-icon :icon="['fas', 'robot']" />
                 <div>
                     <span>{{ $t('禁用消息渲染') }}</span>
-                    <span><a
-                        style="cursor: pointer"
-                        @click="sendAbab">{{
-                        $t('点击进行 CAPTCHA 验证')
-                    }}</a></span>
+                    <span>
+                        <a style="cursor: pointer" @click="sendAbab">{{ $t('点击进行 CAPTCHA 验证') }}</a>
+                    </span>
                 </div>
                 <label class="ss-switch">
-                    <input
-                        v-model="runtimeData.sysConfig.debug_msg"
-                        type="checkbox"
-                        name="debug_msg"
-                        @change="save">
+                    <input v-model="runtimeData.sysConfig.debug_msg"
+                        type="checkbox" name="debug_msg" @change="save">
                     <div>
                         <div />
                     </div>
@@ -123,12 +102,8 @@
                     <span>{{ $t('发送原始消息') }}</span>
                     <span>{{ $t('咻 ——') }}</span>
                 </div>
-                <input
-                    v-model="ws_text"
-                    class="ss-input"
-                    style="width: 150px"
-                    type="text"
-                    @keyup="sendTestWs">
+                <input v-model="ws_text" class="ss-input" style="width: 150px"
+                    type="text" @keyup="sendTestWs">
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'envelope']" />
@@ -136,12 +111,8 @@
                     <span>{{ $t('应用消息测试') }}</span>
                     <span>{{ $t('#$&*#$= ……') }}</span>
                 </div>
-                <input
-                    v-model="appmsg_text"
-                    class="ss-input"
-                    style="width: 150px"
-                    type="text"
-                    @keyup="sendTestAppmsg">
+                <input v-model="appmsg_text" class="ss-input"
+                    style="width: 150px" type="text" @keyup="sendTestAppmsg">
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'file-invoice']" />
@@ -149,10 +120,8 @@
                     <span>{{ $t('输出运行时') }}</span>
                     <span>{{ $t('全都吐出来！') }}</span>
                 </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="printRuntime">
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click="printRuntime">
                     {{ $t('执行') }}
                 </button>
             </div>
@@ -162,10 +131,8 @@
                     <span>{{ $t('输出调试信息') }}</span>
                     <span>{{ $t('到底用的什么版本呢 ……') }}</span>
                 </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="printVersionInfo">
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click="printVersionInfo">
                     {{ $t('执行') }}
                 </button>
             </div>
@@ -176,10 +143,8 @@
                         <span>{{ $t('重启应用') }}</span>
                         <span>{{ $t('99% 的特性都能通过重启解决！') }}</span>
                     </div>
-                    <button
-                        style="width: 100px; font-size: 0.8rem"
-                        class="ss-button"
-                        @click="restartapp">
+                    <button style="width: 100px; font-size: 0.8rem"
+                        class="ss-button" @click="restartapp">
                         {{ $t('执行') }}
                     </button>
                 </div>
@@ -195,10 +160,8 @@
                         $t('tar zcvf config.tar.gz /localStorage')
                     }}</span>
                 </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="printSetUpInfo">
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click="printSetUpInfo">
                     {{ $t('执行') }}
                 </button>
             </div>
@@ -208,10 +171,8 @@
                     <span>{{ $t('导入设置项') }}</span>
                     <span>{{ $t('tar zxvf cache.tar.gz /localStorage') }}</span>
                 </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="importSetUpInfo">
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click="importSetUpInfo">
                     {{ $t('执行') }}
                 </button>
             </div>
@@ -221,10 +182,8 @@
                     <span>{{ $t('重置应用') }}</span>
                     <span>{{ $t('sudo rm -rf /localStorage') }}</span>
                 </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="resetApp">
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click="resetApp">
                     {{ $t('执行') }}
                 </button>
             </div>
@@ -268,9 +227,7 @@
         mounted() {
             this.$watch(
                 () => runtimeData.jsonMap?.name,
-                () => {
-                    this.jsonMapName = runtimeData.jsonMap?.name ?? ''
-                },
+                () => { this.jsonMapName = runtimeData.jsonMap?.name ?? '' },
             )
         },
         methods: {
@@ -371,11 +328,7 @@
                     switch (process && process.platform) {
                         case 'linux': {
                             // archlinux
-                            if (
-                                runtimeData.tags.release
-                                    .toLowerCase()
-                                    .indexOf('arch') > 0
-                            ) {
+                            if (runtimeData.tags.release.toLowerCase().indexOf('arch') > 0) {
                                 let pacmanInfo =
                                     await runtimeData.plantform.reader.invoke(
                                         'sys:runCommand',
@@ -391,8 +344,7 @@
                                             'pacman -Q stapxs-qq-lite',
                                         )
                                     if (pacmanInfo.success) {
-                                        info +=
-                                            '    Install Type     -> pacman\n'
+                                        info += '    Install Type     -> pacman\n'
                                     }
                                 }
                             }
@@ -555,14 +507,8 @@
                             fun: () => {
                                 localStorage.clear()
                                 document.cookie.split(';').forEach((c) => {
-                                    document.cookie = c
-                                        .replace(/^ +/, '')
-                                        .replace(
-                                            /=.*/,
-                                            '=;expires=' +
-                                                new Date().toUTCString() +
-                                                ';path=/',
-                                        )
+                                    document.cookie = c.replace(/^ +/, '')
+                                        .replace(/=.*/,'=;expires=' + new Date().toUTCString() + ';path=/')
                                 })
                                 if (runtimeData.plantform.reader) {
                                     runtimeData.plantform.reader.sendSync('opt:clearAll')

@@ -25,18 +25,10 @@
                     <span>{{ $t('语言（Language）') }}</span>
                     <span>{{ $t('喵喵喵喵？') }}</span>
                 </div>
-                <select
-                    v-model="runtimeData.sysConfig.language"
-                    name="language"
-                    title="language"
-                    @change="
-                        save($event);
-                        gaLanguage($event)
-                    ">
-                    <option
-                        v-for="item in languages"
-                        :key="item.value"
-                        :value="item.value">
+                <select v-model="runtimeData.sysConfig.language"
+                    name="language" title="language"
+                    @change="save($event);gaLanguage($event)">
+                    <option v-for="item in languages" :key="item.value" :value="item.value">
                         {{ item.name }}
                     </option>
                 </select>
@@ -57,8 +49,7 @@
         <div class="ss-card">
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
-                <div
-                    id="opt_view_dark"
+                <div id="opt_view_dark"
                     class="opt-item">
                     <font-awesome-icon :icon="['fas', 'moon']" />
                     <div>
@@ -66,11 +57,8 @@
                         <span>{{ $t('是五彩斑斓的黑色！') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input
-                            v-model="runtimeData.sysConfig.opt_dark"
-                            type="checkbox"
-                            name="opt_dark"
-                            @change="save">
+                        <input v-model="runtimeData.sysConfig.opt_dark"
+                            type="checkbox" name="opt_dark" @change="save">
                         <div>
                             <div />
                         </div>
@@ -83,11 +71,8 @@
                         <span>{{ $t('Biubiu ——，自动变黑！') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input
-                            v-model="runtimeData.sysConfig.opt_auto_dark"
-                            type="checkbox"
-                            name="opt_auto_dark"
-                            @change="save">
+                        <input v-model="runtimeData.sysConfig.opt_auto_dark"
+                            type="checkbox" name="opt_auto_dark" @change="save">
                         <div>
                             <div />
                         </div>
@@ -102,31 +87,14 @@
                             <span>{{ $t('换个心情 🎵 ~') }}</span>
                         </div>
                         <div class="theme-color-col">
-                            <label
-                                v-for="(name, index) in colors"
-                                :key="'color_id_' + index"
-                                :title="name"
-                                class="ss-radio">
-                                <input
-                                    type="radio"
-                                    name="theme_color"
-                                    :data-id="index"
-                                    :checked="
-                                        runtimeData.sysConfig.theme_color ===
-                                            undefined
-                                            ? index === 0
-                                            : Number(
-                                                runtimeData.sysConfig
-                                                    .theme_color,
-                                            ) === index
-                                    "
+                            <label v-for="(name, index) in colors" :key="'color_id_' + index"
+                                :title="name" class="ss-radio">
+                                <input type="radio" name="theme_color" :data-id="index"
+                                    :checked="runtimeData.sysConfig.theme_color === undefined ?
+                                        index === 0 : Number(runtimeData.sysConfig.theme_color) === index"
                                     @change="save($event);gaColor($event)">
                                 <div
-                                    :style="
-                                        'background: var(--color-main-' +
-                                            index +
-                                            ');'
-                                    ">
+                                    :style="'background: var(--color-main-' + index + ')'">
                                     <div />
                                 </div>
                             </label>
@@ -134,8 +102,7 @@
                     </div>
                 </template>
             </template>
-            <template
-                v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
+            <template v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
                 <div class="opt-item">
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
                     <div>
@@ -143,11 +110,8 @@
                         <span>{{ $t('自动获取的主题色设置并应用') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input
-                            v-model="runtimeData.sysConfig.opt_auto_win_color"
-                            type="checkbox"
-                            name="opt_auto_win_color"
-                            @change="save">
+                        <input v-model="runtimeData.sysConfig.opt_auto_win_color"
+                            type="checkbox" name="opt_auto_win_color" @change="save">
                         <div>
                             <div />
                         </div>
@@ -160,13 +124,9 @@
                     <span>{{ $t('背景图片') }}</span>
                     <span>{{ $t('嘿嘿嘿（痴呆') }}</span>
                 </div>
-                <input
-                    v-model="runtimeData.sysConfig.chat_background"
-                    class="ss-input"
-                    style="width: 150px"
-                    type="text"
-                    name="chat_background"
-                    @keyup="save">
+                <input v-model="runtimeData.sysConfig.chat_background"
+                    class="ss-input" style="width: 150px"
+                    type="text" name="chat_background" @keyup="save">
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'o']" />
@@ -175,16 +135,10 @@
                     <span>{{ $t('什么都看不见了（恼') }}</span>
                 </div>
                 <div class="ss-range">
-                    <input
-                        v-model="runtimeData.sysConfig.chat_background_blur"
-                        :style="`background-size:
-                ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
-                        type="range"
-                        name="chat_background_blur"
-                        @input="save">
-                    <span
-                        :style="`color: var(--color-font${
-                            runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
+                    <input v-model="runtimeData.sysConfig.chat_background_blur"
+                        :style="`background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
+                        type="range" name="chat_background_blur" @input="save">
+                    <span :style="`color: var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
                         {{ runtimeData.sysConfig.chat_background_blur }}
                         px</span>
                 </div>
@@ -198,18 +152,14 @@
                     <span>{{ $t('消息页面主题') }}</span>
                     <span>{{ $t('一些好玩的主题！') }}</span>
                 </div>
-                <select
-                    v-model="runtimeData.sysConfig.chatview_name"
-                    name="chatview_name"
-                    title="chatview_name"
+                <select v-model="runtimeData.sysConfig.chatview_name"
+                    name="chatview_name" title="chatview_name"
                     @change="save($event);gaChatView($event)">
                     <option value="">
                         {{ $t('默认') }}
                     </option>
-                    <option
-                        v-for="item in getAppendChatView()"
-                        :key="item"
-                        :value="item">
+                    <option v-for="item in getAppendChatView()"
+                        :key="item" :value="item">
                         {{ item.replace('Chat', '') }}
                     </option>
                 </select>
@@ -221,18 +171,14 @@
                     <span>{{ $t('咻咻！此选项将使动画加速到 100ms 并去除部分浪费时间的组动画') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input
-                        v-model="runtimeData.sysConfig.opt_fast_animation"
-                        type="checkbox"
-                        name="opt_fast_animation"
-                        @change="save">
+                    <input v-model="runtimeData.sysConfig.opt_fast_animation"
+                        type="checkbox" name="opt_fast_animation" @change="save">
                     <div>
                         <div />
                     </div>
                 </label>
             </div>
-            <div
-                v-if="isMobile() && !runtimeData.tags.isCapacitor"
+            <div v-if="isMobile() && !runtimeData.tags.isCapacitor"
                 class="opt-item">
                 <font-awesome-icon :icon="['fas', 'up-down-left-right']" />
                 <div>
@@ -240,8 +186,7 @@
                     <span>{{ $t('调整页面在移动端的缩放比例') }}</span>
                 </div>
                 <div class="ss-range">
-                    <input
-                        v-model="runtimeData.sysConfig.initial_scale"
+                    <input v-model="runtimeData.sysConfig.initial_scale"
                         :style="`background-size: ${(initialScaleShow - 0.5) / 0.01}% 100%`"
                         type="range"
                         min="0.5"
@@ -250,9 +195,7 @@
                         name="initial_scale"
                         @change="scaleSave"
                         @input="setInitialScaleShow">
-                    <span
-                        :style="`color: var(--color-font${
-                            initialScaleShow / 0.05 })`">
+                    <span :style="`color: var(--color-font${initialScaleShow / 0.05 })`">
                         {{ initialScaleShow }}</span>
                 </div>
             </div>
@@ -265,8 +208,7 @@
                     <span>{{ $t('适配全面屏设备防止四角出界') }}</span>
                 </div>
                 <div class="ss-range">
-                    <input
-                        v-model="runtimeData.sysConfig.fs_adaptation"
+                    <input v-model="runtimeData.sysConfig.fs_adaptation"
                         :style="`background-size: ${(fsAdaptationShow / 50) * 100}% 100%;`"
                         type="range"
                         min="0"
@@ -275,9 +217,7 @@
                         name="fs_adaptation"
                         @change="save"
                         @input="setFsAdaptationShow">
-                    <span
-                        :style="`color: var(--color-font${
-                            fsAdaptationShow / 50 > 0.5 ? '-r' : ''})`">
+                    <span :style="`color: var(--color-font${fsAdaptationShow / 50 > 0.5 ? '-r' : ''})`">
                         {{ fsAdaptationShow }} px
                     </span>
                 </div>
@@ -293,11 +233,8 @@
                     }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input
-                        v-model="runtimeData.sysConfig.opt_always_top"
-                        type="checkbox"
-                        name="opt_always_top"
-                        @change="save">
+                    <input v-model="runtimeData.sysConfig.opt_always_top"
+                        type="checkbox" name="opt_always_top" @change="save">
                     <div>
                         <div />
                     </div>
@@ -310,11 +247,8 @@
                     <span>{{ $t('啊吧啊吧（智慧）') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input
-                        v-model="runtimeData.sysConfig.opt_revolve"
-                        type="checkbox"
-                        name="opt_revolve"
-                        @change="save">
+                    <input v-model="runtimeData.sysConfig.opt_revolve"
+                        type="checkbox" name="opt_revolve" @change="save">
                     <div>
                         <div />
                     </div>
@@ -409,12 +343,7 @@
                     runtimeData.popBoxList.pop()
                     const popInfo = {
                         svg: 'up-down-left-right',
-                        html:
-                            '<span>' +
-                            this.$t(
-                                '缩放比例调整已取消，已恢复默认缩放比例。',
-                            ) +
-                            '</span>',
+                        html: '<span>' + this.$t('缩放比例调整已取消，已恢复默认缩放比例。') + '</span>',
                         title: this.$t('确认缩放比例'),
                         button: [
                             {
@@ -431,12 +360,7 @@
                 // 保存提醒
                 const popInfo = {
                     svg: 'up-down-left-right',
-                    html:
-                        '<span>' +
-                        this.$t(
-                            '点击确认以应用缩放比例，预览将在 5 秒后取消……',
-                        ) +
-                        '</span>',
+                    html: '<span>' + this.$t('点击确认以应用缩放比例，预览将在 5 秒后取消……') + '</span>',
                     title: this.$t('确认缩放比例'),
                     button: [
                         {

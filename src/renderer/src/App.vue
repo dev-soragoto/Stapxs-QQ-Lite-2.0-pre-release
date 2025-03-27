@@ -18,12 +18,10 @@
     <div v-if="runtimeData.tags.platform == 'darwin'" class="controller mac-controller" />
     <div id="base-app">
         <div class="main-body">
-            <ul :style="get('fs_adaptation') > 0 ? `padding-bottom: ${get('fs_adaptation')}px;`
-                : ''
-            ">
+            <ul :style="get('fs_adaptation') > 0 ? `padding-bottom: ${get('fs_adaptation')}px;` : ''">
                 <li id="bar-home" :class="(tags.page == 'Home' ? 'active' : '') +
-                    (loginInfo.status ? ' hiden-home' : '')
-                " @click="changeTab('主页', 'Home', false)">
+                    (loginInfo.status ? ' hiden-home' : '')"
+                    @click="changeTab('主页', 'Home', false)">
                     <font-awesome-icon :icon="['fas', 'home']" />
                     <span>{{ $t('主页') }}</span>
                 </li>
@@ -43,8 +41,7 @@
                     <span>{{ $t('设置') }}</span>
                 </li>
             </ul>
-            <div
-                :style="get('fs_adaptation') > 0 ? `height: calc(100% - ${75 + Number(get('fs_adaptation'))}px);` : ''">
+            <div :style="get('fs_adaptation') > 0 ? `height: calc(100% - ${75 + Number(get('fs_adaptation'))}px);` : ''">
                 <div v-if="tags.page == 'Home'" :name="$t('主页')">
                     <div class="home-body">
                         <div class="login-pan-card ss-card">
@@ -110,8 +107,7 @@
                                     xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 170 70"
                                     preserveAspectRatio="none" shape-rendering="auto">
                                     <defs>
-                                        <path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88
-                       18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z" />
+                                        <path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z" />
                                     </defs>
                                     <g class="parallax">
                                         <use xlink:href="#gentle-wave" x="83" y="0" />
@@ -139,12 +135,11 @@
         <component :is="runtimeData.pageView.chatView" v-if="
             loginInfo.status &&
                 runtimeData.chatInfo &&
-                runtimeData.chatInfo.show.id != 0
-        " v-show="tags.showChat"
-            ref="chat" :mumber-info="runtimeData.chatInfo.info.now_member_info == undefined
-                ? {}
-                : runtimeData.chatInfo.info.now_member_info
-            " :merge-list="runtimeData.mergeMessageList"
+                runtimeData.chatInfo.show.id != 0"
+            v-show="tags.showChat"
+            ref="chat" :mumber-info="runtimeData.chatInfo.info.now_member_info == undefined ?
+                {} : runtimeData.chatInfo.info.now_member_info"
+            :merge-list="runtimeData.mergeMessageList"
             :list="runtimeData.messageList" :chat="runtimeData.chatInfo"
             @user-click="changeChat" />
         <TransitionGroup class="app-msg" name="appmsg" tag="div">
@@ -159,57 +154,38 @@
         <Transition>
             <div v-if="runtimeData.popBoxList.length > 0" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
-                    (runtimeData.popBoxList[0].full ? ' full' : '') +
-                    (get('option_view_no_window') == true ? '' : ' window')
-                " :style="'transform: translate(-50%, calc(-50% - ' +
-                    (runtimeData.popBoxList.length > 3
-                        ? 3
-                        : runtimeData.popBoxList.length) *
-                    10 +
-                    'px));' +
-                    (get('fs_adaptation') > 0
-                        ? ` margin-bottom: ${40 + Number(get('fs_adaptation'))}px;`
-                        : '')
-                ">
+                         (runtimeData.popBoxList[0].full ? ' full' : '') +
+                         (get('option_view_no_window') == true ? '' : ' window')"
+                    :style="'transform: translate(-50%, calc(-50% - ' +
+                        (runtimeData.popBoxList.length > 3 ?
+                            3 : runtimeData.popBoxList.length) * 10 + 'px));' +
+                        (get('fs_adaptation') > 0 ?
+                            ` margin-bottom: ${40 + Number(get('fs_adaptation'))}px;` : '')">
                     <header v-show="runtimeData.popBoxList[0].title != undefined">
                         <div v-if="runtimeData.popBoxList[0].svg != undefined">
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
                         </div>
                         <a>{{ runtimeData.popBoxList[0].title }}</a>
-                        <font-awesome-icon v-show="runtimeData.popBoxList[0].button"
-                            :icon="['fas', 'xmark']"
-                            @click="removePopBox" />
+                        <font-awesome-icon v-if="runtimeData.popBoxList[0].allowClose != false"
+                            :icon="['fas', 'xmark']" @click="removePopBox" />
                     </header>
                     <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html" />
                     <component :is="runtimeData.popBoxList[0].template" v-else :data="runtimeData.popBoxList[0].data"
                         v-bind="runtimeData.popBoxList[0].templateValue" />
                     <div v-show="runtimeData.popBoxList[0].button" class="button">
-                        <button v-for="(button, index) in runtimeData.popBoxList[0]
-                                    .button" :key="'pop-box-btn' + index" :class="'ss-button' +
-                                (button.master == true ? ' master' : '')
-                            "
+                        <button v-for="(button, index) in runtimeData.popBoxList[0].button"
+                            :key="'pop-box-btn' + index" :class="'ss-button' + (button.master == true ? ' master' : '')"
                             @click="button.fun">
                             {{ button.text }}
                         </button>
                     </div>
                     <div class="pop-box-more">
                         <div v-for="index in runtimeData.popBoxList.length" :key="'pop-more-' + index" :data-id="index"
-                            :class="index > runtimeData.popBoxList.length - 1
-                                ? 'hid'
-                                : ''
-                            " :style="'margin:-' +
-                                2 * (index - 1) +
-                                'px ' +
-                                (20 * index - 1 - 2 * (index - 1)) +
-                                'px 0 ' +
-                                (20 * index - 1 - 2 * (index - 1)) +
-                                'px;'
-                            " />
+                            :class="index > runtimeData.popBoxList.length - 1 ? 'hid' : '' "
+                            :style="'margin:-' + 2 * (index - 1) + 'px ' + (20 * index - 1 - 2 * (index - 1)) + 'px 0 ' + (20 * index - 1 - 2 * (index - 1)) + 'px;'" />
                     </div>
                 </div>
-                <div @click="
-                    popQuickClose(runtimeData.popBoxList[0].allowQuickClose)
-                " />
+                <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose && runtimeData.popBoxList[0].allowClose)" />
             </div>
         </Transition>
         <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"

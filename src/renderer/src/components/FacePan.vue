@@ -9,35 +9,36 @@
     <div class="ss-card face-pan">
         <BcTab>
             <div icon="fa-solid fa-face-laugh-squint">
+                <div class="title">
+                    <span>{{ $t('小黄脸表情') }}</span>
+                </div>
                 <div class="base-face">
-                    <div
-                        v-for="num in baseFaceMax"
+                    <div v-for="num in baseFaceMax"
                         v-show="getFace(num) != ''"
                         :key="'base-face-' + num"
                         :data-id="num"
                         @click="addBaseFace(num)">
-                        <img
-                            loading="lazy"
+                        <img loading="lazy"
                             :src="getFace(num) as any">
                     </div>
                 </div>
             </div>
             <div icon="fa-solid fa-heart">
-                <div
-                    class="face-stickers"
+                <div class="title">
+                    <span>{{ $t('收藏的表情') }}</span>
+                    <font-awesome-icon
+                        :icon="['fas', 'fa-rotate-right']"
+                        @click="reloadRoamingStamp" />
+                </div>
+                <div class="face-stickers"
                     @scroll="stickersScroll">
-                    <img
-                        v-for="(url, index) in runtimeData.stickerCache"
+                    <img v-for="(url, index) in runtimeData.stickerCache"
                         v-show="url != 'end'"
                         :key="'stickers-' + index"
                         loading="lazy"
                         :src="url"
                         @click="addImgFace(url)">
-                    <div
-                        v-show="
-                            runtimeData.stickerCache &&
-                                runtimeData.stickerCache.length <= 0
-                        "
+                    <div v-show="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
                         class="ss-card">
                         <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                         <span>{{ $t('一无所有') }}</span>
@@ -68,7 +69,7 @@
             BcTab,
         },
         props: ['display'],
-        emits: ['addSpecialMsg'],
+        emits: ['addSpecialMsg', 'sendMsg'],
         data() {
             return {
                 getFace: getFace,
@@ -84,24 +85,29 @@
                 runtimeData.stickerCache === undefined &&
                 runtimeData.jsonMap.roaming_stamp
             ) {
+                this.reloadRoamingStamp()
+            }
+        },
+        methods: {
+            reloadRoamingStamp() {
+                runtimeData.stickerCache = undefined
                 if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full') {
-                    // 全量分页，返回所有内容（napcat 行为）
+                    // 全量分页，返回所有内容
                     Connector.send(
                         runtimeData.jsonMap.roaming_stamp.name,
                         { count: 48 },
                         'getRoamingStamp_48',
                     )
                 } else {
-                    // 默认不分页，返回所有内容（lgr 行为）
+                    // 默认不分页，返回所有内容
                     Connector.send(
                         runtimeData.jsonMap.roaming_stamp.name,
                         {},
                         'getRoamingStamp',
                     )
                 }
-            }
-        },
-        methods: {
+            },
+
             addSpecialMsg(json: MsgItemElem, addText: boolean) {
                 this.$emit('addSpecialMsg', {
                     addText: addText,
@@ -116,6 +122,10 @@
                     { type: 'image', file: url, subType: 1 },
                     true,
                 )
+                // 直接发送表情
+                if(runtimeData.sysConfig.send_face == true) {
+                    this.$emit('sendMsg')
+                }
             },
 
             stickersScroll(e: Event) {
@@ -126,13 +136,8 @@
                     target.clientHeight + 0.5
                 ) {
                     if (runtimeData.stickerCache) {
-                        if (
-                            runtimeData.jsonMap.roaming_stamp.pagerType ==
-                                'full' &&
-                            runtimeData.stickerCache[
-                                runtimeData.stickerCache.length - 1
-                            ] != 'end'
-                        ) {
+                        if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full' &&
+                            runtimeData.stickerCache[runtimeData.stickerCache.length - 1] != 'end') {
                             const count = 48 + 48 * this.stickerPage
                             // 全量分页，返回所有内容（napcat 行为）
                             Connector.send(

@@ -11,35 +11,23 @@
 
 <template>
     <div class="friend-view">
-        <div
-            id="friend-list"
-            :class="
-                'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')
-            ">
+        <div id="friend-list" :class="'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')">
             <div>
                 <div class="base">
                     <span>{{ $t('联系人') }}</span>
                     <div style="flex: 1" />
-                    <font-awesome-icon
-                        :icon="['fas', 'rotate-right']"
-                        @click="reloadUser" />
+                    <font-awesome-icon :icon="['fas', 'rotate-right']" @click="reloadUser" />
                 </div>
                 <div
                     id="friend-small-search"
                     class="small">
                     <label>
-                        <input
-                            id="friend-search-small"
-                            v-model="searchInfo"
-                            type="text"
-                            :placeholder="$t('搜索 ……')"
-                            @input="search">
-                        <font-awesome-icon
-                            :icon="['fas', 'magnifying-glass']" />
+                        <input id="friend-search-small"
+                            v-model="searchInfo" type="text"
+                            :placeholder="$t('搜索 ……')" @input="search">
+                        <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                     </label>
-                    <div
-                        class="reload"
-                        @click="reloadUser">
+                    <div class="reload" @click="reloadUser">
                         <font-awesome-icon :icon="['fas', 'rotate-right']" />
                     </div>
                     <div @click="openLeftBar">
@@ -47,36 +35,21 @@
                     </div>
                 </div>
                 <label>
-                    <input
-                        id="friend-search"
-                        v-model="searchInfo"
-                        type="text"
-                        :placeholder="$t('搜索 ……')"
-                        @input="search">
+                    <input id="friend-search" v-model="searchInfo" type="text"
+                        :placeholder="$t('搜索 ……')" @input="search">
                     <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                 </label>
             </div>
             <div :class="runtimeData.tags.openSideBar ? 'open' : ''">
                 <template v-if="runtimeData.showList.length <= 0">
                     <template v-if="runtimeData.tags.classes.length > 0">
-                        <template
-                            v-for="info in runtimeData.tags.classes"
+                        <template v-for="info in runtimeData.tags.classes"
                             :key="'class-' + info.class_id">
-                            <div
-                                :class="
-                                    'list exp-body' +
-                                        (classStatus[info.class_id] == true
-                                            ? ' open'
-                                            : '')
-                                ">
-                                <header
-                                    :title="info.class_name"
-                                    :class="
-                                        'exp-header' +
-                                            (runtimeData.tags.openSideBar
-                                                ? ' open'
-                                                : '')
-                                    "
+                            <div :class=" 'list exp-body' +
+                                (classStatus[info.class_id] == true ? ' open' : '')">
+                                <header :title="info.class_name"
+                                    :class="'exp-header' +
+                                        (runtimeData.tags.openSideBar ? ' open' : '')"
                                     @click="classClick(info.class_id)">
                                     <div />
                                     <span>{{ info.class_name }}</span>
@@ -88,40 +61,21 @@
                                     }}</a>
                                 </header>
                                 <div :id="'class-' + info.class_id">
-                                    <FriendBody
-                                        v-for="item in runtimeData.userList.filter(
-                                            (get) => {
-                                                return (
-                                                    get.class_id ==
-                                                    info.class_id
-                                                )
-                                            },
-                                        )"
-                                        :key="
-                                            'fb-' +
-                                                (item.user_id
-                                                    ? item.user_id
-                                                    : item.group_id)
-                                        "
-                                        :data="item"
-                                        from="friend"
+                                    <FriendBody v-for="item in runtimeData.userList.filter(
+                                                    (get) => {
+                                                        return ( get.class_id == info.class_id )
+                                                    },
+                                                )"
+                                        :key=" 'fb-' + (item.user_id ? item.user_id : item.group_id) "
+                                        :data="item" from="friend"
                                         @click="userClick(item, $event)" />
                                 </div>
                             </div>
                         </template>
-                        <div
-                            :class="
-                                'list exp-body' +
-                                    (classStatus['-1'] == true ? ' open' : '')
-                            ">
-                            <header
-                                :title="$t('群组')"
-                                :class="
-                                    'exp-header' +
-                                        (runtimeData.tags.openSideBar
-                                            ? ' open'
-                                            : '')
-                                "
+                        <div :class="'list exp-body' + (classStatus['-1'] == true ? ' open' : '')">
+                            <header :title="$t('群组')"
+                                :class="'exp-header' +
+                                    (runtimeData.tags.openSideBar ? ' open' : '') "
                                 @click="classClick('-1')">
                                 <div />
                                 <span>{{ $t('群组') }}</span>
@@ -132,18 +86,12 @@
                                 }}</a>
                             </header>
                             <div>
-                                <FriendBody
-                                    v-for="item in runtimeData.userList.filter(
-                                        (get) => {
-                                            return get.class_id == undefined
-                                        },
-                                    )"
-                                    :key="
-                                        'fb-' +
-                                            (item.user_id
-                                                ? item.user_id
-                                                : item.group_id)
-                                    "
+                                <FriendBody v-for="item in runtimeData.userList.filter(
+                                                (get) => {
+                                                    return get.class_id == undefined
+                                                },
+                                            )"
+                                    :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
                                     :data="item"
                                     from="friend"
                                     @click="userClick(item, $event)" />
@@ -151,30 +99,19 @@
                         </div>
                     </template>
                     <template v-else>
-                        <FriendBody
-                            v-for="item in runtimeData.userList"
-                            :key="
-                                'fb-' +
-                                    (item.user_id ? item.user_id : item.group_id)
-                            "
+                        <FriendBody v-for="item in runtimeData.userList"
+                            :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
                             :data="item"
                             from="friend"
                             @click="userClick(item, $event)" />
                     </template>
                 </template>
                 <!-- 搜索用的 -->
-                <div
-                    v-else
-                    class="list">
+                <div v-else class="list">
                     <div>
-                        <FriendBody
-                            v-for="item in runtimeData.showList"
-                            :key="
-                                'fb-' +
-                                    (item.user_id ? item.user_id : item.group_id)
-                            "
-                            :data="item"
-                            from="friend"
+                        <FriendBody v-for="item in runtimeData.showList"
+                            :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
+                            :data="item" from="friend"
                             @click="userClick(item, $event)" />
                     </div>
                 </div>
@@ -261,10 +198,7 @@
                     id: data.user_id ? data.user_id : data.group_id,
                     name: this.getShowName(data),
                     avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id: 'https://p.qlogo.cn/gh/' +
-                          data.group_id +
-                          '/' +
-                          data.group_id +
-                          '/0',
+                          data.group_id + '/' + data.group_id + '/0',
                     jump: sender.dataset.jump,
                 } as BaseChatInfoElem
                 // 更新聊天框
@@ -322,7 +256,7 @@
                                 name: this.getShowName(item)
                             }
                         }))
-            }
+                }
             },
 
             /**

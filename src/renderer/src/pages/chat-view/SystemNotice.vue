@@ -7,30 +7,20 @@
 -->
 
 <template>
-    <div
-        id="chat-pan"
-        :class="
-            'chat-pan sys-not-pan' +
-                (runtimeData.tags.openSideBar ? ' open' : '') +
-                (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
-        ">
+    <div id="chat-pan"
+        :class=" 'chat-pan sys-not-pan' +
+            (runtimeData.tags.openSideBar ? ' open' : '') +
+            (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')">
         <div>
-            <font-awesome-icon
-                :icon="['fas', 'angle-left']"
-                @click="exit" />
+            <font-awesome-icon :icon="['fas', 'angle-left']" @click="exit" />
             <span>{{ $t('系统消息') }}</span>
         </div>
         <div class="sys-not-list">
-            <template
-                v-for="(notice, index) in runtimeData.systemNoticesList"
+            <template v-for="(notice, index) in runtimeData.systemNoticesList"
                 :key="'sysNot-' + index">
                 <div v-if="notice.request_type == 'friend'">
                     <div>
-                        <img
-                            :src="
-                                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                                    notice.user_id
-                            ">
+                        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + notice.user_id">
                         <div>
                             <span>{{ notice.user_id }}
                                 {{ $t('请求加为好友') }}</span>
@@ -47,13 +37,11 @@
                         </div>
                     </div>
                     <div>
-                        <button
-                            class="ss-button"
+                        <button class="ss-button"
                             @click="dealFriend(notice, false)">
                             {{ $t('拒绝') }}
                         </button>
-                        <button
-                            class="ss-button"
+                        <button class="ss-button"
                             @click="dealFriend(notice, true)">
                             {{ $t('同意') }}
                         </button>
@@ -61,14 +49,7 @@
                 </div>
                 <div v-else-if="notice.request_type == 'group'">
                     <div>
-                        <img
-                            :src="
-                                'https://p.qlogo.cn/gh/' +
-                                    notice.group_id +
-                                    '/' +
-                                    notice.group_id +
-                                    '/0'
-                            ">
+                        <img :src="'https://p.qlogo.cn/gh/' + notice.group_id + '/' + notice.group_id + '/0'">
                         <div>
                             <span>{{ getName(notice.user_id) }}
                                 {{ $t('邀请你加入群聊') }}
@@ -86,31 +67,22 @@
                         </div>
                     </div>
                     <div>
-                        <button
-                            class="ss-button"
-                            @click="dealGroupAdd(notice, false)">
+                        <button class="ss-button" @click="dealGroupAdd(notice, false)">
                             {{ $t('拒绝') }}
                         </button>
-                        <button
-                            class="ss-button"
-                            @click="dealGroupAdd(notice, true)">
+                        <button class="ss-button" @click="dealGroupAdd(notice, true)">
                             {{ $t('同意') }}
                         </button>
                     </div>
                 </div>
-                <div
-                    v-else
-                    v-show="dev">
+                <div v-else v-show="dev">
                     <div>
                         <img>
                         <div>
                             <span>{{ $t('sys_notice_unknow') }}</span>
-                            <a
-                                style="
-                                    color: var(--color-font-2);
-                                    word-wrap: anywhere;
-                                ">request: {{ notice.request_type }}; sub:
-                                {{ notice.sub_type }}</a>
+                            <a style="color: var(--color-font-2);word-wrap: anywhere;">
+                                request: {{ notice.request_type }}; sub: {{ notice.sub_type }}
+                            </a>
                         </div>
                     </div>
                 </div>

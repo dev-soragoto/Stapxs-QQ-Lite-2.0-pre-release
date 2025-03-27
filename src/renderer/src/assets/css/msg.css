@@ -96,6 +96,12 @@
     border-radius: 10px;
     padding: 1px 4px;
 }
+.message-body > span.owner {
+    background: var(--color-yellow);
+}
+.message-body > span.admin {
+    background: var(--color-green);
+}
 .message-body > a {
     color: var(--color-font-1);
     font-size: 0.9rem;
