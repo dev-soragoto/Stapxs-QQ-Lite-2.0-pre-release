@@ -316,7 +316,7 @@
                                                 group_id: runtimeData.chatInfo.show.id,
                                                 user_id: info.user_id,
                                                 duration: num * 60,
-                                            }, 'updateGroupMemberInfo')
+                                            }, 'banMumber')
                                         runtimeData.popBoxList.shift()
                                         this.closeChatInfoPan()
                                     },

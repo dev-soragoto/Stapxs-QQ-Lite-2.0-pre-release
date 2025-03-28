@@ -6,7 +6,7 @@ PODS:
   - CapacitorCordova (6.2.0)
   - CapacitorKeyboard (6.0.3):
     - Capacitor
-  - CapacitorLocalNotifications (6.1.1):
+  - CapacitorLocalNotifications (6.1.2):
     - Capacitor
   - CapacitorOnebotConnctor (0.0.1):
     - Capacitor
@@ -53,7 +53,7 @@ SPEC CHECKSUMS:
   CapacitorApp: e1e6b7d05e444d593ca16fd6d76f2b7c48b5aea7
   CapacitorCordova: b33e7f4aa4ed105dd43283acdd940964374a87d9
   CapacitorKeyboard: e89189ad398b815b6ff7e52271f0fb4f911a0a0a
-  CapacitorLocalNotifications: cd2aca61d90f278562f3afe921964232046911b8
+  CapacitorLocalNotifications: 65d718c32cbcb753697627bea76dd4336ef85dc2
   CapacitorOnebotConnctor: 6f9f82cae00c8fe1f1838456d079802613d5732b
   CapacitorStatusBar: b16799a26320ffa52f6c8b01737d5a95bbb8f3eb
   HugotomaziCapacitorNavigationBar: d56bded81461cc38cd071727126e7298002ff2b5

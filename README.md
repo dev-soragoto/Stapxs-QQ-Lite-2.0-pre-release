@@ -1,5 +1,5 @@
 > <strong>// 小广告 //</strong><br />
-> 想在终端连接 Napcat？来看看 Stapxs QQ Shell 吧！--> https://github.com/Stapxs/Stapxs-QQ-Shell<br />
+> 想在终端连接 Napcat？来看看 [Stapxs QQ Shell](https://github.com/Stapxs/Stapxs-QQ-Shell) 吧！<br />
 ---
 
 <p align="center">
