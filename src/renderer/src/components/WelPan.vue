@@ -7,8 +7,14 @@
  <!-- eslint-disable max-len -->
 
 <template>
-    <div v-if="show == 'home'"
-        class="wel-home">
+    <div v-if="show != 'home'" class="step-line">
+        <font-awesome-icon :class="show == 'home' ? 'select' : ''" :icon="['fas', 'earth-asia']" @click="changeView('home')" /><div />
+        <font-awesome-icon :class="show == 'license' ? 'select' : ''" :icon="['fas', 'book']" @click="changeView('license')" /><div />
+        <font-awesome-icon :class="show.startsWith('function') ? 'select' : ''" :icon="['fas', 'brush']" @click="changeView('function')" /><div />
+        <font-awesome-icon :class="show == 'info' ? 'select' : ''" :icon="['fas', 'circle-info']" @click="changeView('info')" /><div />
+        <font-awesome-icon :class="show == 'end' ? 'select' : ''" :icon="['fas', 'circle-check']" @click="changeView('end')" />
+    </div>
+    <div v-if="show == 'home'" class="wel-home">
         <img src="/img/icons/icon.svg">
         <span>WELCOME</span>
         <div>
@@ -16,18 +22,7 @@
             <a>2.0</a>
         </div>
         <hr>
-        <a> {{ $t('下面是一点点简单的使用引导 …… 如果不想看可以直接戳跳过（小声），但是也没多长啦') }}
-        </a>
-        <button class="ss-button wel-next" @click="setPage('language')">
-            next
-        </button>
-    </div>
-    <div v-else-if="show == 'language'"
-        class="wel-language">
-        <span>{{ $t('选择语言') }}</span>
-        <a>Select a language</a>
-        <div class="l10n-info"
-            style="width: calc(100% - 40px)">
+        <div class="l10n-info" style="width: calc(100% - 40px)">
             <font-awesome-icon style="margin-right: 30px" :icon="['fas', 'language']" />
             <div style="overflow: hidden">
                 <select v-model="runtimeData.sysConfig.language"
@@ -43,12 +38,170 @@
                 <span class="author">{{ $t('作者：') }}{{ $t('Stapx Steve') }}</span>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('end')">
-            next
-        </button>
+        <button class="ss-button wel-next" @click="setPage('license')">{{ $t('继续') }}</button>
     </div>
-    <div v-else-if="show == 'end'"
-        class="wel-end">
+    <div v-if="show == 'license'" class="base-box">
+        <div class="lead">
+            <span>{{ $t('欢迎使用 Stapxs QQ Lite') }}</span>
+            <div />
+            <div>
+                <span>{{ $t('在开始之前，请阅读以下条款：') }}</span>
+                <a @click="openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/next/DISCLAIMER.md', true)">Stapxs QQ Lite 免责条款（简体中文）</a>
+                <a @click="openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/next/LICENSE', true)">Stapxs QQ Lite 开源许可（英文）</a>
+                <br>
+                <span>{{ $t('并酌情阅读以下文档：') }}</span>
+                <a @click="openLink('https://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html', true)">《如何有效地报告 BUG》</a>
+                <a @click="openLink('https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md', true)">《提问的智慧》</a>
+            </div>
+            <span>{{ $t('点击继续则默许已阅读并同意以上条款内容') }}</span>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('function')">{{ $t('继续') }}</button>
+    </div>
+    <div v-else-if="show == 'function'" class="function">
+        <div class="config">
+            <div>
+                <div class="theme_color">
+                    <div><div /><div><div /><div /></div></div>
+                    <div class="me"><div /><div><div /><div /></div></div>
+                    <div><div /><div><div /><div /></div></div>
+                </div>
+            </div>
+            <div>
+                <span>{{ $t('外观') }}</span>
+                <a>{{ $t('Stapxs QQ Lite 拥有一个主题色，你可以选择一个主题色作为主要风格！如果你喜欢保持深色主题，也可以关闭自动深色模式自行选择。') }}</a>
+                <div class="opt-item">
+                    <div>
+                        <span>{{ $t('主题色') }}</span>
+                        <span>{{ $t('换个心情 🎵 ~') }}</span>
+                    </div>
+                    <div class="theme-color-col">
+                        <label v-for="(name, index) in colors" :key="'color_id_' + index"
+                            :title="name" class="ss-radio">
+                            <input type="radio" name="theme_color" :data-id="index"
+                                :checked="runtimeData.sysConfig.theme_color === undefined ?
+                                    index === 0 : Number(runtimeData.sysConfig.theme_color) === index"
+                                @change="save($event)">
+                            <div
+                                :style="'background: var(--color-main-' + index + ')'">
+                                <div />
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div v-if="!runtimeData.sysConfig.opt_auto_dark" id="opt_view_dark" class="opt-item">
+                    <div>
+                        <span>{{ $t('深色模式') }}</span>
+                        <span>{{ $t('是五彩斑斓的黑色！') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input v-model="runtimeData.sysConfig.opt_dark"
+                            type="checkbox" name="opt_dark" @change="save">
+                        <div>
+                            <div />
+                        </div>
+                    </label>
+                </div>
+                <div class="opt-item">
+                    <div>
+                        <span>{{ $t('自动深色模式') }}</span>
+                        <span>{{ $t('Biubiu ——，自动变黑！') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input v-model="runtimeData.sysConfig.opt_auto_dark"
+                            type="checkbox" name="opt_auto_dark" @change="save">
+                        <div>
+                            <div />
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('function_msg')">{{ $t('继续') }}</button>
+    </div>
+    <div v-else-if="show == 'function_msg'" class="function">
+        <div class="config">
+            <div>
+                <div class="bubble_sort_user">
+                    <div>
+                        <div><font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'user-group']" /></div>
+                        <div><div>{{ $t('群收纳盒') }}</div><div /></div>
+                    </div>
+                    <div><div /><div><div /><div /></div></div>
+                    <div><div /><div><div /><div /></div></div>
+                </div>
+            </div>
+            <div>
+                <span>{{ $t('群收纳盒') }}</span>
+                <a>{{ $t('群收纳盒将所有的群消息收进一个单独的群消息列表内并提供实时置顶新消息的功能；你可以关闭它来控制群消息的直接通知选项。') }}</a>
+                <div class="opt-item">
+                    <div>
+                        <span>{{ $t('关闭群收纳盒') }}</span>
+                        <span>{{ $t('全都放出来！全都放出来！') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input v-model="runtimeData.sysConfig.bubble_sort_user"
+                            type="checkbox" name="bubble_sort_user" @change="save">
+                        <div>
+                            <div />
+                        </div>
+                    </label>
+                </div>
+                <div v-if="runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+                    <div>
+                        <span>{{ $t('群消息通知方式') }}</span>
+                        <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
+                    </div>
+                    <select v-model="runtimeData.sysConfig.group_notice_type" style="width: 100%;"
+                        name="group_notice_type" title="group_notice_type" @change="save">
+                        <option value="none">
+                            {{ $t('不通知（默认）') }}
+                        </option>
+                        <option value="inner">
+                            {{ $t('仅应用内通知') }}
+                        </option>
+                        <option value="all">
+                            {{ $t('应用内通知和系统通知') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('function_img')">{{ $t('继续') }}</button>
+    </div>
+    <div v-else-if="show == 'function_img'" class="function">
+        <div class="config">
+            <div>
+                <div class="chat_pic_pan">
+                    <div><div /><div>{{ $t('发送') }}</div></div>
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'image']" />
+                        <font-awesome-icon :icon="['fas', 'image']" />
+                    </div>
+                    <div><div /><div /></div>
+                </div>
+            </div>
+            <div>
+                <span>{{ $t('图片发送框') }}</span>
+                <a>{{ $t('图片发送框默认启用，所有待发送的图片都将发送在文本之前。如果想要图文混排发送，你需要关闭这个功能以使用纯文本发送模式。') }}</a>
+                <div class="opt-item">
+                    <div>
+                        <span>{{ $t('禁用图片发送框') }}</span>
+                        <span>{{ $t('你也向往自由吗？') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input v-model="runtimeData.sysConfig.close_chat_pic_pan"
+                            type="checkbox" name="close_chat_pic_pan"
+                            @change="save">
+                        <div>
+                            <div />
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('end')">{{ $t('继续') }}</button>
+    </div>
+    <div v-else-if="show == 'end'" class="wel-end">
         <svg id="Layer_1"
             height="60px"
             width="60px"
@@ -115,6 +268,7 @@
         <a>{{
             $t('该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。')
         }}</a>
+        <button class="ss-button wel-next-end" @click="runtimeData.popBoxList.shift()">{{ $t('关闭') }}</button>
     </div>
 </template>
 
@@ -124,7 +278,7 @@
     import { defineComponent } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import { runASWEvent as save } from '@renderer/function/option'
-    import { sendStatEvent } from '@renderer/function/utils/appUtil'
+    import { openLink, sendStatEvent } from '@renderer/function/utils/appUtil'
 
     export default defineComponent({
         name: 'WelcomePan',
@@ -132,12 +286,25 @@
         data() {
             return {
                 languages: languages,
+                openLink: openLink,
                 runtimeData: runtimeData,
                 save: save,
                 show: 'home',
+                colors: [
+                    '林槐蓝',
+                    '墨竹青',
+                    '少女粉',
+                    '微软紫',
+                    '坏猫黄',
+                    '玄素黑',
+                ],
             }
         },
         methods: {
+            changeView(name: string) {
+                if(this.show === name || this.show === 'license') return
+                this.show = name
+            },
             gaLanguage(event: Event) {
                 const sender = event.target as HTMLInputElement
                 sendStatEvent('use_language', { name: sender.value })
@@ -150,15 +317,27 @@
     })
 </script>
 
-<style>
+<style scoped>
     .wel-next {
         background: var(--color-card-2);
         color: var(--color-font);
         padding: 0 15px;
         cursor: pointer;
         position: absolute;
-        bottom: 15px;
-        right: calc(5ch + 55px);
+        bottom: 10px;
+        right: 15px
+    }
+    .wel-next-end {
+        background: var(--color-main);
+        color: var(--color-font-r);
+        padding: 0 15px;
+        cursor: pointer;
+        position: absolute;
+        bottom: 10px;
+        right: 15px
+    }
+    .base-box {
+        padding-bottom: 30px !important;
     }
 
     .wel-home {
@@ -205,36 +384,19 @@
     .wel-end > a,
     .wel-home > a {
         color: var(--color-font-1);
+        margin-bottom: 20px;
         text-align: center;
         font-size: 0.8rem;
     }
 
-    .wel-language {
-        padding: 0 !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .l10n-info {
+        width: calc(100% - 40px) !important;
+        background: transparent !important;
+        border-left: unset !important;
+        margin-bottom:  0 !important;
     }
 
-    .wel-language > div.l10n-info {
-        width: calc(100% - 40px);
-        background: transparent;
-        border-left: unset;
-    }
-
-    .wel-language > span {
-        font-size: 1.1rem;
-        margin-top: 10px;
-        color: var(--color-main);
-    }
-
-    .wel-language > a {
-        color: var(--color-font-1);
-        margin-top: 3px;
-        margin-bottom: 10px;
-    }
-
-    .wel-language select {
+    .l10n-info select {
         width: 100%;
         border: 0;
         color: var(--color-font);
@@ -254,5 +416,275 @@
     .wel-end > span {
         margin-top: 10px;
         font-size: 1.3rem;
+    }
+
+    .step-line {
+        display: flex;
+        margin: 10px auto 0 auto;
+        width: calc(100% - 50px);
+        background: var(--color-card-1);
+        padding: 7px !important;
+        border-radius: 100px;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+    .step-line > svg {
+        cursor: pointer;
+        margin: 0 10px;
+        padding: 5px;
+    }
+    .step-line > div {
+        width: 10px;
+        height: 2px;
+        background: var(--color-font);
+        border-radius: 2px;
+    }
+    .step-line > svg.select {
+        cursor: unset;
+        border-radius: 100%;
+        background: var(--color-main);
+        color: var(--color-font-r);
+        width: 0.8rem;
+        height: 0.8rem;
+    }
+
+    .lead {
+        flex-direction: row;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .lead > span:nth-child(1) {
+        font-size: 1.1rem;
+        color: var(--color-main);
+        text-align: center;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .lead > div:nth-child(2) {
+        max-width: 5px;
+        background: var(--color-main);
+        flex: 1;
+        border-radius: 7px;
+        box-shadow: 0 0 5px var(--color-shader);
+        margin-right: 20px;
+    }
+    .lead > div:nth-child(3) {
+        display: flex;
+        flex-direction: column;
+    }
+    .lead > span:nth-child(4) {
+        font-size: 0.8rem;
+        color: var(--color-font-2);
+        width: 100%;
+        text-align: center;
+        margin-top: 20px;
+    }
+    .lead > div > span {
+        color: var(--color-font);
+    }
+    .lead > div > a {
+        color: var(--color-font-2);
+        margin-left: 20px;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .function > div.config {
+        flex-direction: row;
+        display: flex;
+    }
+    .function > div.config > div:first-child {
+        height: 45vh;
+        margin-left: -25vh;
+        width: 40vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .function > div.config > div:last-child {
+        flex-direction: column;
+        margin-left: 20px;
+        display: flex;
+        flex: 1;
+    }
+    .function > div.config > div:last-child > span {
+        color: var(--color-main);
+        display: block;
+        font-size: 1rem;
+    }
+    .function > div.config > div:last-child > a {
+        color: var(--color-font-2);
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+        display: block;
+    }
+    .function > div.config > div:last-child > div {
+        border-left: 3px solid var(--color-main);
+        padding: 0 0 0 10px;
+        border-radius: 3px;
+        margin-top: 5px;
+        flex-wrap: wrap;
+    }
+    .function > div.config > div:last-child > div select {
+        width: 100%;
+    }
+    .function > div.config > div:last-child > div:hover {
+        background: transparent !important;
+    }
+
+    .bubble_sort_user > div {
+        background: var(--color-card-1);
+        box-shadow: 0 0 5px var(--color-shader);
+        border-radius: 7px;
+        display: flex;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .bubble_sort_user > div > div:first-child {
+        background: var(--color-card-2);
+        margin-right: 10px;
+        border-radius: 7px;
+        overflow: hidden;
+        height: 35px;
+        width: 35px;
+    }
+    .bubble_sort_user > div > div:first-child > svg {
+        background: var(--color-main);
+        color: var(--color-font-r);
+        height: calc(100% - 20px);
+        width: calc(100% - 20px);
+        padding: 10px;
+    }
+    .bubble_sort_user > div > div:last-child {
+        flex: 1;
+    }
+    .bubble_sort_user > div > div:last-child > div:first-child {
+        color: var(--color-main);
+        font-size: 0.85rem;
+    }
+    .bubble_sort_user > div:not(:first-child) > div:last-child > div:first-child {
+        background: var(--color-card-2);
+        border-radius: 7px;
+        height: 0.85rem;
+    }
+    .bubble_sort_user > div > div:last-child > div:last-child {
+        background: var(--color-card-2);
+        border-radius: 7px;
+        margin-top: 5px;
+        height: 0.8rem;
+        width: 100%;
+    }
+
+    .theme_color > div {
+        margin-bottom: 10px;
+        display: flex;
+    }
+    .theme_color > div.me {
+        flex-direction: row-reverse;
+        transform: translateX(35px);
+    }
+    .theme_color > div:not(.me) {
+        transform: translateX(-35px);
+    }
+    .theme_color > div > div:first-child {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        border-radius: 100%;
+        height: 35px;
+        width: 35px;
+    }
+    .theme_color > div.me > div:first-child {
+        opacity: 0;
+    }
+    .theme_color > div > div:last-child {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        flex: 1;
+        margin: 0 10px;
+    }
+    .theme_color > div.me > div:last-child {
+        align-items: flex-end;
+    }
+    .theme_color > div > div:last-child > div:first-child {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        border-radius: 7px;
+        height: 0.8rem;
+        width: 60%;
+    }
+    .theme_color > div > div:last-child > div:last-child {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        height: calc(0.8rem + 20px);
+        border-radius: 7px;
+        margin-top: 10px;
+        width: 100%;
+    }
+    .theme_color > div.me > div:last-child > div {
+        background: var(--color-main);
+    }
+
+    .chat_pic_pan {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        height: calc(40vh - 40px);
+        flex-direction: column;
+        pointer-events: none;
+        border-radius: 7px;
+        display: flex;
+        padding: 10px;
+        margin: 20px;
+    }
+    .chat_pic_pan > div:first-child {
+        justify-content: space-between;
+        display: flex;
+    }
+    .chat_pic_pan > div:first-child > div:first-child {
+        background: var(--color-card-2);
+        border-radius: 7px;
+        height: 1rem;
+        width: 15vh;
+    }
+    .chat_pic_pan > div:first-child > div:last-child {
+        background: var(--color-main);
+        color: var(--color-font-r);
+        height: calc(1rem + 3px);
+        font-size: 0.7rem;
+        text-align: center;
+        border-radius: 7px;
+        width: 7vh;
+    }
+    .chat_pic_pan > div:nth-child(2) {
+        flex-direction: column;
+        display: flex;
+        flex: 1;
+        overflow-y: scroll;
+        margin: 2px;
+    }
+    .chat_pic_pan > div:nth-child(2) > svg {
+        border: 2px solid var(--color-card-2);
+        color: var(--color-font-2);
+        border-radius: 7px;
+        margin-right: 5px;
+        margin-top: 5px;
+        padding: 26% 0;
+    }
+    .chat_pic_pan > div:last-child {
+        display: flex;
+    }
+    .chat_pic_pan > div:last-child > div:first-child {
+        background: var(--color-card-2);
+        border-radius: 7px;
+        height: 5vh;
+        width: 5vh;
+    }
+    .chat_pic_pan > div:last-child > div:last-child {
+        background: var(--color-card-2);
+        margin-left: 5px;
+        border-radius: 7px;
+        height: 5vh;
+        flex: 1;
     }
 </style>

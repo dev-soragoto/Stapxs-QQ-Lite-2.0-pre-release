@@ -183,7 +183,7 @@ export function reloadCookies(domain = 'qun.qq.com') {
     Connector.send(
         'get_cookies',
         { domain: domain },
-        'getCookies' + domain,
+        'getCookies_' + domain,
     )
 }
 
@@ -901,20 +901,19 @@ export function checkOpenTimes() {
         }
     } else {
         localStorage.setItem('times', '1')
+    }
+    // 使用引导
+    const guide = localStorage.getItem('guide')
+    const guideVersion = 1
+    if (guide != guideVersion.toString()) {
         // 首次打开，显示首次打开引导信息
         const popInfo = {
             template: WelPan,
-            button: [
-                {
-                    text: 'close',
-                    master: true,
-                    fun: () => {
-                        runtimeData.popBoxList.shift()
-                    },
-                },
-            ],
+            allowClose: false,
+            button: [],
         }
         runtimeData.popBoxList.push(popInfo)
+        // localStorage.setItem('guide', guideVersion.toString())
     }
 }
 
