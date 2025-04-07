@@ -172,6 +172,23 @@
             </div>
         </div>
         <div class="ss-card">
+            <header>{{ $t('浏览') }}</header>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'globe']" />
+                <div>
+                    <span>{{ $t('禁用内置浏览器') }}</span>
+                    <span>{{ $t('让我看看你的浏览器 👀') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.close_browser"
+                        type="checkbox" name="close_browser" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="ss-card">
             <header>{{ $t('分析信息') }}</header>
             <div
                 class="opt-item"

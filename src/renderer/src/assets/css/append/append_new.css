@@ -55,6 +55,7 @@ body {
 }
 .login-pan-card button.afd {
     transform: translateX(calc(-50% + 25px));
+    transition: all 0.3s;
     position: fixed;
     width: 240px;
     left: 50vw;

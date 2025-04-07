@@ -68,7 +68,7 @@ export function scrollToMsg(seqName: string, showAnimation: boolean): boolean {
 export function openLink(url: string, external = false) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
     if (runtimeData.tags.isElectron) {
-        if (!external) {
+        if (!external && !runtimeData.sysConfig.close_browser) {
             runtimeData.popBoxList = []
             const popInfo = {
                 html: `<iframe src="${url}" class="view-iframe"></iframe>`,
