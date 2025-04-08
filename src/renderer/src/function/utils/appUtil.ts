@@ -913,7 +913,7 @@ export function checkOpenTimes() {
             button: [],
         }
         runtimeData.popBoxList.push(popInfo)
-        // localStorage.setItem('guide', guideVersion.toString())
+        localStorage.setItem('guide', guideVersion.toString())
     }
 }
 

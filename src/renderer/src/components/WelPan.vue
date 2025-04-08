@@ -9,9 +9,10 @@
 <template>
     <div v-if="show != 'home'" class="step-line">
         <font-awesome-icon :class="show == 'home' ? 'select' : ''" :icon="['fas', 'earth-asia']" @click="changeView('home')" /><div />
-        <font-awesome-icon :class="show == 'license' ? 'select' : ''" :icon="['fas', 'book']" @click="changeView('license')" /><div />
+        <font-awesome-icon :class="show == 'license' ? 'select' : ''" :icon="['fas', 'pen-nib']" @click="changeView('license')" /><div />
         <font-awesome-icon :class="show.startsWith('function') ? 'select' : ''" :icon="['fas', 'brush']" @click="changeView('function')" /><div />
-        <font-awesome-icon :class="show == 'info' ? 'select' : ''" :icon="['fas', 'circle-info']" @click="changeView('info')" /><div />
+        <font-awesome-icon :class="show.startsWith('tip') ? 'select' : ''" :icon="['fas', 'book']" @click="changeView('tip')" /><div />
+        <font-awesome-icon :class="show.startsWith('info') ? 'select' : ''" :icon="['fas', 'circle-info']" @click="changeView('info')" /><div />
         <font-awesome-icon :class="show == 'end' ? 'select' : ''" :icon="['fas', 'circle-check']" @click="changeView('end')" />
     </div>
     <div v-if="show == 'home'" class="wel-home">
@@ -197,6 +198,93 @@
                         </div>
                     </label>
                 </div>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('tip')">{{ $t('继续') }}</button>
+    </div>
+    <div v-else-if="show == 'tip'" class="function">
+        <div class="config">
+            <div>
+                <div class="theme_color menu">
+                    <div><div /><div><div /><div /></div></div>
+                    <a><div>
+                        <div><div /><div /></div>
+                        <div class="select">
+                            <font-awesome-icon :icon="['fas', 'reply']" />
+                            <span>{{ $t('回复') }}</span>
+                        </div>
+                        <div><div /><div /></div>
+                        <div><div /><div /></div>
+                        <div><div /><div /></div>
+                    </div></a>
+                </div>
+            </div>
+            <div>
+                <span>{{ $t('更多菜单') }}</span>
+                <a>{{ $t('Stapxs QQ Lite 的部分功能包含在元素的菜单中。你可以右击（或长按）消息列表、头像、消息等元素展开菜单来使用更多功能！') }}</a>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('tip_input')">{{ $t('继续') }}</button>
+    </div>
+    <div v-else-if="show == 'tip_input'" class="function">
+        <div class="config">
+            <div>
+                <div class="input_bar">
+                    <div>
+                        <div><div /><div /></div>
+                        <div class="select"><div /><div>{{ $t('林小槐') }}</div></div>
+                        <div><div /><div /></div>
+                        <div><div /><div /></div>
+                        <div><div /><div /></div>
+                    </div>
+                    <div><div /><div>{{ $t('[SQ:0] 你看看这个 @林') }}</div></div>
+                </div>
+            </div>
+            <div>
+                <span>{{ $t('输入框功能') }}</span>
+                <a>{{ $t('消息发送框除了输入内容以外，同时支持粘贴图片、at 群成员功能；不过不支持富媒体显示和多行输入。') }}</a>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('info')">{{ $t('继续') }}</button>
+    </div>
+    <div v-if="show == 'info'" class="base-box">
+        <div class="lead">
+            <span>{{ $t('统计选项') }}</span>
+            <div />
+            <div>
+                <span>{{ $t('Stapxs QQ Lite 会将部分使用数据上传到自建的 umami 服务器中用于了解用户使用情况以及制作一些有趣的统计信息。') }}</span>
+                <span style="margin-bottom: 20px;">{{ $t('如果你并不希望上传这些数据，可以选择关闭它。') }}</span>
+                <div class="opt-item"
+                    :style="runtimeData.sysConfig.close_ga !== true ?
+                        'background: var(--color-card-1);' : ''">
+                    <font-awesome-icon :icon="['fas', 'cloud']" />
+                    <div>
+                        <span>{{ $t('关闭分析') }}</span>
+                        <span>{{ $t('真的不让看吗（小声') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input v-model="runtimeData.sysConfig.close_ga" type="checkbox"
+                            name="close_ga" @change="save">
+                        <div style="background: var(--color-card-2)">
+                            <div />
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button class="ss-button wel-next" @click="setPage('info_free')">{{ $t('继续') }}</button>
+    </div>
+    <div v-if="show == 'info_free'" class="base-box">
+        <div class="lead">
+            <span>{{ $t('开源提醒') }}</span>
+            <div />
+            <div style="align-items: flex-end;">
+                <span>{{ $t('Stapxs QQ Lite 是一个开源免费的软件，这意味着没有任何激活、使用限制等付费功能；') }}</span>
+                <span style="margin-bottom: 20px;">{{ $t('如果你通过任何付费方式获取了 Stapxs QQ Lite，请及时追回损失并酌情反馈。') }}</span>
+
+                <span>{{ $t('Stapxs QQ Lite 仅在 GitHub 上发布。由于提供了自行部署的方式，非官方版本请谨慎使用。') }}</span>
+                <font-awesome-icon style="width:15vh;height:15vh;margin-top:-15vh;opacity:0.1;color:var(--color-font);"
+                    :icon="['fas', 'triangle-exclamation']" />
             </div>
         </div>
         <button class="ss-button wel-next" @click="setPage('end')">{{ $t('继续') }}</button>
@@ -626,6 +714,48 @@
         background: var(--color-main);
     }
 
+    .menu > a > div {
+        width: 20vh;
+        background: var(--color-card-2);
+        box-shadow: 0 0 5px var(--color-shader);
+        border-radius: 7px;
+        margin: 0 auto 0 auto;
+        transform: translate(5vh, -30px);
+        padding: 5px
+    }
+    .menu > a > div > div {
+        align-items: center;
+        border-radius: 7px;
+        height: 1.1rem;
+        display: flex;
+        margin: 3px 0;
+    }
+    .menu > a > div > div.select {
+        background: var(--color-main);
+    }
+    .menu > a > div > div > svg {
+        color: var(--color-font-1-r);
+        opacity: 0.9;
+        margin: 5px;
+    }
+    .menu > a > div > div > span {
+        color: var(--color-font-1-r);
+        font-size: 0.7rem;
+    }
+    .menu > a > div > div > div:first-child {
+        background: var(--color-card-1);
+        border-radius: 7px;
+        height: 1rem;
+        width: 1rem;
+    }
+    .menu > a > div > div > div:last-child {
+        background: var(--color-card-1);
+        border-radius: 7px;
+        margin-left: 3px;
+        height: 1rem;
+        flex: 1;
+    }
+
     .chat_pic_pan {
         box-shadow: 0 0 5px var(--color-shader);
         background: var(--color-card-1);
@@ -686,5 +816,94 @@
         border-radius: 7px;
         height: 5vh;
         flex: 1;
+    }
+
+    .input_bar > div:first-child {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        pointer-events: none;
+        overflow-y: scroll;
+        border-radius: 7px;
+        max-height: 6rem;
+        padding: 3px 5px;
+        width: 80%;
+    }
+    .input_bar > div:first-child > div {
+        align-items: center;
+        padding: 3px 5px;
+        display: flex;
+    }
+    .input_bar > div:first-child > div.select {
+        background: var(--color-main);
+        border-radius: 7px;
+    }
+    .input_bar > div:first-child > div > div:first-child {
+        height: 1rem;
+        width: 1rem;
+        background: var(--color-card-2);
+        border-radius: 100%;
+        margin: 3px 0;
+    }
+    .input_bar > div:first-child > div > div:last-child {
+        margin-left: 5px
+    }
+    .input_bar > div:first-child > div.select > div:last-child {
+        color: var(--color-font-r);
+        font-size: 0.8rem;
+    }
+    .input_bar > div:first-child > div:not(.select) > div:last-child {
+        background: var(--color-card-2);
+        height: 1rem;
+        flex: 1;
+        border-radius: 7px;
+        padding: 3px 5px;
+    }
+    .input_bar > div:last-child {
+        margin-top: 10px;
+        display: flex;
+        width: 100%;
+    }
+    .input_bar > div:last-child > div:first-child {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        border-radius: 7px;
+        height: 2rem;
+        width: 2rem;
+    }
+    .input_bar > div:last-child > div:last-child {
+        box-shadow: 0 0 5px var(--color-shader);
+        background: var(--color-card-1);
+        color: var(--color-font-2);
+        margin-right: -10px;
+        align-items: center;
+        border-radius: 7px;
+        font-size: 0.8rem;
+        margin-left: 5px;
+        padding: 0 10px;
+        display: flex;
+        height: 2rem;
+        flex: 1;
+    }
+
+    @media (max-width: 700px) {
+        .function {
+            overflow-y: scroll;
+            overflow-x: hidden;
+            margin: 30px 0;
+        }
+        .function > div.config {
+            flex-direction: column;
+        }
+        .function > div.config > div:first-child {
+            align-items: center;
+            margin-left: 0;
+            width: 100%;
+        }
+        .function > div.config > div:first-child > div {
+            width: 80%;
+        }
+        .theme_color {
+            margin-left: 35px;
+        }
     }
 </style>

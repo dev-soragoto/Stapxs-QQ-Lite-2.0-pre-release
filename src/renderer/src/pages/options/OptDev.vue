@@ -106,6 +106,15 @@
                     type="text" @keyup="sendTestWs">
             </div>
             <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'paper-plane']" />
+                <div>
+                    <span>{{ $t('接收原始消息') }}</span>
+                    <span>{{ $t('咻咻 ——') }}</span>
+                </div>
+                <input v-model="parse_text" class="ss-input" style="width: 150px"
+                    type="text" @keyup="sendTestParse">
+            </div>
+            <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'envelope']" />
                 <div>
                     <span>{{ $t('应用消息测试') }}</span>
@@ -204,11 +213,12 @@
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { runtimeData } from '@renderer/function/msg'
+    import { runtimeData, parse } from '@renderer/function/msg'
     import { BrowserInfo, detect } from 'detect-browser'
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
+
 
     export default defineComponent({
         name: 'ViewOptDev',
@@ -221,6 +231,7 @@
                 save: save,
                 run: run,
                 ws_text: '',
+                parse_text: '',
                 appmsg_text: '',
             }
         },
@@ -239,6 +250,14 @@
                     // 修改 echo 防止被消息处理机处理
                     info.echo = 'websocketTest'
                     Connector.sendRaw(JSON.stringify(info))
+                }
+            },
+            sendTestParse(event: KeyboardEvent) {
+                // 发送测试解析消息
+                if (event.keyCode === 13 && this.parse_text !== '') {
+                    const info = JSON.parse(this.parse_text)
+                    parse(info)
+                    this.parse_text = ''
                 }
             },
             sendTestAppmsg(event: KeyboardEvent) {
