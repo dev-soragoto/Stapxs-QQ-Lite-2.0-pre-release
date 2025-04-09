@@ -1079,3 +1079,24 @@ msgstr ""
 
 msgid "跳转到消息"
 msgstr ""
+
+msgid "合并转发消息"
+msgstr ""
+
+msgid "[图片]"
+msgstr ""
+
+msgid "[表情]"
+msgstr ""
+
+msgid "[文件]"
+msgstr ""
+
+msgid "[视频]"
+msgstr ""
+
+msgid "[聊天记录]"
+msgstr ""
+
+msgid "[不支持的消息]"
+msgstr ""
