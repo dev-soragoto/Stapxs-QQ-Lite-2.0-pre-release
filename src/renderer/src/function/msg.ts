@@ -629,7 +629,6 @@ const msgFunctons = {
             // 去 messagelist 里找到这条消息
             runtimeData.messageList.forEach((item) => {
                 if (item.message_id == messageId) {
-                    item.message_id = msg.message_id
                     item.fake_msg = false
                     return
                 }
