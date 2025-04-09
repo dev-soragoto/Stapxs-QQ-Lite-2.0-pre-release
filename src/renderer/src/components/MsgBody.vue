@@ -154,7 +154,37 @@
                             class="msg-unknown"
                             style="cursor: pointer"
                             @click="View.getForwardMsg(item.id)">
-                            {{ $t('（点击查看合并转发消息）') }}
+                            {{ $t('合并转发消息') }}
+                            <div v-for="(i, index) in item.content.slice(0, 3)">
+                                {{i.sender.nickname}}:
+                                <span v-for="(msg, msgIndex) in i.message">
+                                    <span v-if="msg.type == 'text'">
+                                        {{ msg.data.text }}
+                                    </span>
+                                    <span v-else-if="msg.type == 'image'">
+                                        {{ $t('[图片]') }}
+                                    </span>
+                                    <span v-else-if="msg.type == 'face' || msg.type == 'bface'">
+                                        {{ $t('[表情]') }}
+                                    </span>
+                                    <span v-else-if="msg.type == 'file'">
+                                        {{ $t('[文件]') }}{{ msg.data.file }}
+                                    </span>
+                                    <span v-else-if="msg.type == 'video'">
+                                        {{ $t('[视频]') }}
+                                    </span>
+                                    <span v-else-if="msg.type == 'forward'">
+                                        {{ $t('[聊天记录]') }}
+                                    </span>
+                                    <span v-else-if="msg.type == 'reply'">
+                                        <!--原版QQ此处不做处理-->
+                                    </span>
+                                    <span v-else>
+                                        {{ $t('[不支持的消息]') }}
+                                    </span>
+                                </span>
+                            </div>
+                            {{ $t('（点击查看合并转发消息）')  }}
                         </span>
                         <div v-else-if="item.type == 'reply'"
                             :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
