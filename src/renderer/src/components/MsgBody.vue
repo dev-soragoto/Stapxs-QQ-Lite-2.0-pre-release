@@ -150,42 +150,54 @@
                                 现在还有不支持 video tag 的浏览器吗？
                             </video>
                         </div>
-                        <span v-else-if="item.type == 'forward'"
-                            class="msg-unknown"
-                            style="cursor: pointer"
-                            @click="View.getForwardMsg(item.id)">
-                            {{ $t('合并转发消息') }}
-                            <div v-for="(i, index) in item.content.slice(0, 3)">
-                                {{i.sender.nickname}}:
-                                <span v-for="(msg, msgIndex) in i.message">
-                                    <span v-if="msg.type == 'text'">
-                                        {{ msg.data.text }}
-                                    </span>
-                                    <span v-else-if="msg.type == 'image'">
-                                        {{ $t('[图片]') }}
-                                    </span>
-                                    <span v-else-if="msg.type == 'face' || msg.type == 'bface'">
-                                        {{ $t('[表情]') }}
-                                    </span>
-                                    <span v-else-if="msg.type == 'file'">
-                                        {{ $t('[文件]') }}{{ msg.data.file }}
-                                    </span>
-                                    <span v-else-if="msg.type == 'video'">
-                                        {{ $t('[视频]') }}
-                                    </span>
-                                    <span v-else-if="msg.type == 'forward'">
-                                        {{ $t('[聊天记录]') }}
-                                    </span>
-                                    <span v-else-if="msg.type == 'reply'">
-                                        <!--原版QQ此处不做处理-->
-                                    </span>
-                                    <span v-else>
-                                        {{ $t('[不支持的消息]') }}
-                                    </span>
-                                </span>
+                        <template v-else-if="item.type == 'forward'">
+                            <div v-if="item.content.length > 0"
+                                class="msg-raw-forward"
+                                @click="View.getForwardMsg(item.id)">
+                                <span>{{ $t('合并转发消息') }}</span>
+                                <div class="forward-msg">
+                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)"
+                                        :key="'raw-forward-' + indexItem">
+                                        {{ i.sender.nickname }}:
+                                        <span v-for="(msg, msgIndex) in i.message"
+                                            :key="'raw-forward-item-' + msgIndex">
+                                            <span v-if="msg.type == 'text'">
+                                                {{ msg.data.text }}
+                                            </span>
+                                            <span v-else-if="msg.type == 'image'">
+                                                [{{ $t('图片') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'face' || msg.type == 'bface'">
+                                                [{{ $t('表情') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'file'">
+                                                [{{ $t('文件') }}]{{ msg.data.file }}
+                                            </span>
+                                            <span v-else-if="msg.type == 'video'">
+                                                [{{ $t('视频') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'forward'">
+                                                [{{ $t('聊天记录') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'reply'">
+                                                <!--原版QQ此处不做处理-->
+                                            </span>
+                                            <span v-else>
+                                                [{{ $t('不支持的消息') }}]
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span>{{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}</span>
+                                </div>
                             </div>
-                            {{ $t('（点击查看合并转发消息）')  }}
-                        </span>
+                            <span v-else class="msg-unknown"
+                                style="cursor: pointer"
+                                @click="View.getForwardMsg(item.id)">
+                                {{ $t('（点击查看合并转发消息）') }}
+                            </span>
+                        </template>
                         <div v-else-if="item.type == 'reply'"
                             :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
                             @click="scrollToMsg(item.id)">
