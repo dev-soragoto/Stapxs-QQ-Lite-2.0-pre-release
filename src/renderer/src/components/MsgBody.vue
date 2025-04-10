@@ -34,7 +34,7 @@
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
-                <span v-else-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
+                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
             </template>
             <a v-if="data.sender.card || data.sender.nickname"
                 v-show="!isMe || type == 'merge'">
@@ -51,28 +51,17 @@
                         :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
                         <div v-if="item.type === undefined" />
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
-                        <span v-else-if="item.type == 'text'"
-                            v-show="item.text !== ''"
-                            class="msg-text"
-                            @click="textClick"
-                            v-html="parseText(item.text)" />
+                        <span v-else-if="item.type == 'text'" v-show="item.text !== ''"
+                            class="msg-text" @click="textClick" v-html="parseText(item.text)" />
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
-                            :class=" imgStyle(
-                                data.message.length,
-                                index,
-                                item.asface,
-                            ) + ' msg-mface'"
+                            :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
                             :src="item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
                             :title="$t('预览图片')"
                             :alt="$t('图片')"
-                            :class=" imgStyle(
-                                data.message.length,
-                                index,
-                                item.asface,
-                            )"
+                            :class=" imgStyle(data.message.length, index, item.asface)"
                             :src="item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail"

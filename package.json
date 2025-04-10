@@ -32,7 +32,6 @@
     "log4js": "^6.9.1",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "semver": "^7.7.1",
-    "vconsole": "^3.15.1",
     "ws": "^8.18.0"
   },
   "devDependencies": {
@@ -81,6 +80,7 @@
     "typescript": "^5.5.2",
     "uuid": "^11.0.3",
     "v-viewer": "^3.0.21",
+    "vconsole": "^3.15.1",
     "vite": "^5.3.1",
     "vite-plugin-pwa": "^0.21.0",
     "vite-plugin-static-copy": "^2.3.0",

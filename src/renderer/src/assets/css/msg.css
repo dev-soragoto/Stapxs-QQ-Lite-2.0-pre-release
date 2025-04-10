@@ -90,6 +90,7 @@
     text-shadow: 0 0 0 var(--color-font-1-r);
 }
 .message-body > span {
+    margin-right: 3px;
     font-size: 0.7rem;
     background: var(--color-main);
     color: var(--color-font-r);

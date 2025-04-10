@@ -185,7 +185,7 @@
                             :style="'margin:-' + 2 * (index - 1) + 'px ' + (20 * index - 1 - 2 * (index - 1)) + 'px 0 ' + (20 * index - 1 - 2 * (index - 1)) + 'px;'" />
                     </div>
                 </div>
-                <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose && runtimeData.popBoxList[0].allowClose)" />
+                <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose != false && runtimeData.popBoxList[0].allowClose != false)" />
             </div>
         </Transition>
         <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
