@@ -1078,6 +1078,7 @@ msgid "合并转发消息"
 msgstr ""
 
 msgid "查看 {count} 条转发消息"
+msgstr ""
 
 msgid "浏览"
 msgstr ""
@@ -1086,4 +1087,76 @@ msgid "禁用内置浏览器"
 msgstr ""
 
 msgid "让我看看你的浏览器 👀"
+msgstr ""
+
+msgid "接收原始消息"
+msgstr ""
+
+msgid "咻咻 ——"
+msgstr ""
+
+msgid "欢迎使用 Stapxs QQ Lite"
+msgstr ""
+
+msgid "在开始之前，请阅读以下条款："
+msgstr ""
+
+msgid "并酌情阅读以下文档："
+msgstr ""
+
+msgid "点击继续则默许已阅读并同意以上条款内容"
+msgstr ""
+
+msgid "外观"
+msgstr ""
+
+msgid "Stapxs QQ Lite 拥有一个主题色，你可以选择一个主题色作为主要风格！如果你喜欢保持深色主题，也可以关闭自动深色模式自行选择。"
+msgstr ""
+
+msgid "群收纳盒将所有的群消息收进一个单独的群消息列表内并提供实时置顶新消息的功能；你可以关闭它来控制群消息的直接通知选项。"
+msgstr ""
+
+msgid "图片发送框"
+msgstr ""
+
+msgid "图片发送框默认启用，所有待发送的图片都将发送在文本之前。如果想要图文混排发送，你需要关闭这个功能以使用纯文本发送模式。"
+msgstr ""
+
+msgid "更多菜单"
+msgstr ""
+
+msgid "Stapxs QQ Lite 的部分功能包含在元素的菜单中。你可以右击（或长按）消息列表、头像、消息等元素展开菜单来使用更多功能！"
+msgstr ""
+
+msgid "输入框功能"
+msgstr ""
+
+msgid "消息发送框除了输入内容以外，同时支持粘贴图片、at 群成员功能；不过不支持富媒体显示和多行输入。"
+msgstr ""
+
+msgid "林小槐"
+msgstr ""
+
+msgid "[SQ:0] 你看看这个 @林"
+msgstr "[SQ:0] 你看看这个 {'@'}林"
+
+msgid "统计选项"
+msgstr ""
+
+msgid "Stapxs QQ Lite 会将部分使用数据上传到自建的 umami 服务器中用于了解用户使用情况以及制作一些有趣的统计信息。"
+msgstr ""
+
+msgid "如果你并不希望上传这些数据，可以选择关闭它。"
+msgstr ""
+
+msgid "开源提醒"
+msgstr ""
+
+msgid "Stapxs QQ Lite 是一个开源免费的软件，这意味着没有任何激活、使用限制等付费功能；"
+msgstr ""
+
+msgid "如果你通过任何付费方式获取了 Stapxs QQ Lite，请及时追回损失并酌情反馈。"
+msgstr ""
+
+msgid "Stapxs QQ Lite 仅在 GitHub 上发布。由于提供了自行部署的方式，非官方版本请谨慎使用。"
 msgstr ""
