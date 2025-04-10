@@ -1351,7 +1351,7 @@
                         app: 'com.tencent.multimsg',
                         meta: {
                             detail: {
-                                source: '合并转发的消息',
+                                source: this.$t('合并转发消息'),
                                 news: [
                                     ...msgList.slice(0, 3).map((item) => {
                                         const name =
@@ -1365,10 +1365,7 @@
                                         }
                                     }),
                                 ],
-                                summary:
-                                    '查看' +
-                                    this.multipleSelectList.length +
-                                    '条转发消息',
+                                summary: this.$t('查看 {count} 条转发消息', { count: this.multipleSelectList.length }),
                                 resid: '',
                             },
                         },
