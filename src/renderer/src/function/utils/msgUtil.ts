@@ -603,7 +603,7 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 num = Math.round(num)
                 // 输出 translateX
                 if (runtimeData.tags.isElectron && windowInfo) {
-                    const reader = runtimeData.plantform.reader
+                    const { reader } = runtimeData.plantform
                     if (reader) {
                         reader.send('win:move', {
                             x: windowInfo.x + num,
