@@ -131,12 +131,12 @@ export class Connector {
                 login.creating = false
                 this.onclose(e.code, e.reason, address, token)
             }
-            websocket.onerror = (e) => {
-                login.creating = false
-                // popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
-                // 由于此处错误信息不完整，所以交给 onclose 处理
-                return
-            }
+            // websocket.onerror = (e) => {
+            //     login.creating = false
+            //     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
+            //     // 由于此处错误信息不完整，所以交给 onclose 处理
+            //     return
+            // }
         }
     }
 
