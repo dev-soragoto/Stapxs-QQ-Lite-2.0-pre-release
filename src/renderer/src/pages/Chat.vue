@@ -78,7 +78,7 @@
                     <!-- 时间戳 -->
                     <NoticeBody
                         v-if="isShowTime(list[index - 1] ? list[index - 1].time : undefined, msgIndex.time)"
-                        :key="'notice-time-' + index"
+                        :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
                     <!-- 消息体 -->
                     <MsgBody v-if="(msgIndex.post_type === 'message' ||
