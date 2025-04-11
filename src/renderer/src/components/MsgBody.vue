@@ -196,6 +196,10 @@
                                 {{ getRepMsg(item.id) ?? $t('（查看回复消息）') }}
                             </a>
                         </div>
+                        <div v-else-if="item.type == 'poke'" v-once :class="showPock()">
+                            <font-awesome-icon class="poke-hand" style="margin-right: 5px;" :icon="['fas', 'fa-hand-point-up']" />
+                            {{ $t('戳了戳你') }}
+                        </div>
                         <span v-else class="msg-unknown">{{ '( ' + $t('不支持的消息') + ': ' + item.type + ' )' }}</span>
                     </div>
                 </template>
@@ -293,12 +297,12 @@
     import { runtimeData } from '@renderer/function/msg'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
     import { StringifyOptions } from 'querystring'
-    import { getFace, getMsgRawTxt } from '@renderer/function/utils/msgUtil'
+    import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
     import {
         openLink,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
-    import { getSizeFromBytes, getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { getSizeFromBytes, getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -753,6 +757,34 @@
                 // 调用上级组件的 poke 方法
                 this.$emit('sendPoke', this.data.sender.user_id)
             },
+
+            async showPock() {
+                // 如果是最后一条消息并且在最近发送
+                if (this.data.message_id ==
+                    runtimeData.messageList[runtimeData.messageList.length - 1].message_id &&
+                    (new Date().getTime() - getViewTime(this.data.time)) / 1000 < 5) {
+                    let windowInfo = null as {
+                        x: number
+                        y: number
+                        width: number
+                        height: number
+                    } | null
+                    if (runtimeData.tags.isElectron) {
+                        const reader = runtimeData.plantform.reader
+                        if (reader) {
+                            windowInfo = await reader.invoke('win:getWindowInfo')
+                        }
+                    }
+                    const message = document.getElementById('chat-' + this.data.message_id)
+                    let item = document.getElementById('app')
+                    if (runtimeData.tags.isElectron) {
+                        item = message?.getElementsByClassName('poke-hand')[0] as HTMLImageElement
+                    }
+                    this.$nextTick(() => {
+                        pokeAnime(item, windowInfo)
+                    })
+                }
+             }
         },
     })
 </script>

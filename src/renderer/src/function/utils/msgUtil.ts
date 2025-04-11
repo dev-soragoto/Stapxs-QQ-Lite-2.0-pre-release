@@ -1,5 +1,6 @@
 import jp from 'jsonpath'
 import app from '@renderer/main'
+import anime from 'animejs'
 
 import { Logger } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
@@ -124,7 +125,7 @@ export function getFace(id: number) {
 }
 
 /**
- * 将一个消息体列表组装为基础消息列表便于解析（message 消息体可能不正确——
+ * 将一个消息体列表组装为基础消息列表便于解析（message 消息体可能不正确）
  * @param msgList
  * @param map
  * @returns
@@ -187,6 +188,11 @@ export function parseMsgList(
                         msgList[j],
                         map,
                     )
+                    // 如果 data 里有 type 字段，改成 type_item
+                    if(data[0] && data[0]['type'] != undefined) {
+                        data[0]['type_item'] = data[0]['type']
+                        delete data[0]['type']
+                    }
                     if (data != undefined && data.length == 1) {
                         msgList[j] = Object.assign(msgList[j], data[0])
                     }
@@ -563,6 +569,56 @@ export function orderOnMsgList(list: (UserFriendElem & UserGroupElem)[]) {
     topList.sort(sortFun)
     normalList.sort(sortFun)
     return topList.concat(normalList)
+}
+
+export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
+            x: number
+            y: number
+            width: number
+            height: number
+        } | null) {
+    if (animeBody) {
+        const timeLine = anime.timeline({ targets: animeBody })
+        // 如果窗口小于 500px 播放完整的动画（手机端样式）
+        if (
+            (document.getElementById('app')?.offsetWidth ?? 500) <
+            500
+        ) {
+            navigator.vibrate([10, 740, 10])
+            timeLine.add({ translateX: 30, duration: 600, easing: 'cubicBezier(.44,.09,.53,1)' })
+                .add({ translateX: 0, duration: 150, easing: 'cubicBezier(.44,.09,.53,1)' })
+                .add({ translateX: [0, 25, 0], duration: 500, easing: 'cubicBezier(.21,.27,.82,.67)' })
+                .add({ targets: {}, duration: 1000 })
+                .add({ translateX: 70, duration: 1300, easing: 'cubicBezier(.89,.72,.72,1.13)' })
+                .add({ translateX: 0, duration: 100, easing: 'easeOutSine' })
+        }
+        timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
+        timeLine.change = () => {
+            if (animeBody) {
+                animeBody.parentElement?.parentElement?.classList.add( 'poking')
+                const teansformX = animeBody.style.transform
+                // teansformX 的数字可能是科学计数法，需要转换为普通数字
+                let num = Number((teansformX.match(/-?\d+\.?\d*/g) ?? [0])[0])
+                // 取整
+                num = Math.round(num)
+                // 输出 translateX
+                if (runtimeData.tags.isElectron && windowInfo) {
+                    const reader = runtimeData.plantform.reader
+                    if (reader) {
+                        reader.send('win:move', {
+                            x: windowInfo.x + num,
+                            y: windowInfo.y,
+                        })
+                    }
+                }
+            }
+        }
+        timeLine.changeComplete = () => {
+            if (animeBody) {
+                animeBody.parentElement?.parentElement?.classList.remove('poking')
+            }
+        }
+    }
 }
 
 export function sendMsgAppendInfo(msg: any) {
