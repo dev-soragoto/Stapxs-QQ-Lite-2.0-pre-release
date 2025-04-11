@@ -1074,7 +1074,7 @@ const msgFunctons = {
             back.forEach((item) => {
                 // 去消息列表里找一下它
                 const user = runtimeData.userList.find((user) => {
-                    return user.user_id == item.user_id
+                    return user.user_id == item.user_id || user.group_id == item.user_id
                 })
                 const inMsgList =
                     runtimeData.onMsgList.find((msg) => {
