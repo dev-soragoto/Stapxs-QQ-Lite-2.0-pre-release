@@ -46,14 +46,13 @@
 </template>
 
 <script lang="ts">
-    import anime from 'animejs'
-
     import { defineComponent, ref } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import {
         getTimeConfig,
         getTrueLang,
     } from '@renderer/function/utils/systemUtil'
+    import { pokeAnime } from '@renderer/function/utils/msgUtil'
 
     export default defineComponent({
         name: 'NoticeBody',
@@ -110,55 +109,11 @@
             // PS：只有最后一条 poke 通知会触发动画，避免反复触发动画
             if (this.info.sub_type === 'poke' && this.info.pokeMe &&
                 this.info == runtimeData.messageList[runtimeData.messageList.length - 1]) {
-                // 给 body 创建一个三段的动画
-                let item = document.getElementById('app')
-                if (runtimeData.tags.isElectron) {
-                    item = document
-                        .getElementById('notice-' + this.id)
-                        ?.getElementsByClassName('space')[0] as HTMLElement
-                }
-                if (item) {
-                    const timeLine = anime.timeline({ targets: item })
-                    // 如果窗口小于 500px 播放完整的动画（手机端样式）
-                    if (
-                        (document.getElementById('app')?.offsetWidth ?? 500) <
-                        500
-                    ) {
-                        navigator.vibrate([10, 740, 10])
-                        timeLine.add({ translateX: 30, duration: 600, easing: 'cubicBezier(.44,.09,.53,1)' })
-                            .add({ translateX: 0, duration: 150, easing: 'cubicBezier(.44,.09,.53,1)' })
-                            .add({ translateX: [0, 25, 0], duration: 500, easing: 'cubicBezier(.21,.27,.82,.67)' })
-                            .add({ targets: {}, duration: 1000 })
-                            .add({ translateX: 70, duration: 1300, easing: 'cubicBezier(.89,.72,.72,1.13)' })
-                            .add({ translateX: 0, duration: 100, easing: 'easeOutSine' })
+                    let item = document.getElementById('app')
+                    if (runtimeData.tags.isElectron) {
+                        item = document.getElementById('notice-' + this.id)?.getElementsByClassName('space')[0] as HTMLElement
                     }
-                    timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
-                    timeLine.change = () => {
-                        if (item) {
-                            item.parentElement?.parentElement?.classList.add( 'poking')
-                            const teansformX = item.style.transform
-                            // teansformX 的数字可能是科学计数法，需要转换为普通数字
-                            let num = Number((teansformX.match(/-?\d+\.?\d*/g) ?? [0])[0])
-                            // 取整
-                            num = Math.round(num)
-                            // 输出 translateX
-                            if (runtimeData.tags.isElectron && windowInfo) {
-                                const reader = runtimeData.plantform.reader
-                                if (reader) {
-                                    reader.send('win:move', {
-                                        x: windowInfo.x + num,
-                                        y: windowInfo.y,
-                                    })
-                                }
-                            }
-                        }
-                    }
-                    timeLine.changeComplete = () => {
-                        if (item) {
-                            item.parentElement?.parentElement?.classList.remove('poking')
-                        }
-                    }
-                }
+                    pokeAnime(item, windowInfo)
             }
         },
         methods: {

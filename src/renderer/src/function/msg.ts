@@ -299,6 +299,37 @@ const noticeFunctions = {
         }
     },
 
+    approve: (_: string, msg: { [key: string]: any }) => {
+        const { $t } = app.config.globalProperties
+
+        const groupId = msg.group_id
+        const userId = msg.user_id
+
+        // 如果的当前打开的会话
+        if (groupId == runtimeData.chatInfo.show.id) {
+            // 刷新群成员列表
+            Connector.send(
+                'get_group_member_list',
+                { group_id: groupId, no_cache: true },
+                'getGroupMemberList',
+            )
+            // 获取到用户信息
+            const user = runtimeData.chatInfo.info.group_members.find(
+                (item) => {
+                    return item.user_id == userId
+                },
+            )
+            // 插入入群通知
+            if (user) {
+                const str = $t('{name} 加入了群聊', {
+                    name: user.nickname,
+                })
+                msg.str = str
+                runtimeData.messageList.push(msg)
+            }
+        }
+    },
+
     input_status: (_: string, msg: { [key: string]: any }) => {
         const { $t } = app.config.globalProperties
         const sender = msg.user_id
@@ -629,7 +660,6 @@ const msgFunctons = {
             // 去 messagelist 里找到这条消息
             runtimeData.messageList.forEach((item) => {
                 if (item.message_id == messageId) {
-                    item.message_id = msg.message_id
                     item.fake_msg = false
                     return
                 }

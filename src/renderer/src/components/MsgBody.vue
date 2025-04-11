@@ -34,7 +34,7 @@
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
-                <span v-else-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
+                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
             </template>
             <a v-if="data.sender.card || data.sender.nickname"
                 v-show="!isMe || type == 'merge'">
@@ -51,28 +51,17 @@
                         :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
                         <div v-if="item.type === undefined" />
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
-                        <span v-else-if="item.type == 'text'"
-                            v-show="item.text !== ''"
-                            class="msg-text"
-                            @click="textClick"
-                            v-html="parseText(item.text)" />
+                        <span v-else-if="item.type == 'text'" v-show="item.text !== ''"
+                            class="msg-text" @click="textClick" v-html="parseText(item.text)" />
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
-                            :class=" imgStyle(
-                                data.message.length,
-                                index,
-                                item.asface,
-                            ) + ' msg-mface'"
+                            :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
                             :src="item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
                             :title="$t('预览图片')"
                             :alt="$t('图片')"
-                            :class=" imgStyle(
-                                data.message.length,
-                                index,
-                                item.asface,
-                            )"
+                            :class=" imgStyle(data.message.length, index, item.asface)"
                             :src="item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail"
@@ -150,12 +139,54 @@
                                 现在还有不支持 video tag 的浏览器吗？
                             </video>
                         </div>
-                        <span v-else-if="item.type == 'forward'"
-                            class="msg-unknown"
-                            style="cursor: pointer"
-                            @click="View.getForwardMsg(item.id)">
-                            {{ $t('（点击查看合并转发消息）') }}
-                        </span>
+                        <template v-else-if="item.type == 'forward'">
+                            <div v-if="item.content.length > 0"
+                                class="msg-raw-forward"
+                                @click="View.getForwardMsg(item.id)">
+                                <span>{{ $t('合并转发消息') }}</span>
+                                <div class="forward-msg">
+                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)"
+                                        :key="'raw-forward-' + indexItem">
+                                        {{ i.sender.nickname }}:
+                                        <span v-for="(msg, msgIndex) in i.message"
+                                            :key="'raw-forward-item-' + msgIndex">
+                                            <span v-if="msg.type == 'text'">
+                                                {{ msg.data.text }}
+                                            </span>
+                                            <span v-else-if="msg.type == 'image'">
+                                                [{{ $t('图片') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'face' || msg.type == 'bface'">
+                                                [{{ $t('表情') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'file'">
+                                                [{{ $t('文件') }}]{{ msg.data.file }}
+                                            </span>
+                                            <span v-else-if="msg.type == 'video'">
+                                                [{{ $t('视频') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'forward'">
+                                                [{{ $t('聊天记录') }}]
+                                            </span>
+                                            <span v-else-if="msg.type == 'reply'">
+                                                <!--原版QQ此处不做处理-->
+                                            </span>
+                                            <span v-else>
+                                                [{{ $t('不支持的消息') }}]
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span>{{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}</span>
+                                </div>
+                            </div>
+                            <span v-else class="msg-unknown"
+                                style="cursor: pointer"
+                                @click="View.getForwardMsg(item.id)">
+                                {{ $t('（点击查看合并转发消息）') }}
+                            </span>
+                        </template>
                         <div v-else-if="item.type == 'reply'"
                             :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
                             @click="scrollToMsg(item.id)">
@@ -164,6 +195,10 @@
                                 style="cursor: pointer">
                                 {{ getRepMsg(item.id) ?? $t('（查看回复消息）') }}
                             </a>
+                        </div>
+                        <div v-else-if="item.type == 'poke'" v-once :class="showPock()">
+                            <font-awesome-icon class="poke-hand" style="margin-right: 5px;" :icon="['fas', 'fa-hand-point-up']" />
+                            {{ $t('戳了戳你') }}
                         </div>
                         <span v-else class="msg-unknown">{{ '( ' + $t('不支持的消息') + ': ' + item.type + ' )' }}</span>
                     </div>
@@ -262,12 +297,12 @@
     import { runtimeData } from '@renderer/function/msg'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
     import { StringifyOptions } from 'querystring'
-    import { getFace, getMsgRawTxt } from '@renderer/function/utils/msgUtil'
+    import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
     import {
         openLink,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
-    import { getSizeFromBytes, getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { getSizeFromBytes, getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -722,6 +757,34 @@
                 // 调用上级组件的 poke 方法
                 this.$emit('sendPoke', this.data.sender.user_id)
             },
+
+            async showPock() {
+                // 如果是最后一条消息并且在最近发送
+                if (this.data.message_id ==
+                    runtimeData.messageList[runtimeData.messageList.length - 1].message_id &&
+                    (new Date().getTime() - getViewTime(this.data.time)) / 1000 < 5) {
+                    let windowInfo = null as {
+                        x: number
+                        y: number
+                        width: number
+                        height: number
+                    } | null
+                    if (runtimeData.tags.isElectron) {
+                        const reader = runtimeData.plantform.reader
+                        if (reader) {
+                            windowInfo = await reader.invoke('win:getWindowInfo')
+                        }
+                    }
+                    const message = document.getElementById('chat-' + this.data.message_id)
+                    let item = document.getElementById('app')
+                    if (runtimeData.tags.isElectron) {
+                        item = message?.getElementsByClassName('poke-hand')[0] as HTMLImageElement
+                    }
+                    this.$nextTick(() => {
+                        pokeAnime(item, windowInfo)
+                    })
+                }
+             }
         },
     })
 </script>

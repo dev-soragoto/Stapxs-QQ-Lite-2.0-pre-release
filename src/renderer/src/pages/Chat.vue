@@ -78,7 +78,7 @@
                     <!-- 时间戳 -->
                     <NoticeBody
                         v-if="isShowTime(list[index - 1] ? list[index - 1].time : undefined, msgIndex.time)"
-                        :key="'notice-time-' + index"
+                        :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
                     <!-- 消息体 -->
                     <MsgBody v-if="(msgIndex.post_type === 'message' ||
@@ -1351,7 +1351,7 @@
                         app: 'com.tencent.multimsg',
                         meta: {
                             detail: {
-                                source: '合并转发的消息',
+                                source: this.$t('合并转发消息'),
                                 news: [
                                     ...msgList.slice(0, 3).map((item) => {
                                         const name =
@@ -1365,10 +1365,7 @@
                                         }
                                     }),
                                 ],
-                                summary:
-                                    '查看' +
-                                    this.multipleSelectList.length +
-                                    '条转发消息',
+                                summary: this.$t('查看 {count} 条转发消息', { count: this.multipleSelectList.length }),
                                 resid: '',
                             },
                         },

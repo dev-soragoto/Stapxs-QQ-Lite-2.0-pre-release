@@ -49,8 +49,7 @@
         <div class="ss-card">
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
-                <div id="opt_view_dark"
-                    class="opt-item">
+                <div id="opt_view_dark" class="opt-item">
                     <font-awesome-icon :icon="['fas', 'moon']" />
                     <div>
                         <span>{{ $t('深色模式') }}</span>

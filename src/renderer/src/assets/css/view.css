@@ -781,12 +781,14 @@ textarea:focus {
 }
 .pop-box-body {
     transform: translate(-50%, -50%);
-    margin-top: 50vh;
+    flex-direction: column;
     transition: all 0.3s;
+    margin-top: 50vh;
     position: absolute;
     width: fit-content;
     margin-left: 50%;
     min-width: 360px;
+    display: flex;
     z-index: 20;
 }
 .pop-box-body.full {
@@ -1293,9 +1295,10 @@ textarea:focus {
 @media (max-width: 500px) {
     /* 全局通用弹窗 */
     .pop-box-body {
-        min-width: unset;
-        width: calc(100% - 80px);
+        max-height: calc(100vh - 80px);
         transform: unset !important;
+        width: calc(100% - 80px);
+        min-width: unset;
         margin: 20px;
         bottom: 0;
     }
