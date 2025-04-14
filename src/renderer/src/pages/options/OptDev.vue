@@ -56,6 +56,7 @@
         <div class="ss-card">
             <header>{{ $t('开发者选项') }}</header>
             <div class="opt-item">
+                <div :class="checkDefalut('log_level')" />
                 <font-awesome-icon :icon="['fas', 'book']" />
                 <div>
                     <span>{{ $t('日志等级') }}</span>
@@ -78,6 +79,7 @@
                 </select>
             </div>
             <div class="opt-item">
+                <div :class="checkDefalut('debug_msg')" />
                 <font-awesome-icon :icon="['fas', 'robot']" />
                 <div>
                     <span>{{ $t('禁用消息渲染') }}</span>
@@ -210,6 +212,7 @@
         run,
         runASWEvent as save,
         saveAll,
+        optDefault,
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
@@ -218,7 +221,6 @@
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
-
 
     export default defineComponent({
         name: 'ViewOptDev',
@@ -242,6 +244,10 @@
             )
         },
         methods: {
+            checkDefalut(name: string) {
+                return (this.runtimeData.sysConfig[name] == undefined ||
+                    this.runtimeData.sysConfig[name] == optDefault[name]) ? '' : 'changed'
+            },
             sendTestWs(event: KeyboardEvent) {
                 // 发送测试 WS 消息
                 if (event.keyCode === 13 && this.ws_text !== '') {

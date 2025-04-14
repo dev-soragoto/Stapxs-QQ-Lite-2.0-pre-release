@@ -324,6 +324,18 @@
     display: flex;
     flex: 1;
 }
+.opt-item > div:first-child {
+    transition: all 0.3s;
+    border-radius: 5px;
+    margin-right: 16px;
+    margin-left: -20px;
+    cursor: pointer;
+    max-width: 5px;
+    height: 1.3rem;
+}
+.opt-item:hover > div:first-child.changed {
+    background: var(--color-font);
+}
 
 .opt-item select {
     background: var(--color-card-1);

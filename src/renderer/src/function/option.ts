@@ -32,20 +32,43 @@ import OptionFun from './option'
 let cacheConfigs: { [key: string]: any }
 
 // 设置项的初始值，防止下拉菜单选项为空或者首次使用初始错误
-const optDefault: { [key: string]: any } = {
+export const optDefault: { [key: string]: any } = {
+    // System
+    address: '',
+    top_info: {},
+    save_password: '',
+    notice_group: {},
+    // View
+    language: 'zh-CN',
     opt_dark: false,
     opt_auto_dark: true,
-    language: 'zh-CN',
-    log_level: 'err',
-    open_ga_bot: true,
+    theme_color: 0,
+    opt_auto_win_color: false,
+    chat_background: '',
+    chat_background_blur: 0,
+    chatview_name: '',
+    opt_fast_animation: false,
     initial_scale: 0.85,
     fs_adaptation: 0,
-    theme_color: 0,
-    chat_background_blur: 0,
-    msg_type: 2,
-    store_face: '[]',
-    group_notice_type: 'none',
+    opt_always_top: false,
+    opt_revolve: false,
+    // Function
+    close_notice: false,
+    bubble_sort_user: true,
+    close_chat_pic_pan: false,
+    close_respond: false,
+    msg_taill: '',
     quick_send: 'default',
+    group_notice_type: 'none',
+    send_face: false,
+    use_breakline: false,
+    close_browser: false,
+    close_ga: false,
+    open_ga_bot: true,
+    // Dev
+    msg_type: 2,
+    log_level: 'err',
+    debug_msg: false,
 }
 
 // =============== 设置项事件 ===============
@@ -407,12 +430,25 @@ function loadOptData(data: { [key: string]: any }) {
         // 执行设置项操作
         run(key, options[key])
     })
+    let optChanged = false
     // 初始化不存在的需要进行初始化的值
     Object.keys(optDefault).forEach((key) => {
         if (options[key] === undefined) {
+            optChanged = true
             options[key] = optDefault[key]
         }
     })
+    // 删除不存在的设置项
+    Object.keys(options).forEach((key) => {
+        if (optDefault[key] === undefined) {
+            optChanged = true
+            delete options[key]
+        }
+    })
+    // 保存
+    if (optChanged) {
+        saveAll(options)
+    }
     // 保存返回
     cacheConfigs = options
     return options

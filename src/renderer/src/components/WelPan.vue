@@ -136,7 +136,7 @@
                 <a>{{ $t('群收纳盒将所有的群消息收进一个单独的群消息列表内并提供实时置顶新消息的功能；你可以关闭它来控制群消息的直接通知选项。') }}</a>
                 <div class="opt-item">
                     <div>
-                        <span>{{ $t('关闭群收纳盒') }}</span>
+                        <span>{{ $t('群收纳盒') }}</span>
                         <span>{{ $t('全都放出来！全都放出来！') }}</span>
                     </div>
                     <label class="ss-switch">
@@ -147,7 +147,7 @@
                         </div>
                     </label>
                 </div>
-                <div v-if="runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+                <div v-if="!runtimeData.sysConfig.bubble_sort_user" class="opt-item">
                     <div>
                         <span>{{ $t('群消息通知方式') }}</span>
                         <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>

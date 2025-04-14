@@ -315,6 +315,7 @@ export default defineComponent({
             }
             // 加载设置项
             runtimeData.sysConfig = Option.load()
+            logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
             // PS：重新再应用部分需要加载完成后才能应用的设置
             Option.run('opt_dark', Option.get('opt_dark'))
             Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
@@ -327,7 +328,6 @@ export default defineComponent({
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')
             }
-            Option.runAS('opt_auto_gtk', Option.get('opt_auto_gtk'))
             // 基础初始化完成
             logger.debug('欢迎使用 Stapxs QQ Lite！')
             logger.debug('当前启动模式为: ' + this.dev ? 'development' : 'production')

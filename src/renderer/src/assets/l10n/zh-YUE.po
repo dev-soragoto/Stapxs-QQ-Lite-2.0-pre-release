@@ -252,9 +252,6 @@ msgstr "Info"
 msgid "ReferenceError: moYu is not defined"
 msgstr "小心老闆叫你 OT debug 囉"
 
-msgid "关闭群收纳盒"
-msgstr ""
-
 msgid "全都放出来！全都放出来！"
 msgstr ""
 

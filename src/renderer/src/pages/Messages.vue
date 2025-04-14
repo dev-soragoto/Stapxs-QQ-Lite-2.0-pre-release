@@ -233,8 +233,7 @@
                 }
 
                 // 判断一下群是否应该在群收纳盒内
-                if (!this.showGroupAssist &&
-                    !runtimeData.sysConfig.bubble_sort_user
+                if (!this.showGroupAssist && runtimeData.sysConfig.bubble_sort_user
                 ) {
                     // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
                     if (
@@ -427,7 +426,7 @@
                 // 为消息列表内的对象刷新置顶标志
                 item.always_top = value
                 // 刷新群收纳盒
-                if(item.group_id && !runtimeData.sysConfig.bubble_sort_user) {
+                if(item.group_id && runtimeData.sysConfig.bubble_sort_user) {
                     if(value) {
                         const index = runtimeData.groupAssistList.findIndex((get) => {
                             return item == get

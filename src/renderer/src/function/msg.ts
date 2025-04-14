@@ -660,6 +660,7 @@ const msgFunctons = {
             // 去 messagelist 里找到这条消息
             runtimeData.messageList.forEach((item) => {
                 if (item.message_id == messageId) {
+                    item.message_id = msg.message_id
                     item.fake_msg = false
                     return
                 }
@@ -1615,7 +1616,7 @@ function newMsg(_: string, data: any) {
         }
 
         // 群收纳箱 ============================================
-        if(!runtimeData.sysConfig.bubble_sort_user) {
+        if(runtimeData.sysConfig.bubble_sort_user) {
             // 刷新群收纳箱列表
             const getGroup = runtimeData.groupAssistList.filter((item, index) => {
                 if (Number(id) === item.group_id) {
@@ -1685,7 +1686,7 @@ function newMsg(_: string, data: any) {
             return false
         })
         // 如果禁用了群收纳箱，将群消息添加到消息列表里
-        if(runtimeData.sysConfig.bubble_sort_user) {
+        if(!runtimeData.sysConfig.bubble_sort_user) {
             if (get.length !== 1 && data.message_type === 'group') {
                 const getList = runtimeData.userList.filter((item) => {
                     return item.group_id === id

@@ -430,6 +430,7 @@ export function sendMsgRaw(
     if(msg == undefined || msg == '' || (Array.isArray(msg) && msg.length == 0)) {
         return
     }
+    // 预发送消息
     // 将消息构建为完整消息体先显示出去
     const msgUUID = uuid()
     if (preShow) {
@@ -437,14 +438,19 @@ export function sendMsgRaw(
         preShowMsg.forEach((item: any) => {
             // 对 base64 图片做特殊处理
             if (item.type == 'image') {
-                const b64Str = (item.file as string).substring(9)
-                item.url = 'data:image/png;base64,' + b64Str
+                if(!item.file.startsWith('http')) {
+                    const b64Str = (item.file as string).substring(9)
+                    item.url = 'data:image/png;base64,' + b64Str
+                } else {
+                    item.url = item.file
+                }
             }
         })
         const showMsg = {
             revoke: true,
             fake_msg: true,
             message_id: msgUUID,
+            fake_message_id: msgUUID,       // 用来作为这条消息的唯一标识，防止 message_id 刷新导致的闪烁
             message_type: runtimeData.chatInfo.show.type,
             time: parseInt(String(new Date().getTime() / 1000)),
             post_type: 'message',

@@ -84,7 +84,7 @@
                     <MsgBody v-if="(msgIndex.post_type === 'message' ||
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
-                        :key="msgIndex.message_id"
+                        :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
                         @click="msgClick($event, msgIndex)"
@@ -119,7 +119,7 @@
                     <MsgBody v-if=" (msgIndex.post_type === 'message' ||
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
-                        :key="msgIndex.message_id"
+                        :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
                         @scroll-to-msg="scrollToMsg"
