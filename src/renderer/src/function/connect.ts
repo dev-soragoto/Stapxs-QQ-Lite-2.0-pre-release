@@ -131,11 +131,12 @@ export class Connector {
                 login.creating = false
                 this.onclose(e.code, e.reason, address, token)
             }
-            websocket.onerror = (e) => {
-                login.creating = false
-                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
-                return
-            }
+            // websocket.onerror = (e) => {
+            //     login.creating = false
+            //     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
+            //     // 由于此处错误信息不完整，所以交给 onclose 处理
+            //     return
+            // }
         }
     }
 
@@ -194,6 +195,7 @@ export class Connector {
                 break // 正常关闭
             case 1006: {
                 // 非正常关闭，尝试重连
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('连接异常关闭'), false)
                 if (login.status) {
                     this.create(address, token, undefined)
                 } else {
@@ -204,13 +206,14 @@ export class Connector {
                 break
             }
             case 1015: {
-                // TSL 错误，尝试使用 ws 连接
+                // TLS 错误，尝试使用 ws 连接
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('TLS错误'), false)
                 this.create(address, token, false)
                 break
             }
             default: {
                 login.creating = false
-                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + code, false)
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误，WS错误代码 {code}',{ code:code }), false)
             }
         }
 

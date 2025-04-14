@@ -1160,3 +1160,12 @@ msgstr ""
 
 msgid "Stapxs QQ Lite 仅在 GitHub 上发布。由于提供了自行部署的方式，非官方版本请谨慎使用。"
 msgstr ""
+
+msgid "连接异常关闭"
+msgstr ""
+
+msgid "TLS错误"
+msgstr ""
+
+msgid "未知的错误，WS错误代码 {code}"
+msgstr "未知的错误，WS错误代码 {code}"
