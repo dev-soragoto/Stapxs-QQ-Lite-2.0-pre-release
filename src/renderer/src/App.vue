@@ -3,7 +3,7 @@
         {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="runtimeData.sysConfig.opt_no_window" class="top-bar" name="appbar">
+    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar">
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />
         <div class="controller">
@@ -324,7 +324,7 @@ export default defineComponent({
                 'opt_auto_win_color',
                 Option.get('opt_auto_win_color'),
             )
-            if (Option.get('opt_no_window') == true) {
+            if (['linux', 'win32'].includes(runtimeData.tags.platform ?? '')) {
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')
             }

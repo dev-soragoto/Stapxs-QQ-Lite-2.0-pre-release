@@ -18,7 +18,7 @@
         :class="
             'chat-pan' +
                 (runtimeData.tags.openSideBar ? ' open' : '') +
-                (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')
+                (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')
         ">
         <div
             id="shell-pan"
