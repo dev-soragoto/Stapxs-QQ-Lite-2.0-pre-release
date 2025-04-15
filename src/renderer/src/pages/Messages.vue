@@ -12,25 +12,17 @@
 <template>
     <div class="friend-view">
         <div id="message-list"
-            :class="'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')">
+            :class="'friend-list' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (showGroupAssist ? ' show' : '')">
             <div>
                 <div class="base only">
-                    <span v-if="showGroupAssist" style="cursor: pointer;"
-                        @click="showGroupAssist = !showGroupAssist">
-                        <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
-                        {{ $t('群收纳盒') }}
-                    </span>
-                    <span v-else>{{ $t('消息') }}</span>
+                    <span>{{ $t('消息') }}</span>
                     <div style="flex: 1" />
-                    <font-awesome-icon v-if="!showGroupAssist" :icon="['fas', 'trash-can']" @click="cleanList" />
+                    <font-awesome-icon :icon="['fas', 'trash-can']" @click="cleanList" />
                 </div>
                 <div class="small">
-                    <span v-if="showGroupAssist" style="cursor: pointer;">
-                        {{ $t('群收纳盒') }}
-                    </span>
-                    <span v-else>{{
-                        $t('消息')
-                    }}</span>
+                    <span>{{ $t('消息') }}</span>
                     <div v-if="showGroupAssist"
                         style="margin-right: -5px;margin-left: 5px;"
                         @click="showGroupAssist = !showGroupAssist">
@@ -41,29 +33,6 @@
                     </div>
                 </div>
             </div>
-            <BcMenu :data="listMenu" name="messages-menu"
-                @close="listMenuClose">
-                <ul>
-                    <li id="top" icon="fa-solid fa-thumbtack">
-                        {{ $t('置顶') }}
-                    </li>
-                    <li id="canceltop" icon="fa-solid fa-grip-lines">
-                        {{ $t('取消置顶') }}
-                    </li>
-                    <li id="remove" icon="fa-solid fa-trash-can">
-                        {{ $t('删除') }}
-                    </li>
-                    <li id="readed" icon="fa-solid fa-check-to-slot">
-                        {{ $t('标记已读') }}
-                    </li>
-                    <li id="notice_open" icon="fa-solid fa-volume-high">
-                        {{ $t('开启通知') }}
-                    </li>
-                    <li id="notice_close" icon="fa-solid fa-volume-xmark">
-                        {{ $t('关闭通知') }}
-                    </li>
-                </ul>
-            </BcMenu>
             <TransitionGroup
                 id="message-list-body"
                 name="onmsg"
@@ -86,8 +55,7 @@
                 <!--- 群组消息 -->
                 <FriendBody
                     v-if="runtimeData.groupAssistList &&
-                        runtimeData.groupAssistList.length > 0 &&
-                        !showGroupAssist"
+                        runtimeData.groupAssistList.length > 0"
                     key="inMessage--10001"
                     :select="chat.show.id === -10001"
                     :data="{
@@ -99,10 +67,10 @@
                         raw_msg: runtimeData.groupAssistList[0].group_name + ': ' +
                             runtimeData.groupAssistList[0].raw_msg_base
                     }"
-                    @click="showGroupAssist = !showGroupAssist" />
+                    @click="showGroupAssistCheck" />
                 <!-- 其他消息 -->
                 <FriendBody
-                    v-for="item in showGroupAssist ? runtimeData.groupAssistList : runtimeData.onMsgList"
+                    v-for="item in runtimeData.onMsgList"
                     :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
                     :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
                     :menu="menu.select && menu.select == item"
@@ -114,6 +82,75 @@
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
+        <div id="group-assist-message-list"
+            :class="'friend-list group-assist-message-list' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (showGroupAssist ? ' show' : '')">
+            <div>
+                <div class="base only">
+                    <span style="cursor: pointer;"
+                        @click="showGroupAssist = !showGroupAssist">
+                        <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
+                        {{ $t('群收纳盒') }}
+                    </span>
+                </div>
+                <div class="small">
+                    <span style="cursor: pointer;">
+                        {{ $t('群收纳盒') }}
+                    </span>
+                    <div v-if="showGroupAssist"
+                        style="margin-right: -5px;margin-left: 5px;"
+                        @click="showGroupAssist = !showGroupAssist">
+                        <font-awesome-icon :icon="['fas', 'angle-left']" />
+                    </div>
+                    <div @click="openLeftBar">
+                        <font-awesome-icon :icon="['fas', 'bars-staggered']" />
+                    </div>
+                </div>
+            </div>
+            <TransitionGroup
+                id="group-assist-message-list-body"
+                name="onmsg"
+                tag="div"
+                :class="runtimeData.tags.openSideBar ? ' open' : ''"
+                style="overflow-x: hidden">
+                <!-- 其他消息 -->
+                <FriendBody
+                    v-for="item in runtimeData.groupAssistList"
+                    :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
+                    :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
+                    :menu="menu.select && menu.select == item"
+                    :data="item"
+                    from="message"
+                    @contextmenu.prevent="listMenuShow($event, item)"
+                    @click="userClick(item)"
+                    @touchstart="showMenuStart($event, item)"
+                    @touchend="showMenuEnd" />
+            </TransitionGroup>
+        </div>
+        <BcMenu :data="listMenu" name="messages-menu"
+            @close="listMenuClose">
+            <ul>
+                <li id="top" icon="fa-solid fa-thumbtack">
+                    {{ $t('置顶') }}
+                </li>
+                <li id="canceltop" icon="fa-solid fa-grip-lines">
+                    {{ $t('取消置顶') }}
+                </li>
+                <li id="remove" icon="fa-solid fa-trash-can">
+                    {{ $t('删除') }}
+                </li>
+                <li id="readed" icon="fa-solid fa-check-to-slot">
+                    {{ $t('标记已读') }}
+                </li>
+                <li id="notice_open" icon="fa-solid fa-volume-high">
+                    {{ $t('开启通知') }}
+                </li>
+                <li id="notice_close" icon="fa-solid fa-volume-xmark">
+                    {{ $t('关闭通知') }}
+                </li>
+            </ul>
+        </BcMenu>
         <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
             <div v-if="!loginInfo.status || runtimeData.chatInfo.show.id == 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'inbox']" />
@@ -497,6 +534,26 @@
                 }, 100)
             },
 
+            /**
+             * 显示群收纳盒
+             */
+            showGroupAssistCheck() {
+                if(!this.showGroupAssist && runtimeData.chatInfo.show.id == 0) {
+                    // 如果没有打开聊天框，打开收纳盒中的第一个群；这么做主要是为了防止动画穿帮 😭
+                    const assistGroup = document.getElementById('group-assist-message-list-body')
+                    if(assistGroup && assistGroup.children.length > 0) {
+                        (assistGroup.children[0] as HTMLDivElement).click()
+                        setTimeout(() => {
+                            this.showGroupAssist = !this.showGroupAssist
+                        }, 500)
+                    } else {
+                        this.showGroupAssist = !this.showGroupAssist
+                    }
+                } else {
+                    this.showGroupAssist = !this.showGroupAssist
+                }
+            },
+
             showMenuStart(
                 event: TouchEvent,
                 item: UserFriendElem & UserGroupElem,
@@ -536,6 +593,10 @@
     .menu div.item > svg {
         margin: 3px 10px 3px 0 !important;
         font-size: 1rem !important;
+    }
+
+    .msg-menu-bg {
+        background: transparent !important;
     }
 
     @media (max-width: 700px) {
