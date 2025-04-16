@@ -32,6 +32,7 @@
         </div>
         <div :class="isMe ? type == 'merge' ? 'message-body' : 'message-body me' : 'message-body'">
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
+                <span v-if="senderInfo?.is_robot" class="robot">{{ $t('机器人') }}</span>
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
                 <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
@@ -287,12 +288,6 @@
                                         <span>00:00 / 00:00</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div :class="isMe ? 'me' : ''">
-                                <a v-for="(content, index) in pageViewInfo.data.comment.content"
-                                    :key="'music163-comment-' + data.message_id + '-' + index">
-                                    <span>{{ pageViewInfo.data.comment.name[index] }}: </span>{{ content }}
-                                </a>
                             </div>
                         </div>
                     </template>
@@ -1121,38 +1116,19 @@
     }
     .link-view-music163 > div:first-child > div > div > div {
         width: calc(100% - 20px);
+        margin-bottom: -6px;
         margin-right: 20px;
         margin-left: 3px;
     }
     .link-view-music163 > div:first-child > div > div > div > div {
         transform: translateY(calc(-100% - 10px));
         background: var(--color-main);
+        pointer-events: none;
         border-radius: 6px;
         height: 6px;
+        width: 0%;
     }
     .link-view-music163 > div:first-child > div.me > div > div > div {
         background: var(--color-font-r);
-    }
-    .link-view-music163 > div:last-child {
-        overflow-x: hidden;
-        max-height: 5rem;
-        margin-top: 10px;
-        padding: 0 10px;
-    }
-    .link-view-music163 > div:last-child::-webkit-scrollbar {
-        border-radius: 7px;
-    }
-    .link-view-music163 > div.me:last-child::-webkit-scrollbar {
-        background: var(--color-font-2);
-    }
-    .link-view-music163 > div.me:last-child::-webkit-scrollbar-thumb {
-        background: var(--color-card-2);
-    }
-    .link-view-music163 > div:last-child > a {
-        font-size: 0.8rem;
-        display: block;
-    }
-    .link-view-music163 > div:last-child > a > span {
-        opacity: 0.8;
     }
 </style>

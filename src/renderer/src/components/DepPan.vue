@@ -8,7 +8,7 @@
 
 <template>
     <div class="main">
-        <div class="ss-card power-by">
+        <div v-if="type === undefined" class="ss-card power-by">
             <img src="@renderer/assets/img/Vue.png"
                 alt="logo"
                 class="logo">
@@ -36,14 +36,58 @@
                     fill-opacity=".2" /></svg>
             </div>
         </div>
-        <div class="dept-list">
-            <div class="ss-card info">
+        <div class="dept-list" :style="type === undefined ? '' : 'width: 100%;'">
+            <div v-if="type === undefined" class="ss-card info">
                 <font-awesome-icon :icon="['fas', 'circle-info']" />
                 <span id="deptLink">{{
                     $t('你可以在项目仓库的依赖关系图中找到大部分依赖，而这里列出了一些不由包管理管理的依赖。')
                 }}</span>
             </div>
-            <div class="dept">
+            <div v-else-if="type === 'service'" class="ss-card info">
+                <font-awesome-icon :icon="['fas', 'circle-info']" />
+                <span id="deptLink">{{
+                    $t('Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。')
+                }}</span>
+            </div>
+
+            <div v-if="type === 'service'" class="dept">
+                <div class="ss-card jump-card"
+                    @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
+                    <header>
+                        <div />
+                        <div>高德地图<span>定位消息预览服务</span></div>
+                    </header>
+                    <font-awesome-icon :icon="['fas', 'angle-right']" />
+                </div>
+                <div v-if="runtimeData.tags.platform == 'web'"
+                    class="ss-card jump-card"
+                    @click="openLink('https://github.com/Stapxs/Stapxs-Web-API')">
+                    <header>
+                        <div />
+                        <div>Stapxs Web API<span>{{ $t('基础链接预览服务') }}</span></div>
+                    </header>
+                    <font-awesome-icon :icon="['fas', 'angle-right']" />
+                </div>
+                <template v-else>
+                    <div class="ss-card jump-card"
+                        @click="openLink('https://gitlab.com/Binaryify/NeteaseCloudMusicApi')">
+                        <header>
+                            <div />
+                            <div>Netease Cloud Music API<span>{{ $t('网易云音乐预览信息服务') }}</span></div>
+                        </header>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <div class="ss-card jump-card"
+                        @click="openLink('https://api.bilibili.com')">
+                        <header>
+                            <div />
+                            <div>Bilibili API<span>{{ $t('Bilibili 预览信息服务') }}</span></div>
+                        </header>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                </template>
+            </div>
+            <div v-else class="dept">
                 <div class="ss-card jump-card"
                     @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
                     <header>
@@ -89,11 +133,14 @@
 <script lang="ts">
     import { defineComponent } from 'vue'
     import { openLink } from '@renderer/function/utils/appUtil'
+    import { runtimeData } from '@renderer/function/msg'
 
     export default defineComponent({
         name: 'DepPan',
+        props: [ 'type' ],
         data() {
             return {
+                runtimeData: runtimeData,
                 openLink: openLink
             }
         },

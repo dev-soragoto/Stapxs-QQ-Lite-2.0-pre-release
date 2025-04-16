@@ -83,14 +83,13 @@ body {
     background: rgba(var(--color-card-2-rgb), 0.7) !important;
     margin-right: 15px !important;
     margin-left: 10px;
-    margin-bottom: -15px;
 }
 .friend-list-space {
     box-shadow: -5px 0px 4px -5px var(--color-shader);
 }
 .chat-pan {
     box-shadow: -5px 0px 4px -5px var(--color-shader);
-    left: 270px !important;
+    left: 270px;
 }
 
 .script-view {

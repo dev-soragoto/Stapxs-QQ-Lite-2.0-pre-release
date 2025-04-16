@@ -103,6 +103,9 @@
 .message-body > span.admin {
     background: var(--color-green);
 }
+.message-body > span.robot {
+    background: var(--color-blue);
+}
 .message-body > a {
     color: var(--color-font-1);
     font-size: 0.9rem;

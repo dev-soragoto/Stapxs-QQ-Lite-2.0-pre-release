@@ -1166,3 +1166,12 @@ msgstr ""
 
 msgid "未知的错误，WS错误代码 {code}"
 msgstr "未知的错误，WS错误代码 {code}"
+
+msgid "机器人"
+msgstr ""
+
+msgid "Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。"
+msgstr ""
+
+msgid "第三方服务声明"
+msgstr ""

@@ -122,12 +122,10 @@ export const linkView = {
             try {
                 const responseDetail = await axios.get(baseUrl + '/song/detail?ids=' + id, { timeout: 10000 })
                 const responseUrl = await axios.get(baseUrl + '/song/url?id=' + id, { timeout: 10000 })
-                const responseComment = await axios.get(baseUrl + '/comment/music?id=' + id + '&limit=3', { timeout: 10000 })
 
                 const getData = {
                     detail: responseDetail.data,
                     url: responseUrl.data,
-                    comment: responseComment.data
                 }
                 const finalData = {
                     type: 'music163',
@@ -138,14 +136,6 @@ export const linkView = {
                         info: {
                             name: jp.query(getData['detail'], '$..name')[0],
                             author: jp.query(getData['detail'], '$..ar[*].name'),
-                        },
-                        // 列表，获取所有的
-                        comment: {
-                            name: jp.query(getData['comment'], '$..nickname'),
-                            content: jp.query(getData['comment'], '$..content'),
-                            time: jp.query(getData['comment'], '$..time'),
-                            like: jp.query(getData['comment'], '$..likedCount'),
-                            reply: jp.query(getData['comment'], '$..replyCount'),
                         }
                     }
                 }
