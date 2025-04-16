@@ -51,8 +51,14 @@
                         :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
                         <div v-if="item.type === undefined" />
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
-                        <span v-else-if="item.type == 'text'" v-show="item.text !== ''"
-                            class="msg-text" @click="textClick" v-html="parseText(item.text)" />
+                        <template v-else-if="item.type == 'text'">
+                            <div v-if="hasMarkdown()" class="msg-md-title" />
+                            <span v-else v-show="item.text !== ''"
+                                class="msg-text" @click="textClick" v-html="parseText(item.text)" />
+                        </template>
+                        <div v-else-if="item.type == 'markdown'" v-once
+                            :id="getMdHTML(item.content, 'msg-md-' + data.message_id)"
+                            class="msg-md" />
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
                             :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
                             :src="item.url"
@@ -263,6 +269,32 @@
                                 {{ pageViewInfo.data.stat.like }}
                             </div>
                         </div>
+                        <div v-else-if="pageViewInfo.type == 'music163'" class="link-view-music163">
+                            <div>
+                                <img :src="pageViewInfo.data.cover">
+                                <div :id="'music163-audio-' + data.message_id" :class="isMe ? 'me' : ''">
+                                    <a>{{ pageViewInfo.data.info.name }}</a>
+                                    <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
+                                    <audio :src="pageViewInfo.data.play_link"
+                                        @loadedmetadata="audioLoaded()"
+                                        @timeupdate="audioUpdate()" />
+                                    <div>
+                                        <input value="0" min="0" step="0.1"
+                                            type="range" @input="audioChange()">
+                                        <div><div /></div>
+                                        <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
+                                        <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
+                                        <span>00:00 / 00:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div :class="isMe ? 'me' : ''">
+                                <a v-for="(content, index) in pageViewInfo.data.comment.content"
+                                    :key="'music163-comment-' + data.message_id + '-' + index">
+                                    <span>{{ pageViewInfo.data.comment.name[index] }}: </span>{{ content }}
+                                </a>
+                            </div>
+                        </div>
                     </template>
                 </div>
             </div>
@@ -290,6 +322,7 @@
     import Option from '@renderer/function/option'
     import CardMessage from './msg-component/CardMessage.vue'
     import app from '@renderer/main'
+    import markdownit from 'markdown-it'
 
     import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
     import { defineComponent } from 'vue'
@@ -311,6 +344,7 @@
         emits: ['scrollToMsg', 'scrollButtom', 'sendPoke'],
         data() {
             return {
+                md: markdownit({ breaks: true }),
                 getFace: getFace,
                 getSizeFromBytes: getSizeFromBytes,
                 isMe: false,
@@ -753,6 +787,16 @@
                 return hasCard
             },
 
+            hasMarkdown() {
+                let hasMarkdown = false
+                this.data.message.forEach((item: any) => {
+                    if (item.type === 'markdown') {
+                        hasMarkdown = true
+                    }
+                })
+                return hasMarkdown
+            },
+
             sendPoke() {
                 // 调用上级组件的 poke 方法
                 this.$emit('sendPoke', this.data.sender.user_id)
@@ -784,7 +828,136 @@
                         pokeAnime(item, windowInfo)
                     })
                 }
-             }
+            },
+
+            getMdHTML(str: string, id: string) {
+                const html = this.md.render(str)
+                const div = document.createElement('div')
+                div.innerHTML = html
+                // 二次处理 img；img 拥有这样的 alt：cornerRadius=100 #48px #48px
+                const imgs = div.getElementsByTagName('img')
+                for(let i=0; i<imgs.length; i++) {
+                    const img = imgs[i]
+                    const alt = img.getAttribute('alt')
+                    if(alt) {
+                        const size = alt.split('#')
+                        if(size.length == 3) {
+                            img.style.width = size[1]
+                            img.style.height = size[2]
+                        }
+                    }
+                }
+                // 二次处理 a；去除 href
+                const links = div.getElementsByTagName('a')
+                for(let i=0; i<links.length; i++) {
+                    const link = links[i]
+                    const href = link.getAttribute('href')
+                    if(href) {
+                        link.setAttribute('data-link', href)
+                        link.setAttribute('href', '')
+                        link.onclick = (e) => {
+                            e.preventDefault()
+                            openLink(href)
+                        }
+                    }
+                }
+
+                const body = document.getElementById(id)
+                if(body) {
+                    body.innerHTML = ''
+                    body.appendChild(div)
+                }
+
+                return id
+            },
+
+            audioLoaded() {
+                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
+                if(mainBody) {
+                    const bar = mainBody.getElementsByTagName('input')[0]
+                    const audio = mainBody.getElementsByTagName('audio')[0]
+                    const span = mainBody.getElementsByTagName('div')[0].getElementsByTagName('span')[0]
+                    if(bar && audio) {
+                        bar.max = audio.duration.toString()
+                        // 设置进度文本
+                        const minutes = Math.floor(audio.duration / 60)
+                        const seconds = Math.floor(audio.duration % 60)
+                        span.innerHTML = '00:00 / ' +
+                            (minutes < 10 ? '0' + minutes : minutes) + ':' +
+                            (seconds < 10 ? '0' + seconds : seconds)
+                    }
+                }
+            },
+
+            audioControll() {
+                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
+                if(mainBody) {
+                    const audio = mainBody.getElementsByTagName('audio')[0]
+                    if(audio) {
+                        if(audio.paused) {
+                            audio.play()
+                            if(this.pageViewInfo) this.pageViewInfo.data.play = true
+                        } else {
+                            audio.pause()
+                            if(this.pageViewInfo) this.pageViewInfo.data.play = false
+                        }
+                    }
+                }
+            },
+
+            audioUpdate() {
+                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
+                if(mainBody) {
+                    const bar = mainBody.getElementsByTagName('input')[0]
+                    const audio = mainBody.getElementsByTagName('audio')[0]
+                    const span = mainBody.getElementsByTagName('div')[0].getElementsByTagName('span')[0]
+                    const div = mainBody.getElementsByTagName('div')[0].getElementsByTagName('div')[0].children[0] as HTMLDivElement
+                    if(bar && audio && span && div) {
+                        bar.value = audio.currentTime.toString()
+                        // 设置进度文本
+                        const minutes = Math.floor(audio.currentTime / 60)
+                        const seconds = Math.floor(audio.currentTime % 60)
+                        const minutesDur = Math.floor(audio.duration / 60)
+                        const secondsDur = Math.floor(audio.duration % 60)
+
+                        span.innerHTML = (minutes < 10 ? '0' + minutes : minutes) + ':' +
+                            (seconds < 10 ? '0' + seconds : seconds) + ' / ' +
+                            (minutesDur < 10 ? '0' + minutesDur : minutesDur) + ':' +
+                            (secondsDur < 10 ? '0' + secondsDur : secondsDur)
+
+                        const perCent = (audio.currentTime / audio.duration) * 100
+                        if(perCent > 100) {
+                            div.style.width = '100%'
+                        } else {
+                            div.style.width = perCent + '%'
+                        }
+
+                        if(audio.currentTime >= audio.duration) {
+                            bar.value = '0'
+                            audio.currentTime = 0
+                            if(this.pageViewInfo) this.pageViewInfo.data.play = false
+                            div.style.width = '0%'
+                        }
+                    }
+                }
+            },
+
+            audioChange() {
+                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
+                if(mainBody) {
+                    const bar = mainBody.getElementsByTagName('input')[0]
+                    const audio = mainBody.getElementsByTagName('audio')[0]
+                    if(bar && audio) {
+                        if(audio.paused) {
+                            audio.currentTime = parseFloat(bar.value)
+                        } else {
+                            audio.pause()
+                            audio.currentTime = parseFloat(bar.value)
+                            audio.play()
+                        }
+                    }
+                }
+            }
         },
     })
 </script>
@@ -858,12 +1031,9 @@
         max-width: 100% !important;
         width: fit-content;
     }
-    .link-view-bilibili > span {
-        font-size: 1rem;
-    }
     .link-view-bilibili > a {
         color: var(--color-font-2) !important;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         max-height: 4rem;
         overflow-y: scroll;
     }
@@ -878,5 +1048,111 @@
         margin-top: 10px;
         justify-content: space-around;
         opacity: 0.7;
+    }
+
+    .link-view-music163 {
+        flex-direction: column;
+        display: flex;
+    }
+    .link-view-music163 > div:first-child {
+        align-items: flex-start;
+        display: flex;
+    }
+    .link-view-music163 > div:first-child > img {
+        border-radius: 7px;
+        margin-right: 20px;
+        width: 25%;
+    }
+    .link-view-music163 > div:first-child > div {
+        flex-direction: column;
+        display: flex;
+        width: 100%;
+    }
+    .link-view-music163 > div:first-child > div > a {
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .link-view-music163 > div:first-child > div > span {
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
+    .link-view-music163 > div:first-child > div > div {
+        flex-direction: row;
+        margin-top: 5px;
+        flex-wrap: wrap;
+        display: flex;
+    }
+    .link-view-music163 > div:first-child > div > div > input {
+        -webkit-appearance: none;
+        width: calc(100% - 20px);
+        background: transparent;
+        margin-bottom: 10px;
+        margin-right: 20px;
+    }
+    .link-view-music163 > div:first-child > div > div > input::-webkit-slider-thumb {
+        background: var(--color-main);
+        -webkit-appearance: none;
+        border-radius: 100%;
+        margin-top: -3px;
+        height: 12px;
+        width: 12px;
+    }
+    .link-view-music163 > div:first-child > div.me > div > input::-webkit-slider-thumb {
+        background: var(--color-font-r);
+    }
+    .link-view-music163 > div:first-child > div > div > input::-webkit-slider-runnable-track {
+        background: var(--color-card-2);
+        border-radius: 10px;
+        height: 6px;
+    }
+    .link-view-music163 > div:first-child > div.me > div > input::-webkit-slider-runnable-track {
+        background: var(--color-font-2);
+    }
+    .link-view-music163 > div:first-child > div > div > svg {
+        font-size: 0.75rem;
+        margin-left: 4px;
+        cursor: pointer;
+    }
+    .link-view-music163 > div:first-child > div > div > span {
+        font-size: 0.75rem;
+        margin-right: 20px;
+        text-align: right;
+        flex: 1;
+    }
+    .link-view-music163 > div:first-child > div > div > div {
+        width: calc(100% - 20px);
+        margin-right: 20px;
+        margin-left: 3px;
+    }
+    .link-view-music163 > div:first-child > div > div > div > div {
+        transform: translateY(calc(-100% - 10px));
+        background: var(--color-main);
+        border-radius: 6px;
+        height: 6px;
+    }
+    .link-view-music163 > div:first-child > div.me > div > div > div {
+        background: var(--color-font-r);
+    }
+    .link-view-music163 > div:last-child {
+        overflow-x: hidden;
+        max-height: 5rem;
+        margin-top: 10px;
+        padding: 0 10px;
+    }
+    .link-view-music163 > div:last-child::-webkit-scrollbar {
+        border-radius: 7px;
+    }
+    .link-view-music163 > div.me:last-child::-webkit-scrollbar {
+        background: var(--color-font-2);
+    }
+    .link-view-music163 > div.me:last-child::-webkit-scrollbar-thumb {
+        background: var(--color-card-2);
+    }
+    .link-view-music163 > div:last-child > a {
+        font-size: 0.8rem;
+        display: block;
+    }
+    .link-view-music163 > div:last-child > a > span {
+        opacity: 0.8;
     }
 </style>

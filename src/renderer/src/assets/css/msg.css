@@ -153,6 +153,28 @@
     white-space: pre-wrap;
 }
 
+.msg-md h1,
+.msg-md h2,
+.msg-md h3,
+.msg-md h4 {
+    align-items: flex-end;
+    flex-direction: row;
+    display: flex;
+    margin: 0;
+}
+.msg-md img {
+    border-radius: 7px;
+    max-width: 100%;
+}
+.msg-md blockquote {
+    border-left: 3px solid var(--color-font-2);
+    color: var(--color-font-2);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    padding: 0 10px;
+    margin: 0;
+}
+
 .msg-unknown {
     overflow-wrap: anywhere;
     white-space: pre-wrap;
