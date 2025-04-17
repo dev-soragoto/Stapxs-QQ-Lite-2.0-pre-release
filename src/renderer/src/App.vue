@@ -463,7 +463,7 @@ export default defineComponent({
             }
             // 更新标题
             const titleList = [
-                '也试试 Lcalingua Plus Plus 吧！',
+                '也试试 Icalingua Plus Plus 吧！',
                 '点击阅读《社交功能限制提醒》',
                 '登录失败，Code 45',
                 '你好世界！',

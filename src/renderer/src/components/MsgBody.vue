@@ -274,7 +274,9 @@
                             <div>
                                 <img :src="pageViewInfo.data.cover">
                                 <div :id="'music163-audio-' + data.message_id" :class="isMe ? 'me' : ''">
-                                    <a>{{ pageViewInfo.data.info.name }}</a>
+                                    <a>{{ pageViewInfo.data.info.name }}
+                                        <a v-if="pageViewInfo.data.info.free != null">{{ $t('（试听）') }}</a>
+                                    </a>
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
                                     <audio :src="pageViewInfo.data.play_link"
                                         @loadedmetadata="audioLoaded()"
@@ -282,7 +284,7 @@
                                     <div>
                                         <input value="0" min="0" step="0.1"
                                             type="range" @input="audioChange()">
-                                        <div><div /></div>
+                                        <div><div /><div /></div>
                                         <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
                                         <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
                                         <span>00:00 / 00:00</span>
@@ -872,14 +874,26 @@
                     const bar = mainBody.getElementsByTagName('input')[0]
                     const audio = mainBody.getElementsByTagName('audio')[0]
                     const span = mainBody.getElementsByTagName('div')[0].getElementsByTagName('span')[0]
-                    if(bar && audio) {
-                        bar.max = audio.duration.toString()
+                    const div = mainBody.getElementsByTagName('div')[0].getElementsByTagName('div')[0].children[1] as HTMLDivElement
+                    if(bar && audio && span && div) {
+                        const max = this.pageViewInfo?.data.info.time ?? audio.duration
+                        bar.max = max.toString()
                         // 设置进度文本
-                        const minutes = Math.floor(audio.duration / 60)
-                        const seconds = Math.floor(audio.duration % 60)
+                        const minutes = Math.floor(max / 60)
+                        const seconds = Math.floor(max % 60)
                         span.innerHTML = '00:00 / ' +
                             (minutes < 10 ? '0' + minutes : minutes) + ':' +
                             (seconds < 10 ? '0' + seconds : seconds)
+                        // 设置不可播放长度
+                        if(max > audio.duration) {
+                            const percent = audio.duration / max
+                            if(percent > 0) {
+                                div.style.width = 'calc(' + (1 - percent) * 100 + '% - 9px)'
+                                div.style.marginLeft = 'calc(' + percent * 100 + '% + 9px)'
+                            } else {
+                                div.style.width = '0%'
+                            }
+                        }
                     }
                 }
             },
@@ -908,19 +922,20 @@
                     const span = mainBody.getElementsByTagName('div')[0].getElementsByTagName('span')[0]
                     const div = mainBody.getElementsByTagName('div')[0].getElementsByTagName('div')[0].children[0] as HTMLDivElement
                     if(bar && audio && span && div) {
+                        const max = this.pageViewInfo?.data.info.time ?? audio.duration
                         bar.value = audio.currentTime.toString()
                         // 设置进度文本
                         const minutes = Math.floor(audio.currentTime / 60)
                         const seconds = Math.floor(audio.currentTime % 60)
-                        const minutesDur = Math.floor(audio.duration / 60)
-                        const secondsDur = Math.floor(audio.duration % 60)
+                        const minutesDur = Math.floor(max / 60)
+                        const secondsDur = Math.floor(max % 60)
 
                         span.innerHTML = (minutes < 10 ? '0' + minutes : minutes) + ':' +
                             (seconds < 10 ? '0' + seconds : seconds) + ' / ' +
                             (minutesDur < 10 ? '0' + minutesDur : minutesDur) + ':' +
                             (secondsDur < 10 ? '0' + secondsDur : secondsDur)
 
-                        const perCent = (audio.currentTime / audio.duration) * 100
+                        const perCent = (audio.currentTime / max) * 100
                         if(perCent > 100) {
                             div.style.width = '100%'
                         } else {
@@ -943,12 +958,17 @@
                     const bar = mainBody.getElementsByTagName('input')[0]
                     const audio = mainBody.getElementsByTagName('audio')[0]
                     if(bar && audio) {
-                        if(audio.paused) {
-                            audio.currentTime = parseFloat(bar.value)
+                        const value = parseFloat(bar.value)
+                        if(value <= audio.duration) {
+                            if(audio.paused) {
+                                audio.currentTime = value
+                            } else {
+                                audio.pause()
+                                audio.currentTime = value
+                                audio.play()
+                            }
                         } else {
-                            audio.pause()
-                            audio.currentTime = parseFloat(bar.value)
-                            audio.play()
+                            bar.value = audio.currentTime.toString()
                         }
                     }
                 }
@@ -1067,6 +1087,10 @@
         font-size: 0.9rem;
         font-weight: bold;
     }
+    .link-view-music163 > div:first-child > div > a > a {
+        font-size: 0.7rem;
+        font-weight: normal;
+    }
     .link-view-music163 > div:first-child > div > span {
         font-size: 0.8rem;
         opacity: 0.7;
@@ -1096,7 +1120,7 @@
         background: var(--color-font-r);
     }
     .link-view-music163 > div:first-child > div > div > input::-webkit-slider-runnable-track {
-        background: var(--color-card-2);
+        background: var(--color-card-1);
         border-radius: 10px;
         height: 6px;
     }
@@ -1127,6 +1151,14 @@
         border-radius: 6px;
         height: 6px;
         width: 0%;
+    }
+    .link-view-music163 > div:first-child > div > div > div > div:nth-child(2) {
+        transform: translateY(calc(-100% - 16px));
+        background: var(--color-card-2);
+        border-radius: 0 6px 6px 0;
+    }
+    .link-view-music163 > div:first-child > div.me > div > div > div:nth-child(2) {
+        background: var(--color-font-1);
     }
     .link-view-music163 > div:first-child > div.me > div > div > div {
         background: var(--color-font-r);
