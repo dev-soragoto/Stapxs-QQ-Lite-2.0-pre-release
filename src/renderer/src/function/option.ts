@@ -38,6 +38,7 @@ export const optDefault: { [key: string]: any } = {
     top_info: {},
     save_password: '',
     notice_group: {},
+    auto_connect: false, 
     // View
     language: 'zh-CN',
     opt_dark: false,
