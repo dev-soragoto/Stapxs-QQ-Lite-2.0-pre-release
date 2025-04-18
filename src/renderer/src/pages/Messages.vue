@@ -54,8 +54,7 @@
                     @click="systemNoticeClick" />
                 <!--- 群组消息 -->
                 <FriendBody
-                    v-if="runtimeData.groupAssistList &&
-                        runtimeData.groupAssistList.length > 0"
+                    v-if="runtimeData.groupAssistList && runtimeData.groupAssistList.length > 0"
                     key="inMessage--10001"
                     :select="chat.show.id === -10001"
                     :data="{
@@ -184,6 +183,7 @@
     import { MenuStatue } from 'vue3-bcui/packages/dist/types'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { login as loginInfo } from '@renderer/function/connect'
+    import { canGroupNotice } from '@renderer/function/utils/msgUtil'
 
     import {
         faThumbTack,
@@ -191,7 +191,6 @@
         faCheckToSlot,
         faGripLines,
     } from '@fortawesome/free-solid-svg-icons'
-    import { orderOnMsgList } from '@renderer/function/utils/msgUtil'
     import { Notify } from '@renderer/function/notify'
 
     export default defineComponent({
@@ -227,7 +226,7 @@
                     if (this.runtimeData.tags.openSideBar) {
                         this.openLeftBar()
                     }
-                    const index = runtimeData.onMsgList.indexOf(data)
+                    const index = runtimeData.baseOnMsgList.indexOf(data)
                     const back = {
                         // 临时会话标志
                         temp: data.group_name == '' ? data.group_id : undefined,
@@ -256,43 +255,16 @@
                         }
                     }
                     // 清除新消息标记
-                    if(runtimeData.onMsgList[index]) {
-                        runtimeData.onMsgList[index].new_msg = false
-                        runtimeData.onMsgList[index].highlight = undefined
+                    if(runtimeData.baseOnMsgList[index]) {
+                        runtimeData.baseOnMsgList[index].new_msg = false
+                        runtimeData.baseOnMsgList[index].highlight = undefined
                         // 关闭所有通知
                         new Notify().closeAll(
                             (
-                                runtimeData.onMsgList[index].group_id ??
-                                runtimeData.onMsgList[index].user_id
+                                runtimeData.baseOnMsgList[index].group_id ??
+                                runtimeData.baseOnMsgList[index].user_id
                             ).toString(),
                         )
-                    }
-                }
-
-                // 判断一下群是否应该在群收纳盒内
-                if (!this.showGroupAssist && runtimeData.sysConfig.bubble_sort_user
-                ) {
-                    // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
-                    if (
-                        data.group_id &&
-                        !this.canGroupNotice(data.group_id) &&
-                        !data.always_top
-                    ) {
-                        // 查重
-                        let has = false
-                        for (const get of runtimeData.groupAssistList) {
-                            if (get.group_id == data.group_id) {
-                                has = true
-                                break
-                            }
-                        }
-                        const index = runtimeData.onMsgList.findIndex((get) => {
-                            return data == get
-                        })
-                        runtimeData.onMsgList.splice(index, 1)
-                        if (!has) {
-                            runtimeData.groupAssistList.push(data)
-                        }
                     }
                 }
             },
@@ -325,9 +297,9 @@
              *  标记群组消息为已读
              */
             readMsg(data: UserFriendElem & UserGroupElem) {
-                const index = runtimeData.onMsgList.indexOf(data)
-                runtimeData.onMsgList[index].new_msg = false
-                runtimeData.onMsgList[index].highlight = undefined
+                const index = runtimeData.baseOnMsgList.indexOf(data)
+                runtimeData.baseOnMsgList[index].new_msg = false
+                runtimeData.baseOnMsgList[index].highlight = undefined
                 // 标记消息已读
                 const id = data.group_id ? data.group_id : data.user_id
                 const type = data.group_id ? 'group' : 'user'
@@ -347,7 +319,7 @@
                 const info = runtimeData.sysConfig.top_info as {
                     [key: string]: number[]
                 } | null
-                runtimeData.onMsgList = []
+                runtimeData.baseOnMsgList = []
                 if (info != null) {
                     const topList = info[runtimeData.loginInfo.uin]
                     if (topList !== undefined) {
@@ -357,7 +329,7 @@
                             )
                             if (topList.indexOf(id) >= 0) {
                                 item.always_top = true
-                                runtimeData.onMsgList.push(item)
+                                runtimeData.baseOnMsgList.push(item)
                             }
                         })
                     }
@@ -385,12 +357,12 @@
                             this.readMsg(item)
                             break
                         case 'remove': {
-                            const index = runtimeData.onMsgList.findIndex(
+                            const index = runtimeData.baseOnMsgList.findIndex(
                                 (get) => {
                                     return item == get
                                 },
                             )
-                            runtimeData.onMsgList.splice(index, 1)
+                            runtimeData.baseOnMsgList.splice(index, 1)
                             break
                         }
                         case 'top':
@@ -410,19 +382,6 @@
                     }
                 }
                 this.menu.select = undefined
-            },
-
-            /**
-             * 判断是否通知群消息
-             * @param id 群 ID
-             */
-            canGroupNotice(id: number) {
-                const noticeInfo = Option.get('notice_group') ?? {}
-                const list = noticeInfo[runtimeData.loginInfo.uin]
-                if (list) {
-                    return list.indexOf(id) >= 0
-                }
-                return false
             },
 
             /**
@@ -465,28 +424,11 @@
                 // 刷新群收纳盒
                 if(item.group_id && runtimeData.sysConfig.bubble_sort_user) {
                     if(value) {
-                        const index = runtimeData.groupAssistList.findIndex((get) => {
-                            return item == get
-                        })
-                        if (index >= 0) {
-                            runtimeData.groupAssistList.splice(index, 1)
-                        }
-                        runtimeData.onMsgList.push(item)
                         this.showGroupAssist = false
                     } else {
-                        const index = runtimeData.onMsgList.findIndex((get) => {
-                            return item == get
-                        })
-                        if (index >= 0) {
-                            runtimeData.onMsgList.splice(index, 1)
-                            runtimeData.groupAssistList.push(item)
-                        }
                         this.showGroupAssist = true
                     }
                 }
-                // 重新排序列表
-                const newList = orderOnMsgList(runtimeData.onMsgList)
-                runtimeData.onMsgList = newList
             },
 
             /**
@@ -507,7 +449,7 @@
                 }
                 // 是群的话显示通知设置
                 if (item.group_id) {
-                    if (this.canGroupNotice(item.group_id)) {
+                    if (canGroupNotice(item.group_id)) {
                         info.list.push('notice_close')
                     } else {
                         info.list.push('notice_open')

@@ -221,6 +221,7 @@ import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
 import { getDeviceType } from './function/utils/systemUtil'
+import { updateBaseOnMsgList } from './function/utils/msgUtil'
 
 export default defineComponent({
     name: 'App',
@@ -447,11 +448,12 @@ export default defineComponent({
                 document.getElementById('connect_btn')?.classList.add('afd')
             }
             // 其他状态监听
-            if (runtimeData.tags.isElectron) {
-                this.$watch(() => runtimeData.onMsgList.length, () => {
+            this.$watch(() => runtimeData.baseOnMsgList, () => {
+                // macOS：刷新 Touch Bar 列表
+                if (runtimeData.tags.isElectron) {
                     const list = [] as
                         { id: number, name: string, image?: string }[]
-                    runtimeData.onMsgList.forEach((item) => {
+                    runtimeData.baseOnMsgList.forEach((item) => {
                         list.push({
                             id: item.user_id ? item.user_id : item.group_id,
                             name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
@@ -459,8 +461,11 @@ export default defineComponent({
                         })
                     })
                     runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
-                })
-            }
+                }
+
+                // 刷新列表
+                updateBaseOnMsgList()
+            }, { deep: true })
             // 更新标题
             const titleList = [
                 '也试试 Icalingua Plus Plus 吧！',

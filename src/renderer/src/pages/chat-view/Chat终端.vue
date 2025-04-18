@@ -252,11 +252,11 @@
                 ls: {
                     info: 'List all contacts in the current message queue.',
                     fun: () => {
-                        this.searchListCache = markRaw(runtimeData.onMsgList)
+                        this.searchListCache = markRaw(runtimeData.baseOnMsgList)
                         let str =
                             '  total ' + this.searchListCache.length + '\n'
                         let hasMsg = false
-                        runtimeData.onMsgList.forEach((item, index) => {
+                        runtimeData.baseOnMsgList.forEach((item, index) => {
                             if (item.new_msg == true) {
                                 str += '• '
                                 hasMsg = true
@@ -548,7 +548,7 @@
                                 // 检查显示列表里有没有它
                                 if (!document.getElementById('user-' + id)) {
                                     // 把它插入到显示列表
-                                    runtimeData.onMsgList?.push(item)
+                                    runtimeData.baseOnMsgList?.push(item)
                                 }
                                 nextTick(() => {
                                     const bodyNext = document.getElementById(
@@ -584,7 +584,7 @@
                     second: 'numeric',
                 }).format(new Date())
                 // 刷新新消息数
-                this.tags.newMsg = runtimeData.onMsgList.filter((item) => {
+                this.tags.newMsg = runtimeData.baseOnMsgList.filter((item) => {
                     return item.new_msg == true
                 }).length
             }, 1000)

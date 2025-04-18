@@ -1298,7 +1298,7 @@
 
             showForWard() {
                 this.tags.showForwardPan = true
-                const showList = runtimeData.onMsgList.reverse()
+                const showList = runtimeData.baseOnMsgList.reverse()
                 // 将 forWardList 中 showList 之中的条目挪到最前面
                 showList.forEach((item) => {
                     const index = this.forwardList.indexOf(item)
@@ -1307,7 +1307,7 @@
                         this.forwardList.unshift(item)
                     }
                 })
-                runtimeData.onMsgList.reverse()
+                runtimeData.baseOnMsgList.reverse()
             },
 
             forwardSelf() {
@@ -1445,8 +1445,8 @@
                 // 关闭转发窗口
                 this.cancelForward()
                 // 将接收目标加入消息列表并跳转过去
-                if (runtimeData.onMsgList.indexOf(data) < 0) {
-                    runtimeData.onMsgList.push(data)
+                if (runtimeData.baseOnMsgList.indexOf(data) < 0) {
+                    runtimeData.baseOnMsgList.push(data)
                 }
                 this.$nextTick(() => {
                     const user = document.getElementById('user-' + id)

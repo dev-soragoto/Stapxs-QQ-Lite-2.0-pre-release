@@ -26,8 +26,7 @@ import {
     getPortableFileLang,
     getTrueLang,
 } from '@renderer/function/utils/systemUtil'
-import { orderOnMsgList } from './utils/msgUtil'
-import OptionFun from './option'
+import { updateBaseOnMsgList } from './utils/msgUtil'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -38,7 +37,7 @@ export const optDefault: { [key: string]: any } = {
     top_info: {},
     save_password: '',
     notice_group: {},
-    auto_connect: false, 
+    auto_connect: false,
     // View
     language: 'zh-CN',
     opt_dark: false,
@@ -89,32 +88,8 @@ const configFunction: { [key: string]: (value: any) => void } = {
     bubble_sort_user: clearGroupAssist,
 }
 
-function clearGroupAssist(value: boolean) {
-    if(!value) {
-        // 将 onMsgList 中的非置顶、没有开启消息通知的群挪到 GroupAssistList 里
-        const noticeInfo = OptionFun.get('notice_group') ?? {}
-        const noticeGroupIdList = noticeInfo[runtimeData.loginInfo.uin]
-
-        const notTopGroupIdList = runtimeData.onMsgList.filter((item) => {
-            return !item.always_top && item.group_id
-        }).map((item) => {
-            return item.group_id
-        })
-
-        const groupAssistList = notTopGroupIdList.filter((item) => {
-            return !noticeGroupIdList.includes(item)
-        })
-
-        const newList = runtimeData.onMsgList.filter((item) => {
-            return groupAssistList.includes(item.group_id)
-        })
-        // 删除 onMsgList 中的这些群
-        runtimeData.onMsgList = runtimeData.onMsgList.filter((item) => {
-            return !groupAssistList.includes(item.group_id)
-        })
-        const sortedList = orderOnMsgList(newList)
-        runtimeData.groupAssistList = sortedList
-    }
+function clearGroupAssist() {
+    updateBaseOnMsgList()
 }
 
 function updateFarstAnimation(value: boolean) {

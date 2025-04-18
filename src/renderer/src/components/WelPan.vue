@@ -39,7 +39,9 @@
                 <span class="author">{{ $t('作者：') }}{{ $t('Stapx Steve') }}</span>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('license')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('license')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-if="show == 'license'" class="base-box">
         <div class="lead">
@@ -56,14 +58,18 @@
             </div>
             <span>{{ $t('点击继续则默许已阅读并同意以上条款内容') }}</span>
         </div>
-        <button class="ss-button wel-next" @click="setPage('function')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('function')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-else-if="show == 'function'" class="function">
         <div class="config">
             <div>
                 <div class="theme_color">
                     <div><div /><div><div /><div /></div></div>
-                    <div class="me"><div /><div><div /><div /></div></div>
+                    <div class="me">
+                        <div /><div><div /><div /></div>
+                    </div>
                     <div><div /><div><div /><div /></div></div>
                 </div>
             </div>
@@ -117,7 +123,9 @@
                 </div>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('function_msg')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('function_msg')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-else-if="show == 'function_msg'" class="function">
         <div class="config">
@@ -167,7 +175,9 @@
                 </div>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('function_img')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('function_img')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-else-if="show == 'function_img'" class="function">
         <div class="config">
@@ -200,7 +210,9 @@
                 </div>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('tip')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('tip')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-else-if="show == 'tip'" class="function">
         <div class="config">
@@ -224,7 +236,9 @@
                 <a>{{ $t('Stapxs QQ Lite 的部分功能包含在元素的菜单中。你可以右击（或长按）消息列表、头像、消息等元素展开菜单来使用更多功能！') }}</a>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('tip_input')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('tip_input')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-else-if="show == 'tip_input'" class="function">
         <div class="config">
@@ -232,7 +246,9 @@
                 <div class="input_bar">
                     <div>
                         <div><div /><div /></div>
-                        <div class="select"><div /><div>{{ $t('林小槐') }}</div></div>
+                        <div class="select">
+                            <div /><div>{{ $t('林小槐') }}</div>
+                        </div>
                         <div><div /><div /></div>
                         <div><div /><div /></div>
                         <div><div /><div /></div>
@@ -245,7 +261,9 @@
                 <a>{{ $t('消息发送框除了输入内容以外，同时支持粘贴图片、at 群成员功能；不过不支持富媒体显示和多行输入。') }}</a>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('info')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('info')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-if="show == 'info'" class="base-box">
         <div class="lead">
@@ -272,7 +290,9 @@
                 </div>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('info_free')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('info_free')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-if="show == 'info_free'" class="base-box">
         <div class="lead">
@@ -287,7 +307,9 @@
                     :icon="['fas', 'triangle-exclamation']" />
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('end')">{{ $t('继续') }}</button>
+        <button class="ss-button wel-next" @click="setPage('end')">
+            {{ $t('继续') }}
+        </button>
     </div>
     <div v-else-if="show == 'end'" class="wel-end">
         <svg id="Layer_1"
@@ -356,7 +378,9 @@
         <a>{{
             $t('该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。')
         }}</a>
-        <button class="ss-button wel-next-end" @click="runtimeData.popBoxList.shift()">{{ $t('关闭') }}</button>
+        <button class="ss-button wel-next-end" @click="runtimeData.popBoxList.shift()">
+            {{ $t('关闭') }}
+        </button>
     </div>
 </template>
 

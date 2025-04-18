@@ -404,13 +404,13 @@ export function createIpc() {
                 true,
             )
             // 去消息列表内寻找，去除新消息标记
-            for (let i = 0; i < runtimeData.onMsgList.length; i++) {
+            for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
                 if (
-                    runtimeData.onMsgList[i].group_id == data.id ||
-                    runtimeData.onMsgList[i].user_id == data.id
+                    runtimeData.baseOnMsgList[i].group_id == data.id ||
+                    runtimeData.baseOnMsgList[i].user_id == data.id
                 ) {
-                    runtimeData.onMsgList[i].new_msg = false
-                    runtimeData.onMsgList[i].highlight = undefined
+                    runtimeData.baseOnMsgList[i].new_msg = false
+                    runtimeData.baseOnMsgList[i].highlight = undefined
                     break
                 }
             }
@@ -537,15 +537,15 @@ export async function loadMobile() {
                     )
                     // 去消息列表内寻找，去除新消息标记
                     for (let i = 0; i <
-                        runtimeData.onMsgList.length; i++) {
+                        runtimeData.baseOnMsgList.length; i++) {
                         if (
-                            runtimeData.onMsgList[i].group_id
+                            runtimeData.baseOnMsgList[i].group_id
                                 == notification.extra.userId ||
-                            runtimeData.onMsgList[i].user_id
+                            runtimeData.baseOnMsgList[i].user_id
                                 == notification.extra.userId
                         ) {
-                            runtimeData.onMsgList[i].new_msg = false
-                            runtimeData.onMsgList[i].highlight = undefined
+                            runtimeData.baseOnMsgList[i].new_msg = false
+                            runtimeData.baseOnMsgList[i].highlight = undefined
                             break
                         }
                     }
@@ -1099,16 +1099,16 @@ export function changeGroupNotice(group_id: number, open: boolean) {
         option.save('notice_group', noticeInfo)
         // 如果它在 groupAssistList 里面，移到 onMsgList
         // 找到它和它的位置
-        const item = runtimeData.groupAssistList.find(
-            (item) => item.group_id == group_id,
-        )
-        if (item) {
-            runtimeData.onMsgList.push(item)
-            runtimeData.groupAssistList.splice(
-                runtimeData.groupAssistList.indexOf(item),
-                1,
-            )
-        }
+        // const item = runtimeData.groupAssistList.find(
+        //     (item) => item.group_id == group_id,
+        // )
+        // if (item) {
+        //     runtimeData.baseOnMsgList.push(item)
+        //     runtimeData.groupAssistList.splice(
+        //         runtimeData.groupAssistList.indexOf(item),
+        //         1,
+        //     )
+        // }
     } else {
         if (list) {
             const index = list.indexOf(group_id)
@@ -1118,20 +1118,20 @@ export function changeGroupNotice(group_id: number, open: boolean) {
         }
         option.save('notice_group', noticeInfo)
         // 如果它在 onMsgList 里面，移到 groupAssistList
-        if(runtimeData.sysConfig.bubble_sort_user) {
-            const item = runtimeData.onMsgList.find(
-                (item) => item.group_id == group_id,
-            )
+        // if(runtimeData.sysConfig.bubble_sort_user) {
+        //     const item = runtimeData.onMsgList.find(
+        //         (item) => item.group_id == group_id,
+        //     )
 
-            if (item && !item.always_top) {
-                item.new_msg = false
+        //     if (item && !item.always_top) {
+        //         item.new_msg = false
 
-                runtimeData.groupAssistList.push(item)
-                runtimeData.onMsgList.splice(
-                    runtimeData.onMsgList.indexOf(item),
-                    1,
-                )
-            }
-        }
+        //         runtimeData.groupAssistList.push(item)
+        //         runtimeData.onMsgList.splice(
+        //             runtimeData.onMsgList.indexOf(item),
+        //             1,
+        //         )
+        //     }
+        // }
     }
 }

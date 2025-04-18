@@ -1,6 +1,7 @@
 import jp from 'jsonpath'
 import app from '@renderer/main'
 import anime from 'animejs'
+import option from '@renderer/function/option'
 
 import { Logger } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
@@ -550,13 +551,13 @@ export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
 }
 
 /**
- * 对消息列表进行排序
- * @param list 消息列表
+ * 刷新消息列表排序
  */
-export function orderOnMsgList(list: (UserFriendElem & UserGroupElem)[]) {
+export function updateBaseOnMsgList() {
+    const allList = runtimeData.baseOnMsgList
     // 先更具 item.always_top 是不是 true 拆为两个数组
-    const topList = list.filter((item) => item.always_top)
-    const normalList = list.filter((item) => !item.always_top)
+    const topList = allList.filter((item) => item.always_top)
+    const normalList = allList.filter((item) => !item.always_top)
     // 将两个数组按照 item.time 降序排序
     // item.time 不存在或者相同时按照 item.py_start 降序排序
 
@@ -574,9 +575,44 @@ export function orderOnMsgList(list: (UserFriendElem & UserGroupElem)[]) {
     }
     topList.sort(sortFun)
     normalList.sort(sortFun)
-    return topList.concat(normalList)
+
+    let onMsgList = [] as any[]
+    let groupAssistList = [] as any[]
+    if(runtimeData.sysConfig.bubble_sort_user) {
+        // 将 normalList 进行拆分
+        onMsgList = topList.concat(normalList.filter((item) => {
+            return item.group_id && canGroupNotice(item.group_id) || item.user_id || item.new_msg
+        }))
+        groupAssistList = normalList.filter((item) => {
+            return item.group_id && !canGroupNotice(item.group_id)
+        })
+    } else {
+        onMsgList = topList.concat(normalList)
+    }
+
+    runtimeData.onMsgList = onMsgList
+    runtimeData.groupAssistList = groupAssistList
 }
 
+/**
+ * 判断当前消息是否可以通知
+ * @param id 群号
+ * @returns 是否可以通知
+ */
+export function canGroupNotice(id: number) {
+    const noticeInfo = option.get('notice_group') ?? {}
+    const list = noticeInfo[runtimeData.loginInfo.uin]
+    if (list) {
+        return list.indexOf(id) >= 0
+    }
+    return false
+}
+
+/**
+ * 戳一戳触发动画
+ * @param animeBody 动画作用的元素
+ * @param windowInfo 窗口信息，在 electron 中使用
+ */
 export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
             x: number
             y: number
