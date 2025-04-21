@@ -13,6 +13,11 @@ export default defineConfig({
                 ]
             })
         ],
+        build: {
+            lib: {
+                entry: 'src/electron/index.ts',
+            }
+        }
     },
     preload: {
         plugins: [externalizeDepsPlugin()],
