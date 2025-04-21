@@ -9,7 +9,7 @@ export default defineConfig({
             externalizeDepsPlugin(),
             viteStaticCopy({
                 targets: [
-                    { src: 'src/main/assets', dest: './' },
+                    { src: 'src/electron/assets', dest: './' },
                 ]
             })
         ],

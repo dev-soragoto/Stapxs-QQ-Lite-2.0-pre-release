@@ -10,13 +10,6 @@
         "frontendDist": "../dist"
     },
     "app": {
-        "windows": [
-            {
-                "title": "Stapxs QQ Lite",
-                "width": 850,
-                "height": 530
-            }
-        ],
         "macOSPrivateApi": true,
         "security": {
             "csp": null

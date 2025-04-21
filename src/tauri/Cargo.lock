@@ -3497,6 +3497,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
+ "window-vibrancy",
  "windows 0.54.0",
 ]
 
