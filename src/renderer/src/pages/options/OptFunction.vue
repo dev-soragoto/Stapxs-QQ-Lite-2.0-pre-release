@@ -11,6 +11,7 @@
         <div class="ss-card">
             <header>{{ $t('通知选项') }}</header>
             <div class="opt-item">
+                <div :class="checkDefault('close_notice')" />
                 <font-awesome-icon :icon="['fas', 'volume-xmark']" />
                 <div>
                     <span>{{ $t('禁用通知') }}</span>
@@ -25,9 +26,10 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('bubble_sort_user')" />
                 <font-awesome-icon :icon="['fas', 'box-open']" />
                 <div>
-                    <span>{{ $t('关闭群收纳盒') }}</span>
+                    <span>{{ $t('群收纳盒') }}</span>
                     <span>{{ $t('全都放出来！全都放出来！') }}</span>
                 </div>
                 <label class="ss-switch">
@@ -38,7 +40,8 @@
                     </div>
                 </label>
             </div>
-            <div v-if="runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+            <div v-if="!runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+                <div :class="checkDefault('group_notice_type')" />
                 <font-awesome-icon :icon="['fas', 'user-group']" />
                 <div>
                     <span>{{ $t('群消息通知方式') }}</span>
@@ -78,6 +81,7 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('close_chat_pic_pan')" />
                 <font-awesome-icon :icon="['fas', 'window-maximize']" />
                 <div>
                     <span>{{ $t('禁用图片发送框') }}</span>
@@ -93,6 +97,7 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('close_respond')" />
                 <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
                 <div>
                     <span>{{ $t('关闭回应功能') }}</span>
@@ -109,6 +114,7 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('msg_taill')" />
                 <font-awesome-icon :icon="['fas', 'fish-fins']" />
                 <div>
                     <span>{{ $t('小尾巴') }}</span>
@@ -119,6 +125,7 @@
                     type="text" name="msg_taill" @keyup="save">
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('quick_send')" />
                 <font-awesome-icon :icon="['fas', 'square-xmark']" />
                 <div>
                     <span>{{ $t('默认功能按钮') }}</span>
@@ -141,6 +148,7 @@
                 </select>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('send_face')" />
                 <font-awesome-icon :icon="['fas', 'square-arrow-up-right']" />
                 <div>
                     <span>{{ $t('直接发送表情') }}</span>
@@ -157,6 +165,7 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('use_breakline')" />
                 <font-awesome-icon :icon="['fas', 'keyboard']" />
                 <div>
                     <span>{{ $t('使用 shift enter 换行') }}</span>
@@ -174,6 +183,7 @@
         <div class="ss-card">
             <header>{{ $t('浏览') }}</header>
             <div class="opt-item">
+                <div :class="checkDefault('close_browser')" />
                 <font-awesome-icon :icon="['fas', 'globe']" />
                 <div>
                     <span>{{ $t('禁用内置浏览器') }}</span>
@@ -194,6 +204,7 @@
                 class="opt-item"
                 :style="runtimeData.sysConfig.close_ga !== true ?
                     'background: var(--color-card-1);' : ''">
+                <div :class="checkDefault('close_ga')" />
                 <font-awesome-icon :icon="['fas', 'cloud']" />
                 <div>
                     <span>{{ $t('关闭分析') }}</span>
@@ -228,6 +239,7 @@
             </div>
             <div v-if="runtimeData.sysConfig.close_ga !== true"
                 class="opt-item">
+                <div :class="checkDefault('open_ga_bot')" />
                 <font-awesome-icon :icon="['fas', 'dice']" />
                 <div>
                     <span>{{ $t('后端类型分析') }}</span>
@@ -247,7 +259,7 @@
 
 <script lang="ts">
     import { defineComponent } from 'vue'
-    import { runASWEvent as save } from '@renderer/function/option'
+    import { runASWEvent as save, checkDefault } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
     import { openLink } from '@renderer/function/utils/appUtil'
 
@@ -255,6 +267,7 @@
         name: 'ViewOptFunction',
         data() {
             return {
+                checkDefault: checkDefault,
                 runtimeData: runtimeData,
                 save: save,
                 ndt: 0,

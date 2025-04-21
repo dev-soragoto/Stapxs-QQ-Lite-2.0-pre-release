@@ -252,9 +252,6 @@ msgstr ""
 msgid "ReferenceError: moYu is not defined"
 msgstr ""
 
-msgid "关闭群收纳盒"
-msgstr ""
-
 msgid "全都放出来！全都放出来！"
 msgstr ""
 
@@ -1159,4 +1156,28 @@ msgid "如果你通过任何付费方式获取了 Stapxs QQ Lite，请及时追�
 msgstr ""
 
 msgid "Stapxs QQ Lite 仅在 GitHub 上发布。由于提供了自行部署的方式，非官方版本请谨慎使用。"
+msgstr ""
+
+msgid "连接异常关闭"
+msgstr ""
+
+msgid "TLS错误"
+msgstr ""
+
+msgid "未知的错误，WS错误代码 {code}"
+msgstr "未知的错误，WS错误代码 {code}"
+
+msgid "机器人"
+msgstr ""
+
+msgid "Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。"
+msgstr ""
+
+msgid "第三方服务声明"
+msgstr ""
+
+msgid "对方正在输入……"
+msgstr ""
+
+msgid "戳了戳你"
 msgstr ""

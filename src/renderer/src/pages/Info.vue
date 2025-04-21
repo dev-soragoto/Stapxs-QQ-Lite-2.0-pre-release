@@ -447,7 +447,7 @@
                 // 如果是自己的话就忽略
                 if (info.user_id != runtimeData.loginInfo.uin) {
                     // 检查这个人是否已经在聊天列表中
-                    let chat = runtimeData.onMsgList.find(
+                    let chat = runtimeData.baseOnMsgList.find(
                         (item: UserFriendElem & UserGroupElem) => {
                             return item.user_id == info.user_id
                         },
@@ -460,7 +460,7 @@
                             },
                         )
                         if (friend) {
-                            runtimeData.onMsgList.push(friend)
+                            runtimeData.baseOnMsgList.push(friend)
                             chat = friend
                         } else {
                             // 创建一个临时聊天
@@ -473,7 +473,7 @@
                                 group_id: info.group_id,
                                 group_name: '',
                             } as UserFriendElem & UserGroupElem
-                            runtimeData.onMsgList.push(user)
+                            runtimeData.baseOnMsgList.push(user)
                             chat = user
                         }
                     }

@@ -61,8 +61,7 @@
     import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
     import { changeGroupNotice, reloadUsers } from '@renderer/function/utils/appUtil'
-
-    import Option from '@renderer/function/option'
+    import { canGroupNotice } from '@renderer/function/utils/msgUtil'
 
     export default defineComponent({
         name: 'ViewOptInfo',
@@ -70,24 +69,11 @@
         emits: ['update_mumber_card'],
         data() {
             return {
+                canGroupNotice: canGroupNotice,
                 runtimeData: runtimeData,
             }
         },
         methods: {
-            /**
-            * 判断是否可以通知群消息
-            * @param id 群聊ID
-            */
-            canGroupNotice() {
-                const id = this.chat.show.id
-                const noticeInfo = Option.get('notice_group') ?? {}
-                const list = noticeInfo[runtimeData.loginInfo.uin]
-                if (list) {
-                    return list.indexOf(id) >= 0
-                }
-                return false
-            },
-
             /**
             * 设置群消息通知
             * @param event 输入事件
@@ -141,8 +127,8 @@
                                         'leaveGroup')
                                 }
                                 // 从消息列表中删除该群聊
-                                runtimeData.onMsgList =
-                                    runtimeData.onMsgList.filter(
+                                runtimeData.baseOnMsgList =
+                                    runtimeData.baseOnMsgList.filter(
                                         (item: any) => item.group_id !== this.chat.show.id)
                                 // 关闭群聊窗口
                                 runtimeData.chatInfo.show.id = 0

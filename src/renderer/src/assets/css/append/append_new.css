@@ -95,6 +95,14 @@ body {
     height: 44px;
 }
 
+.group-assist-message-list {
+    margin-right: -220px;
+}
+.group-assist-message-list.show {
+    margin-left: -220px;
+    margin-right: 0;
+}
+
 .friend-body {
     margin-bottom: 5px;
     margin-top: 0;

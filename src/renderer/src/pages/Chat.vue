@@ -13,7 +13,7 @@
     <div id="chat-pan"
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
-            (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')"
+            (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @touchmove="ChatOnMove"
         @touchend="chatMoveEnd">
@@ -84,7 +84,7 @@
                     <MsgBody v-if="(msgIndex.post_type === 'message' ||
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
-                        :key="msgIndex.message_id"
+                        :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
                         @click="msgClick($event, msgIndex)"
@@ -119,7 +119,7 @@
                     <MsgBody v-if=" (msgIndex.post_type === 'message' ||
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
-                        :key="msgIndex.message_id"
+                        :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
                         @scroll-to-msg="scrollToMsg"
@@ -413,7 +413,7 @@
             </div>
         </div>
         <!-- 消息右击菜单 -->
-        <div :class="'msg-menu' + (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')">
+        <div :class="'msg-menu' + (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
             <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
             <div id="msgMenu" :class="tags.showMsgMenu ?
                 'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
@@ -1298,7 +1298,7 @@
 
             showForWard() {
                 this.tags.showForwardPan = true
-                const showList = runtimeData.onMsgList.reverse()
+                const showList = runtimeData.baseOnMsgList.reverse()
                 // 将 forWardList 中 showList 之中的条目挪到最前面
                 showList.forEach((item) => {
                     const index = this.forwardList.indexOf(item)
@@ -1307,7 +1307,7 @@
                         this.forwardList.unshift(item)
                     }
                 })
-                runtimeData.onMsgList.reverse()
+                runtimeData.baseOnMsgList.reverse()
             },
 
             forwardSelf() {
@@ -1445,8 +1445,8 @@
                 // 关闭转发窗口
                 this.cancelForward()
                 // 将接收目标加入消息列表并跳转过去
-                if (runtimeData.onMsgList.indexOf(data) < 0) {
-                    runtimeData.onMsgList.push(data)
+                if (runtimeData.baseOnMsgList.indexOf(data) < 0) {
+                    runtimeData.baseOnMsgList.push(data)
                 }
                 this.$nextTick(() => {
                     const user = document.getElementById('user-' + id)

@@ -46,6 +46,7 @@ export function regIpcListener() {
     ipcMain.handle('sys:previewLink', async (_, link: string) => {
         const linkList = {
             bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
+            music163: ['music.163.com', '163cn.tv'],
         }
 
         // 判断是不是特殊解析的链接

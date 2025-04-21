@@ -3,7 +3,7 @@
         {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="runtimeData.sysConfig.opt_no_window" class="top-bar" name="appbar">
+    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar">
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />
         <div class="controller">
@@ -221,6 +221,7 @@ import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
 import { getDeviceType } from './function/utils/systemUtil'
+import { updateBaseOnMsgList } from './function/utils/msgUtil'
 
 export default defineComponent({
     name: 'App',
@@ -315,6 +316,7 @@ export default defineComponent({
             }
             // 加载设置项
             runtimeData.sysConfig = Option.load()
+            logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
             // PS：重新再应用部分需要加载完成后才能应用的设置
             Option.run('opt_dark', Option.get('opt_dark'))
             Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
@@ -323,11 +325,10 @@ export default defineComponent({
                 'opt_auto_win_color',
                 Option.get('opt_auto_win_color'),
             )
-            if (Option.get('opt_no_window') == true) {
+            if (['linux', 'win32'].includes(runtimeData.tags.platform ?? '')) {
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')
             }
-            Option.runAS('opt_auto_gtk', Option.get('opt_auto_gtk'))
             // 基础初始化完成
             logger.debug('欢迎使用 Stapxs QQ Lite！')
             logger.debug('当前启动模式为: ' + this.dev ? 'development' : 'production')
@@ -447,11 +448,12 @@ export default defineComponent({
                 document.getElementById('connect_btn')?.classList.add('afd')
             }
             // 其他状态监听
-            if (runtimeData.tags.isElectron) {
-                this.$watch(() => runtimeData.onMsgList.length, () => {
+            this.$watch(() => runtimeData.baseOnMsgList, () => {
+                // macOS：刷新 Touch Bar 列表
+                if (runtimeData.tags.isElectron) {
                     const list = [] as
                         { id: number, name: string, image?: string }[]
-                    runtimeData.onMsgList.forEach((item) => {
+                    runtimeData.baseOnMsgList.forEach((item) => {
                         list.push({
                             id: item.user_id ? item.user_id : item.group_id,
                             name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
@@ -459,11 +461,14 @@ export default defineComponent({
                         })
                     })
                     runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
-                })
-            }
+                }
+
+                // 刷新列表
+                updateBaseOnMsgList()
+            }, { deep: true })
             // 更新标题
             const titleList = [
-                '也试试 Lcalingua Plus Plus 吧！',
+                '也试试 Icalingua Plus Plus 吧！',
                 '点击阅读《社交功能限制提醒》',
                 '登录失败，Code 45',
                 '你好世界！',

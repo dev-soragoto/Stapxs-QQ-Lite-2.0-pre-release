@@ -12,25 +12,17 @@
 <template>
     <div class="friend-view">
         <div id="message-list"
-            :class="'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')">
+            :class="'friend-list' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (showGroupAssist ? ' show' : '')">
             <div>
                 <div class="base only">
-                    <span v-if="showGroupAssist" style="cursor: pointer;"
-                        @click="showGroupAssist = !showGroupAssist">
-                        <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
-                        {{ $t('群收纳盒') }}
-                    </span>
-                    <span v-else>{{ $t('消息') }}</span>
+                    <span>{{ $t('消息') }}</span>
                     <div style="flex: 1" />
-                    <font-awesome-icon v-if="!showGroupAssist" :icon="['fas', 'trash-can']" @click="cleanList" />
+                    <font-awesome-icon :icon="['fas', 'trash-can']" @click="cleanList" />
                 </div>
                 <div class="small">
-                    <span v-if="showGroupAssist" style="cursor: pointer;">
-                        {{ $t('群收纳盒') }}
-                    </span>
-                    <span v-else>{{
-                        $t('消息')
-                    }}</span>
+                    <span>{{ $t('消息') }}</span>
                     <div v-if="showGroupAssist"
                         style="margin-right: -5px;margin-left: 5px;"
                         @click="showGroupAssist = !showGroupAssist">
@@ -41,29 +33,6 @@
                     </div>
                 </div>
             </div>
-            <BcMenu :data="listMenu" name="messages-menu"
-                @close="listMenuClose">
-                <ul>
-                    <li id="top" icon="fa-solid fa-thumbtack">
-                        {{ $t('置顶') }}
-                    </li>
-                    <li id="canceltop" icon="fa-solid fa-grip-lines">
-                        {{ $t('取消置顶') }}
-                    </li>
-                    <li id="remove" icon="fa-solid fa-trash-can">
-                        {{ $t('删除') }}
-                    </li>
-                    <li id="readed" icon="fa-solid fa-check-to-slot">
-                        {{ $t('标记已读') }}
-                    </li>
-                    <li id="notice_open" icon="fa-solid fa-volume-high">
-                        {{ $t('开启通知') }}
-                    </li>
-                    <li id="notice_close" icon="fa-solid fa-volume-xmark">
-                        {{ $t('关闭通知') }}
-                    </li>
-                </ul>
-            </BcMenu>
             <TransitionGroup
                 id="message-list-body"
                 name="onmsg"
@@ -85,9 +54,7 @@
                     @click="systemNoticeClick" />
                 <!--- 群组消息 -->
                 <FriendBody
-                    v-if="runtimeData.groupAssistList &&
-                        runtimeData.groupAssistList.length > 0 &&
-                        !showGroupAssist"
+                    v-if="runtimeData.groupAssistList && runtimeData.groupAssistList.length > 0"
                     key="inMessage--10001"
                     :select="chat.show.id === -10001"
                     :data="{
@@ -99,10 +66,10 @@
                         raw_msg: runtimeData.groupAssistList[0].group_name + ': ' +
                             runtimeData.groupAssistList[0].raw_msg_base
                     }"
-                    @click="showGroupAssist = !showGroupAssist" />
+                    @click="showGroupAssistCheck" />
                 <!-- 其他消息 -->
                 <FriendBody
-                    v-for="item in showGroupAssist ? runtimeData.groupAssistList : runtimeData.onMsgList"
+                    v-for="item in runtimeData.onMsgList"
                     :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
                     :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
                     :menu="menu.select && menu.select == item"
@@ -114,6 +81,75 @@
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
+        <div id="group-assist-message-list"
+            :class="'friend-list group-assist-message-list' +
+                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (showGroupAssist ? ' show' : '')">
+            <div>
+                <div class="base only">
+                    <span style="cursor: pointer;"
+                        @click="showGroupAssist = !showGroupAssist">
+                        <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
+                        {{ $t('群收纳盒') }}
+                    </span>
+                </div>
+                <div class="small">
+                    <span style="cursor: pointer;">
+                        {{ $t('群收纳盒') }}
+                    </span>
+                    <div v-if="showGroupAssist"
+                        style="margin-right: -5px;margin-left: 5px;"
+                        @click="showGroupAssist = !showGroupAssist">
+                        <font-awesome-icon :icon="['fas', 'angle-left']" />
+                    </div>
+                    <div @click="openLeftBar">
+                        <font-awesome-icon :icon="['fas', 'bars-staggered']" />
+                    </div>
+                </div>
+            </div>
+            <TransitionGroup
+                id="group-assist-message-list-body"
+                name="onmsg"
+                tag="div"
+                :class="runtimeData.tags.openSideBar ? ' open' : ''"
+                style="overflow-x: hidden">
+                <!-- 其他消息 -->
+                <FriendBody
+                    v-for="item in runtimeData.groupAssistList"
+                    :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
+                    :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
+                    :menu="menu.select && menu.select == item"
+                    :data="item"
+                    from="message"
+                    @contextmenu.prevent="listMenuShow($event, item)"
+                    @click="userClick(item)"
+                    @touchstart="showMenuStart($event, item)"
+                    @touchend="showMenuEnd" />
+            </TransitionGroup>
+        </div>
+        <BcMenu :data="listMenu" name="messages-menu"
+            @close="listMenuClose">
+            <ul>
+                <li id="top" icon="fa-solid fa-thumbtack">
+                    {{ $t('置顶') }}
+                </li>
+                <li id="canceltop" icon="fa-solid fa-grip-lines">
+                    {{ $t('取消置顶') }}
+                </li>
+                <li id="remove" icon="fa-solid fa-trash-can">
+                    {{ $t('删除') }}
+                </li>
+                <li id="readed" icon="fa-solid fa-check-to-slot">
+                    {{ $t('标记已读') }}
+                </li>
+                <li id="notice_open" icon="fa-solid fa-volume-high">
+                    {{ $t('开启通知') }}
+                </li>
+                <li id="notice_close" icon="fa-solid fa-volume-xmark">
+                    {{ $t('关闭通知') }}
+                </li>
+            </ul>
+        </BcMenu>
         <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
             <div v-if="!loginInfo.status || runtimeData.chatInfo.show.id == 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'inbox']" />
@@ -147,6 +183,7 @@
     import { MenuStatue } from 'vue3-bcui/packages/dist/types'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { login as loginInfo } from '@renderer/function/connect'
+    import { canGroupNotice } from '@renderer/function/utils/msgUtil'
 
     import {
         faThumbTack,
@@ -154,7 +191,6 @@
         faCheckToSlot,
         faGripLines,
     } from '@fortawesome/free-solid-svg-icons'
-    import { orderOnMsgList } from '@renderer/function/utils/msgUtil'
     import { Notify } from '@renderer/function/notify'
 
     export default defineComponent({
@@ -190,7 +226,7 @@
                     if (this.runtimeData.tags.openSideBar) {
                         this.openLeftBar()
                     }
-                    const index = runtimeData.onMsgList.indexOf(data)
+                    const index = runtimeData.baseOnMsgList.indexOf(data)
                     const back = {
                         // 临时会话标志
                         temp: data.group_name == '' ? data.group_id : undefined,
@@ -219,44 +255,16 @@
                         }
                     }
                     // 清除新消息标记
-                    if(runtimeData.onMsgList[index]) {
-                        runtimeData.onMsgList[index].new_msg = false
-                        runtimeData.onMsgList[index].highlight = undefined
+                    if(runtimeData.baseOnMsgList[index]) {
+                        runtimeData.baseOnMsgList[index].new_msg = false
+                        runtimeData.baseOnMsgList[index].highlight = undefined
                         // 关闭所有通知
                         new Notify().closeAll(
                             (
-                                runtimeData.onMsgList[index].group_id ??
-                                runtimeData.onMsgList[index].user_id
+                                runtimeData.baseOnMsgList[index].group_id ??
+                                runtimeData.baseOnMsgList[index].user_id
                             ).toString(),
                         )
-                    }
-                }
-
-                // 判断一下群是否应该在群收纳盒内
-                if (!this.showGroupAssist &&
-                    !runtimeData.sysConfig.bubble_sort_user
-                ) {
-                    // 如果这个群没有开启通知并且不是置顶的，就移动到群收纳盒
-                    if (
-                        data.group_id &&
-                        !this.canGroupNotice(data.group_id) &&
-                        !data.always_top
-                    ) {
-                        // 查重
-                        let has = false
-                        for (const get of runtimeData.groupAssistList) {
-                            if (get.group_id == data.group_id) {
-                                has = true
-                                break
-                            }
-                        }
-                        const index = runtimeData.onMsgList.findIndex((get) => {
-                            return data == get
-                        })
-                        runtimeData.onMsgList.splice(index, 1)
-                        if (!has) {
-                            runtimeData.groupAssistList.push(data)
-                        }
                     }
                 }
             },
@@ -289,9 +297,9 @@
              *  标记群组消息为已读
              */
             readMsg(data: UserFriendElem & UserGroupElem) {
-                const index = runtimeData.onMsgList.indexOf(data)
-                runtimeData.onMsgList[index].new_msg = false
-                runtimeData.onMsgList[index].highlight = undefined
+                const index = runtimeData.baseOnMsgList.indexOf(data)
+                runtimeData.baseOnMsgList[index].new_msg = false
+                runtimeData.baseOnMsgList[index].highlight = undefined
                 // 标记消息已读
                 const id = data.group_id ? data.group_id : data.user_id
                 const type = data.group_id ? 'group' : 'user'
@@ -311,7 +319,7 @@
                 const info = runtimeData.sysConfig.top_info as {
                     [key: string]: number[]
                 } | null
-                runtimeData.onMsgList = []
+                runtimeData.baseOnMsgList = []
                 if (info != null) {
                     const topList = info[runtimeData.loginInfo.uin]
                     if (topList !== undefined) {
@@ -321,7 +329,7 @@
                             )
                             if (topList.indexOf(id) >= 0) {
                                 item.always_top = true
-                                runtimeData.onMsgList.push(item)
+                                runtimeData.baseOnMsgList.push(item)
                             }
                         })
                     }
@@ -349,12 +357,12 @@
                             this.readMsg(item)
                             break
                         case 'remove': {
-                            const index = runtimeData.onMsgList.findIndex(
+                            const index = runtimeData.baseOnMsgList.findIndex(
                                 (get) => {
                                     return item == get
                                 },
                             )
-                            runtimeData.onMsgList.splice(index, 1)
+                            runtimeData.baseOnMsgList.splice(index, 1)
                             break
                         }
                         case 'top':
@@ -374,19 +382,6 @@
                     }
                 }
                 this.menu.select = undefined
-            },
-
-            /**
-             * 判断是否通知群消息
-             * @param id 群 ID
-             */
-            canGroupNotice(id: number) {
-                const noticeInfo = Option.get('notice_group') ?? {}
-                const list = noticeInfo[runtimeData.loginInfo.uin]
-                if (list) {
-                    return list.indexOf(id) >= 0
-                }
-                return false
             },
 
             /**
@@ -427,30 +422,13 @@
                 // 为消息列表内的对象刷新置顶标志
                 item.always_top = value
                 // 刷新群收纳盒
-                if(item.group_id && !runtimeData.sysConfig.bubble_sort_user) {
+                if(item.group_id && runtimeData.sysConfig.bubble_sort_user) {
                     if(value) {
-                        const index = runtimeData.groupAssistList.findIndex((get) => {
-                            return item == get
-                        })
-                        if (index >= 0) {
-                            runtimeData.groupAssistList.splice(index, 1)
-                        }
-                        runtimeData.onMsgList.push(item)
                         this.showGroupAssist = false
                     } else {
-                        const index = runtimeData.onMsgList.findIndex((get) => {
-                            return item == get
-                        })
-                        if (index >= 0) {
-                            runtimeData.onMsgList.splice(index, 1)
-                            runtimeData.groupAssistList.push(item)
-                        }
                         this.showGroupAssist = true
                     }
                 }
-                // 重新排序列表
-                const newList = orderOnMsgList(runtimeData.onMsgList)
-                runtimeData.onMsgList = newList
             },
 
             /**
@@ -471,7 +449,7 @@
                 }
                 // 是群的话显示通知设置
                 if (item.group_id) {
-                    if (this.canGroupNotice(item.group_id)) {
+                    if (canGroupNotice(item.group_id)) {
                         info.list.push('notice_close')
                     } else {
                         info.list.push('notice_open')
@@ -496,6 +474,26 @@
                         }
                     }
                 }, 100)
+            },
+
+            /**
+             * 显示群收纳盒
+             */
+            showGroupAssistCheck() {
+                if(!this.showGroupAssist && runtimeData.chatInfo.show.id == 0) {
+                    // 如果没有打开聊天框，打开收纳盒中的第一个群；这么做主要是为了防止动画穿帮 😭
+                    const assistGroup = document.getElementById('group-assist-message-list-body')
+                    if(assistGroup && assistGroup.children.length > 0) {
+                        (assistGroup.children[0] as HTMLDivElement).click()
+                        setTimeout(() => {
+                            this.showGroupAssist = !this.showGroupAssist
+                        }, 500)
+                    } else {
+                        this.showGroupAssist = !this.showGroupAssist
+                    }
+                } else {
+                    this.showGroupAssist = !this.showGroupAssist
+                }
             },
 
             showMenuStart(
@@ -537,6 +535,10 @@
     .menu div.item > svg {
         margin: 3px 10px 3px 0 !important;
         font-size: 1rem !important;
+    }
+
+    .msg-menu-bg {
+        background: transparent !important;
     }
 
     @media (max-width: 700px) {

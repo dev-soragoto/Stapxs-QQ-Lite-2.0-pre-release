@@ -388,10 +388,14 @@ textarea:focus {
 
 .friend-list {
     background: var(--color-card-1);
+    transition: transform 0.3s;
     flex-direction: column;
     overflow: hidden;
     display: flex;
     width: 300px;
+}
+.friend-list > div {
+    transition: opacity 0.3s;
 }
 .friend-list .small {
     display: none;
@@ -477,6 +481,28 @@ textarea:focus {
 }
 .friend-list-space {
     background: var(--color-bg);
+}
+
+.friend-list.show {
+    transform: translateX(-100%);
+}
+.friend-list.show > div {
+    opacity: 0;
+}
+.group-assist-message-list {
+    transition: margin 0.3s, opacity 0.4s;
+    margin-right: -300px;
+    opacity: 0;
+    z-index: 1;
+}
+.group-assist-message-list.show {
+    margin-left: -300px;
+    margin-right: 0;
+    transform: unset;
+    opacity: 1;
+}
+.group-assist-message-list.show > div {
+    opacity: 1;
 }
 
 .friend-body {
@@ -1239,6 +1265,15 @@ textarea:focus {
     .friend-list.open > div:first-child > div.small > span {
         display: flex;
     }
+
+    .group-assist-message-list {
+        margin-right: -100%;
+    }
+    .group-assist-message-list.show {
+        margin-left: -100%;
+        margin-right: 0;
+    }
+
     .friend-body {
         background: transparent !important;
         justify-content: center;
@@ -1337,6 +1372,14 @@ textarea:focus {
     .friend-list-space {
         overflow: hidden;
         width: 0;
+    }
+
+    .group-assist-message-list {
+        margin-right: -100% !important;
+    }
+    .group-assist-message-list.show {
+        margin-left: -100% !important;
+        margin-right: 0;
     }
 }
 

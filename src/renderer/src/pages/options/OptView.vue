@@ -20,6 +20,7 @@
                 </div>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('language')" />
                 <font-awesome-icon :icon="['fas', 'earth-asia']" />
                 <div>
                     <span>{{ $t('语言（Language）') }}</span>
@@ -50,6 +51,7 @@
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
                 <div id="opt_view_dark" class="opt-item">
+                    <div :class="checkDefault('opt_view_dark')" />
                     <font-awesome-icon :icon="['fas', 'moon']" />
                     <div>
                         <span>{{ $t('深色模式') }}</span>
@@ -64,6 +66,7 @@
                     </label>
                 </div>
                 <div class="opt-item">
+                    <div :class="checkDefault('opt_auto_dark')" />
                     <font-awesome-icon :icon="['fas', 'toggle-on']" />
                     <div>
                         <span>{{ $t('自动深色模式') }}</span>
@@ -80,6 +83,7 @@
                 <template
                     v-if="runtimeData.sysConfig.opt_auto_win_color != true">
                     <div class="opt-item">
+                        <div :class="checkDefault('theme_color')" />
                         <font-awesome-icon :icon="['fas', 'palette']" />
                         <div>
                             <span>{{ $t('主题色') }}</span>
@@ -103,6 +107,7 @@
             </template>
             <template v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
                 <div class="opt-item">
+                    <div :class="checkDefault('opt_auto_win_color')" />
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
                     <div>
                         <span>{{ $t('自动跟随主题色') }}</span>
@@ -118,6 +123,7 @@
                 </div>
             </template>
             <div class="opt-item">
+                <div :class="checkDefault('chat_background')" />
                 <font-awesome-icon :icon="['fas', 'image']" />
                 <div>
                     <span>{{ $t('背景图片') }}</span>
@@ -128,6 +134,7 @@
                     type="text" name="chat_background" @keyup="save">
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('chat_background_blur')" />
                 <font-awesome-icon :icon="['fas', 'o']" />
                 <div>
                     <span>{{ $t('背景模糊') }}</span>
@@ -146,6 +153,7 @@
         <div class="ss-card">
             <header>{{ $t('页面') }}</header>
             <div class="opt-item">
+                <div :class="checkDefault('chatview_name')" />
                 <font-awesome-icon :icon="['fas', 'table-columns']" />
                 <div>
                     <span>{{ $t('消息页面主题') }}</span>
@@ -164,6 +172,7 @@
                 </select>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('opt_fast_animation')" />
                 <font-awesome-icon :icon="['fas', 'car-side']" />
                 <div>
                     <span>{{ $t('更快的动画速度') }}</span>
@@ -179,6 +188,7 @@
             </div>
             <div v-if="isMobile() && !runtimeData.tags.isCapacitor"
                 class="opt-item">
+                <div :class="checkDefault('initial_scale')" />
                 <font-awesome-icon :icon="['fas', 'up-down-left-right']" />
                 <div>
                     <span>{{ $t('缩放比例') }}</span>
@@ -201,6 +211,7 @@
             <div
                 v-if="isMobile() && !runtimeData.tags.isCapacitor"
                 class="opt-item">
+                <div :class="checkDefault('fs_adaptation')" />
                 <font-awesome-icon :icon="['fas', 'border-top-left']" />
                 <div>
                     <span>{{ $t('圆角适配') }}</span>
@@ -224,6 +235,7 @@
             <div
                 v-if="runtimeData.tags.isElectron"
                 class="opt-item">
+                <div :class="checkDefault('opt_always_top')" />
                 <font-awesome-icon :icon="['fas', 'angle-up']" />
                 <div>
                     <span>{{ $t('置顶窗口') }}</span>
@@ -260,7 +272,7 @@
 <script lang="ts">
     import { defineComponent, toRaw } from 'vue'
     import { runtimeData } from '../../function/msg'
-    import { runASWEvent as save, get } from '../../function/option'
+    import { runASWEvent as save, get, checkDefault } from '../../function/option'
     import { BrowserInfo, detect } from 'detect-browser'
     import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
@@ -273,6 +285,7 @@
             return {
                 get: get,
                 runtimeData: runtimeData,
+                checkDefault: checkDefault,
                 save: save,
                 languages: languages,
                 // 别问我为什么微软是紫色的

@@ -56,6 +56,7 @@
         <div class="ss-card">
             <header>{{ $t('开发者选项') }}</header>
             <div class="opt-item">
+                <div :class="checkDefault('log_level')" />
                 <font-awesome-icon :icon="['fas', 'book']" />
                 <div>
                     <span>{{ $t('日志等级') }}</span>
@@ -78,6 +79,7 @@
                 </select>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('debug_msg')" />
                 <font-awesome-icon :icon="['fas', 'robot']" />
                 <div>
                     <span>{{ $t('禁用消息渲染') }}</span>
@@ -210,6 +212,7 @@
         run,
         runASWEvent as save,
         saveAll,
+        checkDefault,
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
@@ -219,13 +222,13 @@
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
 
-
     export default defineComponent({
         name: 'ViewOptDev',
         data() {
             return {
                 jsonMapName: runtimeData.jsonMap?.name ?? '',
 
+                checkDefault: checkDefault,
                 BotMsgType: BotMsgType,
                 runtimeData: runtimeData,
                 save: save,

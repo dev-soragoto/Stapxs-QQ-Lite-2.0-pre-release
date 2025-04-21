@@ -83,7 +83,6 @@ async function createWindow() {
             backgroundMaterial: 'acrylic',
             frame: false
         }
-        store.set('opt_no_window', 'true')
     } else if(process.platform === 'linux') {
         // Linux
         windowConfig = {
@@ -91,7 +90,6 @@ async function createWindow() {
             transparent: true,
             frame: false
         }
-        store.set('opt_no_window', 'true')
     }
     win = new BrowserWindow(windowConfig)
     win.once('focus', () => {if(win)win.flashFrame(false)})

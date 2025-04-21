@@ -53,10 +53,19 @@
         </div>
         <div class="ss-card jump-card"
             :style="showUI ? '' : 'background: var(--color-card-1);'"
-            @click="dependencies">
+            @click="dependencies()">
             <header>
                 <div />
                 {{ $t('许可版权声明') }}
+            </header>
+            <font-awesome-icon :icon="['fas', 'angle-right']" />
+        </div>
+        <div class="ss-card jump-card"
+            :style="showUI ? '' : 'background: var(--color-card-1);'"
+            @click="dependencies('service', '第三方服务声明')">
+            <header>
+                <div />
+                {{ $t('第三方服务声明') }}
             </header>
             <font-awesome-icon :icon="['fas', 'angle-right']" />
         </div>
@@ -231,11 +240,15 @@
                 })
         },
         methods: {
-            dependencies() {
+            dependencies(type = undefined as string | undefined, title = '许可版权声明') {
                 runtimeData.popBoxList = []
                 const popInfo = {
-                    title: this.$t('许可版权声明'),
+                    title: this.$t(title),
                     template: DepPan,
+                    templateValue: {
+                        type: type,
+                        title: title
+                    },
                 }
                 runtimeData.popBoxList.push(popInfo)
             },

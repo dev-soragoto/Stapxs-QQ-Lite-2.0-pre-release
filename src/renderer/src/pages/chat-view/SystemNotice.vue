@@ -10,7 +10,7 @@
     <div id="chat-pan"
         :class=" 'chat-pan sys-not-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
-            (runtimeData.sysConfig.opt_no_window ? ' withBar' : '')">
+            (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
         <div>
             <font-awesome-icon :icon="['fas', 'angle-left']" @click="exit" />
             <span>{{ $t('系统消息') }}</span>

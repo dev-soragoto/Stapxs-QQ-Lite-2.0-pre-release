@@ -252,9 +252,6 @@ msgstr "基本"
 msgid "ReferenceError: moYu is not defined"
 msgstr "ReferenceError: moYu is not defined"
 
-msgid "关闭群收纳盒"
-msgstr ""
-
 msgid "全都放出来！全都放出来！"
 msgstr ""
 
