@@ -22,7 +22,7 @@ import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
-import { hslToRgb, rgbToHsl } from '@renderer/function/utils/systemUtil'
+import { hslToRgb, ipcSend, rgbToHsl } from '@renderer/function/utils/systemUtil'
 import { toRaw, nextTick } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
@@ -656,8 +656,8 @@ export async function loadAppendStyle() {
             }
         }
 
-        if(runtimeData.tags.isElectron) {
-            runtimeData.plantform.reader?.send('win:maximize')
+        if(runtimeData.tags.isElectron || runtimeData.tags.isTauri) {
+            ipcSend('win:maximize', false)
             const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
             if(topBar) {
                 topBar.style.display = 'none'
@@ -694,7 +694,7 @@ export async function loadAppendStyle() {
     // }
 
     // UI 2.0 附加样式
-    if (runtimeData.tags.isElectron) {
+    if (runtimeData.tags.isElectron || runtimeData.tags.isTauri) {
         import('@renderer/assets/css/append/append_new.css').then(() => {
             logger.info('UI 2.0 附加样式加载完成')
         })
@@ -703,15 +703,15 @@ export async function loadAppendStyle() {
     let subVersion = runtimeData.tags.release?.split('.') as any
     subVersion = subVersion ? Number(subVersion[2]) : 0
     if (
-        runtimeData.tags.isElectron &&
+        (runtimeData.tags.isElectron || runtimeData.tags.isTauri) &&
         (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))
     ) {
         import('@renderer/assets/css/append/append_vibrancy.css').then(() => {
             logger.info('透明 UI 附加样式加载完成')
         })
     }
-    if (runtimeData.tags.isElectron && platform == 'linux') {
-        const gnomeExtInfo = runtimeData.plantform.reader?.invoke('sys:getGnomeExt')
+    if ((runtimeData.tags.isElectron || runtimeData.tags.isTauri) && platform == 'linux') {
+        const gnomeExtInfo = ipcSend('sys:getGnomeExt', true)
         if (gnomeExtInfo) {
             gnomeExtInfo.then((info: any) => {
                 if (

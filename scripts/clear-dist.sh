@@ -13,6 +13,8 @@ dirs=(
     # android
     "src/mobile/android/app/release"
     "src/mobile/android/app/debug"
+    # tauri
+    "src/tauri/target"
 )
 
 for dir in ${dirs[@]}; do

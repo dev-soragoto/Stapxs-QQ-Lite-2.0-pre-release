@@ -1,4 +1,5 @@
 import { IpcRenderer } from '@electron-toolkit/preload'
+import { invoke } from '@tauri-apps/api/core'
 
 export enum BotMsgType {
     CQCode,
@@ -24,6 +25,9 @@ export interface RunTimeDataElem {
     }
     plantform: {
         reader?: IpcRenderer | null,
+        tauri: {
+            invoke: typeof invoke
+        },
         capacitor?: any,
         pulgins?: any,
         vConsole?: any,
@@ -38,8 +42,9 @@ export interface RunTimeDataElem {
             index: number
         }
         loginWaveTimer?: any
-        isCapacitor: boolean
         isElectron: boolean
+        isTauri: boolean
+        isCapacitor: boolean
         platform: string | undefined
         release: string | undefined
         connectSsl: boolean

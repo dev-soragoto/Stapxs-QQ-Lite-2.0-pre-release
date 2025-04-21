@@ -23,7 +23,8 @@
     "build": "vite build",
     "build:electron": "electron-vite build && electron-builder",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
-    "build:android": "vite build && capacitor sync android && capacitor build android"
+    "build:android": "vite build && capacitor sync android && capacitor build android",
+    "build:tauri": "tauri build -c src/tauri/tauri.conf.json"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",

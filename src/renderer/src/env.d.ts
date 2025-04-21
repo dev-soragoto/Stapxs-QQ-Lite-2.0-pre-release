@@ -16,6 +16,7 @@ declare interface Window {
         lat: number,
         lng: number
     }) => void
+    __TAURI_INTERNALS__: any
 }
 
 // po 文件，按字符串处理

@@ -220,8 +220,8 @@ import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
-import { getDeviceType } from './function/utils/systemUtil'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
+import { getDeviceType, ipcSend } from './function/utils/systemUtil'
 
 export default defineComponent({
     name: 'App',
@@ -278,17 +278,26 @@ export default defineComponent({
         // 页面加载完成后
         window.onload = async () => {
             // 初始化全局参数
+            runtimeData.tags.isElectron = window.electron != undefined
+            runtimeData.tags.isTauri = window.__TAURI_INTERNALS__ != undefined
             runtimeData.tags.isCapacitor = window.Capacitor != undefined
                 && window.Capacitor.isNativePlatform()
-            runtimeData.tags.isElectron = window.electron != undefined
-            runtimeData.plantform.reader = window.electron?.ipcRenderer
-            if (runtimeData.plantform.reader) {
+
+            if (runtimeData.tags.isElectron) {
+                runtimeData.plantform.reader = window.electron?.ipcRenderer
                 runtimeData.tags.platform =
                     await runtimeData.plantform.reader.invoke('sys:getPlatform')
                 runtimeData.tags.release =
                     await runtimeData.plantform.reader.invoke('sys:getRelease')
-            }
-            else if (runtimeData.tags.isCapacitor) {
+            } else if (runtimeData.tags.isTauri) {
+                runtimeData.plantform.tauri = {
+                    invoke: (await import('@tauri-apps/api/core')).invoke,
+                }
+                runtimeData.tags.platform =
+                    await runtimeData.plantform.tauri.invoke('sys_get_platform')
+                runtimeData.tags.release =
+                    await runtimeData.plantform.tauri.invoke('sys_get_release')
+            } else if (runtimeData.tags.isCapacitor) {
                 runtimeData.tags.platform = window.Capacitor.getPlatform()
                 runtimeData.plantform.capacitor = window.Capacitor
                 runtimeData.plantform.pulgins = window.Capacitor.Plugins
@@ -332,10 +341,6 @@ export default defineComponent({
             // 基础初始化完成
             logger.debug('欢迎使用 Stapxs QQ Lite！')
             logger.debug('当前启动模式为: ' + this.dev ? 'development' : 'production')
-            logger.add(LogType.DEBUG, 'Electron 环境: '
-                + runtimeData.tags.isElectron, window.electron)
-            logger.add(LogType.DEBUG, 'Capacitor 环境: '
-                + runtimeData.tags.isCapacitor, window.Capacitor)
             // 加载移动平台特性
             App.loadMobile()
             // 加载额外样式
@@ -375,8 +380,8 @@ export default defineComponent({
                 this.connect()
             }
             // 服务发现
-            if (runtimeData.tags.isElectron) {
-                runtimeData.plantform.reader.send('sys:scanNetwork')
+            if (runtimeData.tags.isElectron || runtimeData.tags.isTauri) {
+                ipcSend('sys:scanNetwork', false)
             }
             if(runtimeData.tags.isCapacitor) {
                 const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
@@ -430,6 +435,9 @@ export default defineComponent({
                 } as any
                 if (runtimeData.tags.isElectron) {
                     config.hostName = 'electron.stapxs.cn'
+                }
+                if(runtimeData.tags.isTauri) {
+                    config.hostName = 'tauri.stapxs.cn'
                 }
                 if(runtimeData.tags.isCapacitor) {
                     config.hostName = 'capacitor.stapxs.cn'

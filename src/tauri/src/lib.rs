@@ -3,12 +3,19 @@ use tauri::window::{ Effect, EffectsBuilder, Color };
 use window_vibrancy::*;
 
 #[tauri::command]
-fn get_platform() -> String {
-    return std::env::consts::OS.to_string();
+fn sys_get_platform() -> String {
+    // win32、darwin、linux，其他情况全算做 linux
+    if cfg!(windows) {
+        return "win32".to_string();
+    } else if cfg!(target_os = "macos") {
+        return "darwin".to_string();
+    } else {
+        return "linux".to_string();
+    }
 }
 
 #[tauri::command]
-fn get_release() -> String {
+fn sys_get_release() -> String {
     // if cfg!(windows) {
     //     unsafe {
     //         let mut os_info: OSVERSIONINFOW = zeroed();
@@ -46,7 +53,6 @@ pub fn run() {
             #[cfg(debug_assertions)]
             {
                 window.open_devtools();
-                window.close_devtools();
             }
 
             // #[cfg(target_os = "windows")]
@@ -57,8 +63,8 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            get_platform,
-            get_release,
+            sys_get_platform,
+            sys_get_release,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

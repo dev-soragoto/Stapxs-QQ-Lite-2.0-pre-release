@@ -2,6 +2,7 @@ import app from '@renderer/main'
 
 import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
+import { runtimeData } from '../msg';
 
 /**
  * 异步延迟
@@ -385,4 +386,28 @@ export function getTimeConfig(date: Date) {
         }
     }
     return base
+}
+
+/**
+ * Electron / Tauri IPC 通信统一方法
+ * @param name 事件名称
+ * @param back 是否需要返回值（主要影响 Electron）
+ * @param args 参数
+ * @returns
+ */
+export function ipcSend(name: string, back: boolean, ...args: any[]) {
+    let returnData = undefined as any
+    if (runtimeData.tags.isElectron) {
+        if(back) {
+        returnData = runtimeData.plantform.reader?.invoke(name, ...args)
+        } else {
+            runtimeData.plantform.reader?.send(name, ...args)
+        }
+    } else if (runtimeData.tags.isTauri) {
+        name = name.replaceAll(':', '_')
+            .replace(/([A-Z])/g, '_$1')
+            .toLowerCase()
+        returnData = runtimeData.plantform.tauri?.invoke(name, ...args)
+    }
+    return returnData
 }

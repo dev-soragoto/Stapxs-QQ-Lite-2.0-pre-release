@@ -51,6 +51,7 @@
     import {
         getTimeConfig,
         getTrueLang,
+        ipcSend,
     } from '@renderer/function/utils/systemUtil'
     import { pokeAnime } from '@renderer/function/utils/msgUtil'
 
@@ -71,12 +72,7 @@
                 width: number
                 height: number
             } | null
-            if (runtimeData.tags.isElectron) {
-                const reader = runtimeData.plantform.reader
-                if (reader) {
-                    windowInfo = await reader.invoke('win:getWindowInfo')
-                }
-            }
+            windowInfo = await ipcSend('win:getWindowInfo', true)
             // 补全撤回者信息
             if (
                 this.info.notice_type &&

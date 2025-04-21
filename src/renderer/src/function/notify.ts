@@ -7,6 +7,7 @@ import {
     LocalNotificationsPlugin,
     DeliveredNotifications
 } from '@capacitor/local-notifications'
+import { ipcSend } from './utils/systemUtil'
 
 export class Notify {
     // 针对 MSG 类型的通知，记录用户的通知数量
@@ -21,6 +22,7 @@ export class Notify {
     public notify(info: NotifyInfo) {
         const { $t } = app.config.globalProperties
         const isElectron = runtimeData.tags.isElectron
+        const isTauri = runtimeData.tags.isTauri
         const isCapacitor = runtimeData.tags.isCapacitor
         // 判断当前 userId 是否已存在通知
         const userId = info.tag.split('/')[0]
@@ -37,9 +39,8 @@ export class Notify {
             this.closeAll(userId)
         }
         // 发送消息
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:sendNotice', info)
+        if (isElectron || isTauri) {
+            ipcSend('sys:sendNotice', false, info)
         } else if(isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -88,10 +89,10 @@ export class Notify {
      */
     public notifySingle(info: NotifyInfo) {
         const isElectron = runtimeData.tags.isElectron
+        const isTauri = runtimeData.tags.isTauri
         const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:sendNotice', info)
+        if (isElectron || isTauri) {
+            ipcSend('sys:sendNotice', false, info)
         } else if (isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -134,10 +135,10 @@ export class Notify {
      */
     public async closeAll(userId: string) {
         const isElectron = runtimeData.tags.isElectron
+        const isTauri = runtimeData.tags.isTauri
         const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:closeAllNotice', userId)
+        if (isElectron || isTauri) {
+            ipcSend('sys:closeAllNotice', false, userId)
         } else if(isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -168,9 +169,10 @@ export class Notify {
      */
     public clear() {
         const isElectron = runtimeData.tags.isElectron
+        const isTauri = runtimeData.tags.isTauri
         const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron) {
-            if (runtimeData.plantform.reader) runtimeData.plantform.reader.send('sys:clearNotice')
+        if (isElectron || isTauri) {
+            ipcSend('sys:clearNotice', false)
         } else if(isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -194,9 +196,9 @@ export class Notify {
      */
     private close(tag: string) {
         const isElectron = runtimeData.tags.isElectron
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:closeNotice', tag)
+        const isTauri = runtimeData.tags.isTauri
+        if (isElectron || isTauri) {
+            ipcSend('sys:closeNotice', false, tag)
         } else {
             Notify.notifyList[tag]?.close()
         }
