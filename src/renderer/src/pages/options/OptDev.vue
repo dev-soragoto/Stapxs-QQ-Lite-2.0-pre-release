@@ -56,7 +56,7 @@
         <div class="ss-card">
             <header>{{ $t('开发者选项') }}</header>
             <div class="opt-item">
-                <div :class="checkDefalut('log_level')" />
+                <div :class="checkDefault('log_level')" />
                 <font-awesome-icon :icon="['fas', 'book']" />
                 <div>
                     <span>{{ $t('日志等级') }}</span>
@@ -79,7 +79,7 @@
                 </select>
             </div>
             <div class="opt-item">
-                <div :class="checkDefalut('debug_msg')" />
+                <div :class="checkDefault('debug_msg')" />
                 <font-awesome-icon :icon="['fas', 'robot']" />
                 <div>
                     <span>{{ $t('禁用消息渲染') }}</span>
@@ -212,7 +212,7 @@
         run,
         runASWEvent as save,
         saveAll,
-        optDefault,
+        checkDefault,
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
@@ -228,6 +228,7 @@
             return {
                 jsonMapName: runtimeData.jsonMap?.name ?? '',
 
+                checkDefault: checkDefault,
                 BotMsgType: BotMsgType,
                 runtimeData: runtimeData,
                 save: save,
@@ -244,10 +245,6 @@
             )
         },
         methods: {
-            checkDefalut(name: string) {
-                return (this.runtimeData.sysConfig[name] == undefined ||
-                    this.runtimeData.sysConfig[name] == optDefault[name]) ? '' : 'changed'
-            },
             sendTestWs(event: KeyboardEvent) {
                 // 发送测试 WS 消息
                 if (event.keyCode === 13 && this.ws_text !== '') {

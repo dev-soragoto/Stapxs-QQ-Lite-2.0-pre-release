@@ -627,6 +627,12 @@ export function remove(name: string) {
     saveAll()
 }
 
+// ================ 工具方法 ================
+export function checkDefault(name: string) {
+    return (runtimeData.sysConfig[name] == undefined ||
+        runtimeData.sysConfig[name] == optDefault[name]) ? '' : 'changed'
+}
+
 export default {
     get,
     getRaw,
@@ -636,4 +642,5 @@ export default {
     runAS,
     runASWEvent,
     remove,
+    checkDefault,
 }

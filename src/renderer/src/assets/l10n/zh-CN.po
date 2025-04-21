@@ -1175,3 +1175,9 @@ msgstr ""
 
 msgid "第三方服务声明"
 msgstr ""
+
+msgid "对方正在输入……"
+msgstr ""
+
+msgid "戳了戳你"
+msgstr ""
