@@ -349,8 +349,7 @@ export default defineComponent({
                 baseApp.style.setProperty('--safe-area-right', '0')
                 // Capacitor：移动端初始化安全区域
                 if (runtimeData.tags.clientType == 'capacitor') {
-                    const safeArea = await runtimeData.plantform.
-                        pulgins.SafeArea?.getSafeArea()
+                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
                     if (safeArea) {
                         logger.add(LogType.DEBUG, '安全区域：', safeArea)
                         baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')

@@ -38,7 +38,7 @@ export interface RunTimeDataElem {
         /**
          * 平台类型
          */
-        platform: 'win32' | 'darwin' | 'linux' | undefined
+        platform: 'win32' | 'darwin' | 'linux' | 'android' | 'ios' | 'web' | undefined
         /**
          * 系统发行版本
          */

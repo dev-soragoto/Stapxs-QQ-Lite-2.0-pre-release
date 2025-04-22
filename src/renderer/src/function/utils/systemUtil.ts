@@ -3,6 +3,7 @@ import app from '@renderer/main'
 import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
 import { runtimeData } from '../msg';
+import { Logger, LogType } from '../base';
 
 /**
  * 异步延迟
@@ -405,24 +406,48 @@ export function callBackend(type: string | undefined, name: string, needBack: bo
     }
     if(runtimeData.tags.clientType == 'capacitor') {
         // 去掉冒号前的东西
-        name = name.split(':')[1]
+        if(name.includes(':')) {
+            name = name.split(':')[1]
+        }
     }
     // 调用对应方法
-    if('electron' == runtimeData.tags.clientType) {
-        if(needBack) {
+    try {
+        if('electron' == runtimeData.tags.clientType) {
+            if(needBack) {
+                return runtimeData.plantform.invoke(name, ...args)
+            } else {
+                runtimeData.plantform.send(name, ...args)
+                return undefined
+            }
+        } else if('tauri' == runtimeData.tags.clientType) {
             return runtimeData.plantform.invoke(name, ...args)
-        } else {
-            runtimeData.plantform.send(name, ...args)
-            return undefined
+        } else if('capacitor' == runtimeData.tags.clientType) {
+            let functionGet = runtimeData.plantform.capacitor[name]
+            if(type != undefined && functionGet == undefined) {
+                functionGet = runtimeData.plantform.pulgins[type][name] ??
+                runtimeData.plantform.capacitor[type][name]
+            }
+            return functionGet(...args)
         }
-    } else if('tauri' == runtimeData.tags.clientType) {
-        return runtimeData.plantform.invoke(name, ...args)
-    } else if('capacitor' == runtimeData.tags.clientType) {
-        if(type == undefined) {
-            return runtimeData.plantform.capacitor[name](...args)
-        } else {
-            return runtimeData.plantform.pulgins[type][name](...args)
+    } catch(ex) {
+        let appendString = ''
+        if('capacitor' == runtimeData.tags.clientType) {
+            let functions = runtimeData.plantform.capacitor
+            if(type != undefined) {
+                functions = runtimeData.plantform.pulgins[type]
+            }
+            if(functions != undefined) {
+                appendString += `方法不存在，插件 ${type} 可用方法：`
+            } else {
+                functions = runtimeData.plantform.pulgins
+                appendString += '插件不存在，可用插件：'
+            }
+            // 获取 functions 的所有方法，将方法名使用逗号连接
+            const functionNames = Object.keys(functions).join(', ')
+            appendString += `${functionNames}`
         }
+        new Logger().add(LogType.ERR, `调用后端方法 ${(type ?? '') + ' - '}${name} 失败：${appendString}`, ex)
+        return undefined
     }
 }
 
@@ -435,5 +460,11 @@ export function callBackend(type: string | undefined, name: string, needBack: bo
 export function addBackendListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
     if('electron' == runtimeData.tags.clientType) {
         runtimeData.plantform.on(name, callBack)
+    } else if('tauri' == runtimeData.tags.clientType) {
+        //
+    } else if('capacitor' == runtimeData.tags.clientType) {
+        if(type != undefined) {
+            runtimeData.plantform.pulgins[type].addListener(name, callBack)
+        }
     }
 }

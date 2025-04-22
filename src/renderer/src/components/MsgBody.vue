@@ -564,7 +564,7 @@
                     }
                     sendStatEvent('link_view', { domain: domain })
                     if (runtimeData.tags.clientType != 'web') {
-                        callBackend('OneBot', 'sys:previewLink', true, fistLink)
+                        callBackend('Onebot', 'sys:previewLink', true, fistLink)
                             .then((res) => {
                                 logger.add(LogType.DEBUG, 'Electron Link View: ', res)
                                 this.loadLinkPreview(protocol + domain, res)
@@ -811,7 +811,7 @@
                         height: number
                     } | null
                     if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-                        windowInfo = await callBackend('OneBot', 'win:getWindowInfo', true)
+                        windowInfo = await callBackend('Onebot', 'win:getWindowInfo', true)
                     }
                     const message = document.getElementById('chat-' + this.data.message_id)
                     let item = document.getElementById('app')

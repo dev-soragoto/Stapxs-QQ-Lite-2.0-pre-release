@@ -9,11 +9,17 @@ import AboutPan from '@renderer/components/AboutPan.vue'
 import UpdatePan from '@renderer/components/UpdatePan.vue'
 import WelPan from '@renderer/components/WelPan.vue'
 
+import { KeyboardInfo } from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
-import { hslToRgb, callBackend, rgbToHsl, addBackendListener } from '@renderer/function/utils/systemUtil'
+import {
+    hslToRgb,
+    callBackend,
+    rgbToHsl,
+    addBackendListener
+} from '@renderer/function/utils/systemUtil'
 import { toRaw, nextTick } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
@@ -431,169 +437,154 @@ export function createIpc() {
 * Capacitor：初始化移动平台
 */
 export async function loadMobile() {
-//     const { $t } = app.config.globalProperties
-//     // Capacitor：相关初始化
-//     if(runtimeData.tags.isCapacitor) {
-//         const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-//         const Notice = runtimeData.plantform.capacitor.Plugins
-//             .LocalNotifications as LocalNotificationsPlugin
-//         const Keyboard = runtimeData.plantform.capacitor.Plugins.Keyboard
-//         const StatusBar = runtimeData.plantform.capacitor.Plugins.StatusBar
-//         const NavigationBar = runtimeData.plantform.capacitor.Plugins.NavigationBar
-//         // 注册回调监听
-//         Onebot.addListener('onebot:event', (data) => {
-//             const msg = JSON.parse(data.data)
-//             switch(data.type) {
-//                 case 'onopen': Connector.onopen(login.address, login.token); break
-//                 case 'onmessage': Connector.onmessage(data.data); break
-//                 case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
-//                 case 'onerror': {
-//                     login.creating = false
-//                     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
-//                     break
-//                 }
-//                 case 'onServiceFound': setQuickLogin(msg.address, msg.port); break
-//                 default: break
-//             }
-//         })
-//         // initial-scale 缩放固定为 0.9
-//         const viewport = document.getElementById('viewport')
-//         if (viewport) {
-//             (viewport as any).content =
-//                 'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
-//         }
-//         // 通知
-//         const permission = await Notice.checkPermissions()
-//         if(permission.display.indexOf('prompt') != -1) {
-//             await Notice.requestPermissions()
-//         } else if(permission.display.indexOf('denied') != -1) {
-//             logger.error(null, '通知权限已被拒绝')
-//         } else {
-//             logger.debug('通知权限已开启')
-//             // 注册通知类型
-//             Notice.registerActionTypes({
-//                 types:[{
-//                     id: 'msgQuickReply',
-//                     actions: [{
-//                         id: 'REPLY_ACTION',
-//                         title: '快速回复',
-//                         requiresAuthentication: true,
-//                         input: true,
-//                         inputButtonTitle: '发送',
-//                         inputPlaceholder: '输入回复内容……'
-//                     }]
-//                 }] as ActionType[]
-//             })
-//             // 注册相关事件
-//             Notice.addListener('localNotificationActionPerformed', (info) => {
-//                 const notification =
-//                     info.notification as LocalNotificationSchema
-//                 if(info.actionId == 'tap') {
-//                     // PS：通知被点击后会自动被关闭，所以这里不需要处理
-//                     jumpToChat(notification.extra.userId,
-//                         notification.extra.msgId)
-//                 } else if(info.actionId == 'REPLY_ACTION') {
-//                     // 快速回复
-//                     sendMsgRaw(
-//                         notification.extra.userId,
-//                         notification.extra.chatType,
-//                         parseMsg(
-//                             info.inputValue ?? '',
-//                             [{ type: 'reply', id: String(notification.extra.msgId) }],
-//                             [],
-//                         ),
-//                         true
-//                     )
-//                     // 去消息列表内寻找，去除新消息标记
-//                     for (let i = 0; i <
-//                         runtimeData.baseOnMsgList.length; i++) {
-//                         if (
-//                             runtimeData.baseOnMsgList[i].group_id
-//                                 == notification.extra.userId ||
-//                             runtimeData.baseOnMsgList[i].user_id
-//                                 == notification.extra.userId
-//                         ) {
-//                             runtimeData.baseOnMsgList[i].new_msg = false
-//                             runtimeData.baseOnMsgList[i].highlight = undefined
-//                             break
-//                         }
-//                     }
-//                 }
-//             })
-//         }
-//         // 键盘
-//         Keyboard.setAccessoryBarVisible({ isVisible: false })
-//         Keyboard.addListener('keyboardWillShow', async (info: KeyboardInfo) => {
-//             const keyboardHeight = info.keyboardHeight
+    const { $t } = app.config.globalProperties
+    // Capacitor：相关初始化
+    if(runtimeData.tags.clientType == 'capacitor') {
+        // 注册回调监听
+        addBackendListener('Onebot', 'onebot:event', (data) => {
+            const msg = JSON.parse(data.data)
+            switch(data.type) {
+                case 'onopen': Connector.onopen(login.address, login.token); break
+                case 'onmessage': Connector.onmessage(data.data); break
+                case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
+                case 'onerror': {
+                    login.creating = false
+                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
+                    break
+                }
+                case 'onServiceFound': setQuickLogin(msg.address, msg.port); break
+                default: break
+            }
+        })
+        // initial-scale 缩放固定为 0.9
+        const viewport = document.getElementById('viewport')
+        if (viewport) {
+            (viewport as any).content =
+                'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
+        }
+        // 通知
+        const permission = await callBackend('LocalNotifications', 'checkPermissions', true)
+        if(permission.display.indexOf('prompt') != -1) {
+            await callBackend('LocalNotifications', 'requestPermissions', false)
+        } else if(permission.display.indexOf('denied') != -1) {
+            logger.error(null, '通知权限已被拒绝')
+        } else {
+            logger.debug('通知权限已开启')
+            // 注册通知类型
+            callBackend('LocalNotifications', 'registerActionTypes', false,{
+                types:[{
+                    id: 'msgQuickReply',
+                    actions: [{
+                        id: 'REPLY_ACTION',
+                        title: '快速回复',
+                        requiresAuthentication: true,
+                        input: true,
+                        inputButtonTitle: '发送',
+                        inputPlaceholder: '输入回复内容……'
+                    }]
+                }] as ActionType[]
+            })
+            // 注册相关事件
+            addBackendListener('LocalNotifications', 'localNotificationActionPerformed', (info) => {
+                const notification =
+                    info.notification as LocalNotificationSchema
+                if(info.actionId == 'tap') {
+                    // PS：通知被点击后会自动被关闭，所以这里不需要处理
+                    jumpToChat(notification.extra.userId,
+                        notification.extra.msgId)
+                } else if(info.actionId == 'REPLY_ACTION') {
+                    // 快速回复
+                    sendMsgRaw(
+                        notification.extra.userId,
+                        notification.extra.chatType,
+                        parseMsg( info.inputValue ?? '', [{ type: 'reply', id: String(notification.extra.msgId) }], []),
+                        true
+                    )
+                    // 去消息列表内寻找，去除新消息标记
+                    for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
+                        if (runtimeData.baseOnMsgList[i].group_id == notification.extra.userId || runtimeData.baseOnMsgList[i].user_id == notification.extra.userId) {
+                            runtimeData.baseOnMsgList[i].new_msg = false
+                            runtimeData.baseOnMsgList[i].highlight = undefined
+                            break
+                        }
+                    }
+                }
+            })
+        }
+        // 键盘
+        callBackend('Keyboard', 'setAccessoryBarVisible', false, { isVisible: false })
+        addBackendListener('Keyboard', 'keyboardWillShow', async (info: KeyboardInfo) => {
+            const keyboardHeight = info.keyboardHeight
 
-//             // 调整输入框高度
-//             const sendMore = document.getElementById('send-more')
-//             if(sendMore && keyboardHeight > window.innerHeight / 3) {
-//                 sendMore.style.paddingBottom = '10px'
-//             }
+            // 调整输入框高度
+            const sendMore = document.getElementById('send-more')
+            if(sendMore && keyboardHeight > window.innerHeight / 3) {
+                sendMore.style.paddingBottom = '10px'
+            }
 
-//             const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
-//             const tabBar = document.getElementsByTagName('ul')[0]
-//             // 如果键盘高度低于高度的 1/3 且说 iOS 设备
-//             // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
-//             //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
-//             if(runtimeData.tags.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
-//                 // 修改 ResizeMode
-//                 Keyboard.setResizeMode({ mode: 'none' })
-//                 // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
-//                 const baseApp = document.getElementById('base-app')
-//                 if (safeArea && baseApp) {
-//                     baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 10) + 'px')
-//                 }
-//                 // 调整菜单高度
-//                 if(safeArea && tabBar) {
-//                     tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
-//                 }
-//             } else if (tabBar) {
-//                 // 调整菜单高度
-//                 tabBar.style.setProperty('padding-bottom', '10px', 'important')
-//             }
+            const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+            const tabBar = document.getElementsByTagName('ul')[0]
+            // 如果键盘高度低于高度的 1/3 且是 iOS 设备
+            // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
+            //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
+            if(runtimeData.tags.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
+                // 修改 ResizeMode
+                callBackend('Keyboard', 'setResizeMode', false, { mode: 'none' })
+                // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
+                const baseApp = document.getElementById('base-app')
+                if (safeArea && baseApp) {
+                    baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 10) + 'px')
+                }
+                // 调整菜单高度
+                if(safeArea && tabBar) {
+                    tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
+                }
+            } else if (tabBar) {
+                // 调整菜单高度
+                tabBar.style.setProperty('padding-bottom', '10px', 'important')
+            }
 
-//             // 调整整个 HTML 的高度
-//             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
-//             const html = document.getElementsByTagName('html')[0]
-//             if(html && runtimeData.tags.platform == 'android') {
-//                 const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
-//                 html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
-//             }
-//         })
-//         Keyboard.addListener('keyboardWillHide', async () => {
-//             Keyboard.setResizeMode({ mode: 'native' })
-//             const baseApp = document.getElementById('base-app')
-//             const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
-//             if (safeArea && baseApp) {
-//                 baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-//             }
+            // 调整整个 HTML 的高度
+            // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
+            const html = document.getElementsByTagName('html')[0]
+            if(html && runtimeData.tags.platform == 'android') {
+                const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+                html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
+            }
+        })
+        addBackendListener('Keyboard', 'keyboardWillHide', async () => {
+            callBackend('Keyboard', 'setResizeMode', false, { mode: 'native' })
+            const baseApp = document.getElementById('base-app')
+            const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+            if (safeArea && baseApp) {
+                baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+            }
 
-//             const tabBar = document.getElementsByTagName('ul')[0]
-//             if(tabBar) {
-//                 tabBar.style.paddingBottom = ''
-//             }
-//             const sendMore = document.getElementById('send-more')
-//             if(sendMore) {
-//                 sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
-//             }
-//             // 调整整个 HTML 的高度
-//             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
-//             const html = document.getElementsByTagName('html')[0]
-//             if(html && runtimeData.tags.platform == 'android') {
-//                 html.style.height = 'calc(100%)'
-//             }
-//         })
-//         // 状态栏（Android）
-//         NavigationBar.setTransparency({ isTransparent: true })
-//         StatusBar.setOverlaysWebView({ overlay: true })
-//         StatusBar.setBackgroundColor({ color: '#ffffff00' })
-//     }
+            const tabBar = document.getElementsByTagName('ul')[0]
+            if(tabBar) {
+                tabBar.style.paddingBottom = ''
+            }
+            const sendMore = document.getElementById('send-more')
+            if(sendMore) {
+                sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
+            }
+            // 调整整个 HTML 的高度
+            // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
+            const html = document.getElementsByTagName('html')[0]
+            if(html && runtimeData.tags.platform == 'android') {
+                html.style.height = 'calc(100%)'
+            }
+        })
+        // 状态栏（Android）
+        callBackend('NavigationBar', 'setTransparency', false, { isTransparent: true })
+        callBackend('StatusBar', 'setOverlaysWebView', false, { overlay: true })
+        callBackend('StatusBar', 'setBackgroundColor', false, { color: '#ffffff00' })
+    }
 }
 
 import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
 import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
+import { ActionType, LocalNotificationSchema } from '@capacitor/local-notifications'
 // import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
 /**
 * 装载补充样式

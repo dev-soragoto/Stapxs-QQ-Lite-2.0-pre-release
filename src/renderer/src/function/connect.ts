@@ -39,23 +39,12 @@ export class Connector {
         login.creating = true
 
         // Electron 默认使用后端连接模式
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+        if (runtimeData.tags.clientType != 'web') {
             logger.add(LogType.WS, '使用后端连接模式')
-            callBackend('OneBot', 'onebot:connect', false, {
-                address: address,
-                token: token,
-            })
+            callBackend('Onebot', 'onebot:connect', false,
+                ['electron', 'tauri'].includes(runtimeData.tags.clientType) ?  { address: address, token: token, } : { url: `${address}?access_token=${token}` })
             return
         }
-        // Capacitor 默认使用后端连接模式
-        // if (runtimeData.tags.isCapacitor) {
-        //     logger.add(LogType.WS, '使用后端连接模式')
-        //     const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-        //     if(Onebot) {
-        //         Onebot.connect({ url: `${address}?access_token=${token}` })
-        //     }
-        //     return
-        // }
 
         if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
             if(import.meta.env.VITE_APP_SSE_SUPPORT == 'false') {
@@ -227,7 +216,7 @@ export class Connector {
      */
     static close() {
         if(runtimeData.tags.clientType != 'web') {
-            callBackend('OneBot', 'onebot:close', false)
+            callBackend('Onebot', 'onebot:close', false)
         } else {
             popInfo.add(
                 PopType.INFO,
@@ -281,7 +270,8 @@ export class Connector {
     static sendRaw(json: string) {
         // 发送
         if(runtimeData.tags.clientType != 'web') {
-            callBackend('OneBot', 'onebot:send', false, json)
+            callBackend('Onebot', 'onebot:send', false,
+                runtimeData.tags.clientType == 'capacitor' ? { data: json } : json)
         } else {
             if (websocket) websocket.send(json)
         }

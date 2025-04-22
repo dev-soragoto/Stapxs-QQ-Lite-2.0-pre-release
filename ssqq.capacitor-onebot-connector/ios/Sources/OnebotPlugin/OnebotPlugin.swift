@@ -17,7 +17,9 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
 
         CAPPluginMethod(name: "findService", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "changeIcon", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise),
+
+        CAPPluginMethod(name: "getSystemInfo", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Onebot()
     private let logger = Logger()
@@ -80,5 +82,13 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
                 self.notifyListeners("onebot:icon", data: [ "name": name ])
             })
         ])
+    }
+
+    @objc func getSystemInfo(_ call: CAPPluginCall) {
+        if let capacitorBundle = Bundle(identifier: "io.ionic.Capacitor") {
+            if let version = capacitorBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
+                call.resolve(["success": version])
+            }
+        }
     }
 }

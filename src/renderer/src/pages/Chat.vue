@@ -578,6 +578,7 @@
         loadHistory as loadHistoryFirst,
     } from '@renderer/function/utils/appUtil'
     import {
+        addBackendListener,
         getTimeConfig,
         getTrueLang,
         getViewTime,
@@ -731,9 +732,9 @@
                 },
             )
             // Capacitor：系统返回操作（Android）
-            if(runtimeData.tags.isCapacitor && runtimeData.tags.platform === 'android') {
-                const BaseAPI = runtimeData.plantform.capacitor.Plugins.App
-                BaseAPI.addListener('backButton', () => {
+            if(runtimeData.tags.clientType == 'capacitor' &&
+                runtimeData.tags.platform === 'android') {
+                addBackendListener('App', 'backButton', () => {
                     // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
                     this.tags.chatTouch.openSuccess = true
                     this.chatMoveEnd()

@@ -1,73 +1,94 @@
 import Foundation
-import Network
+import Capacitor
 import os
 
+/**
+ * https://capacitorjs.com/docs/plugins/ios
+ */
 @available(iOS 14.0, *)
-@objc public class Onebot: NSObject {
+@objc(OnebotPlugin)
+public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "OnebotPlugin"
+    public let jsName = "Onebot"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "connect", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "close", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "send", returnType: CAPPluginReturnPromise),
 
-    // 需要返回 type 和 data 两个字段
-    var onEvent: ((String, String) -> Void)?
-    var onOptionEvent: ((String, String) -> Void)?
+        CAPPluginMethod(name: "findService", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "changeIcon", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise),
 
-    private var client: WebSocketClient?
+        CAPPluginMethod(name: "getSystemInfo", returnType: CAPPluginReturnPromise)
+    ]
+    private let implementation = Onebot()
+    private let logger = Logger()
 
-    @objc public func connect(_ url: String) {
+    override public func load() {
+        super.load()
+        logger.info(" _____ _____ _____ _____ __ __  ")
+        logger.info("|   __|_   _|  _  |  _  |  |  | ")
+        logger.info("|__   | | | |     |   __|-   -| ")
+        logger.info("|_____| |_| |__|__|__|  |__|__| CopyRight © Stapx Steve")
+        logger.info("=======================================================")
+        logger.info("Capacitor Onebot 基础连接器加载完成")
+        logger.info("当前执行平台：iOS / iPadOS")
+        logger.info("** 此插件 swift 版本代码 95% 由 Github Copilot 及 OpenAI ChatGPT 4o 生成 **")
 
-        let url = URL(string: url)!
-        if(client != nil) {
-            client?.disconnect()
-        }
-        // 使用 GCD 创建 WebSocket 连接
-        DispatchQueue.global().async {
-            let client = WebSocketClient(url: url, onEvent: { type, data in
-                if let onEvent = self.onEvent {
-                    onEvent(type, data)
-                }
-            })
-            client.connect()
-            // 全局保存 client 对象，避免被销毁
-            self.client = client
-        }
-    }
-
-    @objc public func send(_ data: String) {
-        client?.sendMessage(data)
-    }
-
-    @objc public func close() {
-        client?.disconnect()
-    }
-
-    @objc public func findService() {
-        DispatchQueue.global().async {
-            Task {
-                let lanScanner = LANScanner(onEvent: { type, data in
-                if let onEvent = self.onEvent {
-                    onEvent(type, data)
-                }
-            })
-                await lanScanner.scanCurrentLAN()
+        // 注册 implementation 的 onEvent 回调，需要判断下有没有注册过
+        if implementation.onEvent == nil {
+            implementation.onEvent = { type, data in
+                self.notifyListeners("onebot:event", data: [ "type": type, "data": data ])
             }
         }
     }
 
-    @objc public func changeIcon(_ name: String) {
-        DispatchQueue.main.async {
-            let logger = Logger()
-            logger.debug("更新图标名：\(name)")
-            if UIApplication.shared.supportsAlternateIcons {
-                UIApplication.shared.setAlternateIconName(name.isEmpty ? nil : name) { error in
-                    if let error = error {
-                        logger.error("更新图标失败：\(error.localizedDescription)")
-                    }
-                }
-            }
-        }
+    @objc func connect(_ call: CAPPluginCall) {
+        let url = call.getString("url") ?? ""
+        call.resolve([
+            "success": implementation.connect(url)
+        ])
     }
 
-    @objc public func getUsedIcon(_ send: @escaping ((String) -> Void)) {
-        DispatchQueue.main.async {
-            send(UIApplication.shared.alternateIconName ?? "")
+    @objc func close(_ call: CAPPluginCall) {
+        call.resolve([
+            "success": implementation.close()
+        ])
+    }
+
+    @objc func send(_ call: CAPPluginCall) {
+        let data = call.getString("data") ?? ""
+        call.resolve([
+            "success": implementation.send(data)
+        ])
+    }
+
+    @objc func findService(_ call: CAPPluginCall) {
+        call.resolve([
+            "success": implementation.findService()
+        ])
+    }
+
+    @objc func changeIcon(_ call: CAPPluginCall) {
+        let name = call.getString("name") ?? ""
+        call.resolve([
+            "success": implementation.changeIcon(name)
+        ])
+    }
+
+    @objc func getUsedIcon(_ call: CAPPluginCall) {
+        call.resolve([
+            "success": implementation.getUsedIcon({ name in
+                self.notifyListeners("onebot:icon", data: [ "name": name ])
+            })
+        ])
+    }
+
+    @objc func getSystemInfo(_ call: CAPPluginCall) {
+        if let capacitorBundleURL = Bundle.main.privateFrameworksURL?.appendingPathComponent("Capacitor.framework"),
+           let capacitorBundle = Bundle(url: capacitorBundleURL),
+           let version = capacitorBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
+            call.resolve(["capacitor": ["Capacitor Version", version]])
         }
     }
 }

@@ -35,7 +35,7 @@
                 </select>
             </div>
         </div>
-        <div v-if="runtimeData.tags.isCapacitor" class="ss-card">
+        <div v-if="runtimeData.tags.clientType == 'capacitor'" class="ss-card">
             <header>{{ $t('图标') }}</header>
             <div class="icon-list">
                 <div v-for="item in getIconList()"
@@ -186,7 +186,7 @@
                     </div>
                 </label>
             </div>
-            <div v-if="isMobile() && !runtimeData.tags.isCapacitor"
+            <div v-if="isMobile() && runtimeData.tags.clientType != 'capacitor'"
                 class="opt-item">
                 <div :class="checkDefault('initial_scale')" />
                 <font-awesome-icon :icon="['fas', 'up-down-left-right']" />
@@ -209,7 +209,7 @@
                 </div>
             </div>
             <div
-                v-if="isMobile() && !runtimeData.tags.isCapacitor"
+                v-if="isMobile() && runtimeData.tags.clientType != 'capacitor'"
                 class="opt-item">
                 <div :class="checkDefault('fs_adaptation')" />
                 <font-awesome-icon :icon="['fas', 'border-top-left']" />
@@ -435,11 +435,8 @@
             },
 
             changeIcon(name: string) {
-                const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-                if(Onebot) {
-                    Onebot.changeIcon({ name: name != '' ? (name + 'AppIcon') : name })
-                    this.usedIcon = name
-                }
+                callBackend('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
+                this.usedIcon = name
             },
         },
     })

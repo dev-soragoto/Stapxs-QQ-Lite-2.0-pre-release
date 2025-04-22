@@ -277,7 +277,7 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                 )
             },
             printRuntime() {
-                if(runtimeData.tags.isCapacitor) {
+                if(runtimeData.tags.clientType === 'capacitor') {
                     if(!runtimeData.plantform.vConsole) {
                         runtimeData.plantform.vConsole = new VConsole({
                             theme: runtimeData.tags.darkMode ? 'dark' : 'light',
@@ -287,7 +287,7 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     if (switcher) {
                         (switcher as HTMLDivElement).click()
                     // safeArea
-                    runtimeData.plantform.pulgins.SafeArea?.getSafeArea().then((safeArea) => {
+                    callBackend('SafeArea', 'getSafeArea', true).then((safeArea) => {
                         if (safeArea) {
                             const vcPanel = document.getElementById('__vconsole')?.getElementsByClassName('vc-panel')[0]
                             if (vcPanel) {
@@ -308,7 +308,9 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                 console.log(runtimeData)
                 console.log('=========================')
                 /* eslint-enable no-console */
-                callBackend(undefined, 'win:openDevTools', false)
+                if(runtimeData.tags.clientType !== 'capacitor') {
+                    callBackend(undefined, 'win:openDevTools', false)
+                }
             },
             async printVersionInfo() {
                 new PopInfo().add(
@@ -317,7 +319,12 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                 )
 
                 // 索要框架信息
-                const addInfo = await callBackend(undefined, 'opt:getSystemInfo', false)
+                const addInfo = await callBackend('Onebot', 'opt:getSystemInfo', true)
+                if(runtimeData.tags.clientType === 'capacitor') {
+                    addInfo.vconsole = ['vConsole Version', runtimeData.plantform.vConsole?.version ?? 'Not loaded']
+                }
+
+                debugger
 
                 const browser = detect() as BrowserInfo
                 let info = '```\n'
@@ -326,13 +333,13 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     new Date().toLocaleString() +
                     '\n================================\n'
                 info += 'System Info:\n'
-                info += `    OS Name          -> ${browser.os}\n`
-                info += `    Browser Name     -> ${browser.name}\n`
-                info += `    Browser Version  -> ${browser.version}\n`
+                info += `    OS Name           -> ${browser.os}\n`
+                info += `    Browser Name      -> ${browser.name}\n`
+                info += `    Browser Version   -> ${browser.version}\n`
                 if (addInfo) {
                     const get = addInfo as { [key: string]: [string, string] }
                     Object.keys(get).forEach((name: string) => {
-                        info += `    ${get[name][0]} -> ${get[name][1]}\n`
+                        info += `    ${get[name][0]}  -> ${get[name][1]}\n`
                     })
                 }
                 // 获取安装信息，这儿主要判断几种已提交的包管理安装方式
@@ -348,7 +355,7 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                                         'pacman -Q stapxs-qq-lite-bin',
                                     )
                                 if (pacmanInfo.success) {
-                                    info += '    Install Type     -> aur\n'
+                                    info += '    Install Type      -> aur\n'
                                 } else {
                                     // 也有可能是 stapxs-qq-lite，这是我自己打的原生包
                                     pacmanInfo = await runtimeData.
@@ -357,7 +364,7 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                                             'pacman -Q stapxs-qq-lite',
                                         )
                                     if (pacmanInfo.success) {
-                                        info += '    Install Type     -> pacman\n'
+                                        info += '    Install Type      -> pacman\n'
                                     }
                                 }
                             }
@@ -367,25 +374,25 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                 }
 
                 info += 'Application Info:\n'
-                info += `    Uptime           -> ${Math.floor(((new Date().getTime() - uptime) / 1000) * 100) / 100} s\n`
-                info += `    Package Version  -> ${packageInfo.version}\n`
-                info += `    Service Work     -> ${runtimeData.tags.sw}\n`
+                info += `    Uptime            -> ${Math.floor(((new Date().getTime() - uptime) / 1000) * 100) / 100} s\n`
+                info += `    Package Version   -> ${packageInfo.version}\n`
+                info += `    Service Work      -> ${runtimeData.tags.sw}\n`
 
                 info += 'Backend Info:\n'
-                info += `    Bot Info Name    -> ${runtimeData.botInfo.app_name}\n`
-                info += `    Bot Info Version -> ${runtimeData.botInfo.app_version !== undefined ? runtimeData.botInfo.app_version : runtimeData.botInfo.version}\n`
-                info += `    Loaded Config    -> ${runtimeData.jsonMap?.name}\n`
+                info += `    Bot Info Name     -> ${runtimeData.botInfo.app_name}\n`
+                info += `    Bot Info Version  -> ${runtimeData.botInfo.app_version !== undefined ? runtimeData.botInfo.app_version : runtimeData.botInfo.version}\n`
+                info += `    Loaded Config     -> ${runtimeData.jsonMap?.name}\n`
 
                 info += 'View Info:\n'
-                info += `    Doc Width        -> ${document.getElementById('app')?.offsetWidth} px\n`
+                info += `    Doc Width         -> ${document.getElementById('app')?.offsetWidth} px\n`
 
                 // capactior：索要 safeArea
-                if (runtimeData.tags.isCapacitor) {
-                    const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+                if (runtimeData.tags.clientType === 'capacitor') {
+                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
                     if (safeArea) {
                         // 按照前端习惯，这儿的 safeArea 顺序是 top, right, bottom, left
                         const safeAreaStr = safeArea.top + ', ' + safeArea.right + ', ' + safeArea.bottom + ', ' + safeArea.left
-                        info += `    Safe Area        -> ${safeAreaStr}\n`
+                        info += `    Safe Area         -> ${safeAreaStr}\n`
                     }
                 }
 
@@ -399,9 +406,9 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     try {
                         await fetch(item[1], { method: 'GET' })
                         const end = new Date().getTime()
-                        info += `    ${item[0]} -> ${end - start} ms\n`
+                        info += `    ${item[0]}  -> ${end - start} ms\n`
                     } catch (e) {
-                        info += `    ${item[0]} -> failed\n`
+                        info += `    ${item[0]}  -> failed\n`
                     }
                 }
                 info += '```'

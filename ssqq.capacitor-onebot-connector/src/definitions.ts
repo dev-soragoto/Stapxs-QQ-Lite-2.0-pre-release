@@ -7,4 +7,6 @@ export interface OnebotPlugin {
 
     changeIcon(options: { name: string }): Promise<{ success: boolean }>;
     getUsedIcon(): Promise<{ success: boolean }>;
+
+    getSystemInfo(): Promise<{ success: boolean }>;
 }
