@@ -478,7 +478,7 @@
                                 'x' +
                                 window.screen.height,
                         } as { [key: string]: string }
-                        if (runtimeData.tags.isElectron) {
+                        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                             infoList.Kernel = packageInfo.version + '-electron'
                         }
                         let info = ''

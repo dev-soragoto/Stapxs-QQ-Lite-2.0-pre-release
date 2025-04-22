@@ -1,4 +1,4 @@
-use tauri::{ WebviewWindowBuilder, WebviewUrl, TitleBarStyle };
+use tauri::{ Manager, TitleBarStyle, WebviewUrl, WebviewWindowBuilder };
 use tauri::window::{ Effect, EffectsBuilder, Color };
 use window_vibrancy::*;
 

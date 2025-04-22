@@ -332,7 +332,7 @@
         openLink,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
-    import { getSizeFromBytes, getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
+    import { callBackend, getSizeFromBytes, getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -563,8 +563,8 @@
                         // ignore
                     }
                     sendStatEvent('link_view', { domain: domain })
-                    if (runtimeData.tags.isElectron) {
-                        runtimeData.plantform.reader?.invoke('sys:previewLink', fistLink)
+                    if (runtimeData.tags.clientType != 'web') {
+                        callBackend('OneBot', 'sys:previewLink', true, fistLink)
                             .then((res) => {
                                 logger.add(LogType.DEBUG, 'Electron Link View: ', res)
                                 this.loadLinkPreview(protocol + domain, res)
@@ -810,15 +810,12 @@
                         width: number
                         height: number
                     } | null
-                    if (runtimeData.tags.isElectron) {
-                        const reader = runtimeData.plantform.reader
-                        if (reader) {
-                            windowInfo = await reader.invoke('win:getWindowInfo')
-                        }
+                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                        windowInfo = await callBackend('OneBot', 'win:getWindowInfo', true)
                     }
                     const message = document.getElementById('chat-' + this.data.message_id)
                     let item = document.getElementById('app')
-                    if (runtimeData.tags.isElectron) {
+                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                         item = message?.getElementsByClassName('poke-hand')[0] as HTMLImageElement
                     }
                     this.$nextTick(() => {

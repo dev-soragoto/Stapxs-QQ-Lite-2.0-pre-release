@@ -23,6 +23,8 @@ import {
     updateWinColor,
 } from '@renderer/function/utils/appUtil'
 import {
+    addBackendListener,
+    callBackend,
     getPortableFileLang,
     getTrueLang,
 } from '@renderer/function/utils/systemUtil'
@@ -110,9 +112,7 @@ function updateFarstAnimation(value: boolean) {
 }
 
 function viewAlwaysTop(value: boolean) {
-    if (runtimeData.plantform.reader) {
-        runtimeData.plantform.reader.send('win:alwaysTop', value)
-    }
+    callBackend(undefined, 'win:alwaysTop', false, value)
 }
 
 function viewRevolve(value: boolean) {
@@ -131,11 +131,9 @@ function viewRevolve(value: boolean) {
 
 function updateWinColorOpt(value: boolean) {
     if (value == true) {
-        if (runtimeData.plantform.reader) {
-            runtimeData.plantform.reader.on('sys:WinColorChanged', (_, params) => {
-                updateWinColor(params)
-            })
-        }
+        addBackendListener(undefined, 'sys:WinColorChanged', (_, params) => {
+            updateWinColor(params)
+        })
         loadWinColor()
     }
 }
@@ -366,8 +364,10 @@ function changeChatView(name: string | undefined) {
 export function load(): { [key: string]: any } {
     let data = {} as { [key: string]: any }
 
-    if (runtimeData.plantform.reader) {
-        data = runtimeData.plantform.reader.sendSync('opt:getAll')
+    if ('electron' == runtimeData.tags.clientType) {
+        data = runtimeData.plantform.sendSync('opt:getAll')
+    } else if(runtimeData.tags.isTarui) {
+        //
     } else {
         const str = localStorage.getItem('options')
         if (str != null) {
@@ -470,8 +470,10 @@ export function get(name: string): any {
  * 在 Web 端和 Capacitor 端使用时由于存储在 WebStorage 中，需要特别注意预防上述未转换导致的错误。
  */
 export function getRaw(name: string) {
-    if (runtimeData.plantform.reader) {
-        return runtimeData.plantform.reader.sendSync('opt:get', name)
+    if (runtimeData.tags.clientType == 'electron') {
+        return runtimeData.plantform.sendSync('opt:get', name)
+    } else if(runtimeData.tags.isTarui) {
+        //
     } else {
         // 解析拆分并执行各个设置项的初始化方法
         const str = localStorage.getItem('options')
@@ -519,13 +521,13 @@ export function saveAll(config = {} as { [key: string]: any }) {
     localStorage.setItem('options', str)
 
     // electron：将配置保存
-    if (runtimeData.plantform.reader) {
+    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
         const saveConfig = config
         Object.keys(config).forEach((key) => {
             const isObject = typeof config[key] == 'object'
             saveConfig[key] = isObject? JSON.stringify(config[key]): config[key]
         })
-        runtimeData.plantform.reader.send('opt:saveAll', saveConfig)
+        callBackend(undefined, 'opt:saveAll', false, saveConfig)
     }
 }
 
@@ -596,10 +598,8 @@ export function runASWEvent(event: Event) {
                 {
                     text: app.config.globalProperties.$t('确定'),
                     fun: () => {
-                        if (runtimeData.tags.isElectron) {
-                            if (runtimeData.plantform.reader) {
-                                runtimeData.plantform.reader.send('win:relaunch')
-                            }
+                        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                            callBackend(undefined, 'win:relaunch', false)
                         } else {
                             location.reload()
                         }

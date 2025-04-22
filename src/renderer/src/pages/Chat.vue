@@ -2001,7 +2001,7 @@
                             'setMessageRead',
                         )
                     }
-                    if(runtimeData.tags.isElectron) {
+                    if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                         // 将焦点移动到发送框
                         this.toMainInput()
                     }

@@ -105,7 +105,7 @@
                     </div>
                 </template>
             </template>
-            <template v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
+            <template v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType) && browser.os != 'Linux'">
                 <div class="opt-item">
                     <div :class="checkDefault('opt_auto_win_color')" />
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
@@ -233,7 +233,7 @@
                 </div>
             </div>
             <div
-                v-if="runtimeData.tags.isElectron"
+                v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType)"
                 class="opt-item">
                 <div :class="checkDefault('opt_always_top')" />
                 <font-awesome-icon :icon="['fas', 'angle-up']" />
@@ -274,7 +274,7 @@
     import { runtimeData } from '../../function/msg'
     import { runASWEvent as save, get, checkDefault } from '../../function/option'
     import { BrowserInfo, detect } from 'detect-browser'
-    import { getDeviceType } from '@renderer/function/utils/systemUtil'
+    import { callBackend, getDeviceType } from '@renderer/function/utils/systemUtil'
 
     import languages from '../../assets/l10n/_l10nconfig.json'
     import { sendStatEvent } from '@renderer/function/utils/appUtil'
@@ -397,9 +397,7 @@
             },
 
             restartapp() {
-                if (runtimeData.plantform.reader) {
-                    runtimeData.plantform.reader.send('win:relaunch')
-                }
+                callBackend(undefined, 'win:relaunch', false)
             },
 
             isMobile() {

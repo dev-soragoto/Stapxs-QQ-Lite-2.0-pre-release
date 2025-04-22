@@ -644,7 +644,7 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 // 取整
                 num = Math.round(num)
                 // 输出 translateX
-                if (runtimeData.tags.isElectron && windowInfo) {
+                if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && windowInfo) {
                     const { reader } = runtimeData.plantform
                     if (reader) {
                         reader.send('win:move', {

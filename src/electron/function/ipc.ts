@@ -321,7 +321,7 @@ export function regIpcListener() {
         }
     })
     // 启用服务发现
-    ipcMain.on('sys:scanNetwork', () => {
+    ipcMain.on('sys:findService', () => {
         if(win)
             new ScanNetwork(win).scanNetwork()
     })

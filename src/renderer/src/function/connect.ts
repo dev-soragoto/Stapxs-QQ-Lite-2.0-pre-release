@@ -15,6 +15,7 @@ import { parse, runtimeData } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
+import { callBackend } from './utils/systemUtil'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -38,26 +39,23 @@ export class Connector {
         login.creating = true
 
         // Electron 默认使用后端连接模式
-        if (runtimeData.tags.isElectron) {
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
             logger.add(LogType.WS, '使用后端连接模式')
-            const reader = runtimeData.plantform.reader
-            if (reader) {
-                reader.send('onebot:connect', {
-                    address: address,
-                    token: token,
-                })
-                return
-            }
-        }
-        // Capacitor 默认使用后端连接模式
-        if (runtimeData.tags.isCapacitor) {
-            logger.add(LogType.WS, '使用后端连接模式')
-            const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-            if(Onebot) {
-                Onebot.connect({ url: `${address}?access_token=${token}` })
-            }
+            callBackend('OneBot', 'onebot:connect', false, {
+                address: address,
+                token: token,
+            })
             return
         }
+        // Capacitor 默认使用后端连接模式
+        // if (runtimeData.tags.isCapacitor) {
+        //     logger.add(LogType.WS, '使用后端连接模式')
+        //     const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
+        //     if(Onebot) {
+        //         Onebot.connect({ url: `${address}?access_token=${token}` })
+        //     }
+        //     return
+        // }
 
         if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
             if(import.meta.env.VITE_APP_SSE_SUPPORT == 'false') {
@@ -228,16 +226,8 @@ export class Connector {
      * 正常断开 Websocket 连接
      */
     static close() {
-        if (runtimeData.tags.isElectron) {
-            const reader = runtimeData.plantform.reader
-            if (reader) {
-                reader.send('onebot:close')
-            }
-        } else if(runtimeData.tags.isCapacitor) {
-            const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-            if(Onebot) {
-                Onebot.close()
-            }
+        if(runtimeData.tags.clientType != 'web') {
+            callBackend('OneBot', 'onebot:close', false)
         } else {
             popInfo.add(
                 PopType.INFO,
@@ -290,16 +280,8 @@ export class Connector {
     }
     static sendRaw(json: string) {
         // 发送
-        if (runtimeData.tags.isElectron) {
-            const reader = runtimeData.plantform.reader
-            if (reader) {
-                reader.send('onebot:send', json)
-            }
-        } else if(runtimeData.tags.isCapacitor) {
-            const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-            if(Onebot) {
-                Onebot.send({ data: json })
-            }
+        if(runtimeData.tags.clientType != 'web') {
+            callBackend('OneBot', 'onebot:send', false, json)
         } else {
             if (websocket) websocket.send(json)
         }

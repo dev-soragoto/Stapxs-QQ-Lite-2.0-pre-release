@@ -7,7 +7,7 @@ import {
     LocalNotificationsPlugin,
     DeliveredNotifications
 } from '@capacitor/local-notifications'
-import { ipcSend } from './utils/systemUtil'
+import { callBackend } from './utils/systemUtil'
 
 export class Notify {
     // 针对 MSG 类型的通知，记录用户的通知数量
@@ -21,9 +21,6 @@ export class Notify {
      */
     public notify(info: NotifyInfo) {
         const { $t } = app.config.globalProperties
-        const isElectron = runtimeData.tags.isElectron
-        const isTauri = runtimeData.tags.isTauri
-        const isCapacitor = runtimeData.tags.isCapacitor
         // 判断当前 userId 是否已存在通知
         const userId = info.tag.split('/')[0]
         if (Notify.userNotifyList[userId] === undefined) {
@@ -39,8 +36,8 @@ export class Notify {
             this.closeAll(userId)
         }
         // 发送消息
-        if (isElectron || isTauri) {
-            ipcSend('sys:sendNotice', false, info)
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:sendNotice', false, info)
         } else if(isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -88,11 +85,8 @@ export class Notify {
      * @param info 通知信息
      */
     public notifySingle(info: NotifyInfo) {
-        const isElectron = runtimeData.tags.isElectron
-        const isTauri = runtimeData.tags.isTauri
-        const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron || isTauri) {
-            ipcSend('sys:sendNotice', false, info)
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:sendNotice', false, info)
         } else if (isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -134,11 +128,8 @@ export class Notify {
      * @param userId 用户 ID
      */
     public async closeAll(userId: string) {
-        const isElectron = runtimeData.tags.isElectron
-        const isTauri = runtimeData.tags.isTauri
-        const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron || isTauri) {
-            ipcSend('sys:closeAllNotice', false, userId)
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:closeAllNotice', false, userId)
         } else if(isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -168,11 +159,8 @@ export class Notify {
      * 关闭所有通知
      */
     public clear() {
-        const isElectron = runtimeData.tags.isElectron
-        const isTauri = runtimeData.tags.isTauri
-        const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron || isTauri) {
-            ipcSend('sys:clearNotice', false)
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:clearNotice', false)
         } else if(isCapacitor) {
             const Notice = runtimeData.plantform.capacitor.Plugins
                 .LocalNotifications as LocalNotificationsPlugin
@@ -195,10 +183,8 @@ export class Notify {
      * @param tag 通知标签
      */
     private close(tag: string) {
-        const isElectron = runtimeData.tags.isElectron
-        const isTauri = runtimeData.tags.isTauri
-        if (isElectron || isTauri) {
-            ipcSend('sys:closeNotice', false, tag)
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:closeNotice', false, tag)
         } else {
             Notify.notifyList[tag]?.close()
         }
@@ -222,8 +208,8 @@ export class Notify {
             }
             this.close(tag)
             // MacOS：刷新 touchbar
-            if (runtimeData.tags.isElectron) {
-                runtimeData.plantform.reader?.send('sys:newMessage')
+            if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                callBackend(undefined, 'sys:newMessage', false)
             }
         }
     }

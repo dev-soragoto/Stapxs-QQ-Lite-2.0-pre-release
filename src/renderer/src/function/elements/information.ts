@@ -1,6 +1,3 @@
-import { IpcRenderer } from '@electron-toolkit/preload'
-import { invoke } from '@tauri-apps/api/core'
-
 export enum BotMsgType {
     CQCode,
     Array,
@@ -23,15 +20,7 @@ export interface RunTimeDataElem {
         chatView: any
         msgView: any
     }
-    plantform: {
-        reader?: IpcRenderer | null,
-        tauri: {
-            invoke: typeof invoke
-        },
-        capacitor?: any,
-        pulgins?: any,
-        vConsole?: any,
-    },
+    plantform: {[key: string]: any},
     tags: {
         firstLoad: boolean
         msgType: BotMsgType
@@ -42,10 +31,17 @@ export interface RunTimeDataElem {
             index: number
         }
         loginWaveTimer?: any
-        isElectron: boolean
-        isTauri: boolean
-        isCapacitor: boolean
-        platform: string | undefined
+        /**
+         * 客户端类型
+         */
+        clientType: 'electron' | 'tauri' | 'capacitor' | 'web'
+        /**
+         * 平台类型
+         */
+        platform: 'win32' | 'darwin' | 'linux' | undefined
+        /**
+         * 系统发行版本
+         */
         release: string | undefined
         connectSsl: boolean
         classes: any[]

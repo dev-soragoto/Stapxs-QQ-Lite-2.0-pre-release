@@ -389,25 +389,51 @@ export function getTimeConfig(date: Date) {
 }
 
 /**
- * Electron / Tauri IPC 通信统一方法
- * @param name 事件名称
- * @param back 是否需要返回值（主要影响 Electron）
+ * 调用后端方法
+ * @param type 插件类型
+ * @param name 方法名称
  * @param args 参数
- * @returns
+ * @returns 数据
  */
-export function ipcSend(name: string, back: boolean, ...args: any[]) {
-    let returnData = undefined as any
-    if (runtimeData.tags.isElectron) {
-        if(back) {
-        returnData = runtimeData.plantform.reader?.invoke(name, ...args)
-        } else {
-            runtimeData.plantform.reader?.send(name, ...args)
-        }
-    } else if (runtimeData.tags.isTauri) {
+export function callBackend(type: string | undefined, name: string, needBack: boolean, ...args: any[]) {
+    // 处理名称
+    if(runtimeData.tags.clientType == 'tauri') {
+        // 将冒号替换为下划线同时拆分
         name = name.replaceAll(':', '_')
             .replace(/([A-Z])/g, '_$1')
             .toLowerCase()
-        returnData = runtimeData.plantform.tauri?.invoke(name, ...args)
     }
-    return returnData
+    if(runtimeData.tags.clientType == 'capacitor') {
+        // 去掉冒号前的东西
+        name = name.split(':')[1]
+    }
+    // 调用对应方法
+    if('electron' == runtimeData.tags.clientType) {
+        if(needBack) {
+            return runtimeData.plantform.invoke(name, ...args)
+        } else {
+            runtimeData.plantform.send(name, ...args)
+            return undefined
+        }
+    } else if('tauri' == runtimeData.tags.clientType) {
+        return runtimeData.plantform.invoke(name, ...args)
+    } else if('capacitor' == runtimeData.tags.clientType) {
+        if(type == undefined) {
+            return runtimeData.plantform.capacitor[name](...args)
+        } else {
+            return runtimeData.plantform.pulgins[type][name](...args)
+        }
+    }
+}
+
+/**
+ * 添加后端监听
+ * @param type 插件类型
+ * @param name 方法名称
+ * @param callBack 回调函数
+ */
+export function addBackendListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
+    if('electron' == runtimeData.tags.clientType) {
+        runtimeData.plantform.on(name, callBack)
+    }
 }

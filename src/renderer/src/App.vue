@@ -3,7 +3,8 @@
         {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar">
+    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar"
+        data-tauri-drag-region="true">
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />
         <div class="controller">
@@ -15,7 +16,8 @@
             </div>
         </div>
     </div>
-    <div v-if="runtimeData.tags.platform == 'darwin'" class="controller mac-controller" />
+    <div v-if="runtimeData.tags.platform == 'darwin'" class="controller mac-controller"
+        data-tauri-drag-region="true" />
     <div id="base-app">
         <div class="main-body">
             <ul :style="get('fs_adaptation') > 0 ? `padding-bottom: ${get('fs_adaptation')}px;` : ''">
@@ -221,7 +223,7 @@ import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
-import { getDeviceType, ipcSend } from './function/utils/systemUtil'
+import { getDeviceType, callBackend } from './function/utils/systemUtil'
 
 export default defineComponent({
     name: 'App',
@@ -278,32 +280,25 @@ export default defineComponent({
         // 页面加载完成后
         window.onload = async () => {
             // 初始化全局参数
-            runtimeData.tags.isElectron = window.electron != undefined
-            runtimeData.tags.isTauri = window.__TAURI_INTERNALS__ != undefined
-            runtimeData.tags.isCapacitor = window.Capacitor != undefined
-                && window.Capacitor.isNativePlatform()
-
-            if (runtimeData.tags.isElectron) {
-                runtimeData.plantform.reader = window.electron?.ipcRenderer
-                runtimeData.tags.platform =
-                    await runtimeData.plantform.reader.invoke('sys:getPlatform')
-                runtimeData.tags.release =
-                    await runtimeData.plantform.reader.invoke('sys:getRelease')
-            } else if (runtimeData.tags.isTauri) {
-                runtimeData.plantform.tauri = {
+            runtimeData.tags.clientType = 'web'
+            if(window.electron != undefined) {
+                runtimeData.tags.clientType = 'electron'
+                runtimeData.plantform = window.electron?.ipcRenderer
+            } else if(window.__TAURI_INTERNALS__ != undefined) {
+                runtimeData.tags.clientType = 'tauri'
+                runtimeData.plantform = {
                     invoke: (await import('@tauri-apps/api/core')).invoke,
+                    window: (await import('@tauri-apps/api/window')),
                 }
-                runtimeData.tags.platform =
-                    await runtimeData.plantform.tauri.invoke('sys_get_platform')
-                runtimeData.tags.release =
-                    await runtimeData.plantform.tauri.invoke('sys_get_release')
-            } else if (runtimeData.tags.isCapacitor) {
-                runtimeData.tags.platform = window.Capacitor.getPlatform()
-                runtimeData.plantform.capacitor = window.Capacitor
+            } else if(window.Capacitor != undefined && window.Capacitor.isNativePlatform()) {
+                runtimeData.tags.clientType = 'capacitor'
+                runtimeData.plantform.capacitor = window.Capacitor;
                 runtimeData.plantform.pulgins = window.Capacitor.Plugins
-            } else {
-                runtimeData.tags.platform = 'web'
             }
+
+            runtimeData.tags.platform = await callBackend(undefined, 'sys:getPlatform', true)
+            runtimeData.tags.release = await callBackend(undefined, 'sys:getRelease', true)
+
             app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(
@@ -353,7 +348,7 @@ export default defineComponent({
                 baseApp.style.setProperty('--safe-area-left', '0')
                 baseApp.style.setProperty('--safe-area-right', '0')
                 // Capacitor：移动端初始化安全区域
-                if (runtimeData.tags.isCapacitor) {
+                if (runtimeData.tags.clientType == 'capacitor') {
                     const safeArea = await runtimeData.plantform.
                         pulgins.SafeArea?.getSafeArea()
                     if (safeArea) {
@@ -380,13 +375,7 @@ export default defineComponent({
                 this.connect()
             }
             // 服务发现
-            if (runtimeData.tags.isElectron || runtimeData.tags.isTauri) {
-                ipcSend('sys:scanNetwork', false)
-            }
-            if(runtimeData.tags.isCapacitor) {
-                const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-                Onebot.findService()
-            }
+            callBackend('Onebot', 'sys:findService', false)
             // =============================================================
             // 初始化完成
             // 创建 popstate
@@ -432,16 +421,8 @@ export default defineComponent({
                 const config = {
                     baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
                     websiteId: import.meta.env.VITE_APP_MU_ID,
+                    hostName: runtimeData.tags.clientType + '.stapxs.cn'
                 } as any
-                if (runtimeData.tags.isElectron) {
-                    config.hostName = 'electron.stapxs.cn'
-                }
-                if(runtimeData.tags.isTauri) {
-                    config.hostName = 'tauri.stapxs.cn'
-                }
-                if(runtimeData.tags.isCapacitor) {
-                    config.hostName = 'capacitor.stapxs.cn'
-                }
                 Umami.initialize(config)
             } else if (this.dev) {
                 logger.debug('由于运行在调试模式下，分析组件并未初始化 ……')
@@ -458,7 +439,7 @@ export default defineComponent({
             // 其他状态监听
             this.$watch(() => runtimeData.baseOnMsgList, () => {
                 // macOS：刷新 Touch Bar 列表
-                if (runtimeData.tags.isElectron) {
+                if (runtimeData.tags.clientType == 'electron') {
                     const list = [] as
                         { id: number, name: string, image?: string }[]
                     runtimeData.baseOnMsgList.forEach((item) => {
@@ -468,7 +449,7 @@ export default defineComponent({
                             image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
                         })
                     })
-                    runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
+                    callBackend(undefined, 'sys:flushOnMessage', false, list)
                 }
 
                 // 刷新列表
@@ -500,9 +481,7 @@ export default defineComponent({
          * electron 窗口操作
          */
         controllWin(name: string) {
-            if (runtimeData.plantform.reader) {
-                runtimeData.plantform.reader.send('win:' + name)
-            }
+            callBackend(undefined, 'win:' + name, false)
         },
 
         /**
@@ -655,9 +634,7 @@ export default defineComponent({
             }
 
             // 清理通知
-            if (runtimeData.plantform.reader) {
-                runtimeData.plantform.reader.send('sys:closeAllNotice', data.id)
-            }
+            callBackend(undefined, 'sys:closeAllNotice', false, data.id)
         },
 
         /**

@@ -147,7 +147,7 @@
                     {{ $t('执行') }}
                 </button>
             </div>
-            <template v-if="runtimeData.tags.isElectron">
+            <template v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType)">
                 <div class="opt-item">
                     <font-awesome-icon :icon="['fas', 'power-off']" />
                     <div>
@@ -221,6 +221,7 @@
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
+import { callBackend } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'ViewOptDev',
@@ -307,9 +308,7 @@
                 console.log(runtimeData)
                 console.log('=========================')
                 /* eslint-enable no-console */
-                if (runtimeData.plantform.reader) {
-                    runtimeData.plantform.reader.send('win:openDevTools')
-                }
+                callBackend(undefined, 'win:openDevTools', false)
             },
             async printVersionInfo() {
                 new PopInfo().add(
@@ -317,12 +316,8 @@
                     app.config.globalProperties.$t('正在收集调试消息……'),
                 )
 
-                // electron：索要 electron 信息
-                let addInfo = undefined
-                if (runtimeData.plantform.reader) {
-                    addInfo =
-                        await runtimeData.plantform.reader.invoke('opt:getSystemInfo')
-                }
+                // 索要框架信息
+                const addInfo = await callBackend(undefined, 'opt:getSystemInfo', false)
 
                 const browser = detect() as BrowserInfo
                 let info = '```\n'
@@ -341,19 +336,15 @@
                     })
                 }
                 // 获取安装信息，这儿主要判断几种已提交的包管理安装方式
-                if (
-                    runtimeData.tags.isElectron &&
-                    runtimeData.plantform.reader &&
-                    runtimeData.tags.release
-                ) {
+                if (['electron', 'tauri'].includes(runtimeData.tags.clientType) &&
+                    runtimeData.tags.release) {
                     const process = window.electron?.process
                     switch (process && process.platform) {
                         case 'linux': {
                             // archlinux
                             if (runtimeData.tags.release.toLowerCase().indexOf('arch') > 0) {
                                 let pacmanInfo =
-                                    await runtimeData.plantform.reader.invoke(
-                                        'sys:runCommand',
+                                    await callBackend(undefined, 'sys:runCommand', true,
                                         'pacman -Q stapxs-qq-lite-bin',
                                     )
                                 if (pacmanInfo.success) {
@@ -532,9 +523,7 @@
                                     document.cookie = c.replace(/^ +/, '')
                                         .replace(/=.*/,'=;expires=' + new Date().toUTCString() + ';path=/')
                                 })
-                                if (runtimeData.plantform.reader) {
-                                    runtimeData.plantform.reader.sendSync('opt:clearAll')
-                                }
+                                callBackend(undefined, 'opt:clearAll', false)
                                 location.reload()
                             },
                         },
@@ -550,9 +539,7 @@
                 runtimeData.popBoxList.push(popInfo)
             },
             restartapp() {
-                if (runtimeData.plantform.reader) {
-                    runtimeData.plantform.reader.send('win:relaunch')
-                }
+                callBackend(undefined, 'win:relaunch', false)
             },
             getBotTypeName(index: BotMsgType) {
                 switch (index) {

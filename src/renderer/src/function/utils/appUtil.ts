@@ -9,20 +9,11 @@ import AboutPan from '@renderer/components/AboutPan.vue'
 import UpdatePan from '@renderer/components/UpdatePan.vue'
 import WelPan from '@renderer/components/WelPan.vue'
 
-
-import {
-    LocalNotificationsPlugin,
-    LocalNotificationSchema,
-    ActionType
-} from '@capacitor/local-notifications'
-import {
-    KeyboardInfo
-} from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
-import { hslToRgb, ipcSend, rgbToHsl } from '@renderer/function/utils/systemUtil'
+import { hslToRgb, callBackend, rgbToHsl, addBackendListener } from '@renderer/function/utils/systemUtil'
 import { toRaw, nextTick } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
@@ -67,7 +58,7 @@ export function scrollToMsg(seqName: string, showAnimation: boolean): boolean {
  */
 export function openLink(url: string, external = false) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
-    if (runtimeData.tags.isElectron) {
+    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
         if (!external && !runtimeData.sysConfig.close_browser) {
             runtimeData.popBoxList = []
             const popInfo = {
@@ -244,7 +235,7 @@ export function downloadFile(
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    if (!runtimeData.tags.isElectron) {
+    if (runtimeData.tags.clientType == 'web') {
         try {
             new FileDownloader({
                 url: url,
@@ -258,15 +249,13 @@ export function downloadFile(
             logger.error(e as Error, '下载文件失败')
         }
     } else {
-        if (runtimeData.plantform.reader) {
-            runtimeData.plantform.reader.on('sys:downloadBack', (_, params) => {
-                onprocess(params)
-            })
-            runtimeData.plantform.reader.send('sys:download', {
-                downloadPath: url,
-                fileName: name,
-            })
-        }
+        addBackendListener(undefined, 'sys:downloadBack', (_, params) => {
+            onprocess(params)
+        })
+        callBackend(undefined, 'sys:download', false, {
+            downloadPath: url,
+            fileName: name,
+        })
     }
 }
 
@@ -312,10 +301,8 @@ export function updateWinColor(color: string) {
     }
 }
 export async function loadWinColor() {
-    if (runtimeData.plantform.reader) {
-        // 获取系统主题色
-        updateWinColor(await runtimeData.plantform.reader.invoke('sys:getWinColor'))
-    }
+    // 获取系统主题色
+    updateWinColor(await callBackend(undefined, 'sys:getWinColor', true))
 }
 
 /**
@@ -324,7 +311,7 @@ export async function loadWinColor() {
 export function createMenu() {
     const { $t } = app.config.globalProperties
     // MacOS：初始化菜单
-    if (runtimeData.plantform.reader) {
+    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
         // 初始化菜单
         const menuTitles = {} as { [key: string]: string }
         menuTitles.success = $t(
@@ -363,264 +350,246 @@ export function createMenu() {
         menuTitles.feedback = $t('在 Github 上反馈问题')
         menuTitles.license = $t('许可协议')
 
-        runtimeData.plantform.reader.send('sys:createMenu', menuTitles)
+        callBackend(undefined, 'sys:loadMenu', false, menuTitles)
     }
 }
 export function updateMenu(config: { id: string; action: string; value: any }) {
     // MacOS：更新菜单
-    if (runtimeData.plantform.reader) {
-        runtimeData.plantform.reader.send('sys:updateMenu', config)
-    }
+    callBackend(undefined, 'sys:updateMenu', false, config)
 }
 
 /**
 * Electron：注册系统 IPC
 */
 export function createIpc() {
-    if (runtimeData.plantform.reader) {
-        runtimeData.plantform.reader.on('sys:serviceFound', (_, data) => {
-            setQuickLogin(data.address, data.port)
-        })
-        runtimeData.plantform.reader.on('bot:flushUser', () => {
-            reloadUsers()
-            popInfo.add(
-                PopType.INFO,
-                app.config.globalProperties.$t('刷新用户列表成功'),
-            )
-        })
-        runtimeData.plantform.reader.on('bot:logout', () => {
-            option.remove('auto_connect')
-            Connector.close()
-        })
-        runtimeData.plantform.reader.on('bot:quickReply', (_, data) => {
-            sendMsgRaw(
-                data.id,
-                data.type,
-                parseMsg(
-                    data.content,
-                    [{ type: 'reply', id: String(data.msg) }],
-                    [],
-                ),
-                true,
-            )
-            // 去消息列表内寻找，去除新消息标记
-            for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
-                if (
-                    runtimeData.baseOnMsgList[i].group_id == data.id ||
-                    runtimeData.baseOnMsgList[i].user_id == data.id
-                ) {
-                    runtimeData.baseOnMsgList[i].new_msg = false
-                    runtimeData.baseOnMsgList[i].highlight = undefined
-                    break
-                }
+    // 服务发现
+    addBackendListener(undefined, 'sys:serviceFound', (_, data) => {
+        setQuickLogin(data.address, data.port)
+    })
+    // bot 功能
+    addBackendListener(undefined, 'bot:flushUser', () => {
+        reloadUsers()
+        popInfo.add(PopType.INFO, app.config.globalProperties.$t('刷新用户列表成功'))
+    })
+    addBackendListener(undefined, 'bot:logout', () => {
+        option.remove('auto_connect')
+        Connector.close()
+    })
+    addBackendListener(undefined, 'bot:quickReply', (_, data) => {
+        sendMsgRaw(data.id, data.type,
+            parseMsg(data.content, [{ type: 'reply', id: String(data.msg) }], []), true)
+        // 去消息列表内寻找，去除新消息标记
+        for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
+            if (runtimeData.baseOnMsgList[i].group_id == data.id ||
+                runtimeData.baseOnMsgList[i].user_id == data.id) {
+                runtimeData.baseOnMsgList[i].new_msg = false
+                runtimeData.baseOnMsgList[i].highlight = undefined
+                break
             }
-        })
-
-        runtimeData.plantform.reader.on('sys:handleUri', (_, data) => {
-            logger.info(JSON.stringify(data))
-        })
-        runtimeData.plantform.reader.on('app:about', () => {
+        }
+    })
+    // 应用功能
+    addBackendListener(undefined, 'app:about', () => {
             const popInfo = {
-                title:
-                    app.config.globalProperties.$t('关于') +
-                    ' ' +
-                    app.config.globalProperties.$t('Stapxs QQ Lite'),
+                title: app.config.globalProperties.$t('关于') + ' ' +
+                        app.config.globalProperties.$t('Stapxs QQ Lite'),
                 template: AboutPan,
                 allowQuickClose: false,
             }
             runtimeData.popBoxList.push(popInfo)
         })
-        runtimeData.plantform.reader.on('app:changeTab', (_, name) => {
-            window.focus()
-            document.getElementById('bar-' + name.toLowerCase())?.click()
-        })
-        runtimeData.plantform.reader.on('app:openLink', (_, link) => {
-            openLink(link)
-        })
-        runtimeData.plantform.reader.on('app:error', (_, text) => {
-            new Logger().add(LogType.ERR, text)
-        })
-        runtimeData.plantform.reader.on('app:jumpChat', (_, info) => {
-            jumpToChat(info.userId, info.msgId)
-            new Notify().closeAll(info.userId)
-        })
-
-        // 后端连接模式
-        runtimeData.plantform.reader.on('onebot:onopen', (_, data) => {
-            Connector.onopen(data.address, data.token)
-        })
-        runtimeData.plantform.reader.on('onebot:onmessage', (_, message) => {
-            Connector.onmessage(message)
-        })
-        runtimeData.plantform.reader.on('onebot:onclose', (_, data) => {
-            Connector.onclose(data.code, data.reason, data.address, data.token)
-        })
-    }
+    addBackendListener(undefined, 'sys:handleUri', (_, data) => {
+        logger.info(JSON.stringify(data))
+    })
+    addBackendListener(undefined, 'app:changeTab', (_, name) => {
+        window.focus()
+        document.getElementById('bar-' + name.toLowerCase())?.click()
+    })
+    addBackendListener(undefined, 'app:openLink', (_, link) => {
+        openLink(link)
+    })
+    addBackendListener(undefined, 'app:error', (_, text) => {
+        new Logger().add(LogType.ERR, text)
+    })
+    addBackendListener(undefined, 'app:jumpChat', (_, info) => {
+        jumpToChat(info.userId, info.msgId)
+        new Notify().closeAll(info.userId)
+    })
+    // 后端连接模式
+    addBackendListener(undefined, 'onebot:onopen', (_, data) => {
+        Connector.onopen(data.address, data.token)
+    })
+    addBackendListener(undefined, 'onebot:onmessage', (_, message) => {
+        Connector.onmessage(message)
+    })
+    addBackendListener(undefined, 'onebot:onclose', (_, data) => {
+        Connector.onclose(data.code, data.reason, data.address, data.token)
+    })
 }
 
 /**
 * Capacitor：初始化移动平台
 */
 export async function loadMobile() {
-    const { $t } = app.config.globalProperties
-    // Capacitor：相关初始化
-    if(runtimeData.tags.isCapacitor) {
-        const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-        const Notice = runtimeData.plantform.capacitor.Plugins
-            .LocalNotifications as LocalNotificationsPlugin
-        const Keyboard = runtimeData.plantform.capacitor.Plugins.Keyboard
-        const StatusBar = runtimeData.plantform.capacitor.Plugins.StatusBar
-        const NavigationBar = runtimeData.plantform.capacitor.Plugins.NavigationBar
-        // 注册回调监听
-        Onebot.addListener('onebot:event', (data) => {
-            const msg = JSON.parse(data.data)
-            switch(data.type) {
-                case 'onopen': Connector.onopen(login.address, login.token); break
-                case 'onmessage': Connector.onmessage(data.data); break
-                case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
-                case 'onerror': {
-                    login.creating = false
-                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
-                    break
-                }
-                case 'onServiceFound': setQuickLogin(msg.address, msg.port); break
-                default: break
-            }
-        })
-        // initial-scale 缩放固定为 0.9
-        const viewport = document.getElementById('viewport')
-        if (viewport) {
-            (viewport as any).content =
-                'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
-        }
-        // 通知
-        const permission = await Notice.checkPermissions()
-        if(permission.display.indexOf('prompt') != -1) {
-            await Notice.requestPermissions()
-        } else if(permission.display.indexOf('denied') != -1) {
-            logger.error(null, '通知权限已被拒绝')
-        } else {
-            logger.debug('通知权限已开启')
-            // 注册通知类型
-            Notice.registerActionTypes({
-                types:[{
-                    id: 'msgQuickReply',
-                    actions: [{
-                        id: 'REPLY_ACTION',
-                        title: '快速回复',
-                        requiresAuthentication: true,
-                        input: true,
-                        inputButtonTitle: '发送',
-                        inputPlaceholder: '输入回复内容……'
-                    }]
-                }] as ActionType[]
-            })
-            // 注册相关事件
-            Notice.addListener('localNotificationActionPerformed', (info) => {
-                const notification =
-                    info.notification as LocalNotificationSchema
-                if(info.actionId == 'tap') {
-                    // PS：通知被点击后会自动被关闭，所以这里不需要处理
-                    jumpToChat(notification.extra.userId,
-                        notification.extra.msgId)
-                } else if(info.actionId == 'REPLY_ACTION') {
-                    // 快速回复
-                    sendMsgRaw(
-                        notification.extra.userId,
-                        notification.extra.chatType,
-                        parseMsg(
-                            info.inputValue ?? '',
-                            [{ type: 'reply', id: String(notification.extra.msgId) }],
-                            [],
-                        ),
-                        true
-                    )
-                    // 去消息列表内寻找，去除新消息标记
-                    for (let i = 0; i <
-                        runtimeData.baseOnMsgList.length; i++) {
-                        if (
-                            runtimeData.baseOnMsgList[i].group_id
-                                == notification.extra.userId ||
-                            runtimeData.baseOnMsgList[i].user_id
-                                == notification.extra.userId
-                        ) {
-                            runtimeData.baseOnMsgList[i].new_msg = false
-                            runtimeData.baseOnMsgList[i].highlight = undefined
-                            break
-                        }
-                    }
-                }
-            })
-        }
-        // 键盘
-        Keyboard.setAccessoryBarVisible({ isVisible: false })
-        Keyboard.addListener('keyboardWillShow', async (info: KeyboardInfo) => {
-            const keyboardHeight = info.keyboardHeight
+//     const { $t } = app.config.globalProperties
+//     // Capacitor：相关初始化
+//     if(runtimeData.tags.isCapacitor) {
+//         const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
+//         const Notice = runtimeData.plantform.capacitor.Plugins
+//             .LocalNotifications as LocalNotificationsPlugin
+//         const Keyboard = runtimeData.plantform.capacitor.Plugins.Keyboard
+//         const StatusBar = runtimeData.plantform.capacitor.Plugins.StatusBar
+//         const NavigationBar = runtimeData.plantform.capacitor.Plugins.NavigationBar
+//         // 注册回调监听
+//         Onebot.addListener('onebot:event', (data) => {
+//             const msg = JSON.parse(data.data)
+//             switch(data.type) {
+//                 case 'onopen': Connector.onopen(login.address, login.token); break
+//                 case 'onmessage': Connector.onmessage(data.data); break
+//                 case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
+//                 case 'onerror': {
+//                     login.creating = false
+//                     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
+//                     break
+//                 }
+//                 case 'onServiceFound': setQuickLogin(msg.address, msg.port); break
+//                 default: break
+//             }
+//         })
+//         // initial-scale 缩放固定为 0.9
+//         const viewport = document.getElementById('viewport')
+//         if (viewport) {
+//             (viewport as any).content =
+//                 'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
+//         }
+//         // 通知
+//         const permission = await Notice.checkPermissions()
+//         if(permission.display.indexOf('prompt') != -1) {
+//             await Notice.requestPermissions()
+//         } else if(permission.display.indexOf('denied') != -1) {
+//             logger.error(null, '通知权限已被拒绝')
+//         } else {
+//             logger.debug('通知权限已开启')
+//             // 注册通知类型
+//             Notice.registerActionTypes({
+//                 types:[{
+//                     id: 'msgQuickReply',
+//                     actions: [{
+//                         id: 'REPLY_ACTION',
+//                         title: '快速回复',
+//                         requiresAuthentication: true,
+//                         input: true,
+//                         inputButtonTitle: '发送',
+//                         inputPlaceholder: '输入回复内容……'
+//                     }]
+//                 }] as ActionType[]
+//             })
+//             // 注册相关事件
+//             Notice.addListener('localNotificationActionPerformed', (info) => {
+//                 const notification =
+//                     info.notification as LocalNotificationSchema
+//                 if(info.actionId == 'tap') {
+//                     // PS：通知被点击后会自动被关闭，所以这里不需要处理
+//                     jumpToChat(notification.extra.userId,
+//                         notification.extra.msgId)
+//                 } else if(info.actionId == 'REPLY_ACTION') {
+//                     // 快速回复
+//                     sendMsgRaw(
+//                         notification.extra.userId,
+//                         notification.extra.chatType,
+//                         parseMsg(
+//                             info.inputValue ?? '',
+//                             [{ type: 'reply', id: String(notification.extra.msgId) }],
+//                             [],
+//                         ),
+//                         true
+//                     )
+//                     // 去消息列表内寻找，去除新消息标记
+//                     for (let i = 0; i <
+//                         runtimeData.baseOnMsgList.length; i++) {
+//                         if (
+//                             runtimeData.baseOnMsgList[i].group_id
+//                                 == notification.extra.userId ||
+//                             runtimeData.baseOnMsgList[i].user_id
+//                                 == notification.extra.userId
+//                         ) {
+//                             runtimeData.baseOnMsgList[i].new_msg = false
+//                             runtimeData.baseOnMsgList[i].highlight = undefined
+//                             break
+//                         }
+//                     }
+//                 }
+//             })
+//         }
+//         // 键盘
+//         Keyboard.setAccessoryBarVisible({ isVisible: false })
+//         Keyboard.addListener('keyboardWillShow', async (info: KeyboardInfo) => {
+//             const keyboardHeight = info.keyboardHeight
 
-            // 调整输入框高度
-            const sendMore = document.getElementById('send-more')
-            if(sendMore && keyboardHeight > window.innerHeight / 3) {
-                sendMore.style.paddingBottom = '10px'
-            }
+//             // 调整输入框高度
+//             const sendMore = document.getElementById('send-more')
+//             if(sendMore && keyboardHeight > window.innerHeight / 3) {
+//                 sendMore.style.paddingBottom = '10px'
+//             }
 
-            const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
-            const tabBar = document.getElementsByTagName('ul')[0]
-            // 如果键盘高度低于高度的 1/3 且说 iOS 设备
-            // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
-            //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
-            if(runtimeData.tags.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
-                // 修改 ResizeMode
-                Keyboard.setResizeMode({ mode: 'none' })
-                // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
-                const baseApp = document.getElementById('base-app')
-                if (safeArea && baseApp) {
-                    baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 10) + 'px')
-                }
-                // 调整菜单高度
-                if(safeArea && tabBar) {
-                    tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
-                }
-            } else if (tabBar) {
-                // 调整菜单高度
-                tabBar.style.setProperty('padding-bottom', '10px', 'important')
-            }
+//             const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+//             const tabBar = document.getElementsByTagName('ul')[0]
+//             // 如果键盘高度低于高度的 1/3 且说 iOS 设备
+//             // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
+//             //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
+//             if(runtimeData.tags.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
+//                 // 修改 ResizeMode
+//                 Keyboard.setResizeMode({ mode: 'none' })
+//                 // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
+//                 const baseApp = document.getElementById('base-app')
+//                 if (safeArea && baseApp) {
+//                     baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 10) + 'px')
+//                 }
+//                 // 调整菜单高度
+//                 if(safeArea && tabBar) {
+//                     tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
+//                 }
+//             } else if (tabBar) {
+//                 // 调整菜单高度
+//                 tabBar.style.setProperty('padding-bottom', '10px', 'important')
+//             }
 
-            // 调整整个 HTML 的高度
-            // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
-            const html = document.getElementsByTagName('html')[0]
-            if(html && runtimeData.tags.platform == 'android') {
-                const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
-                html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
-            }
-        })
-        Keyboard.addListener('keyboardWillHide', async () => {
-            Keyboard.setResizeMode({ mode: 'native' })
-            const baseApp = document.getElementById('base-app')
-            const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
-            if (safeArea && baseApp) {
-                baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-            }
+//             // 调整整个 HTML 的高度
+//             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
+//             const html = document.getElementsByTagName('html')[0]
+//             if(html && runtimeData.tags.platform == 'android') {
+//                 const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+//                 html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
+//             }
+//         })
+//         Keyboard.addListener('keyboardWillHide', async () => {
+//             Keyboard.setResizeMode({ mode: 'native' })
+//             const baseApp = document.getElementById('base-app')
+//             const safeArea = await runtimeData.plantform.pulgins.SafeArea?.getSafeArea()
+//             if (safeArea && baseApp) {
+//                 baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+//             }
 
-            const tabBar = document.getElementsByTagName('ul')[0]
-            if(tabBar) {
-                tabBar.style.paddingBottom = ''
-            }
-            const sendMore = document.getElementById('send-more')
-            if(sendMore) {
-                sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
-            }
-            // 调整整个 HTML 的高度
-            // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
-            const html = document.getElementsByTagName('html')[0]
-            if(html && runtimeData.tags.platform == 'android') {
-                html.style.height = 'calc(100%)'
-            }
-        })
-        // 状态栏（Android）
-        NavigationBar.setTransparency({ isTransparent: true })
-        StatusBar.setOverlaysWebView({ overlay: true })
-        StatusBar.setBackgroundColor({ color: '#ffffff00' })
-    }
+//             const tabBar = document.getElementsByTagName('ul')[0]
+//             if(tabBar) {
+//                 tabBar.style.paddingBottom = ''
+//             }
+//             const sendMore = document.getElementById('send-more')
+//             if(sendMore) {
+//                 sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
+//             }
+//             // 调整整个 HTML 的高度
+//             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
+//             const html = document.getElementsByTagName('html')[0]
+//             if(html && runtimeData.tags.platform == 'android') {
+//                 html.style.height = 'calc(100%)'
+//             }
+//         })
+//         // 状态栏（Android）
+//         NavigationBar.setTransparency({ isTransparent: true })
+//         StatusBar.setOverlaysWebView({ overlay: true })
+//         StatusBar.setBackgroundColor({ color: '#ffffff00' })
+//     }
 }
 
 import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
@@ -638,7 +607,7 @@ export async function loadAppendStyle() {
                 logger.info(`${platform} 平台附加样式加载完成`)
             })
             .catch(() => {
-                logger.info('未找到对应平台的附加样式')
+                logger.info('未找到对应平台的附加样式：' + platform)
             })
     }
 
@@ -656,15 +625,15 @@ export async function loadAppendStyle() {
             }
         }
 
-        if(runtimeData.tags.isElectron || runtimeData.tags.isTauri) {
-            ipcSend('win:maximize', false)
+        if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'win:maximize', false)
             const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
             if(topBar) {
                 topBar.style.display = 'none'
             }
         }
     }
-    if(runtimeData.tags.isCapacitor) {
+    if(runtimeData.tags.clientType == 'capacitor') {
         const styleTag = document.createElement('style')
         styleTag.id = 'mobile-css'
         document.head.appendChild(styleTag)
@@ -674,27 +643,9 @@ export async function loadAppendStyle() {
             updateCss()
         })
     }
-    // if((runtimeData.tags.isElectron && runtimeData.tags.platform == 'win32')) {
-    //     runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
-    //         if(isTabletMode) {
-    //             const styleTag = document.createElement('style')
-    //             styleTag.id = 'mobile-css'
-    //             document.head.appendChild(styleTag)
-    //             updateCss(windowsCss)
-    //         }
-    //     })
-    //     // 屏幕旋转事件处理
-    //     window.addEventListener('resize', () => {
-    //         runtimeData.plantform.reader?.invoke('sys:isTabletMode').then((isTabletMode: boolean) => {
-    //             if(isTabletMode) {
-    //                 updateCss(windowsCss)
-    //             }
-    //         })
-    //     })
-    // }
 
     // UI 2.0 附加样式
-    if (runtimeData.tags.isElectron || runtimeData.tags.isTauri) {
+    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
         import('@renderer/assets/css/append/append_new.css').then(() => {
             logger.info('UI 2.0 附加样式加载完成')
         })
@@ -702,16 +653,14 @@ export async function loadAppendStyle() {
     // 透明 UI 附加样式
     let subVersion = runtimeData.tags.release?.split('.') as any
     subVersion = subVersion ? Number(subVersion[2]) : 0
-    if (
-        (runtimeData.tags.isElectron || runtimeData.tags.isTauri) &&
-        (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))
-    ) {
+    if (['electron', 'tauri'].includes(runtimeData.tags.clientType) &&
+        (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))) {
         import('@renderer/assets/css/append/append_vibrancy.css').then(() => {
             logger.info('透明 UI 附加样式加载完成')
         })
     }
-    if ((runtimeData.tags.isElectron || runtimeData.tags.isTauri) && platform == 'linux') {
-        const gnomeExtInfo = ipcSend('sys:getGnomeExt', true)
+    if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && platform == 'linux') {
+        const gnomeExtInfo = callBackend(undefined, 'sys:getGnomeExt', true)
         if (gnomeExtInfo) {
             gnomeExtInfo.then((info: any) => {
                 if (
@@ -815,7 +764,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         message: msg,
         updated: isUpdated,
     }
-    const buttonGoUpdate = (runtimeData.tags.isElectron || runtimeData.tags.isCapacitor) ? [
+    const buttonGoUpdate = (runtimeData.tags.clientType != 'web') ? [
               {
                   text: $t('知道了'),
                   fun: () => runtimeData.popBoxList.shift(),
@@ -1007,20 +956,14 @@ export function checkNotice() {
 * @param cookies Cookies
 * @param data 数据
 */
-export function BackendRequest(
-    type: 'GET' | 'POST',
-    url: string,
-    cookies: string[],
-    data: any = undefined,
-) {
-    if (runtimeData.plantform.reader) {
-        runtimeData.plantform.reader.send('sys:requestHttp', {
-            type: type,
-            url: url,
-            cookies: JSON.stringify(cookies),
-            data: data,
-        })
-    }
+export function BackendRequest(type: 'GET' | 'POST', url: string,
+        cookies: string[], data: any = undefined) {
+    callBackend(undefined, 'sys:requestHttp', false, {
+        type: type,
+        url: url,
+        cookies: JSON.stringify(cookies),
+        data: data,
+    })
 }
 
 /**

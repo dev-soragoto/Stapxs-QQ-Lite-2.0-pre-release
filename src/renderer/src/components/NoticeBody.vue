@@ -51,7 +51,7 @@
     import {
         getTimeConfig,
         getTrueLang,
-        ipcSend,
+        callBackend,
     } from '@renderer/function/utils/systemUtil'
     import { pokeAnime } from '@renderer/function/utils/msgUtil'
 
@@ -72,7 +72,7 @@
                 width: number
                 height: number
             } | null
-            windowInfo = await ipcSend('win:getWindowInfo', true)
+            windowInfo = await callBackend(undefined, 'win:getWindowInfo', true)
             // 补全撤回者信息
             if (
                 this.info.notice_type &&
@@ -106,7 +106,7 @@
             if (this.info.sub_type === 'poke' && this.info.pokeMe &&
                 this.info == runtimeData.messageList[runtimeData.messageList.length - 1]) {
                     let item = document.getElementById('app')
-                    if (runtimeData.tags.isElectron) {
+                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                         item = document.getElementById('notice-' + this.id)?.getElementsByClassName('space')[0] as HTMLElement
                     }
                     pokeAnime(item, windowInfo)
