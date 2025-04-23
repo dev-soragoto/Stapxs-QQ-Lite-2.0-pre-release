@@ -1,6 +1,8 @@
 <template>
     <div v-if="dev" class="dev-bar">
-        {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
+        Stapxs QQ Lite Development Mode
+        {{ ' / platform: ' + runtimeData.tags.platform }}
+        {{ ' / client: ' + runtimeData.tags.clientType }}
         {{ ' / fps: ' + fps.value }}
     </div>
     <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar"
@@ -288,7 +290,8 @@ export default defineComponent({
                 runtimeData.tags.clientType = 'tauri'
                 runtimeData.plantform = {
                     invoke: (await import('@tauri-apps/api/core')).invoke,
-                    window: (await import('@tauri-apps/api/window')),
+                    listen: (await import('@tauri-apps/api/event')).listen,
+                    // window: (await import('@tauri-apps/api/window')),
                 }
             } else if(window.Capacitor != undefined && window.Capacitor.isNativePlatform()) {
                 runtimeData.tags.clientType = 'capacitor'

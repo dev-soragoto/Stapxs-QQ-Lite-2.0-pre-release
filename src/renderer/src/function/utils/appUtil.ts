@@ -369,8 +369,9 @@ export function updateMenu(config: { id: string; action: string; value: any }) {
 */
 export function createIpc() {
     // 服务发现
-    addBackendListener(undefined, 'sys:serviceFound', (_, data) => {
-        setQuickLogin(data.address, data.port)
+    addBackendListener(undefined, 'sys:serviceFound', (event, data) => {
+        const info = data ?? event.payload
+        setQuickLogin(info.address, info.port)
     })
     // bot 功能
     addBackendListener(undefined, 'bot:flushUser', () => {
@@ -381,13 +382,14 @@ export function createIpc() {
         option.remove('auto_connect')
         Connector.close()
     })
-    addBackendListener(undefined, 'bot:quickReply', (_, data) => {
-        sendMsgRaw(data.id, data.type,
-            parseMsg(data.content, [{ type: 'reply', id: String(data.msg) }], []), true)
+    addBackendListener(undefined, 'bot:quickReply', (event, data) => {
+        const info = data ?? event.payload
+        sendMsgRaw(info.id, info.type,
+            parseMsg(info.content, [{ type: 'reply', id: String(info.msg) }], []), true)
         // 去消息列表内寻找，去除新消息标记
         for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
-            if (runtimeData.baseOnMsgList[i].group_id == data.id ||
-                runtimeData.baseOnMsgList[i].user_id == data.id) {
+            if (runtimeData.baseOnMsgList[i].group_id == info.id ||
+                runtimeData.baseOnMsgList[i].user_id == info.id) {
                 runtimeData.baseOnMsgList[i].new_msg = false
                 runtimeData.baseOnMsgList[i].highlight = undefined
                 break
@@ -404,32 +406,35 @@ export function createIpc() {
             }
             runtimeData.popBoxList.push(popInfo)
         })
-    addBackendListener(undefined, 'sys:handleUri', (_, data) => {
-        logger.info(JSON.stringify(data))
+    addBackendListener(undefined, 'sys:handleUri', (event, data) => {
+        logger.info(JSON.stringify(data ?? event.payload))
     })
-    addBackendListener(undefined, 'app:changeTab', (_, name) => {
+    addBackendListener(undefined, 'app:changeTab', (event, name) => {
         window.focus()
-        document.getElementById('bar-' + name.toLowerCase())?.click()
+        document.getElementById('bar-' + (name ?? event.payload).toLowerCase())?.click()
     })
-    addBackendListener(undefined, 'app:openLink', (_, link) => {
-        openLink(link)
+    addBackendListener(undefined, 'app:openLink', (event, link) => {
+        openLink(link ?? event.payload)
     })
-    addBackendListener(undefined, 'app:error', (_, text) => {
-        new Logger().add(LogType.ERR, text)
+    addBackendListener(undefined, 'app:error', (event, text) => {
+        new Logger().add(LogType.ERR, text ?? event.payload)
     })
-    addBackendListener(undefined, 'app:jumpChat', (_, info) => {
+    addBackendListener(undefined, 'app:jumpChat', (event, data) => {
+        const info = data ?? event.payload
         jumpToChat(info.userId, info.msgId)
         new Notify().closeAll(info.userId)
     })
     // 后端连接模式
-    addBackendListener(undefined, 'onebot:onopen', (_, data) => {
-        Connector.onopen(data.address, data.token)
+    addBackendListener(undefined, 'onebot:onopen', (event, data) => {
+        const info = data ?? event.payload
+        Connector.onopen(info.address, info.token)
     })
-    addBackendListener(undefined, 'onebot:onmessage', (_, message) => {
-        Connector.onmessage(message)
+    addBackendListener(undefined, 'onebot:onmessage', (event, message) => {
+        Connector.onmessage(message ?? event.payload)
     })
-    addBackendListener(undefined, 'onebot:onclose', (_, data) => {
-        Connector.onclose(data.code, data.reason, data.address, data.token)
+    addBackendListener(undefined, 'onebot:onclose', (event, data) => {
+        const info = data ?? event.payload
+        Connector.onclose(info.code, info.reason, info.address, info.token)
     })
 }
 

@@ -420,7 +420,12 @@ export function callBackend(type: string | undefined, name: string, needBack: bo
                 return undefined
             }
         } else if('tauri' == runtimeData.tags.clientType) {
-            return runtimeData.plantform.invoke(name, ...args)
+            // tauri 这边必须传入一个字典
+            if(args.length == 0 || Object.prototype.toString.call(args[0]) === '[object Object]') {
+                return runtimeData.plantform.invoke(name, args[0])
+            } else {
+                return runtimeData.plantform.invoke(name, { data: args[0] })
+            }
         } else if('capacitor' == runtimeData.tags.clientType) {
             let functionGet = runtimeData.plantform.capacitor[name]
             if(type != undefined && functionGet == undefined) {
@@ -461,7 +466,7 @@ export function addBackendListener(type: string | undefined, name: string, callB
     if('electron' == runtimeData.tags.clientType) {
         runtimeData.plantform.on(name, callBack)
     } else if('tauri' == runtimeData.tags.clientType) {
-        //
+        runtimeData.plantform.listen(name, callBack)
     } else if('capacitor' == runtimeData.tags.clientType) {
         if(type != undefined) {
             runtimeData.plantform.pulgins[type].addListener(name, callBack)

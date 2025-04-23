@@ -324,8 +324,6 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     addInfo.vconsole = ['vConsole Version', runtimeData.plantform.vConsole?.version ?? 'Not loaded']
                 }
 
-                debugger
-
                 const browser = detect() as BrowserInfo
                 let info = '```\n'
                 info +=

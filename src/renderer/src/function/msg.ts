@@ -1850,6 +1850,7 @@ const baseRuntime = {
         msgType: BotMsgType.Array,
         isElectron: false,
         isCapacitor: false,
+        clientType: 'web' as const,
         platform: undefined,
         release: undefined,
         connectSsl: false,
