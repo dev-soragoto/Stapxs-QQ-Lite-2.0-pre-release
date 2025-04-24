@@ -1,7 +1,7 @@
 use futures_util::{StreamExt, SinkExt};
 use tokio::sync::mpsc;
 use tokio_tungstenite::connect_async;
-use tungstenite::protocol::Message;
+use tungstenite::{protocol::{frame::coding::CloseCode, Message}, Utf8Bytes};
 
 pub struct WebSocketClient {
     sender: mpsc::UnboundedSender<Message>,
@@ -12,7 +12,7 @@ impl WebSocketClient {
     where
         F1: FnMut() + Send + 'static,
         F2: FnMut(String) + Send + 'static,
-        F3: FnMut() + Send + 'static,
+        F3: FnMut(CloseCode, Utf8Bytes) + Send + 'static,
     {
         let (ws_stream, _) = connect_async(url).await?;
 
@@ -40,15 +40,15 @@ impl WebSocketClient {
                     // Ok(Message::Binary(bin)) => {
                     //     on_message(format!("[binary] {:?}", bin));
                     // }
-                    Ok(Message::Close(_)) => {
+                    Ok(Message::Close(Some(frame))) => {
                         // 收到 Close，触发 on_close
-                        on_close();
+                        on_close(frame.code, frame.reason);
                         break;
                     }
                     Ok(_) => {}
                     Err(e) => {
                         eprintln!("WebSocket error: {:?}", e);
-                        on_close();
+                        on_close(CloseCode::Normal, Utf8Bytes::from(""));
                         break;
                     }
                 }

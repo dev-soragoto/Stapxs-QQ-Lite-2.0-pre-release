@@ -30,3 +30,12 @@ tungstenite = "0.26.2"
 once_cell = "1.21.3"
 futures-util = "0.3.31"
 anyhow = "1.0.98"
+tauri-plugin-store = "2.2.0"
+log4rs = "1.3.0"
+log = "0.4.27"
+chrono = "0.4.40"
+reqwest = "0.12.15"
+warp = "0.3.7"
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-window-state = "2.2.2"

@@ -360,13 +360,24 @@ function changeChatView(name: string | undefined) {
  * 读取并序列化 localStorage 中的设置项（electron 读取 electron-store 存储）
  * @returns 设置项集合
  */
-export function load(): { [key: string]: any } {
+export async function load(): Promise<{ [key: string]: any }> {
     let data = {} as { [key: string]: any }
 
     if ('electron' == runtimeData.tags.clientType) {
         data = runtimeData.plantform.sendSync('opt:getAll')
-    } else if(runtimeData.tags.isTarui) {
-        //
+    } else if('tauri' == runtimeData.tags.clientType) {
+        data = await callBackend(undefined, 'opt:getAll', true)
+        // 处理下 json 字符串
+        Object.keys(data).forEach((key) => {
+            const value = data[key]
+            if (typeof value == 'string') {
+                try {
+                    data[key] = JSON.parse(value)
+                } catch (e: unknown) {
+                    // ignore
+                }
+            }
+        })
     } else {
         const str = localStorage.getItem('options')
         if (str != null) {
@@ -471,8 +482,8 @@ export function get(name: string): any {
 export function getRaw(name: string) {
     if (runtimeData.tags.clientType == 'electron') {
         return runtimeData.plantform.sendSync('opt:get', name)
-    } else if(runtimeData.tags.isTarui) {
-        //
+    } else if(runtimeData.tags.clientType == 'tauri') {
+        return callBackend(undefined, 'opt:get', true, name)
     } else {
         // 解析拆分并执行各个设置项的初始化方法
         const str = localStorage.getItem('options')
@@ -524,9 +535,10 @@ export function saveAll(config = {} as { [key: string]: any }) {
         const saveConfig = config
         Object.keys(config).forEach((key) => {
             const isObject = typeof config[key] == 'object'
-            saveConfig[key] = isObject? JSON.stringify(config[key]): config[key]
+            saveConfig[key] = isObject ? JSON.stringify(config[key]): config[key]
         })
-        callBackend(undefined, 'opt:saveAll', false, saveConfig)
+        callBackend(undefined, 'opt:saveAll', false,
+            runtimeData.tags.clientType == 'tauri' ? { data: saveConfig } : saveConfig)
     }
 }
 

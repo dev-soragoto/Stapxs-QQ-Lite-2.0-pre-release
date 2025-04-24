@@ -418,6 +418,7 @@ const msgFunctons = {
             login.status = true
             // 显示账户菜单
             updateMenu({
+                parent: 'account',
                 id: 'userName',
                 action: 'label',
                 value: data.nickname,
@@ -1293,6 +1294,7 @@ function saveUser(msg: { [key: string]: any }, type: string) {
         }
         // 更新菜单
         updateMenu({
+            parent: 'account',
             id: 'userList',
             action: 'label',
             value: app.config.globalProperties.$t('用户列表（{count}）', {

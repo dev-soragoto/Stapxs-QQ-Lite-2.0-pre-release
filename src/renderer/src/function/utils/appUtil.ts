@@ -67,6 +67,10 @@ export function openLink(url: string, external = false) {
     if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
         if (!external && !runtimeData.sysConfig.close_browser) {
             runtimeData.popBoxList = []
+            if(runtimeData.tags.proxyPort) {
+                // 存在本地代理服务器
+                url = 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + url
+            }
             const popInfo = {
                 html: `<iframe src="${url}" class="view-iframe"></iframe>`,
                 full: true,
@@ -356,10 +360,11 @@ export function createMenu() {
         menuTitles.feedback = $t('在 Github 上反馈问题')
         menuTitles.license = $t('许可协议')
 
-        callBackend(undefined, 'sys:loadMenu', false, menuTitles)
+        callBackend(undefined, 'sys:createMenu', false,
+            runtimeData.tags.clientType == 'tauri' ? { data: menuTitles} : menuTitles)
     }
 }
-export function updateMenu(config: { id: string; action: string; value: any }) {
+export function updateMenu(config: { parent: string, id: string; action: string; value: string }) {
     // MacOS：更新菜单
     callBackend(undefined, 'sys:updateMenu', false, config)
 }
@@ -473,6 +478,7 @@ export async function loadMobile() {
             await callBackend('LocalNotifications', 'requestPermissions', false)
         } else if(permission.display.indexOf('denied') != -1) {
             logger.error(null, '通知权限已被拒绝')
+            logger.system('开发者阁下为什么要拒绝通知权限的请求呢？')
         } else {
             logger.debug('通知权限已开启')
             // 注册通知类型
@@ -980,7 +986,7 @@ export function loadJsonMap(name: string) {
                 msgPath = (msgPathList[msgPathKey] as any).default
             }
             if(msgPath) {
-                logger.debug('加载映射表：' + msgPath.name)
+                logger.system('开发者，请稍等一下（翻找），正在为阁下加载 ' + msgPath.name + ' 的服务映射表。')
                 if (msgPath.redirect) {
                     // eslint-disable-next-line
                     const newMsgPathKey = Object.keys(msgPathList).find((key) => {
@@ -999,12 +1005,12 @@ export function loadJsonMap(name: string) {
                         }
                     })
                     msgPath = newMsgPath
-                    logger.debug('加载映射表（重定向）：' + msgPath?.name)
+                    logger.system('非常抱歉开发者，已帮阁下将映射表重定向加载为 ：' + msgPath?.name + ' （慌张）')
                 }
             }
             runtimeData.jsonMap = msgPath
         } catch (ex) {
-            logger.debug('加载映射表失败：' + ex)
+            logger.system('很抱歉开发者，映射表加载失败 ……' + ex)
         }
     }
     return msgPath

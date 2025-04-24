@@ -211,6 +211,7 @@ import Spacing from 'spacingjs/src/spacing'
 import app from '@renderer/main'
 import Option from '@renderer/function/option'
 import Umami from '@stapxs/umami-logger-typescript'
+import * as App from './function/utils/appUtil'
 
 import { defineComponent, defineAsyncComponent } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
@@ -218,14 +219,14 @@ import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
-import * as App from './function/utils/appUtil'
+import { updateBaseOnMsgList } from './function/utils/msgUtil'
+import { getDeviceType, callBackend } from './function/utils/systemUtil'
+import { uptime } from '@renderer/main'
 
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
-import { updateBaseOnMsgList } from './function/utils/msgUtil'
-import { getDeviceType, callBackend } from './function/utils/systemUtil'
 
 export default defineComponent({
     name: 'App',
@@ -281,6 +282,13 @@ export default defineComponent({
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
         // 页面加载完成后
         window.onload = async () => {
+            if(import.meta.env.DEV) {
+                // eslint-disable-next-line
+                console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to sar-dos on stapxs-qq-lite.su ]')
+            } else {
+                // eslint-disable-next-line
+                console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
+            }
             // 初始化全局参数
             runtimeData.tags.clientType = 'web'
             if(window.electron != undefined) {
@@ -313,6 +321,9 @@ export default defineComponent({
             // 初始化功能
             App.createMenu() // Electron：创建菜单
             App.createIpc() // Electron：创建 IPC 通信
+            try {
+                runtimeData.tags.proxyPort = await callBackend(undefined, 'sys:runProxy', true)
+            } catch (e) { /**/ }
             // 加载开发者相关功能
             if (this.dev) {
                 document.title = 'Stapxs QQ Lite (Dev)'
@@ -322,7 +333,13 @@ export default defineComponent({
                 this.rafLoop()
             }
             // 加载设置项
-            runtimeData.sysConfig = Option.load()
+            runtimeData.sysConfig = await Option.load()
+            if(this.dev) {
+                logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
+                logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
+            } else {
+                logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
+            }
             logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
             // PS：重新再应用部分需要加载完成后才能应用的设置
             Option.run('opt_dark', Option.get('opt_dark'))
@@ -337,8 +354,7 @@ export default defineComponent({
                 if (app) app.classList.add('withBar')
             }
             // 基础初始化完成
-            logger.debug('欢迎使用 Stapxs QQ Lite！')
-            logger.debug('当前启动模式为: ' + this.dev ? 'development' : 'production')
+            logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
             // 加载移动平台特性
             App.loadMobile()
             // 加载额外样式
@@ -427,9 +443,7 @@ export default defineComponent({
                 } as any
                 Umami.initialize(config)
             } else if (this.dev) {
-                logger.debug('由于运行在调试模式下，分析组件并未初始化 ……')
-            } else if (Option.get('close_ga')) {
-                logger.debug('统计功能已被关闭，分析组件并未初始化 ……')
+                logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
             App.checkUpdate() // 检查更新
             App.checkOpenTimes() // 检查打开次数
@@ -472,6 +486,7 @@ export default defineComponent({
         }
         // 页面关闭前
         window.onbeforeunload = () => {
+            logger.system('开发者阁下—— 唔，阁下离开的太匆忙了！让我来帮开发者阁下收拾下东西吧。')
             new Notify().clear()
             if(import.meta.env.DEV) {
                 Connector.close()

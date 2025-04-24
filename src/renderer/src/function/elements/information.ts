@@ -43,6 +43,10 @@ export interface RunTimeDataElem {
          * 系统发行版本
          */
         release: string | undefined
+        /**
+         * 代理服务器端口
+         */
+        proxyPort?: number
         connectSsl: boolean
         classes: any[]
         sw?: boolean

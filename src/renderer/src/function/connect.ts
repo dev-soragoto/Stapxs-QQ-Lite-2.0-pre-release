@@ -38,6 +38,8 @@ export class Connector {
         const { $t } = app.config.globalProperties
         login.creating = true
 
+        logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
+
         // Electron 默认使用后端连接模式
         if (runtimeData.tags.clientType != 'web') {
             logger.add(LogType.WS, '使用后端连接模式')
@@ -82,12 +84,6 @@ export class Connector {
                 login.creating = false
                 return
             }
-
-            logger.debug('当前处于 debug 日志模式。连接器将仅输出发出的消息 ……')
-            logger.add(
-                LogType.WS,
-                '当前处于 all 日志模式。连接器将输出全部收发消息 ……',
-            )
 
             let url = `ws://${address}?access_token=${token}`
             if (address.startsWith('ws://') || address.startsWith('wss://')) {
@@ -147,9 +143,10 @@ export class Connector {
         Connector.send('get_version_info', {}, 'getVersionInfo')
         // 更新菜单
         updateMenu({
+            parent: 'account',
             id: 'logout',
             action: 'visible',
-            value: true,
+            value: 'true',
         })
     }
 
@@ -167,11 +164,13 @@ export class Connector {
 
         websocket = undefined
         updateMenu({
+            parent: 'account',
             id: 'logout',
             action: 'visible',
-            value: false,
+            value: 'false',
         })
         updateMenu({
+            parent: 'account',
             id: 'userName',
             action: 'label',
             value: $t('连接'),

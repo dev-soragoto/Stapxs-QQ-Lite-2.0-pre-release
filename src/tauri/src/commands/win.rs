@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use tauri::{command, LogicalPosition};
+use tauri::{command, LogicalPosition, Manager};
 
 #[command]
 pub fn win_close(app_handle: tauri::AppHandle) {
@@ -48,12 +48,12 @@ pub fn win_move(window: tauri::Window, x: i32, y: i32) {
     window.set_position(LogicalPosition::new(x, y)).unwrap();
 }
 
-// #[command]
-// pub fn win_open_dev_tools(window: tauri::Window) {
-//     // tauri 不提供此功能
-// }
-
 #[command]
-pub fn win_get_win_color() -> String {
-    return "".to_string();
+pub fn win_open_dev_tools(app: tauri::AppHandle) {
+    app.get_webview_window("main").unwrap().open_devtools();
 }
+
+// #[command]
+// pub fn win_get_win_color() -> String {
+//     return "".to_string();
+// }

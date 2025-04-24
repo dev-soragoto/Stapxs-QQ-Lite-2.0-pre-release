@@ -123,11 +123,8 @@ export function regIpcListener() {
         }
     })
     // 保存信息
-    ipcMain.on('sys:store', (_, arg) => {
+    ipcMain.on('opt:store', (_, arg) => {
         store.set(arg.key, arg.value)
-    })
-    ipcMain.handle('sys:getStore', (_, key) => {
-        return store.get(key)
     })
     // 保存设置
     // PS：升级至 electron 27 后 cookie 已完全无法持久化，只能进行保存
@@ -510,7 +507,7 @@ export function regIpcListener() {
                         item.label = value
                         break
                     case 'visible':
-                        item.visible = value
+                        item.visible = value == 'true'
                         break
                 }
             }
