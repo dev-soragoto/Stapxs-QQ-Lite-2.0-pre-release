@@ -47,6 +47,7 @@ pub fn run() {
                 .unwrap();
 
             log4rs::init_config(config).unwrap();
+
             println!("");
             println!(" _____ _____ _____ _____ __ __ ");
             println!("|   __|_   _|  _  |  _  |  |  |");
@@ -54,6 +55,11 @@ pub fn run() {
             println!("|_____| |_| |__|__|__|  |__|__| CopyRight © Stapx Steve");
             println!("=======================================================");
             println!("日志等级:{}", log_level);
+
+            if PROXY_PORT.get().is_some() {
+                info!("代理服务器已启动，端口：{}", PROXY_PORT.get().unwrap());
+            }
+
             info!("欢迎使用 Stapxs QQ Lite, 当前版本: {}", env!("CARGO_PKG_VERSION"));
             info!("启动平台架构：{}", std::env::consts::OS);
             info!("正在创建窗体 ……");
@@ -61,6 +67,7 @@ pub fn run() {
             info!("窗体创建成功");
             Ok(())
         })
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
@@ -70,6 +77,9 @@ pub fn run() {
             commands::sys::sys_create_menu,
             commands::sys::sys_update_menu,
             commands::sys::sys_run_proxy,
+            commands::sys::sys_send_notice,
+            commands::sys::sys_open_in_browser,
+            commands::sys::sys_run_command,
             commands::onebot::onebot_connect,
             commands::onebot::onebot_send,
             commands::onebot::onebot_close,

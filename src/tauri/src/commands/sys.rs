@@ -1,8 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, process::Command};
 use crate::PROXY_PORT;
 
 use log::debug;
-use tauri::{command, Emitter, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}};
+use serde_json::Value;
+use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter};
+use tauri_plugin_notification::NotificationExt;
+use tauri_plugin_opener::OpenerExt;
+use tauri_plugin_shell::{open::open, ShellExt};
 
 #[command]
 pub fn sys_get_platform() -> String {
@@ -37,33 +41,57 @@ pub fn sys_download() -> String {
 }
 
 #[command]
-pub fn sys_send_notice() -> String {
-    return "".to_string();
+pub fn sys_send_notice(app: AppHandle, data: HashMap<String, Value>) {
+    app.notification().builder()
+        .title(data.get("title").unwrap().as_str().unwrap())
+        .body(data.get("body").unwrap().as_str().unwrap())
+        .icon("../../build/icon-client-others.png")
+        .show()
+        .unwrap();
 }
 
-#[command]
-pub fn sys_close_notice() -> String {
-    return "".to_string();
-}
+// #[command]
+// pub fn sys_close_notice() -> String {
+//     return "".to_string();
+// }
+
+// #[command]
+// pub fn sys_clear_notice() -> String {
+//     return "".to_string();
+// }
+
+// #[command]
+// pub fn sys_close_all_notice() -> String {
+//     return "".to_string();
+// }
 
 #[command]
-pub fn sys_clear_notice() -> String {
-    return "".to_string();
-}
+pub fn sys_run_command(data: String) -> HashMap<String, Value> {
+    let mut ret: HashMap<String, Value> = HashMap::new();
 
-#[command]
-pub fn sys_close_all_notice() -> String {
-    return "".to_string();
-}
+    match Command::new(data).output() {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            ret.insert("success".to_string(), true.into());
+            ret.insert("message".to_string(), stdout.into());
+        },
+        Err(e) => {
+            ret.insert("success".to_string(), false.into());
+            ret.insert("message".to_string(), e.to_string().into());
+        }
+    }
 
-#[command]
-pub fn sys_run_command() -> String {
-    return "".to_string();
+    return ret;
 }
 
 #[command]
 pub fn sys_get_gnome_ext() -> String {
     return "".to_string();
+}
+
+#[command]
+pub fn sys_open_in_browser(app_handle: tauri::AppHandle, data: String) {
+    let _ = app_handle.opener().open_path(data, None::<&str>);
 }
 
 #[command]

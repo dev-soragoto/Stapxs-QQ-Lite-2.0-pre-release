@@ -69,7 +69,7 @@ export function openLink(url: string, external = false) {
             runtimeData.popBoxList = []
             if(runtimeData.tags.proxyPort) {
                 // 存在本地代理服务器
-                url = 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + url
+                url = 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + encodeURIComponent(url)
             }
             const popInfo = {
                 html: `<iframe src="${url}" class="view-iframe"></iframe>`,
@@ -87,6 +87,11 @@ export function openLink(url: string, external = false) {
                             const shell = window.electron?.shell
                             if (shell) {
                                 shell.openExternal(url)
+                            } else {
+                                if(runtimeData.tags.proxyPort) {
+                                    url = decodeURIComponent(url.replace(`http://localhost:${runtimeData.tags.proxyPort}/proxy?url=`, ''))
+                                }
+                                callBackend('', 'sys:openInBrowser', false, url)
                             }
                             runtimeData.popBoxList.shift()
                         },
@@ -105,6 +110,11 @@ export function openLink(url: string, external = false) {
             const shell = window.electron?.shell
             if (shell) {
                 shell.openExternal(url)
+            } else {
+                if(runtimeData.tags.proxyPort) {
+                    url = decodeURIComponent(url.replace(`http://localhost:${runtimeData.tags.proxyPort}/proxy?url=`, ''))
+                }
+                callBackend('', 'sys:openInBrowser', false, url)
             }
         }
     } else {

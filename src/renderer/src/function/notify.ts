@@ -36,7 +36,7 @@ export class Notify {
         }
         // 发送消息
         if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'sys:sendNotice', false, info)
+            callBackend(undefined, 'sys:sendNotice', false, runtimeData.tags.clientType == 'tauri' ? { data: info } : info)
         } else if(runtimeData.tags.clientType === 'capacitor') {
                 const data = {
                     title: info.title,
