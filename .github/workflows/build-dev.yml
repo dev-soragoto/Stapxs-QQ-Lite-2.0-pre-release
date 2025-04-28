@@ -67,10 +67,6 @@ jobs:
                                         libwebkit2gtk-4.1-dev \
                                         libjavascriptcoregtk-4.0-dev
 
-            - name: Install system dependencies
-              if: matrix.os == 'windows-2019'
-              run: winget install Microsoft.WebView2Runtime
-
             - name: Check Tauri Environment
               run: yarn tauri info
 

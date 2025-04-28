@@ -4,7 +4,7 @@ use commands::utils::http_proxy::ProxyServer;
 use log::info;
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
 use once_cell::sync::OnceCell;
-use tauri::{ Manager, WebviewUrl, WebviewWindowBuilder };
+use tauri::{ menu::{Menu, MenuEvent, MenuItem}, tray::{TrayIcon, TrayIconBuilder, TrayIconEvent}, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder };
 use tauri_plugin_store::StoreBuilder;
 
 pub static PROXY_PORT: OnceCell<u16> = OnceCell::new();
@@ -81,6 +81,10 @@ pub fn run() {
                     api.prevent_close();
                 }
             });
+
+            // 创建托盘
+            #[cfg(not(target_os = "macos"))]
+            build_tray(app.handle().clone());
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -150,4 +154,52 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         window.open_devtools();
     }
     Ok(window)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn build_tray(app: AppHandle) -> TrayIcon {
+    let show = MenuItem::with_id(
+        &app, "show", "显示", true, None::<&str>).unwrap();
+    let quit = MenuItem::with_id(
+        &app, "quit", "退出", true, None::<&str>).unwrap();
+
+    let menu = Menu::with_items(
+        &app, &[&show, &quit]).unwrap();
+
+    let tray = TrayIconBuilder::new()
+        .icon(app.default_window_icon().unwrap().clone())
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .build(&app)
+        .unwrap();
+
+    tray.on_tray_icon_event(move |_, event| {
+        if let TrayIconEvent::DoubleClick { .. } = event {
+            show_hidden_app(app.clone());
+        }
+    });
+
+    tray.on_menu_event(|app, event| {
+        let MenuEvent { id, .. } = event;
+        match id.0.as_str() {
+            "show" => {
+                show_hidden_app(app.clone());
+            }
+            "quit" => {
+                app.exit(0);
+            }
+            _ => {}
+        }
+    });
+
+    tray
+}
+
+fn show_hidden_app(app: AppHandle) {
+    let window = app.get_webview_window("main").unwrap();
+    #[cfg(not(target_os = "macos"))]
+    window.show().unwrap();
+    #[cfg(target_os = "macos")]
+    tauri::AppHandle::show(&app).unwrap();
+    window.set_focus().unwrap();
 }

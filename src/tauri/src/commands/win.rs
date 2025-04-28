@@ -3,7 +3,10 @@ use tauri::{command, LogicalPosition, Manager};
 
 #[command]
 pub fn win_close(app_handle: tauri::AppHandle) {
-    app_handle.exit(0);
+    #[cfg(not(target_os = "macos"))] {
+        let window = app_handle.get_webview_window("main").unwrap();
+        window.hide().unwrap();
+    }
 }
 
 #[tauri::command]
