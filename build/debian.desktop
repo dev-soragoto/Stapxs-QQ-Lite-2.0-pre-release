@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Stapxs QQ Lite
+Exec=stapxs-qq-lite %U
+Icon=stapxs-qq-lite
+Type=Application
+Categories=Utility;
+MimeType=x-scheme-handler/stapxs-qq-lite

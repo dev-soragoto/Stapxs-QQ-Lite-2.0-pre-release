@@ -273,7 +273,7 @@ pub fn sys_get_win_color() -> Option<String> {
 
             let color = format!("{:02X}{:02X}{:02X}{:02X}", r_hex, g_hex, b_hex, 0xFF);
             info!("获取强调色成功: {}", color);
-            Some(color)
+            return Some(color)
         }
     }
     #[cfg(target_os = "windows")] {
@@ -289,13 +289,14 @@ pub fn sys_get_win_color() -> Option<String> {
 
                 let color = format!("{:02X}{:02X}{:02X}{:02X}", r, g, b, 0xFF);
                 info!("获取强调色成功: {}", color);
-                Some(color)
+                return Some(color)
             } else {
                 info!("获取强调色失败 ……");
-                Some("00000000".to_string())
+                return Some("00000000".to_string())
             }
         }
     }
+    return Some("00000000".to_string());
 }
 
 // macOS：Touch Bar 支持
