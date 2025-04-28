@@ -69,10 +69,7 @@ jobs:
 
             - name: Install system dependencies
               if: matrix.os == 'windows-2019'
-              run: |
-                Invoke-WebRequest -Uri https://aka.ms/webview2/msi -OutFile webview2_installer.msi
-                Start-Process msiexec.exe -ArgumentList '/i', 'webview2_installer.msi', '/quiet', '/norestart' -NoNewWindow -Wait
-                Remove-Item -Force webview2_installer.msi
+              run: winget install Microsoft.WebView2Runtime
 
             - name: Check Tauri Environment
               run: yarn tauri info

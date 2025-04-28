@@ -1,11 +1,13 @@
 <template>
-    <div v-if="dev" class="dev-bar">
+    <div v-if="dev" :class="'dev-bar' + (runtimeData.tags.platform == 'win32' ? ' win' : '')">
         Stapxs QQ Lite Development Mode
         {{ ' / platform: ' + runtimeData.tags.platform }}
         {{ ' / client: ' + runtimeData.tags.clientType }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar"
+    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')"
+        :class="'top-bar' + ((runtimeData.tags.platform == 'win32' && dev) ? ' win' : '')"
+        name="appbar"
         data-tauri-drag-region="true">
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />

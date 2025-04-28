@@ -140,12 +140,14 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
             .effects(vec![tauri::window::Effect::Sidebar])
             .build());
     let window = win_builder.build()?;
+    #[cfg(target_os = "windows")] {
+        let _ = window.set_decorations(false);
+        window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)))
+            .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
+    }
     #[cfg(debug_assertions)]
     {
         window.open_devtools();
     }
-    // #[cfg(target_os = "windows")]
-    // apply_blur(&window, Some((18, 18, 18, 125)))
-    //     .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
     Ok(window)
 }
