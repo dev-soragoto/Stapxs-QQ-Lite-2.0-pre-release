@@ -1,12 +1,11 @@
-use std::{collections::HashMap, process::Command};
+use std::{collections::HashMap, ffi::CStr, process::Command};
 use crate::PROXY_PORT;
 
-use log::debug;
+use log::{debug, error, info};
 use serde_json::Value;
 use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_opener::OpenerExt;
-use tauri_plugin_shell::{open::open, ShellExt};
 
 #[command]
 pub fn sys_get_platform() -> String {
@@ -234,6 +233,69 @@ pub fn sys_update_menu(app: tauri::AppHandle, parent: String, id: String, action
 #[command]
 pub fn sys_run_proxy() -> u16 {
     return PROXY_PORT.get().unwrap().clone();
+}
+
+#[command]
+pub fn sys_get_win_color() -> Option<String> {
+    #[cfg(target_os = "macos")] {
+        use cocoa::{base::nil, foundation::NSAutoreleasePool};
+        use objc2::{msg_send, runtime::{AnyClass, AnyObject}};
+        unsafe {
+            let _pool = NSAutoreleasePool::new(nil);
+            let ns_color_class = AnyClass::get(CStr::from_bytes_with_nul_unchecked(b"NSColor\0"))?;
+            let ns_color_space_class = AnyClass::get(CStr::from_bytes_with_nul_unchecked(b"NSColorSpace\0"))?;
+
+            // 获取控制强调色
+            let accent_color: *mut AnyObject = msg_send![ns_color_class, controlAccentColor];
+            if accent_color.is_null() {
+                error!("获取强调色失败 ……");
+                return Some("00000000".to_string());
+            } else {
+                debug!("accent color: {:?}", accent_color);
+            }
+
+            // 将颜色转换为 RGB 空间
+            let device_rgb: *mut AnyObject = msg_send![ns_color_space_class, deviceRGBColorSpace];
+            let rgb_color: *mut AnyObject = msg_send![accent_color, colorUsingColorSpace: device_rgb];
+            if rgb_color.is_null() {
+                error!("转换强调色色彩空间失败 ……");
+                return Some("00000000".to_string());
+            } else {
+                debug!("rgb color: {:?}", rgb_color);
+            }
+
+            let r: f64 = msg_send![rgb_color, redComponent];
+            let g: f64 = msg_send![rgb_color, greenComponent];
+            let b: f64 = msg_send![rgb_color, blueComponent];
+            let r_hex = (r * 255.0).round() as u8;
+            let g_hex = (g * 255.0).round() as u8;
+            let b_hex = (b * 255.0).round() as u8;
+
+            let color = format!("{:02X}{:02X}{:02X}{:02X}", r_hex, g_hex, b_hex, 0xFF);
+            info!("获取强调色成功: {}", color);
+            Some(color)
+        }
+    }
+    #[cfg(target_os = "windows")] {
+        use windows::Win32::Graphics::Dwm::DwmGetColorizationColor;
+        use windows_result::BOOL;
+        unsafe {
+            let mut color: u32 = 0;
+            let mut opaque: BOOL = windows_result::BOOL(0);
+            if DwmGetColorizationColor(&mut color, &mut opaque).is_ok() {
+                let r = ((color >> 16) & 0xff) as u8;
+                let g = ((color >> 8) & 0xff) as u8;
+                let b = (color & 0xff) as u8;
+
+                let color = format!("{:02X}{:02X}{:02X}{:02X}", r, g, b, 0xFF);
+                info!("获取强调色成功: {}", color);
+                Some(color)
+            } else {
+                info!("获取强调色失败 ……");
+                Some("00000000".to_string())
+            }
+        }
+    }
 }
 
 // macOS：Touch Bar 支持

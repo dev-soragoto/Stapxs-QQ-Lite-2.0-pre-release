@@ -2,8 +2,8 @@
 name = "stapxs-qq-lite"
 version = "0.1.0"
 description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+authors = ["stapxs"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,7 +11,7 @@ edition = "2021"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "stapxs_qq_lite_lib"
+name = "ssqq_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -37,6 +37,15 @@ chrono = "0.4.40"
 reqwest = "0.12.15"
 warp = "0.3.7"
 tauri-plugin-notification = "2.2.2"
+tauri-plugin-single-instance = "2.2.3"
+windows-result = "0.3.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.26.0"
+objc2 = "0.6.1"
+
+[target.'cfg(target_os="windows")'.dependencies]
+windows = { version = "0.61.1", features = ["Win32_UI_Shell"] }
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-window-state = "2.2.2"

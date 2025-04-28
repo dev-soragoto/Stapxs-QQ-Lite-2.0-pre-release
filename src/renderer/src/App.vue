@@ -479,9 +479,12 @@ export default defineComponent({
                 '你好世界！',
                 '这只是个普通的彩蛋！'
             ]
-            document.title = titleList[Math.floor(Math.random() * titleList.length)]
+            const title = titleList[Math.floor(Math.random() * titleList.length)]
             if(runtimeData.tags.platform == 'web') {
-                document.title = titleList[Math.floor(Math.random() * titleList.length)] + '- Stapxs QQ Lite'
+                document.title = title + '- Stapxs QQ Lite'
+            } else {
+                document.title = title
+                callBackend(undefined, 'win:setTitle', false, title)
             }
         }
         // 页面关闭前

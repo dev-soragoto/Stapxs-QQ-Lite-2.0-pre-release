@@ -1,0 +1,66 @@
+# Dev 分支构建测试
+name: build-dev
+on:
+    push:
+        branches:
+            - dev
+
+jobs:
+    init:
+        name: 初始化构建
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.step_init.outputs.VERSION }}
+        steps:
+            # 拉取代码
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+            - name: Init Env
+              id: step_init
+              run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+
+    build-tauri:
+        name: 构建 Tauri 版本
+        needs: init
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [windows-2019, ubuntu-latest]
+        outputs:
+            version: ${{ needs.init.outputs.version }}
+
+        steps:
+            # 拉取代码
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+            # 设置 Node.js 版本
+            - name: Load Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20.x
+            # 更新依赖
+            - name: Install
+              run: yarn
+
+            - name: Setup Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                toolchain: stable
+                profile: minimal
+                override: true
+
+            - name: Build Tauri app
+              run: |
+                  export CARGO_TARGET_DIR=../../dist_tauri
+                  yarn build:tauri
+
+            - name: Upload Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ needs.init.outputs.version }}-${{ matrix.os }}
+                  path: dist_tauri/release/bundle
+

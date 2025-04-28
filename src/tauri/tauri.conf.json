@@ -27,7 +27,8 @@
         "useLocalToolsDir": true,
         "icon": [
             "../../build/icon-client-mac.icns",
-            "../../build/icon-client-others.png"
+            "../../build/icon-client-others.png",
+            "../../build/icon-client-others.ico"
         ],
         "macOS": {
             "dmg": {

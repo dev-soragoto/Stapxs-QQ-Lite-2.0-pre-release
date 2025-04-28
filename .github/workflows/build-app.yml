@@ -1,7 +1,7 @@
-# 在主分支上构建
+# 主分支构建发布
 name: build-app
 on:
-    push: # push 触发
+    push:
         branches:
             - next
 

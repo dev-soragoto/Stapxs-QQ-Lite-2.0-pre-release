@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    stapxs_qq_lite_lib::run()
+    ssqq_lib::run()
 }

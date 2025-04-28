@@ -53,7 +53,7 @@ pub fn win_open_dev_tools(app: tauri::AppHandle) {
     app.get_webview_window("main").unwrap().open_devtools();
 }
 
-// #[command]
-// pub fn win_get_win_color() -> String {
-//     return "".to_string();
-// }
+#[command]
+pub fn win_set_title(window: tauri::Window, data: String) {
+    window.set_title(&data).unwrap();
+}

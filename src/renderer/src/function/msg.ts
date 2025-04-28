@@ -28,6 +28,7 @@ import {
     sendMsgAppendInfo,
 } from '@renderer/function/utils/msgUtil'
 import {
+    callBackend,
     delay,
     getViewTime,
     randomNum,
@@ -423,9 +424,12 @@ const msgFunctons = {
                 action: 'label',
                 value: data.nickname,
             })
-            document.title = `${data.nickname}（${data.uin}）`
+            const title = `${data.nickname}（${data.uin}）`
             if(runtimeData.tags.platform == 'web') {
-                document.title = `${data.nickname}（${data.uin}）- Stapxs QQ Lite`
+                document.title = title + '- Stapxs QQ Lite'
+            } else {
+                document.title = title
+                callBackend(undefined, 'win:setTitle', false, title)
             }
             // 结束登录页面的水波动画
             clearInterval(runtimeData.tags.loginWaveTimer)
