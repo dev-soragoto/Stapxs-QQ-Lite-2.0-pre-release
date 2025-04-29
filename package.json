@@ -11,6 +11,7 @@
   "scripts": {
     "capacitor:copy:before": "capacitor-sync-version",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
+    "lint:tauri": "cargo check --manifest-path src/tauri/Cargo.toml",
     "update:icon": "npx @capacitor/assets generate --assetPath 'src/mobile/_assets' --iosProject 'src/mobile/ios/App' --androidProject 'src/mobile/android' --android --ios",
     "update:version": "npx @stapxs/capacitor-sync-version android ios",
     "dev": "vite dev",

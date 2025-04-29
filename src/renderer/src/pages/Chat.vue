@@ -2087,7 +2087,7 @@
                                         const info = {
                                             index: item.message_id,
                                             message_id: item.message_id,
-                                            img_url: msg.url,
+                                            img_url: runtimeData.tags.proxyPort && msg.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(msg.url)}` : msg.url
                                         }
                                         this.getImgList.push(info)
                                     }

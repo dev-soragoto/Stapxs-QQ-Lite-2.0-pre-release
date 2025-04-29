@@ -69,7 +69,7 @@
                             :title="$t('预览图片')"
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, index, item.asface)"
-                            :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
+                            :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
