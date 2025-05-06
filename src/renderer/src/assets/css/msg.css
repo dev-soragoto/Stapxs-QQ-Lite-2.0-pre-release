@@ -108,9 +108,14 @@
 }
 .message-body > a {
     color: var(--color-font-1);
-    font-size: 0.9rem;
     display: inline-block;
+    font-size: 0.9rem;
     margin: 0 5px;
+}
+.message-body > a.time {
+    color: var(--color-font-2);
+    font-size: 0.75rem;
+    opacity: 0.7;
 }
 .message-body > div {
     background: var(--color-card-1);

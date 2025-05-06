@@ -10,6 +10,19 @@ static WS_CLIENT: Lazy<Mutex<Option<WebSocketClient>>> = Lazy::new(|| Mutex::new
 
 #[command]
 pub async fn onebot_connect(app_handle: tauri::AppHandle, address: &str, token: &str) -> Result<(), String> {
+    // 检查是否已经存在连接
+    {
+        let client = WS_CLIENT.lock().unwrap();
+        if client.is_some() {
+            info!("已有连接，跳过创建");
+            let mut payload = HashMap::new();
+            payload.insert("address", address.clone());
+            payload.insert("token", token.clone());
+            app_handle.emit("onebot:onopen", payload).unwrap();
+            return Ok(());
+        }
+    }
+
     info!("正在连接到: {}", address);
     // 创建 WebSocketClient
     let address = address.to_string();
@@ -28,8 +41,13 @@ pub async fn onebot_connect(app_handle: tauri::AppHandle, address: &str, token: 
         },
         move |msg| { app_handle2.emit("onebot:onmessage", msg).unwrap(); },
         move |code: CloseCode, _| {
-            app_handle3.emit("onebot:onclose", "").unwrap();
+            let mut payload = HashMap::new();
+            payload.insert("code", code.to_string());
+            payload.insert("message", "连接意外断开".to_string());
+            app_handle3.emit("onebot:onclose", payload).unwrap();
             info!("连接已关闭，代码：{}", code);
+            let mut client = WS_CLIENT.lock().unwrap();
+            *client = None;
          }
     ).await.map_err(|e| e.to_string())?;
 
@@ -53,12 +71,17 @@ pub fn onebot_send(data: &str) -> Result<(), String> {
 }
 
 #[command]
-pub fn onebot_close() -> Result<(), String> {
+pub fn onebot_close(app_handle: tauri::AppHandle,) -> Result<(), String> {
     // 获取 WebSocketClient
     let mut client = WS_CLIENT.lock().unwrap();
     if let Some(ws_client) = &*client {
         ws_client.close().map_err(|e| e.to_string())?;
         *client = None;
+        info!("连接已关闭");
+        let mut payload = HashMap::new();
+        payload.insert("code", 1000.to_string());
+        payload.insert("message", "".to_string());
+        app_handle.emit("onebot:onclose", payload).unwrap();
         Ok(())
     } else {
         Err("WebSocketClient not initialized".to_string())

@@ -391,10 +391,20 @@ export function getTimeConfig(date: Date) {
 
 /**
  * 调用后端方法
- * @param type 插件类型
+ * 请使用统一的 electron 方法名称，其余平台会自动转换
+ * - electron 将调用 sys: 前缀的名称如 > sys:getConfig
+ * - capacitor 将调用去除 sys: 前缀的名称如 > getConfig
+ * - tauri 将调用 sys_ 前缀加下划线小写的名称如 > sys_get_config
+ *
+ * 返回值如有大多为 Promise（在 electron 中一定是），请使用 async/await 调用
+ *
+ * ---
+ *
+ * @param type capacitor：插件类型
  * @param name 方法名称
- * @param args 参数
- * @returns 数据
+ * @param needBack electron：是否需要返回值
+ * @param args 参数列表
+ * @returns 返回值
  */
 export function callBackend(type: string | undefined, name: string, needBack: boolean, ...args: any[]) {
     // 处理名称
@@ -404,11 +414,8 @@ export function callBackend(type: string | undefined, name: string, needBack: bo
             .replace(/([A-Z])/g, '_$1')
             .toLowerCase()
     }
-    if(runtimeData.tags.clientType == 'capacitor') {
-        // 去掉冒号前的东西
-        if(name.includes(':')) {
-            name = name.split(':')[1]
-        }
+    if(runtimeData.tags.clientType == 'capacitor' && name.includes(':')) {
+        name = name.split(':')[1]
     }
     // 调用对应方法
     try {
@@ -457,9 +464,9 @@ export function callBackend(type: string | undefined, name: string, needBack: bo
 }
 
 /**
- * 添加后端监听
- * @param type 插件类型
- * @param name 方法名称
+ * 添加后端监听，名称统一为 sys: 前缀
+ * @param type capacitor：插件类型
+ * @param name 事件名称
  * @param callBack 回调函数
  */
 export function addBackendListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
@@ -467,9 +474,7 @@ export function addBackendListener(type: string | undefined, name: string, callB
         runtimeData.plantform.on(name, callBack)
     } else if('tauri' == runtimeData.tags.clientType) {
         runtimeData.plantform.listen(name, callBack)
-    } else if('capacitor' == runtimeData.tags.clientType) {
-        if(type != undefined) {
-            runtimeData.plantform.pulgins[type].addListener(name, callBack)
-        }
+    } else if('capacitor' == runtimeData.tags.clientType && type != undefined) {
+        runtimeData.plantform.pulgins[type].addListener(name, callBack)
     }
 }

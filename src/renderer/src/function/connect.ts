@@ -114,12 +114,6 @@ export class Connector {
                 login.creating = false
                 this.onclose(e.code, e.reason, address, token)
             }
-            // websocket.onerror = (e) => {
-            //     login.creating = false
-            //     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
-            //     // 由于此处错误信息不完整，所以交给 onclose 处理
-            //     return
-            // }
         }
     }
 
@@ -156,28 +150,19 @@ export class Connector {
 
     static onclose(
         code: number,
-        _: string | undefined,
+        msg: string | undefined,
         address: string,
         token: string | undefined,
     ) {
         const { $t } = app.config.globalProperties
 
         websocket = undefined
-        updateMenu({
-            parent: 'account',
-            id: 'logout',
-            action: 'visible',
-            value: 'false',
-        })
-        updateMenu({
-            parent: 'account',
-            id: 'userName',
-            action: 'label',
-            value: $t('连接'),
-        })
+        updateMenu({ parent: 'account', id: 'logout', action: 'visible', value: 'false' })
+        updateMenu({ parent: 'account', id: 'userName', action: 'label', value: $t('连接') })
 
-        switch (code) {
+        switch (Number(code)) {
             case 1000:
+                popInfo.add(PopType.INFO, $t('连接已断开') + msg, false)
                 break // 正常关闭
             case 1006: {
                 // 非正常关闭，尝试重连
@@ -199,7 +184,7 @@ export class Connector {
             }
             default: {
                 login.creating = false
-                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误，WS错误代码 {code}',{ code:code }), false)
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误 {code}',{ code: code }), false)
             }
         }
 
@@ -271,8 +256,8 @@ export class Connector {
         if(runtimeData.tags.clientType != 'web') {
             callBackend('Onebot', 'onebot:send', false,
                 runtimeData.tags.clientType == 'capacitor' ? { data: json } : json)
-        } else {
-            if (websocket) websocket.send(json)
+        } else if (websocket) {
+            websocket.send(json)
         }
 
         if (Option.get('log_level') === 'debug') {

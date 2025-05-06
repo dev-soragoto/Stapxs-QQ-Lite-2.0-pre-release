@@ -64,7 +64,7 @@
                         remark: $t('群收纳盒'),
                         time: runtimeData.groupAssistList[0].time,
                         raw_msg: runtimeData.groupAssistList[0].group_name + ': ' +
-                            runtimeData.groupAssistList[0].raw_msg_base
+                            (runtimeData.groupAssistList[0].raw_msg_base ?? '')
                     }"
                     @click="showGroupAssistCheck" />
                 <!-- 其他消息 -->
@@ -141,6 +141,9 @@
                 </li>
                 <li id="readed" icon="fa-solid fa-check-to-slot">
                     {{ $t('标记已读') }}
+                </li>
+                <li id="read" icon="fa-solid fa-flag">
+                    {{ $t('标记未读') }}
                 </li>
                 <li id="notice_open" icon="fa-solid fa-volume-high">
                     {{ $t('开启通知') }}
@@ -353,6 +356,10 @@
                 const item = this.menu.select
                 if (id) {
                     switch (id) {
+                        case 'read': {
+                            item.new_msg = true
+                            break
+                        }
                         case 'readed':
                             this.readMsg(item)
                             break
@@ -442,10 +449,15 @@
             listMenuShowRun(info: any, item: UserFriendElem & UserGroupElem) {
                 // PS：这是触屏触发的标志，如果优先触发了 contextmenu 就不用触发触屏了
                 this.showMenu = false
-                info.list = ['top', 'remove', 'readed']
+                info.list = ['top', 'remove']
                 // 置顶的不显示移除
                 if (item.always_top) {
-                    info.list = ['canceltop', 'readed']
+                    info.list = ['canceltop']
+                }
+                if (item.new_msg) {
+                    info.list.push('readed')
+                } else {
+                    info.list.push('read')
                 }
                 // 是群的话显示通知设置
                 if (item.group_id) {

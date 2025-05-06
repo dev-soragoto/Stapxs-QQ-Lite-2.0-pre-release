@@ -1164,8 +1164,8 @@ msgstr ""
 msgid "TLS错误"
 msgstr ""
 
-msgid "未知的错误，WS错误代码 {code}"
-msgstr "未知的错误，WS错误代码 {code}"
+msgid "未知的错误 {code}"
+msgstr ""
 
 msgid "机器人"
 msgstr ""
@@ -1180,4 +1180,13 @@ msgid "对方正在输入……"
 msgstr ""
 
 msgid "戳了戳你"
+msgstr ""
+
+msgid "标记未读"
+msgstr ""
+
+msgid "显示原始消息"
+msgstr ""
+
+msgid "连接已断开"
 msgstr ""

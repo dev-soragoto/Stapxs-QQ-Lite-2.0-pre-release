@@ -44,6 +44,16 @@
             <a v-else v-show="!isMe || type == 'merge'">
                 {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
             </a>
+            <a v-if="selected" class="time">
+                {{ Intl.DateTimeFormat(trueLang, {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                }).format(getViewTime(getViewTime(data.time))) }}
+            </a>
             <div>
                 <!-- 消息体 -->
                 <template v-if="!hasCard()">
@@ -254,7 +264,7 @@
                                     day: 'numeric',
                                     hour: 'numeric',
                                     minute: 'numeric'
-                                }).format(pageViewInfo.data.public * 1000) }}</a>
+                                }).format(getViewTime(pageViewInfo.data.public)) }}</a>
                             </div>
                             <img :src="pageViewInfo.data.pic">
                             <span>{{ pageViewInfo.data.title }}</span>
@@ -332,7 +342,11 @@
         openLink,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
-    import { callBackend, getSizeFromBytes, getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
+    import {
+        callBackend,
+        getSizeFromBytes,
+        getTrueLang,
+        getViewTime } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -344,6 +358,7 @@
                 md: markdownit({ breaks: true }),
                 getFace: getFace,
                 getSizeFromBytes: getSizeFromBytes,
+                getViewTime: getViewTime,
                 isMe: false,
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
@@ -547,6 +562,12 @@
             parseText(text: string) {
                 const logger = new Logger()
                 text = ViewFuns.parseText(text)
+                // 防止大量的重复字符
+                const filtedText = text.replace(/(.)(\1{10,})/g, '$1<span style="opacity:0.7;margin-right:10px;">...</span>')
+                if(filtedText != text) {
+                    const style = 'display:block;margin-top:10px;opacity:0.7;cursor:pointer;'
+                    text = filtedText + '<a style="' + style +'" data-raw="' + text + '" onclick="this.parentNode.innerText = this.dataset.raw;return false;">' + this.$t('显示原始消息') + '</a>'
+                }
                 // 链接判定
                 const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
                 text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
