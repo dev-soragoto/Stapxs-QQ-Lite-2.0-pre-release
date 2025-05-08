@@ -12,7 +12,7 @@ export interface RunTimeDataElem {
     userList: (UserFriendElem & UserGroupElem)[]
     showList: (UserFriendElem & UserGroupElem)[]
     groupAssistList: (UserFriendElem & UserGroupElem)[]
-    baseOnMsgList: (UserFriendElem & UserGroupElem)[]
+    baseOnMsgList: Map<number, (UserFriendElem & UserGroupElem)>
     onMsgList: (UserFriendElem & UserGroupElem)[]
     systemNoticesList?: { [key: string]: any }
     chatInfo: ChatInfoElem

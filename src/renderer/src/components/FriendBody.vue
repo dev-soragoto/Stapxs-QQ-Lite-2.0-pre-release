@@ -14,12 +14,12 @@
         <div :class="data.new_msg === true ? 'new' : ''" />
         <font-awesome-icon v-if="data.user_id == -10000" :icon="['fas', 'bell']" />
         <font-awesome-icon v-else-if="data.user_id == -10001" :icon="['fas', 'user-group']" />
-        <img v-else loading="lazy" :title="getShowName()"
+        <img v-else loading="lazy" :title="getShowName(data.group_name || data.nickname, data.remark)"
             :src="data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id :
                 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'">
         <div>
             <div>
-                <p>{{ getShowName() }}</p>
+                <p>{{ getShowName(data.group_name || data.nickname, data.remark) }}</p>
                 <div style="flex: 1" />
                 <a class="time">{{
                     data.time !== undefined
@@ -47,29 +47,16 @@
 <script lang="ts">
     import { defineComponent } from 'vue'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { getShowName } from '@renderer/function/utils/msgUtil'
 
     export default defineComponent({
         name: 'FriendBody',
         props: ['data', 'select', 'menu', 'from'],
         data() {
             return {
+                getShowName: getShowName,
                 trueLang: getTrueLang(),
             }
-        },
-        methods: {
-            getShowName() {
-                const group = this.data.group_name
-                const remark = this.data.remark
-                const nickname = this.data.nickname
-                if (group) return group
-                else {
-                    if (!remark || remark == nickname) {
-                        return nickname
-                    } else {
-                        return remark + '（' + nickname + '）'
-                    }
-                }
-            },
-        },
+        }
     })
 </script>

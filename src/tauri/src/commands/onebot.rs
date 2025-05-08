@@ -16,8 +16,8 @@ pub async fn onebot_connect(app_handle: tauri::AppHandle, address: &str, token: 
         if client.is_some() {
             info!("已有连接，跳过创建");
             let mut payload = HashMap::new();
-            payload.insert("address", address.clone());
-            payload.insert("token", token.clone());
+            payload.insert("address", address);
+            payload.insert("token", token);
             app_handle.emit("onebot:onopen", payload).unwrap();
             return Ok(());
         }

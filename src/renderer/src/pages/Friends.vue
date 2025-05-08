@@ -204,14 +204,7 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                 } as BaseChatInfoElem
                 // 更新聊天框
                 this.$emit('userClick', back)
-                // 查重
-                const getList = runtimeData.baseOnMsgList.filter((item) => {
-                    const id = item.user_id ? item.user_id : item.group_id
-                    return Number(id) === Number(back.id)
-                })
-                if (getList.length === 0) {
-                    runtimeData.baseOnMsgList.push(data)
-                }
+                runtimeData.baseOnMsgList.set(back.id, data)
                 // 获取历史消息
                 this.$emit('loadHistory', back)
                 // 切换标签卡

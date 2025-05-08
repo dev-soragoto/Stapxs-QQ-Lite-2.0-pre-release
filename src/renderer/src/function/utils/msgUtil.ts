@@ -554,7 +554,7 @@ export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
  * 刷新消息列表排序
  */
 export function updateBaseOnMsgList() {
-    const allList = runtimeData.baseOnMsgList
+    const allList = [...runtimeData.baseOnMsgList.values()]
     // 先更具 item.always_top 是不是 true 拆为两个数组
     const topList = allList.filter((item) => item.always_top)
     const normalList = allList.filter((item) => !item.always_top)
@@ -581,7 +581,8 @@ export function updateBaseOnMsgList() {
     if(runtimeData.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
         onMsgList = topList.concat(normalList.filter((item) => {
-            return item.group_id && canGroupNotice(item.group_id) || item.user_id || item.new_msg
+            return item.group_id && canGroupNotice(item.group_id) ||
+                item.user_id || item.new_msg || item.highlight
         }))
         groupAssistList = normalList.filter((item) => {
             return item.group_id && !canGroupNotice(item.group_id)
@@ -668,5 +669,19 @@ export function sendMsgAppendInfo(msg: any) {
         msg.message.forEach(() => {
             // TODO: 消息附加功能，暂时没用到
         })
+    }
+}
+
+/**
+ *
+ * @param base group_name 或者 nickname
+ * @param remark remark
+ * @returns 显示的名称
+ */
+export function getShowName(base: string, remark: string) {
+    if (!remark || remark == '' || remark == base) {
+        return base
+    } else {
+        return remark + '（' + base + '）'
     }
 }

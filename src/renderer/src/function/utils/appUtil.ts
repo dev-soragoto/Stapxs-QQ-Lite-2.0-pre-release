@@ -402,13 +402,11 @@ export function createIpc() {
         sendMsgRaw(info.id, info.type,
             parseMsg(info.content, [{ type: 'reply', id: String(info.msg) }], []), true)
         // 去消息列表内寻找，去除新消息标记
-        for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
-            if (runtimeData.baseOnMsgList[i].group_id == info.id ||
-                runtimeData.baseOnMsgList[i].user_id == info.id) {
-                runtimeData.baseOnMsgList[i].new_msg = false
-                runtimeData.baseOnMsgList[i].highlight = undefined
-                break
-            }
+        const item = runtimeData.baseOnMsgList.get(info.id)
+        if(item) {
+            item.new_msg = false
+            item.highlight = undefined
+            runtimeData.baseOnMsgList.set(Number(info.id), item)
         }
     })
     // 应用功能
@@ -522,12 +520,11 @@ export async function loadMobile() {
                         true
                     )
                     // 去消息列表内寻找，去除新消息标记
-                    for (let i = 0; i < runtimeData.baseOnMsgList.length; i++) {
-                        if (runtimeData.baseOnMsgList[i].group_id == notification.extra.userId || runtimeData.baseOnMsgList[i].user_id == notification.extra.userId) {
-                            runtimeData.baseOnMsgList[i].new_msg = false
-                            runtimeData.baseOnMsgList[i].highlight = undefined
-                            break
-                        }
+                    const item = runtimeData.baseOnMsgList.get(Number(notification.extra.userId))
+                    if(item) {
+                        item.new_msg = false
+                        item.highlight = undefined
+                        runtimeData.baseOnMsgList.set(Number(notification.extra.userId), item)
                     }
                 }
             })
@@ -1052,18 +1049,6 @@ export function changeGroupNotice(group_id: number, open: boolean) {
             noticeInfo[runtimeData.loginInfo.uin] = [group_id]
         }
         option.save('notice_group', noticeInfo)
-        // 如果它在 groupAssistList 里面，移到 onMsgList
-        // 找到它和它的位置
-        // const item = runtimeData.groupAssistList.find(
-        //     (item) => item.group_id == group_id,
-        // )
-        // if (item) {
-        //     runtimeData.baseOnMsgList.push(item)
-        //     runtimeData.groupAssistList.splice(
-        //         runtimeData.groupAssistList.indexOf(item),
-        //         1,
-        //     )
-        // }
     } else {
         if (list) {
             const index = list.indexOf(group_id)
