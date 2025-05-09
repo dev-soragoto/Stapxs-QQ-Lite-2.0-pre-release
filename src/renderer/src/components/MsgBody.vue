@@ -35,7 +35,7 @@
                 <span v-if="senderInfo?.is_robot" class="robot">{{ $t('机器人') }}</span>
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
-                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
+                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title.replace(/[\u202A-\u202E\u2066-\u2069]/g, '') }}</span>
             </template>
             <a v-if="data.sender.card || data.sender.nickname"
                 v-show="!isMe || type == 'merge'">

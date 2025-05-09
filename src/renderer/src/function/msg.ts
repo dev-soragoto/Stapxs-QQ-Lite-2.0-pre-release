@@ -1616,13 +1616,14 @@ function newMsg(_: string, data: any) {
                 })
                 getGroup = getList[0]
             }
-
-            getGroup.message_id = data.message_id
-            const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
-            getGroup.raw_msg = name + ': ' + getMsgRawTxt(data)
-            getGroup.raw_msg_base = getMsgRawTxt(data)
-            getGroup.time = getViewTime(Number(data.time))
-            runtimeData.baseOnMsgList.set(Number(id), getGroup)
+            if (getGroup) {
+                getGroup.message_id = data.message_id
+                const name = data.sender.card && data.sender.card !== ''? data.sender.card: data.sender.nickname
+                getGroup.raw_msg = name + ': ' + getMsgRawTxt(data)
+                getGroup.raw_msg_base = getMsgRawTxt(data)
+                getGroup.time = getViewTime(Number(data.time))
+                runtimeData.baseOnMsgList.set(Number(id), getGroup)
+            }
         }
 
         const get = [...runtimeData.baseOnMsgList.keys()].filter((item) => {

@@ -680,8 +680,8 @@ export function sendMsgAppendInfo(msg: any) {
  */
 export function getShowName(base: string, remark: string) {
     if (!remark || remark == '' || remark == base) {
-        return base
+        return base.replace(/[\u202A-\u202E\u2066-\u2069]/g, '')
     } else {
-        return remark + '（' + base + '）'
+        return (remark + '（' + base + '）').replace(/[\u202A-\u202E\u2066-\u2069]/g, '')
     }
 }

@@ -1,87 +1,94 @@
 use log::info;
-use tauri::{command, Emitter};
 use once_cell::sync::Lazy;
-use tungstenite::protocol::frame::coding::CloseCode;
-use crate::commands::utils::websocket_client::WebSocketClient;
 use std::{collections::HashMap, sync::Mutex};
+use tauri::{command, AppHandle, Emitter};
+use tungstenite::protocol::frame::coding::CloseCode;
 
-// 全局可变 WebSocketClient
+use crate::commands::utils::websocket_client::WebSocketClient;
+
 static WS_CLIENT: Lazy<Mutex<Option<WebSocketClient>>> = Lazy::new(|| Mutex::new(None));
 
 #[command]
-pub async fn onebot_connect(app_handle: tauri::AppHandle, address: &str, token: &str) -> Result<(), String> {
-    // 检查是否已经存在连接
+pub async fn onebot_connect(
+    app_handle: AppHandle,
+    address: &str,
+    token: &str,
+) -> Result<(), String> {
     {
         let client = WS_CLIENT.lock().unwrap();
         if client.is_some() {
             info!("已有连接，跳过创建");
             let mut payload = HashMap::new();
-            payload.insert("address", address);
-            payload.insert("token", token);
+            payload.insert("address", address.to_string());
+            payload.insert("token", token.to_string());
             app_handle.emit("onebot:onopen", payload).unwrap();
             return Ok(());
         }
     }
 
     info!("正在连接到: {}", address);
-    // 创建 WebSocketClient
+    let url = format!("{}?access_token={}", address, token);
     let address = address.to_string();
     let token = token.to_string();
-    let url = format!("{}?access_token={}", address, token);
-    let app_handle1 = app_handle.clone();
-    let app_handle2 = app_handle.clone();
-    let app_handle3 = app_handle.clone();
-    let ws_client = WebSocketClient::create(&url,
+
+    let app_handle_open = app_handle.clone();
+    let app_handle_msg = app_handle.clone();
+    let app_handle_close = app_handle.clone();
+
+    let ws_client = WebSocketClient::create(
+        &url,
         move || {
-            info!("已成功连接");
+            info!("连接成功: {}", &address);
             let mut payload = HashMap::new();
             payload.insert("address", address.clone());
             payload.insert("token", token.clone());
-            app_handle1.emit("onebot:onopen", payload).unwrap();
+            let _ = app_handle_open.emit("onebot:onopen", payload);
         },
-        move |msg| { app_handle2.emit("onebot:onmessage", msg).unwrap(); },
-        move |code: CloseCode, _| {
+        move |msg| {
+            let _ = app_handle_msg.emit("onebot:onmessage", msg);
+        },
+        move |code: CloseCode, reason| {
+            info!("连接已关闭：{} {:?}", code, reason);
+            {
+                let mut client = WS_CLIENT.lock().unwrap();
+                *client = None;
+            }
             let mut payload = HashMap::new();
             payload.insert("code", code.to_string());
-            payload.insert("message", "连接意外断开".to_string());
-            app_handle3.emit("onebot:onclose", payload).unwrap();
-            info!("连接已关闭，代码：{}", code);
-            let mut client = WS_CLIENT.lock().unwrap();
-            *client = None;
-         }
-    ).await.map_err(|e| e.to_string())?;
+            payload.insert("message", reason.to_string());
+            let _ = app_handle_close.emit("onebot:onclose", payload);
+        },
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
-    // 将 WebSocketClient 存储到全局变量中
     let mut client = WS_CLIENT.lock().unwrap();
     *client = Some(ws_client);
-
     Ok(())
 }
 
 #[command]
 pub fn onebot_send(data: &str) -> Result<(), String> {
-    // 获取 WebSocketClient
     let client = WS_CLIENT.lock().unwrap();
     if let Some(ws_client) = &*client {
-        ws_client.send(data).map_err(|e| e.to_string())?;
-        Ok(())
+        ws_client.send(data).map_err(|e| e.to_string())
     } else {
         Err("WebSocketClient not initialized".to_string())
     }
 }
 
 #[command]
-pub fn onebot_close(app_handle: tauri::AppHandle,) -> Result<(), String> {
-    // 获取 WebSocketClient
+pub fn onebot_close(app_handle: AppHandle) -> Result<(), String> {
     let mut client = WS_CLIENT.lock().unwrap();
     if let Some(ws_client) = &*client {
         ws_client.close().map_err(|e| e.to_string())?;
         *client = None;
-        info!("连接已关闭");
+
+        info!("连接主动关闭");
         let mut payload = HashMap::new();
         payload.insert("code", 1000.to_string());
         payload.insert("message", "".to_string());
-        app_handle.emit("onebot:onclose", payload).unwrap();
+        let _ = app_handle.emit("onebot:onclose", payload);
         Ok(())
     } else {
         Err("WebSocketClient not initialized".to_string())
