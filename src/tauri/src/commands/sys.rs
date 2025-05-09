@@ -1,7 +1,8 @@
-use std::{collections::HashMap, ffi::CStr, process::Command};
+use std::{collections::HashMap, ffi::CStr, process::Command, time::Duration};
 use crate::PROXY_PORT;
 
 use log::{debug, error, info};
+use reqwest::Client;
 use serde_json::Value;
 use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
@@ -37,8 +38,63 @@ pub fn sys_find_service() -> String {
 }
 
 #[command]
-pub fn sys_preview_link() -> String {
-    return "".to_string();
+pub async fn sys_get_final_redirect_url(data: String) -> Result<String, String> {
+    let client = Client::builder()
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            if attempt.previous().len() >= 100 {
+                attempt.stop()
+            } else {
+                attempt.follow()
+            }
+        }))
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Client build error: {}", e))?;
+
+    let res = client
+        .get(&data)
+        .send()
+        .await
+        .map_err(|e| format!("Request error: {}", e))?;
+
+    let final_url = res.url().to_string();
+    Ok(final_url)
+}
+
+#[command]
+pub async fn sys_get_html(data: String) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let res = client.get(&data).send().await.map_err(|e| e.to_string())?;
+
+    let content_type = res
+        .headers()
+        .get("Content-Type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if content_type.contains("text/html") {
+        res.text().await.map_err(|e| e.to_string())
+    } else {
+        Ok(String::new())
+    }
+}
+
+#[command]
+pub async fn sys_get_api(data: String) -> Result<Value, String> {
+    let client = reqwest::Client::new();
+    let res = client.get(&data).send().await.map_err(|e| e.to_string())?;
+
+    let content_type = res
+        .headers()
+        .get("Content-Type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if content_type.contains("application/json") {
+        res.json::<Value>().await.map_err(|e| e.to_string())
+    } else {
+        Err("Response is not JSON".to_string())
+    }
 }
 
 #[command]
@@ -307,7 +363,6 @@ pub fn sys_get_win_color() -> Option<String> {
             }
         }
     }
-    return Some("00000000".to_string());
 }
 
 // macOS：Touch Bar 支持

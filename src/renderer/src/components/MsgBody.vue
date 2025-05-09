@@ -65,7 +65,7 @@
                         <template v-else-if="item.type == 'text'">
                             <div v-if="hasMarkdown()" class="msg-md-title" />
                             <span v-else v-show="item.text !== ''"
-                                class="msg-text" @click="textClick" v-html="parseText(item.text)" />
+                                class="msg-text" @click="textClick" v-html="textIndex[index]" />
                         </template>
                         <div v-else-if="item.type == 'markdown'" v-once
                             :id="getMdHTML(item.content, 'msg-md-' + data.message_id)"
@@ -347,6 +347,7 @@
         getSizeFromBytes,
         getTrueLang,
         getViewTime } from '@renderer/function/utils/systemUtil'
+    import { linkView } from '@renderer/function/utils/linkViewUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -369,6 +370,7 @@
                 getVideo: false,
                 senderInfo: null as any,
                 trueLang: getTrueLang(),
+                textIndex: {} as { [key: string]: number },
             }
         },
         mounted() {
@@ -393,6 +395,13 @@
                     return item.user_id == this.data.sender.user_id
                 },
             )[0]
+            // 处理 textIndex
+            for (let i = 0; i < this.data.message.length; i++) {
+                const item = this.data.message[i]
+                if(item.type == 'text') {
+                    this.parseText(i)
+                }
+            }
         },
         methods: {
             /**
@@ -559,7 +568,9 @@
              * 处理纯文本消息和链接预览
              * @param text 纯文本消息
              */
-            parseText(text: string) {
+            async parseText(index: number) {
+                let text = this.data.message[index].text
+
                 const logger = new Logger()
                 text = ViewFuns.parseText(text)
                 // 防止大量的重复字符
@@ -584,30 +595,58 @@
                         // ignore
                     }
                     sendStatEvent('link_view', { domain: domain })
-                    if (runtimeData.tags.clientType != 'web') {
-                        callBackend('Onebot', 'sys:previewLink', true, fistLink)
-                            .then((res) => {
-                                logger.add(LogType.DEBUG, 'Electron Link View: ', res)
-                                this.loadLinkPreview(protocol + domain, res)
-                            })
-                    } else {
-                        // 获取链接预览
-                        fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
-                            .then((res) => res.json())
-                            .then((res) => {
+
+                    let data = null as any
+                    let finaLink = fistLink
+                    try {
+                        finaLink = await callBackend('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
+                        if(!finaLink) {
+                            finaLink = fistLink
+                        }
+                    } catch(_) { /**/ }
+                    const showLinkList = {
+                        bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
+                        music163: ['music.163.com', '163cn.tv'],
+                    }
+                    for (const key in showLinkList) {
+                        if (showLinkList[key].some((item: string) => finaLink.includes(item))) {
+                            data = await linkView[key](finaLink)
+                        }
+                    }
+                    // 通用 og 解析
+                    if(!data) {
+                        if (runtimeData.tags.clientType != 'web') {
+                            let html = await callBackend('Onebot', 'sys:getHtml', true, finaLink)
+                            if(html) {
+                                const headEnd = html.indexOf('</head>')
+                                html = html.slice(0, headEnd)
+                                // 获取所有的 og meta 标签
+                                const ogRegex = /<meta\s+property="og:([^"]+)"\s+content="([^"]+)"\s*\/?>/g
+                                const ogTags = {} as {[key: string]: string}
+                                let match: string[] | null
+                                while ((match = ogRegex.exec(html)) !== null) {
+                                    ogTags[`og:${match[1]}`] = match[2]
+                                }
+                                data = ogTags
+                            }
+                        } else {
+                            // 获取链接预览
+                            const response = await fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
+                            if(response.ok) {
+                                const res = await response.json()
                                 if (res.status === undefined && Object.keys(res).length > 0) {
-                                    this.loadLinkPreview(protocol + domain, res)
+                                    data = res
                                 }
-                            })
-                            .catch((error) => {
-                                if (error) {
-                                    logger.error(error as Error, '获取链接预览失败: ' + fistLink)
-                                }
-                            })
+                            }
+                        }
+                    }
+
+                    logger.add(LogType.DEBUG, 'Link View: ', data)
+                    if(data) {
+                        this.loadLinkPreview(protocol + domain, data)
                     }
                 }
-                // 返回
-                return text
+                this.textIndex[index] = text
             },
 
             loadLinkPreview(domain: string, res: any) {

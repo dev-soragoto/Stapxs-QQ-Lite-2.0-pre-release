@@ -1057,21 +1057,5 @@ export function changeGroupNotice(group_id: number, open: boolean) {
             }
         }
         option.save('notice_group', noticeInfo)
-        // 如果它在 onMsgList 里面，移到 groupAssistList
-        // if(runtimeData.sysConfig.bubble_sort_user) {
-        //     const item = runtimeData.onMsgList.find(
-        //         (item) => item.group_id == group_id,
-        //     )
-
-        //     if (item && !item.always_top) {
-        //         item.new_msg = false
-
-        //         runtimeData.groupAssistList.push(item)
-        //         runtimeData.onMsgList.splice(
-        //             runtimeData.onMsgList.indexOf(item),
-        //             1,
-        //         )
-        //     }
-        // }
     }
 }

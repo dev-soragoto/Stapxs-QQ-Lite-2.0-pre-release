@@ -478,3 +478,25 @@ export function addBackendListener(type: string | undefined, name: string, callB
         runtimeData.plantform.pulgins[type].addListener(name, callBack)
     }
 }
+
+/**
+ * 请求 API，暂时未支持 method: string, data: any
+ * @param url 请求的地址
+ */
+export async function getApi(url: string) {
+    // 先尝试在前端请求
+    try {
+        const response = await fetch(url)
+        if(response.ok) {
+            const data = await response.json()
+            return data
+        }
+    } catch (error) {
+        new Logger().error(error as Error, '前端请求 API 失败，尝试后端请求……')
+        if(runtimeData.tags.clientType != 'web') {
+            return await callBackend('Onebot', 'sys:getApi', true, url)
+        } else {
+            return null
+        }
+    }
+}
