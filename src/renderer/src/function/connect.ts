@@ -254,8 +254,7 @@ export class Connector {
     static sendRaw(json: string) {
         // 发送
         if(runtimeData.tags.clientType != 'web') {
-            callBackend('Onebot', 'onebot:send', false,
-                runtimeData.tags.clientType == 'capacitor' ? { data: json } : json)
+            callBackend('Onebot', 'onebot:send', false, json)
         } else if (websocket) {
             websocket.send(json)
         }

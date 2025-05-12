@@ -584,67 +584,69 @@
                 text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
                 const linkList = text.match(reg)
                 if (linkList !== null && !this.gotLink) {
-                    this.gotLink = true
-                    const fistLink = linkList[0]
-                    let protocol = ''
-                    let domain = ''
-                    try {
-                        protocol = new URL(fistLink).protocol + '//'
-                        domain = new URL(fistLink).hostname
-                    } catch (ignore) {
-                        // ignore
-                    }
-                    sendStatEvent('link_view', { domain: domain })
+                    queueMicrotask(async() => {
+                        this.gotLink = true
+                        const fistLink = linkList[0]
+                        let protocol = ''
+                        let domain = ''
+                        try {
+                            protocol = new URL(fistLink).protocol + '//'
+                            domain = new URL(fistLink).hostname
+                        } catch (ignore) {
+                            // ignore
+                        }
+                        sendStatEvent('link_view', { domain: domain })
 
-                    let data = null as any
-                    let finaLink = fistLink
-                    try {
-                        finaLink = await callBackend('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
-                        if(!finaLink) {
-                            finaLink = fistLink
-                        }
-                    } catch(_) { /**/ }
-                    const showLinkList = {
-                        bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
-                        music163: ['music.163.com', '163cn.tv'],
-                    }
-                    for (const key in showLinkList) {
-                        if (showLinkList[key].some((item: string) => finaLink.includes(item))) {
-                            data = await linkView[key](finaLink)
-                        }
-                    }
-                    // 通用 og 解析
-                    if(!data) {
-                        if (runtimeData.tags.clientType != 'web') {
-                            let html = await callBackend('Onebot', 'sys:getHtml', true, finaLink)
-                            if(html) {
-                                const headEnd = html.indexOf('</head>')
-                                html = html.slice(0, headEnd)
-                                // 获取所有的 og meta 标签
-                                const ogRegex = /<meta\s+property="og:([^"]+)"\s+content="([^"]+)"\s*\/?>/g
-                                const ogTags = {} as {[key: string]: string}
-                                let match: string[] | null
-                                while ((match = ogRegex.exec(html)) !== null) {
-                                    ogTags[`og:${match[1]}`] = match[2]
-                                }
-                                data = ogTags
+                        let data = null as any
+                        let finaLink = fistLink
+                        try {
+                            finaLink = await callBackend('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
+                            if(!finaLink) {
+                                finaLink = fistLink
                             }
-                        } else {
-                            // 获取链接预览
-                            const response = await fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
-                            if(response.ok) {
-                                const res = await response.json()
-                                if (res.status === undefined && Object.keys(res).length > 0) {
-                                    data = res
-                                }
+                        } catch(_) { /**/ }
+                        const showLinkList = {
+                            bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
+                            music163: ['music.163.com', '163cn.tv'],
+                        }
+                        for (const key in showLinkList) {
+                            if (showLinkList[key].some((item: string) => finaLink.includes(item))) {
+                                data = await linkView[key](finaLink)
                             }
                         }
-                    }
+                        // 通用 og 解析
+                        if(!data) {
+                            if (runtimeData.tags.clientType != 'web') {
+                                let html = await callBackend('Onebot', 'sys:getHtml', true, finaLink)
+                                if(html) {
+                                    const headEnd = html.indexOf('</head>')
+                                    html = html.slice(0, headEnd)
+                                    // 获取所有的 og meta 标签
+                                    const ogRegex = /<meta\s+property="og:([^"]+)"\s+content="([^"]+)"\s*\/?>/g
+                                    const ogTags = {} as {[key: string]: string}
+                                    let match: string[] | null
+                                    while ((match = ogRegex.exec(html)) !== null) {
+                                        ogTags[`og:${match[1]}`] = match[2]
+                                    }
+                                    data = ogTags
+                                }
+                            } else {
+                                // 获取链接预览
+                                const response = await fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
+                                if(response.ok) {
+                                    const res = await response.json()
+                                    if (res.status === undefined && Object.keys(res).length > 0) {
+                                        data = res
+                                    }
+                                }
+                            }
+                        }
 
-                    logger.add(LogType.DEBUG, 'Link View: ', data)
-                    if(data) {
-                        this.loadLinkPreview(protocol + domain, data)
-                    }
+                        logger.add(LogType.DEBUG, 'Link View: ', data)
+                        if(data) {
+                            this.loadLinkPreview(protocol + domain, data)
+                        }
+                    })
                 }
                 this.textIndex[index] = text
             },

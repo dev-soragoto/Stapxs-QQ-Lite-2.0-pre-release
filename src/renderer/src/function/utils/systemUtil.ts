@@ -391,12 +391,17 @@ export function getTimeConfig(date: Date) {
 
 /**
  * 调用后端方法
+ *
+ * #### 方法名称
  * 请使用统一的 electron 方法名称，其余平台会自动转换
  * - electron 将调用 sys: 前缀的名称如 > sys:getConfig
  * - capacitor 将调用去除 sys: 前缀的名称如 > getConfig
  * - tauri 将调用 sys_ 前缀加下划线小写的名称如 > sys_get_config
  *
- * 返回值如有大多为 Promise（在 electron 中一定是），请使用 async/await 调用
+ * #### 备注
+ * - 在 capacitor 和 tauri 中。args 必须是一个对象，如果你传递了其他类型的参数，此方法会自行转换为 ```{data: args[0]}```; 请在后端获取 data 在进行处理。
+ * - capacitor 的返回也必须是一个对象，此方法会主动将有且只有一个参数的返回值拆出来，不用特别在意获取。
+ * - 返回值如有大多为 Promise（在 electron 中一定是），请使用 async/await 调用。
  *
  * ---
  *
@@ -406,7 +411,7 @@ export function getTimeConfig(date: Date) {
  * @param args 参数列表
  * @returns 返回值
  */
-export function callBackend(type: string | undefined, name: string, needBack: boolean, ...args: any[]) {
+export async function callBackend(type: string | undefined, name: string, needBack: boolean, ...args: any[]) {
     // 处理名称
     if(runtimeData.tags.clientType == 'tauri') {
         // 将冒号替换为下划线同时拆分
@@ -421,25 +426,33 @@ export function callBackend(type: string | undefined, name: string, needBack: bo
     try {
         if('electron' == runtimeData.tags.clientType) {
             if(needBack) {
-                return runtimeData.plantform.invoke(name, ...args)
+                return await runtimeData.plantform.invoke(name, ...args)
             } else {
                 runtimeData.plantform.send(name, ...args)
                 return undefined
             }
         } else if('tauri' == runtimeData.tags.clientType) {
             // tauri 这边必须传入一个字典
-            if(args.length == 0 || Object.prototype.toString.call(args[0]) === '[object Object]') {
-                return runtimeData.plantform.invoke(name, args[0])
-            } else {
-                return runtimeData.plantform.invoke(name, { data: args[0] })
+            if(args.length == 0 || Object.prototype.toString.call(args[0]) !== '[object Object]') {
+                args = [{ data: args[0] }]
             }
+            return await runtimeData.plantform.invoke(name, args[0])
         } else if('capacitor' == runtimeData.tags.clientType) {
+            // capacitor 这边必须传入一个字典
+            if(args.length == 0 || Object.prototype.toString.call(args[0]) !== '[object Object]') {
+                args = [{ data: args[0] }]
+            }
             let functionGet = runtimeData.plantform.capacitor[name]
             if(type != undefined && functionGet == undefined) {
                 functionGet = runtimeData.plantform.pulgins[type][name] ??
                 runtimeData.plantform.capacitor[type][name]
             }
-            return functionGet(...args)
+            const back = await functionGet(args[0])
+            if(Object.prototype.toString.call(back) === '[object Object]' && Object.keys(back).length == 1) {
+                return back[Object.keys(back)[0]]
+            } else {
+                return back
+            }
         }
     } catch(ex) {
         let appendString = ''
