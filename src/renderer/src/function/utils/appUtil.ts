@@ -482,9 +482,10 @@ export async function loadMobile() {
         }
         // 通知
         const permission = await callBackend('LocalNotifications', 'checkPermissions', true)
-        if(permission.display.indexOf('prompt') != -1) {
+        const permissionStr = permission || permission.display
+        if(permissionStr.indexOf('prompt') != -1) {
             await callBackend('LocalNotifications', 'requestPermissions', false)
-        } else if(permission.display.indexOf('denied') != -1) {
+        } else if(permissionStr.indexOf('denied') != -1) {
             logger.error(null, '通知权限已被拒绝')
             logger.system('开发者阁下为什么要拒绝通知权限的请求呢？')
         } else {
@@ -669,7 +670,7 @@ export async function loadAppendStyle() {
         })
     }
     if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && platform == 'linux') {
-        const gnomeExtInfo = callBackend(undefined, 'sys:getGnomeExt', true)
+        const gnomeExtInfo = await callBackend(undefined, 'sys:getGnomeExt', true)
         if (gnomeExtInfo) {
             gnomeExtInfo.then((info: any) => {
                 if (
