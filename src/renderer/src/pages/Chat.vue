@@ -1533,7 +1533,7 @@
             downloadImg() {
                 const url = this.tags.menuDisplay.downloadImg
                 if (url != false) {
-                    downloadFile(url as string, 'img.png', () => undefined)
+                    downloadFile(url as string, 'img.png', () => undefined, () => undefined)
                 }
                 this.closeMsgMenu()
             },

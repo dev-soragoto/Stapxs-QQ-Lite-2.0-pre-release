@@ -247,6 +247,7 @@ export function downloadFile(
     url: string,
     name: string,
     onprocess: (event: ProgressEvent & { [key: string]: any }) => undefined,
+    oncancel: (event: ProgressEvent & { [key: string]: any }) => undefined,
 ) {
     if (document.location.protocol == 'https:') {
         // 判断下载文件 URL 的协议
@@ -269,8 +270,11 @@ export function downloadFile(
             logger.error(e as Error, '下载文件失败')
         }
     } else {
-        addBackendListener(undefined, 'sys:downloadBack', (_, params) => {
-            onprocess(params)
+        addBackendListener(undefined, 'sys:downloadBack', (event, data) => {
+            onprocess(data || event.payload)
+        })
+        addBackendListener(undefined, 'sys:downloadCancel', (event, data) => {
+            oncancel(data || event.payload)
         })
         callBackend(undefined, 'sys:download', false, {
             downloadPath: url,
@@ -447,7 +451,7 @@ export function createIpc() {
     })
     addBackendListener(undefined, 'onebot:onclose', (event, data) => {
         const info = data ?? event.payload
-        Connector.onclose(info.code, info.reason, info.address, info.token)
+        Connector.onclose(info.code, info.reason || info.message, info.address, info.token)
     })
 }
 

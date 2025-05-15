@@ -110,6 +110,7 @@ pub fn run() {
             commands::sys::sys_get_final_redirect_url,
             commands::sys::sys_get_html,
             commands::sys::sys_get_api,
+            commands::sys::sys_download,
             commands::onebot::onebot_connect,
             commands::onebot::onebot_send,
             commands::onebot::onebot_close,

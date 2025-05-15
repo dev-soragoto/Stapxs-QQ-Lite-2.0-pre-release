@@ -1,4 +1,4 @@
-use log::info;
+use log::{info, error};
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, sync::Mutex};
 use tauri::{command, AppHandle, Emitter};
@@ -60,7 +60,14 @@ pub async fn onebot_connect(
         },
     )
     .await
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| {
+        error!("连接失败: {}", e);
+        let mut payload = HashMap::new();
+        payload.insert("code", 1000.to_string());
+        payload.insert("message", e.to_string());
+        let _ = app_handle.emit("onebot:onclose", payload);
+        e.to_string()
+    })?;
 
     let mut client = WS_CLIENT.lock().unwrap();
     *client = Some(ws_client);

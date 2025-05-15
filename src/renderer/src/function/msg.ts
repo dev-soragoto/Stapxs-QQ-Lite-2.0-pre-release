@@ -823,12 +823,13 @@ const msgFunctons = {
 
         // 下载文件
         if (msgItem && bodyIndex != -1) {
-            const onProcess = function (event: ProgressEvent): undefined {
+            downloadFile(url, fileName, (event: ProgressEvent) => {
                 if (!event.lengthComputable) return
                 const percent = Math.floor((event.loaded / event.total) * 100)
                 msgItem.message[bodyIndex].download_percent = percent
-            }
-            downloadFile(url, fileName, onProcess)
+            }, () => {
+                msgItem.message[bodyIndex].download_percent = undefined
+            })
         }
     },
 
@@ -872,7 +873,11 @@ const msgFunctons = {
         }
 
         // 下载文件
-        downloadFile(url, fileName, onProcess)
+        downloadFile(url, fileName, onProcess, () => {
+            if(listItem) {
+                listItem.download_percent = undefined
+            }
+        })
     },
 
     /**

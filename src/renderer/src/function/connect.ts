@@ -162,7 +162,7 @@ export class Connector {
 
         switch (Number(code)) {
             case 1000:
-                popInfo.add(PopType.INFO, $t('连接已断开') + (msg ?? ''), false)
+                popInfo.add(PopType.INFO, $t('连接已断开') + (msg ? (': ' + msg.replace(':', ' - ')) : ''), false)
                 break // 正常关闭
             case 1006: {
                 // 非正常关闭，尝试重连

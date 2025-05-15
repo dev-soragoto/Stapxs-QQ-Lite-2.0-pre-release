@@ -1,12 +1,14 @@
-use std::{collections::HashMap, ffi::CStr, process::Command, time::Duration};
+use std::{collections::HashMap, ffi::CStr, fs::File, process::Command, time::Duration, io::{self, Write}};
 use crate::PROXY_PORT;
 
 use log::{debug, error, info};
 use reqwest::Client;
+use rfd::MessageLevel;
 use serde_json::Value;
 use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_opener::OpenerExt;
+use futures_util::StreamExt;
 
 #[command]
 pub fn sys_get_platform() -> String {
@@ -98,8 +100,79 @@ pub async fn sys_get_api(data: String) -> Result<Value, String> {
 }
 
 #[command]
-pub fn sys_download() -> String {
-    return "".to_string();
+pub async fn sys_download(app_handle: AppHandle, downloadPath: String, fileName: String) -> Result<(), String> {
+    info!("下载文件：{:?}", downloadPath);
+
+    let folder = rfd::FileDialog::new()
+        .pick_folder();
+
+    let folder_path = match folder {
+        Some(folder) => folder,
+        None => {
+            info!("用户取消了选择文件夹");
+            app_handle.emit("sys:downloadCancel", "").unwrap();
+            return Ok(());
+        }
+    };
+
+    let filepath = folder_path.join(fileName);
+    debug!("下载文件路径: {:?}", filepath);
+    // 检查文件是否存在
+    if filepath.exists() {
+        let result = rfd::MessageDialog::new()
+            .set_title("文件已存在")
+            .set_description("文件已存在，是否覆盖？")
+            .set_level(MessageLevel::Warning)
+            .set_buttons(rfd::MessageButtons::YesNo)
+            .show();
+        if result != rfd::MessageDialogResult::Yes {
+            info!("用户取消了下载");
+            app_handle.emit("sys:downloadCancel", "").unwrap();
+            return Ok(());
+        }
+    }
+
+    let result = async {
+        let client = Client::new();
+        let response = client.get(downloadPath).send().await.map_err(|e| format!("请求失败: {}", e))?;
+
+        let total_size = response
+            .content_length()
+            .ok_or_else(|| {
+                io::Error::new(io::ErrorKind::Other, "无法获取文件大小")
+            })?;
+
+        let mut file = File::create(&filepath)?;
+        let mut stream = response.bytes_stream();
+
+        let mut downloaded: u64 = 0;
+        while let Some(item) = stream.next().await {
+            let chunk = item?;
+            file.write_all(&chunk)?;
+            downloaded += chunk.len() as u64;
+
+            let percent = downloaded as f64 / total_size as f64 * 100.0;
+            print!("\r已下载: {:.2}%", percent);
+            let mut payload: HashMap<&str, Value> = HashMap::new();
+            payload.insert("lengthComputable", true.into());
+            payload.insert("loaded", downloaded.into());
+            payload.insert("total", total_size.into());
+            app_handle.emit("sys:downloadBack", payload).unwrap();
+            io::stdout().flush()?;
+        }
+
+        Ok::<_, Box<dyn std::error::Error>>(())
+    }.await;
+    if let Err(e) = result {
+        error!("下载失败: {}", e);
+        app_handle.emit("sys:downloadError", e.to_string()).unwrap();
+        return Err(e.to_string());
+    }
+
+    println!("\r");
+    info!("下载完成: {:?}", filepath);
+
+    return Ok(())
 }
 
 #[command]
