@@ -436,6 +436,7 @@ pub fn sys_get_win_color() -> Option<String> {
             }
         }
     }
+    return Some("00000000".to_string())
 }
 
 // macOS：Touch Bar 支持
