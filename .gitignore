@@ -9,5 +9,6 @@ out
 dev-dist
 dist
 dist_electron
+dist_tauri
 dist_capacitor
 stats.html

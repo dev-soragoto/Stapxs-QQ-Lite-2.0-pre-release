@@ -56,9 +56,8 @@ const colorList = [
     '50534f',
     'f9a633',
     '8076a3',
-    'f0a1a8',
     '92aa8a',
-    '606E7A',
+    '606e7a',
     '7abb7e',
     'b573f7',
     'ff5370',
@@ -72,3 +71,7 @@ console.log(
     `font-weight:bold;background:#${color};color:#fff;border-radius:7px 0 0 7px;padding:7px 14px;margin:7px 0 7px 7px;`,
     'background:#e3e8ec;color:#000;border-radius:0 7px 7px 0;display:inline-block;padding:7px 14px;margin:7px 7px 7px 0;',
 )
+if(import.meta.env.DEV) {
+    console.log('[ SSystem Bootloader Loading …… core/sardos-core ]')
+}
+console.log('[ SSystem Bootloader Loading …… core/ssqq-core ]')

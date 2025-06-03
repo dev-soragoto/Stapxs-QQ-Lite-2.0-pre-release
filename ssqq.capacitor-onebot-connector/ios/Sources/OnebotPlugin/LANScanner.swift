@@ -100,7 +100,7 @@ class LANScanner {
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
             if let httpResponse = response as? HTTPURLResponse {
-                logger.debug("连接：\(host):\(port) 成功，代码：\(httpResponse.statusCode)")
+                ("连接：\(host):\(port) 成功，代码：\(httpResponse.statusCode)")
                 return true
             }
         } catch {

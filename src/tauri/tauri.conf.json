@@ -1,0 +1,65 @@
+{
+    "$schema": "https://schema.tauri.app/config/2",
+    "productName": "Stapxs QQ Lite",
+    "version": "../../package.json",
+    "identifier": "cn.stapxs.qqweb",
+    "build": {
+        "beforeDevCommand": "yarn dev",
+        "devUrl": "http://localhost:8080",
+        "beforeBuildCommand": "yarn build",
+        "frontendDist": "../../dist"
+    },
+    "app": {
+        "macOSPrivateApi": true,
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "copyright": "Copyright © 2022-2025 Stapx Steve [林槐]",
+        "homepage": "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0",
+        "longDescription": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
+        "shortDescription": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
+        "publisher": "stapxs",
+        "license": "Apache-2.0",
+        "targets": "all",
+        "useLocalToolsDir": true,
+        "icon": [
+            "../../build/icon-client-mac.icns",
+            "../../build/icon-client-others.png",
+            "../../build/icon-client-others.ico"
+        ],
+        "macOS": {
+            "dmg": {
+                "appPosition": {
+                    "x": 112,
+                    "y": 110
+                },
+                "applicationFolderPosition": {
+                    "x": 396,
+                    "y": 110
+                },
+                "windowSize": {
+                    "height": 302,
+                    "width": 517
+                },
+                "background": "../../build/dmg-bg.png"
+            },
+            "entitlements": "../../build/entitlements.mac.plist"
+        },
+        "windows": {
+            "allowDowngrades": false,
+            "webviewInstallMode": {
+                "silent": true,
+                "type": "downloadBootstrapper"
+            },
+            "wix": null
+        },
+        "linux": {
+            "deb": {
+                "desktopTemplate": "../../build/debian.desktop"
+            }
+        }
+    }
+}

@@ -17,6 +17,22 @@ textarea:focus {
     outline: none;
 }
 
+.custom-focus {
+    outline: none;
+}
+.custom-focus:focus-visible {
+    animation: custom-focus .1s ease-out forwards;
+}
+
+@keyframes custom-focus {
+  0% {
+    outline: 15px solid rgba(127, 145, 222, 0);
+  }
+  100% {
+    outline: 3px solid rgba(127, 145, 222, 1);
+  }
+}
+
 .vc-switch {
     background: var(--color-main) !important;
     display: none !important;
@@ -44,6 +60,12 @@ textarea:focus {
     padding: 10px 0;
     z-index: 100;
 }
+.dev-bar.win {
+    background: transparent !important;
+    width: calc(100% - 180px);
+    box-shadow: unset;
+    left: 90px;
+}
 
 .top-bar {
     -webkit-app-region: drag;
@@ -56,6 +78,9 @@ textarea:focus {
     height: 40px;
     width: 100%;
     z-index: 99;
+}
+.top-bar.win {
+    background: var(--color-bg-yellow);
 }
 .top-bar > div.bar-button {
     -webkit-app-region: no-drag;

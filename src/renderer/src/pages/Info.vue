@@ -446,37 +446,27 @@
             startChat(info: any) {
                 // 如果是自己的话就忽略
                 if (info.user_id != runtimeData.loginInfo.uin) {
-                    // 检查这个人是否已经在聊天列表中
-                    let chat = runtimeData.baseOnMsgList.find(
+
+                    // 检查这个人是不是好友
+                    let chat = runtimeData.userList.find(
                         (item: UserFriendElem & UserGroupElem) => {
                             return item.user_id == info.user_id
                         },
                     )
                     if (!chat) {
-                        // 检查这个人是不是好友
-                        const friend = runtimeData.userList.find(
-                            (item: UserFriendElem & UserGroupElem) => {
-                                return item.user_id == info.user_id
-                            },
-                        )
-                        if (friend) {
-                            runtimeData.baseOnMsgList.push(friend)
-                            chat = friend
-                        } else {
-                            // 创建一个临时聊天
-                            const user = {
-                                user_id: info.user_id,
-                                // 因为临时消息没有返回昵称
-                                nickname:
-                                    app.config.globalProperties.$t('临时会话'),
-                                remark: info.user_id,
-                                group_id: info.group_id,
-                                group_name: '',
-                            } as UserFriendElem & UserGroupElem
-                            runtimeData.baseOnMsgList.push(user)
-                            chat = user
-                        }
+                        // 创建一个临时聊天
+                        const user = {
+                            user_id: info.user_id,
+                            // 因为临时消息没有返回昵称
+                            nickname:
+                                app.config.globalProperties.$t('临时会话'),
+                            remark: info.user_id,
+                            group_id: info.group_id,
+                            group_name: '',
+                        } as UserFriendElem & UserGroupElem
+                        chat = user
                     }
+                    runtimeData.baseOnMsgList.set(Number(info.user_id), chat)
                     // 切换到这个聊天
                     this.$nextTick(() => {
                         if (chat) {

@@ -4,9 +4,9 @@ import { jumpToChat } from './utils/appUtil'
 import { runtimeData } from './msg'
 import {
     LocalNotificationSchema,
-    LocalNotificationsPlugin,
     DeliveredNotifications
 } from '@capacitor/local-notifications'
+import { callBackend } from './utils/systemUtil'
 
 export class Notify {
     // 针对 MSG 类型的通知，记录用户的通知数量
@@ -20,8 +20,6 @@ export class Notify {
      */
     public notify(info: NotifyInfo) {
         const { $t } = app.config.globalProperties
-        const isElectron = runtimeData.tags.isElectron
-        const isCapacitor = runtimeData.tags.isCapacitor
         // 判断当前 userId 是否已存在通知
         const userId = info.tag.split('/')[0]
         if (Notify.userNotifyList[userId] === undefined) {
@@ -37,31 +35,26 @@ export class Notify {
             this.closeAll(userId)
         }
         // 发送消息
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:sendNotice', info)
-        } else if(isCapacitor) {
-            const Notice = runtimeData.plantform.capacitor.Plugins
-                .LocalNotifications as LocalNotificationsPlugin
-                if(Notice) {
-                    const data = {
-                        title: info.title,
-                        body: info.body,
-                        // id 相同的通知会被覆盖，这里使用用户 ID 作为通知 ID 便于覆盖
-                        id: Number(info.tag.split('/')[0]),
-                        schedule: {
-                            at: new Date(Date.now() + 100)
-                        },
-                        sound: runtimeData.tags.platform === 'ios' ? 'beep.wav' : 'beep.mp3',
-                        actionTypeId: 'msgQuickReply',
-                        extra: {
-                            userId: info.tag.split('/')[0],
-                            msgId: info.tag.split('/')[1],
-                            chatType: info.type
-                        }
-                    } as LocalNotificationSchema
-                    Notice.schedule({ notifications: [data] })
-                }
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:sendNotice', false, runtimeData.tags.clientType == 'tauri' ? { data: info } : info)
+        } else if(runtimeData.tags.clientType === 'capacitor') {
+                const data = {
+                    title: info.title,
+                    body: info.body,
+                    // id 相同的通知会被覆盖，这里使用用户 ID 作为通知 ID 便于覆盖
+                    id: Number(info.tag.split('/')[0]),
+                    schedule: {
+                        at: new Date(Date.now() + 100)
+                    },
+                    sound: runtimeData.tags.platform === 'ios' ? 'beep.wav' : 'beep.mp3',
+                    actionTypeId: 'msgQuickReply',
+                    extra: {
+                        userId: info.tag.split('/')[0],
+                        msgId: info.tag.split('/')[1],
+                        chatType: info.type
+                    }
+                } as LocalNotificationSchema
+                callBackend('LocalNotifications', 'schedule', false, { notifications: [data] })
         } else {
             // Safari：在 iOS 下，如果页面没有被创建为主屏幕，通知无法被调用
             // 最见鬼的是它不是方法返回失败，而且整个 Notification 对象都没有
@@ -87,27 +80,20 @@ export class Notify {
      * @param info 通知信息
      */
     public notifySingle(info: NotifyInfo) {
-        const isElectron = runtimeData.tags.isElectron
-        const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:sendNotice', info)
-        } else if (isCapacitor) {
-            const Notice = runtimeData.plantform.capacitor.Plugins
-                .LocalNotifications as LocalNotificationsPlugin
-                if(Notice) {
-                    const data = {
-                        title: info.title,
-                        body: info.body,
-                        // id 为随机数，不会被覆盖；主要用于应用的通知
-                        id: Math.floor(Math.random() * 100000),
-                        schedule: {
-                            at: new Date(Date.now() + 100)
-                        },
-                        sound: runtimeData.tags.platform === 'ios' ? 'beep.wav' : 'beep.mp3'
-                    } as LocalNotificationSchema
-                    Notice.schedule({ notifications: [data] })
-                }
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:sendNotice', false, info)
+        } else if (runtimeData.tags.clientType === 'capacitor') {
+                const data = {
+                    title: info.title,
+                    body: info.body,
+                    // id 为随机数，不会被覆盖；主要用于应用的通知
+                    id: Math.floor(Math.random() * 100000),
+                    schedule: {
+                        at: new Date(Date.now() + 100)
+                    },
+                    sound: runtimeData.tags.platform === 'ios' ? 'beep.wav' : 'beep.mp3'
+                } as LocalNotificationSchema
+                callBackend('LocalNotifications', 'schedule', false, { notifications: [data] })
         } else {
             // Safari：在 iOS 下，如果页面没有被创建为主屏幕，通知无法被调用
             // 最见鬼的是它不是方法返回失败，而且整个 Notification 对象都没有
@@ -133,24 +119,17 @@ export class Notify {
      * @param userId 用户 ID
      */
     public async closeAll(userId: string) {
-        const isElectron = runtimeData.tags.isElectron
-        const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:closeAllNotice', userId)
-        } else if(isCapacitor) {
-            const Notice = runtimeData.plantform.capacitor.Plugins
-                .LocalNotifications as LocalNotificationsPlugin
-            if(Notice) {
-                const list = await Notice.getDeliveredNotifications() as
-                    unknown as DeliveredNotifications
-                if(list.notifications) {
-                    list.notifications.forEach((item) => {
-                        if (item.extra.userId === userId) {
-                            Notice.cancel({ notifications: [{ id: item.id }] })
-                        }
-                    })
-                }
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:closeAllNotice', false, userId)
+        } else if(runtimeData.tags.clientType === 'capacitor') {
+            const list = (await callBackend('LocalNotifications', 'getDeliveredNotifications', true)) as
+                unknown as DeliveredNotifications
+            if(list.notifications) {
+                list.notifications.forEach((item) => {
+                    if (item.extra.userId === userId) {
+                        callBackend('LocalNotifications', 'cancel', false, { notifications: [{ id: item.id }] })
+                    }
+                })
             }
         } else {
             const keys = Object.keys(Notify.notifyList)
@@ -167,16 +146,10 @@ export class Notify {
      * 关闭所有通知
      */
     public clear() {
-        const isElectron = runtimeData.tags.isElectron
-        const isCapacitor = runtimeData.tags.isCapacitor
-        if (isElectron) {
-            if (runtimeData.plantform.reader) runtimeData.plantform.reader.send('sys:clearNotice')
-        } else if(isCapacitor) {
-            const Notice = runtimeData.plantform.capacitor.Plugins
-                .LocalNotifications as LocalNotificationsPlugin
-            if(Notice) {
-                Notice.removeAllDeliveredNotifications()
-            }
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:clearNotice', false)
+        } else if(runtimeData.tags.clientType === 'capacitor') {
+            callBackend('LocalNotifications', 'removeAllDeliveredNotifications', false)
         } else {
             const keys = Object.keys(Notify.notifyList)
             keys.forEach((key) => {
@@ -193,10 +166,8 @@ export class Notify {
      * @param tag 通知标签
      */
     private close(tag: string) {
-        const isElectron = runtimeData.tags.isElectron
-        if (isElectron) {
-            if (runtimeData.plantform.reader)
-                runtimeData.plantform.reader.send('sys:closeNotice', tag)
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            callBackend(undefined, 'sys:closeNotice', false, tag)
         } else {
             Notify.notifyList[tag]?.close()
         }
@@ -220,8 +191,8 @@ export class Notify {
             }
             this.close(tag)
             // MacOS：刷新 touchbar
-            if (runtimeData.tags.isElectron) {
-                runtimeData.plantform.reader?.send('sys:newMessage')
+            if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                callBackend(undefined, 'sys:newMessage', false)
             }
         }
     }

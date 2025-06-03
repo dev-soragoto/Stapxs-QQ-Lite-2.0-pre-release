@@ -13,7 +13,7 @@ import {
     Notification as ELNotification,
     shell,
 } from 'electron'
-import { linkView, runCommand } from './util.ts'
+import { runCommand } from './util.ts'
 import { win, touchBarInstance } from '../index.ts'
 import { Connector } from './connector.ts'
 import { logLevel } from '../index.ts'
@@ -42,39 +42,49 @@ export function regIpcListener() {
     ipcMain.handle('sys:getRelease', () => {
         return os.release()
     })
-    // 本地链接预览
-    ipcMain.handle('sys:previewLink', async (_, link: string) => {
-        const linkList = {
-            bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
-            music163: ['music.163.com', '163cn.tv'],
-        }
-
-        // 判断是不是特殊解析的链接
-        for (const key in linkList) {
-            if (linkList[key].some((item: string) => link.includes(item))) {
-                return await linkView[key](link)
+    // 获取最终 URL
+    ipcMain.handle('sys:getFinalRedirectUrl', async (_, str: string) => {
+        try {
+            const url = new URL(str);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                return str
             }
-        }
-        // 通用解析，注意排除非 html 的请求防止下载大文件
-        const res = await axios.get(link, {
-            headers: { Accept: 'text/html' }
-        })
-        const contentType = res.headers['content-type']
-        if(contentType && contentType.includes('text/html')) {
-            // 获取 html
-            let html = res.data
-            const headEnd = html.indexOf('</head>')
-            html = html.slice(0, headEnd)
-            // 获取所有的 og meta 标签
-            const ogRegex = /<meta\s+property="og:([^"]+)"\s+content="([^"]+)"\s*\/?>/g
-            const ogTags = {} as {[key: string]: string}
-            let match: string[] | null
-            while ((match = ogRegex.exec(html)) !== null) {
-                ogTags[`og:${match[1]}`] = match[2]
+            if (str.length > 2000) {
+                return str
             }
-            return ogTags
+            const MAX_REDIRECTS = 10;
+            const response = await axios.get(url.toString(), {
+                maxRedirects: MAX_REDIRECTS,
+                validateStatus: (status) => status < 400
+            })
+            return response.request.res.responseUrl
+        } catch (error) {
+            return str
+        }
+    })
+    // 获取 html 内容
+    ipcMain.handle('sys:getHtml', async (_, link: string) => {
+        try {
+            const res = await axios.get(link, {
+                headers: { Accept: 'text/html' }
+            })
+            const contentType = res.headers['content-type']
+            if(contentType && contentType.includes('text/html')) {
+                return res.data
+            }
+        } catch (error) {
+            logger.error(error as Error, '获取 html 内容失败')
         }
         return null
+    })
+    // 获取 api 数据
+    ipcMain.handle('sys:getApi', async (_, link: string) => {
+        try {
+            const response = await axios.get(link, { timeout: 10000 })
+            return response.data
+        } catch (error) {
+            logger.error(error as Error, '获取 api 数据失败')
+        }
     })
     // 关闭窗口
     ipcMain.on('win:close', () => {
@@ -123,11 +133,8 @@ export function regIpcListener() {
         }
     })
     // 保存信息
-    ipcMain.on('sys:store', (_, arg) => {
+    ipcMain.on('opt:store', (_, arg) => {
         store.set(arg.key, arg.value)
-    })
-    ipcMain.handle('sys:getStore', (_, key) => {
-        return store.get(key)
     })
     // 保存设置
     // PS：升级至 electron 27 后 cookie 已完全无法持久化，只能进行保存
@@ -321,7 +328,7 @@ export function regIpcListener() {
         }
     })
     // 启用服务发现
-    ipcMain.on('sys:scanNetwork', () => {
+    ipcMain.on('sys:findService', () => {
         if(win)
             new ScanNetwork(win).scanNetwork()
     })
@@ -510,7 +517,7 @@ export function regIpcListener() {
                         item.label = value
                         break
                     case 'visible':
-                        item.visible = value
+                        item.visible = value == 'true'
                         break
                 }
             }

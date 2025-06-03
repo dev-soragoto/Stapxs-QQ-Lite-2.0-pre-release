@@ -127,9 +127,7 @@
                                         'leaveGroup')
                                 }
                                 // 从消息列表中删除该群聊
-                                runtimeData.baseOnMsgList =
-                                    runtimeData.baseOnMsgList.filter(
-                                        (item: any) => item.group_id !== this.chat.show.id)
+                                runtimeData.baseOnMsgList.delete(this.chat.show.id)
                                 // 关闭群聊窗口
                                 runtimeData.chatInfo.show.id = 0
                                 // 刷新好友/群列表

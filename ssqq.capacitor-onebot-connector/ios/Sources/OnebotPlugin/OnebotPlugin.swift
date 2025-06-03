@@ -17,7 +17,13 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
 
         CAPPluginMethod(name: "findService", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "changeIcon", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise),
+
+        CAPPluginMethod(name: "getSystemInfo", returnType: CAPPluginReturnPromise),
+
+        CAPPluginMethod(name: "getFinalRedirectUrl", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getHtml", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getApi", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Onebot()
     private let logger = Logger()
@@ -80,5 +86,59 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
                 self.notifyListeners("onebot:icon", data: [ "name": name ])
             })
         ])
+    }
+
+    @objc func getSystemInfo(_ call: CAPPluginCall) {
+        if let capacitorBundle = Bundle(identifier: "io.ionic.Capacitor") {
+            if let version = capacitorBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
+                call.resolve(["success": version])
+            }
+        }
+    }
+
+    @objc func getFinalRedirectUrl(_ call: CAPPluginCall) {
+        let url = call.getString("data") ?? ""
+        let httpUtil = HTTPUtil()
+        let initialURL = URL(string: url)!
+        httpUtil.getFinalRedirectedURL(for: initialURL) { finalURL in
+            if let finalURL = finalURL {
+                call.resolve(["url": finalURL.absoluteString])
+            } else {
+                print("无法获取重定向 URL")
+                call.resolve(["url": url])
+            }
+        }
+    }
+
+    @objc func getHtml(_ call: CAPPluginCall) {
+        let urlGet = call.getString("data") ?? ""
+        let httpUtil = HTTPUtil()
+        let url = URL(string: urlGet)!
+        httpUtil.fetchContent(from: url, expectedMimeType: "text/html") { content in
+            if let html = content {
+                call.resolve(["data": html])
+            } else {
+                print("请求失败")
+            }
+        }
+    }
+
+    @objc func getApi(_ call: CAPPluginCall) {
+        let urlGet = call.getString("data") ?? ""
+        let httpUtil = HTTPUtil()
+        let url = URL(string: urlGet)!
+        httpUtil.fetchContent(from: url, expectedMimeType: "application/json") { content in
+            if let json = content {
+                if let data = json.data(using: .utf8),
+                   let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
+                   let dict = jsonObject as? [String: Any] {
+                    call.resolve(dict)
+                } else {
+                    call.reject("无效 JSON 数据")
+                }
+            } else {
+                print("请求失败")
+            }
+        }
     }
 }

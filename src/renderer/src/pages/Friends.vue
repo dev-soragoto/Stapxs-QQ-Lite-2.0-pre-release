@@ -144,6 +144,7 @@
     import { runtimeData } from '@renderer/function/msg'
     import { reloadUsers } from '@renderer/function/utils/appUtil'
     import { login as loginInfo } from '@renderer/function/connect'
+import { callBackend } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'ViewFriends',
@@ -170,7 +171,7 @@
                     name = 'friend-search-small'
                 }
                 // 将焦点移动到搜索框
-                if(runtimeData.tags.isElectron) {
+                if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                     const search = document.getElementById(name)
                     if(search) {
                         search.focus()
@@ -203,14 +204,7 @@
                 } as BaseChatInfoElem
                 // 更新聊天框
                 this.$emit('userClick', back)
-                // 查重
-                const getList = runtimeData.baseOnMsgList.filter((item) => {
-                    const id = item.user_id ? item.user_id : item.group_id
-                    return Number(id) === Number(back.id)
-                })
-                if (getList.length === 0) {
-                    runtimeData.baseOnMsgList.push(data)
-                }
+                runtimeData.baseOnMsgList.set(back.id, data)
                 // 获取历史消息
                 this.$emit('loadHistory', back)
                 // 切换标签卡
@@ -247,9 +241,9 @@
                     this.runtimeData.showList = [] as any[]
                 }
                 // macOS: 刷新 TouchBar
-                if(runtimeData.tags.isElectron) {
+                if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                     // list 只需要 id 和 name
-                    runtimeData.plantform.reader?.send('sys:flushFriendSearch',
+                    callBackend(undefined, 'sys:flushFriendSearch', false,
                         this.runtimeData.showList.map((item) => {
                             return {
                                 id: item.user_id ? item.user_id : item.group_id,

@@ -252,7 +252,7 @@
                 ls: {
                     info: 'List all contacts in the current message queue.',
                     fun: () => {
-                        this.searchListCache = markRaw(runtimeData.baseOnMsgList)
+                        this.searchListCache = [...runtimeData.baseOnMsgList.values()]
                         let str =
                             '  total ' + this.searchListCache.length + '\n'
                         let hasMsg = false
@@ -478,7 +478,7 @@
                                 'x' +
                                 window.screen.height,
                         } as { [key: string]: string }
-                        if (runtimeData.tags.isElectron) {
+                        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                             infoList.Kernel = packageInfo.version + '-electron'
                         }
                         let info = ''
@@ -548,7 +548,7 @@
                                 // 检查显示列表里有没有它
                                 if (!document.getElementById('user-' + id)) {
                                     // 把它插入到显示列表
-                                    runtimeData.baseOnMsgList?.push(item)
+                                    runtimeData.baseOnMsgList?.set(Number(id), item)
                                 }
                                 nextTick(() => {
                                     const bodyNext = document.getElementById(
@@ -584,7 +584,7 @@
                     second: 'numeric',
                 }).format(new Date())
                 // 刷新新消息数
-                this.tags.newMsg = runtimeData.baseOnMsgList.filter((item) => {
+                this.tags.newMsg = [...runtimeData.baseOnMsgList.values()].filter((item) => {
                     return item.new_msg == true
                 }).length
             }, 1000)

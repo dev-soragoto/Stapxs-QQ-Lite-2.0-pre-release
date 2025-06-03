@@ -64,7 +64,7 @@
                         remark: $t('群收纳盒'),
                         time: runtimeData.groupAssistList[0].time,
                         raw_msg: runtimeData.groupAssistList[0].group_name + ': ' +
-                            runtimeData.groupAssistList[0].raw_msg_base
+                            (runtimeData.groupAssistList[0].raw_msg_base ?? '')
                     }"
                     @click="showGroupAssistCheck" />
                 <!-- 其他消息 -->
@@ -142,6 +142,9 @@
                 <li id="readed" icon="fa-solid fa-check-to-slot">
                     {{ $t('标记已读') }}
                 </li>
+                <li id="read" icon="fa-solid fa-flag">
+                    {{ $t('标记未读') }}
+                </li>
                 <li id="notice_open" icon="fa-solid fa-volume-high">
                     {{ $t('开启通知') }}
                 </li>
@@ -183,7 +186,7 @@
     import { MenuStatue } from 'vue3-bcui/packages/dist/types'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { login as loginInfo } from '@renderer/function/connect'
-    import { canGroupNotice } from '@renderer/function/utils/msgUtil'
+    import { canGroupNotice, getShowName } from '@renderer/function/utils/msgUtil'
 
     import {
         faThumbTack,
@@ -226,13 +229,12 @@
                     if (this.runtimeData.tags.openSideBar) {
                         this.openLeftBar()
                     }
-                    const index = runtimeData.baseOnMsgList.indexOf(data)
                     const back = {
                         // 临时会话标志
                         temp: data.group_name == '' ? data.group_id : undefined,
                         type: data.user_id ? 'user' : 'group',
                         id: id,
-                        name: data.group_name? data.group_name: data.remark === data.nickname? data.nickname: data.remark + '（' + data.nickname + '）',
+                        name: getShowName(data.group_name || data.nickname, data.remark),
                         avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
                               data.user_id: 'https://p.qlogo.cn/gh/' +
                               data.group_id + '/' + data.group_id + '/0',
@@ -255,16 +257,13 @@
                         }
                     }
                     // 清除新消息标记
-                    if(runtimeData.baseOnMsgList[index]) {
-                        runtimeData.baseOnMsgList[index].new_msg = false
-                        runtimeData.baseOnMsgList[index].highlight = undefined
+                    const item = runtimeData.baseOnMsgList.get(id)
+                    if(item) {
+                        item.new_msg = false
+                        item.highlight = undefined
+                        runtimeData.baseOnMsgList.set(id, item)
                         // 关闭所有通知
-                        new Notify().closeAll(
-                            (
-                                runtimeData.baseOnMsgList[index].group_id ??
-                                runtimeData.baseOnMsgList[index].user_id
-                            ).toString(),
-                        )
+                        new Notify().closeAll((item.group_id ?? item.user_id).toString())
                     }
                 }
             },
@@ -297,11 +296,14 @@
              *  标记群组消息为已读
              */
             readMsg(data: UserFriendElem & UserGroupElem) {
-                const index = runtimeData.baseOnMsgList.indexOf(data)
-                runtimeData.baseOnMsgList[index].new_msg = false
-                runtimeData.baseOnMsgList[index].highlight = undefined
-                // 标记消息已读
                 const id = data.group_id ? data.group_id : data.user_id
+                const item = runtimeData.baseOnMsgList.get(id)
+                if(item) {
+                    item.new_msg = false
+                    item.highlight = undefined
+                    runtimeData.baseOnMsgList.set(id, item)
+                }
+                // 标记消息已读
                 const type = data.group_id ? 'group' : 'user'
                 loadHistoryMessage(id, type, 1, 'readMemberMessage')
                 // pop
@@ -319,7 +321,7 @@
                 const info = runtimeData.sysConfig.top_info as {
                     [key: string]: number[]
                 } | null
-                runtimeData.baseOnMsgList = []
+                runtimeData.baseOnMsgList = new Map()
                 if (info != null) {
                     const topList = info[runtimeData.loginInfo.uin]
                     if (topList !== undefined) {
@@ -329,7 +331,7 @@
                             )
                             if (topList.indexOf(id) >= 0) {
                                 item.always_top = true
-                                runtimeData.baseOnMsgList.push(item)
+                                runtimeData.baseOnMsgList.set(id, item)
                             }
                         })
                     }
@@ -353,16 +355,16 @@
                 const item = this.menu.select
                 if (id) {
                     switch (id) {
+                        case 'read': {
+                            item.new_msg = true
+                            break
+                        }
                         case 'readed':
                             this.readMsg(item)
                             break
                         case 'remove': {
-                            const index = runtimeData.baseOnMsgList.findIndex(
-                                (get) => {
-                                    return item == get
-                                },
-                            )
-                            runtimeData.baseOnMsgList.splice(index, 1)
+                            const id = item.user_id ? item.user_id : item.group_id
+                            runtimeData.baseOnMsgList.delete(id)
                             break
                         }
                         case 'top':
@@ -442,10 +444,15 @@
             listMenuShowRun(info: any, item: UserFriendElem & UserGroupElem) {
                 // PS：这是触屏触发的标志，如果优先触发了 contextmenu 就不用触发触屏了
                 this.showMenu = false
-                info.list = ['top', 'remove', 'readed']
+                info.list = ['top', 'remove']
                 // 置顶的不显示移除
                 if (item.always_top) {
-                    info.list = ['canceltop', 'readed']
+                    info.list = ['canceltop']
+                }
+                if (item.new_msg) {
+                    info.list.push('readed')
+                } else {
+                    info.list.push('read')
                 }
                 // 是群的话显示通知设置
                 if (item.group_id) {

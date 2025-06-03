@@ -35,7 +35,7 @@
                 <span v-if="senderInfo?.is_robot" class="robot">{{ $t('机器人') }}</span>
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
-                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title }}</span>
+                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title.replace(/[\u202A-\u202E\u2066-\u2069]/g, '') }}</span>
             </template>
             <a v-if="data.sender.card || data.sender.nickname"
                 v-show="!isMe || type == 'merge'">
@@ -43,6 +43,16 @@
             </a>
             <a v-else v-show="!isMe || type == 'merge'">
                 {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
+            </a>
+            <a v-if="selected" class="time">
+                {{ Intl.DateTimeFormat(trueLang, {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                }).format(getViewTime(getViewTime(data.time))) }}
             </a>
             <div>
                 <!-- 消息体 -->
@@ -55,7 +65,7 @@
                         <template v-else-if="item.type == 'text'">
                             <div v-if="hasMarkdown()" class="msg-md-title" />
                             <span v-else v-show="item.text !== ''"
-                                class="msg-text" @click="textClick" v-html="parseText(item.text)" />
+                                class="msg-text" @click="textClick" v-html="textIndex[index]" />
                         </template>
                         <div v-else-if="item.type == 'markdown'" v-once
                             :id="getMdHTML(item.content, 'msg-md-' + data.message_id)"
@@ -69,7 +79,7 @@
                             :title="$t('预览图片')"
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, index, item.asface)"
-                            :src="item.url"
+                            :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
                             @load="scrollButtom"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
@@ -254,7 +264,7 @@
                                     day: 'numeric',
                                     hour: 'numeric',
                                     minute: 'numeric'
-                                }).format(pageViewInfo.data.public * 1000) }}</a>
+                                }).format(getViewTime(pageViewInfo.data.public)) }}</a>
                             </div>
                             <img :src="pageViewInfo.data.pic">
                             <span>{{ pageViewInfo.data.title }}</span>
@@ -332,7 +342,12 @@
         openLink,
         sendStatEvent,
     } from '@renderer/function/utils/appUtil'
-    import { getSizeFromBytes, getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
+    import {
+        callBackend,
+        getSizeFromBytes,
+        getTrueLang,
+        getViewTime } from '@renderer/function/utils/systemUtil'
+    import { linkView } from '@renderer/function/utils/linkViewUtil'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -344,6 +359,7 @@
                 md: markdownit({ breaks: true }),
                 getFace: getFace,
                 getSizeFromBytes: getSizeFromBytes,
+                getViewTime: getViewTime,
                 isMe: false,
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
@@ -354,6 +370,7 @@
                 getVideo: false,
                 senderInfo: null as any,
                 trueLang: getTrueLang(),
+                textIndex: {} as { [key: string]: number },
             }
         },
         mounted() {
@@ -378,6 +395,13 @@
                     return item.user_id == this.data.sender.user_id
                 },
             )[0]
+            // 处理 textIndex
+            for (let i = 0; i < this.data.message.length; i++) {
+                const item = this.data.message[i]
+                if(item.type == 'text') {
+                    this.parseText(i)
+                }
+            }
         },
         methods: {
             /**
@@ -544,49 +568,87 @@
              * 处理纯文本消息和链接预览
              * @param text 纯文本消息
              */
-            parseText(text: string) {
+            async parseText(index: number) {
+                let text = this.data.message[index].text
+
                 const logger = new Logger()
                 text = ViewFuns.parseText(text)
+                // 防止大量的重复字符
+                const filtedText = text.replace(/(.)(\1{10,})/g, '$1<span style="opacity:0.7;margin-right:10px;">...</span>')
+                if(filtedText != text) {
+                    const style = 'display:block;margin-top:10px;opacity:0.7;cursor:pointer;'
+                    text = filtedText + '<a style="' + style +'" data-raw="' + text + '" onclick="this.parentNode.innerText = this.dataset.raw;return false;">' + this.$t('显示原始消息') + '</a>'
+                }
                 // 链接判定
                 const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
                 text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
                 const linkList = text.match(reg)
                 if (linkList !== null && !this.gotLink) {
-                    this.gotLink = true
-                    const fistLink = linkList[0]
-                    let protocol = ''
-                    let domain = ''
-                    try {
-                        protocol = new URL(fistLink).protocol + '//'
-                        domain = new URL(fistLink).hostname
-                    } catch (ignore) {
-                        // ignore
-                    }
-                    sendStatEvent('link_view', { domain: domain })
-                    if (runtimeData.tags.isElectron) {
-                        runtimeData.plantform.reader?.invoke('sys:previewLink', fistLink)
-                            .then((res) => {
-                                logger.add(LogType.DEBUG, 'Electron Link View: ', res)
-                                this.loadLinkPreview(protocol + domain, res)
-                            })
-                    } else {
-                        // 获取链接预览
-                        fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
-                            .then((res) => res.json())
-                            .then((res) => {
-                                if (res.status === undefined && Object.keys(res).length > 0) {
-                                    this.loadLinkPreview(protocol + domain, res)
+                    queueMicrotask(async() => {
+                        this.gotLink = true
+                        const fistLink = linkList[0]
+                        let protocol = ''
+                        let domain = ''
+                        try {
+                            protocol = new URL(fistLink).protocol + '//'
+                            domain = new URL(fistLink).hostname
+                        } catch (ignore) {
+                            // ignore
+                        }
+                        sendStatEvent('link_view', { domain: domain })
+
+                        let data = null as any
+                        let finaLink = fistLink
+                        try {
+                            finaLink = await callBackend('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
+                            if(!finaLink) {
+                                finaLink = fistLink
+                            }
+                        } catch(_) { /**/ }
+                        const showLinkList = {
+                            bilibili: ['bilibili.com', 'b23.tv', 'bili2233.cn', 'acg.tv'],
+                            music163: ['music.163.com', '163cn.tv'],
+                        }
+                        for (const key in showLinkList) {
+                            if (showLinkList[key].some((item: string) => finaLink.includes(item))) {
+                                data = await linkView[key](finaLink)
+                            }
+                        }
+                        // 通用 og 解析
+                        if(!data) {
+                            if (runtimeData.tags.clientType != 'web') {
+                                let html = await callBackend('Onebot', 'sys:getHtml', true, finaLink)
+                                if(html) {
+                                    const headEnd = html.indexOf('</head>')
+                                    html = html.slice(0, headEnd)
+                                    // 获取所有的 og meta 标签
+                                    const ogRegex = /<meta\s+property="og:([^"]+)"\s+content="([^"]+)"\s*\/?>/g
+                                    const ogTags = {} as {[key: string]: string}
+                                    let match: string[] | null
+                                    while ((match = ogRegex.exec(html)) !== null) {
+                                        ogTags[`og:${match[1]}`] = match[2]
+                                    }
+                                    data = ogTags
                                 }
-                            })
-                            .catch((error) => {
-                                if (error) {
-                                    logger.error(error as Error, '获取链接预览失败: ' + fistLink)
+                            } else {
+                                // 获取链接预览
+                                const response = await fetch(`${import.meta.env.VITE_APP_LINK_VIEW}/${encodeURIComponent(fistLink)}`)
+                                if(response.ok) {
+                                    const res = await response.json()
+                                    if (res.status === undefined && Object.keys(res).length > 0) {
+                                        data = res
+                                    }
                                 }
-                            })
-                    }
+                            }
+                        }
+
+                        logger.add(LogType.DEBUG, 'Link View: ', data)
+                        if(data) {
+                            this.loadLinkPreview(protocol + domain, data)
+                        }
+                    })
                 }
-                // 返回
-                return text
+                this.textIndex[index] = text
             },
 
             loadLinkPreview(domain: string, res: any) {
@@ -810,15 +872,12 @@
                         width: number
                         height: number
                     } | null
-                    if (runtimeData.tags.isElectron) {
-                        const reader = runtimeData.plantform.reader
-                        if (reader) {
-                            windowInfo = await reader.invoke('win:getWindowInfo')
-                        }
+                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                        windowInfo = await callBackend('Onebot', 'win:getWindowInfo', true)
                     }
                     const message = document.getElementById('chat-' + this.data.message_id)
                     let item = document.getElementById('app')
-                    if (runtimeData.tags.isElectron) {
+                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                         item = message?.getElementsByClassName('poke-hand')[0] as HTMLImageElement
                     }
                     this.$nextTick(() => {

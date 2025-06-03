@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "3.1.4",
+  "version": "3.2.0",
   "private": false,
   "author": "Stapx Steve [林槐]",
   "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
@@ -11,10 +11,12 @@
   "scripts": {
     "capacitor:copy:before": "capacitor-sync-version",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
+    "lint:tauri": "cargo check --manifest-path src/tauri/Cargo.toml",
     "update:icon": "npx @capacitor/assets generate --assetPath 'src/mobile/_assets' --iosProject 'src/mobile/ios/App' --androidProject 'src/mobile/android' --android --ios",
     "update:version": "npx @stapxs/capacitor-sync-version android ios",
     "dev": "vite dev",
     "dev:electron": "electron-vite dev",
+    "dev:tauri": "tauri dev -c src/tauri/tauri.conf.json",
     "dev:ios": "vite build && capacitor sync ios && capacitor run ios",
     "dev:android": "vite build && capacitor sync android && capacitor run android",
     "open:ios": "vite build && capacitor sync ios && capacitor open ios",
@@ -22,11 +24,15 @@
     "build": "vite build",
     "build:electron": "electron-vite build && electron-builder",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
-    "build:android": "vite build && capacitor sync android && capacitor build android"
+    "build:android": "vite build && capacitor sync android && capacitor build android",
+    "build:tauri": "tauri build -c src/tauri/tauri.conf.json"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-shell": "~2",
     "electron-store": "^10.0.0",
     "electron-window-state": "^5.0.3",
     "jsonpath": "^1.1.1",
@@ -57,6 +63,7 @@
     "@rushstack/eslint-patch": "^1.10.3",
     "@stapxs/capacitor-sync-version": "^1.0.10",
     "@stapxs/umami-logger-typescript": "^1.0.12",
+    "@tauri-apps/cli": "^2.3.1",
     "@types/jsonpath": "^0.2.4",
     "@types/node": "^20.14.8",
     "@types/semver": "^7.5.8",

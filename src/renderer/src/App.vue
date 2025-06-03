@@ -1,9 +1,14 @@
 <template>
-    <div v-if="dev" class="dev-bar">
-        {{ 'Stapxs QQ Lite Development Mode On ' + runtimeData.tags.platform }}
+    <div v-if="dev" :class="'dev-bar' + (runtimeData.tags.platform == 'win32' ? ' win' : '')">
+        Stapxs QQ Lite Development Mode
+        {{ ' / platform: ' + runtimeData.tags.platform }}
+        {{ ' / client: ' + runtimeData.tags.clientType }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')" class="top-bar" name="appbar">
+    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')"
+        :class="'top-bar' + ((runtimeData.tags.platform == 'win32' && dev) ? ' win' : '')"
+        name="appbar"
+        data-tauri-drag-region="true">
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />
         <div class="controller">
@@ -15,7 +20,8 @@
             </div>
         </div>
     </div>
-    <div v-if="runtimeData.tags.platform == 'darwin'" class="controller mac-controller" />
+    <div v-if="runtimeData.tags.platform == 'darwin'" class="controller mac-controller"
+        data-tauri-drag-region="true" />
     <div id="base-app">
         <div class="main-body">
             <ul :style="get('fs_adaptation') > 0 ? `padding-bottom: ${get('fs_adaptation')}px;` : ''">
@@ -207,21 +213,22 @@ import Spacing from 'spacingjs/src/spacing'
 import app from '@renderer/main'
 import Option from '@renderer/function/option'
 import Umami from '@stapxs/umami-logger-typescript'
+import * as App from './function/utils/appUtil'
 
 import { defineComponent, defineAsyncComponent } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
-import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
+import { Logger, popList, PopInfo, LogType, PopType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
-import * as App from './function/utils/appUtil'
+import { updateBaseOnMsgList } from './function/utils/msgUtil'
+import { getDeviceType, callBackend } from './function/utils/systemUtil'
+import { uptime } from '@renderer/main'
 
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
-import { getDeviceType } from './function/utils/systemUtil'
-import { updateBaseOnMsgList } from './function/utils/msgUtil'
 
 export default defineComponent({
     name: 'App',
@@ -277,24 +284,33 @@ export default defineComponent({
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
         // 页面加载完成后
         window.onload = async () => {
-            // 初始化全局参数
-            runtimeData.tags.isCapacitor = window.Capacitor != undefined
-                && window.Capacitor.isNativePlatform()
-            runtimeData.tags.isElectron = window.electron != undefined
-            runtimeData.plantform.reader = window.electron?.ipcRenderer
-            if (runtimeData.plantform.reader) {
-                runtimeData.tags.platform =
-                    await runtimeData.plantform.reader.invoke('sys:getPlatform')
-                runtimeData.tags.release =
-                    await runtimeData.plantform.reader.invoke('sys:getRelease')
-            }
-            else if (runtimeData.tags.isCapacitor) {
-                runtimeData.tags.platform = window.Capacitor.getPlatform()
-                runtimeData.plantform.capacitor = window.Capacitor
-                runtimeData.plantform.pulgins = window.Capacitor.Plugins
+            if(import.meta.env.DEV) {
+                // eslint-disable-next-line
+                console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to sar-dos on stapxs-qq-lite.su ]')
             } else {
-                runtimeData.tags.platform = 'web'
+                // eslint-disable-next-line
+                console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
             }
+            // 初始化全局参数
+            runtimeData.tags.clientType = 'web'
+            if(window.electron != undefined) {
+                runtimeData.tags.clientType = 'electron'
+                runtimeData.plantform = window.electron?.ipcRenderer
+            } else if(window.__TAURI_INTERNALS__ != undefined) {
+                runtimeData.tags.clientType = 'tauri'
+                runtimeData.plantform = {
+                    invoke: (await import('@tauri-apps/api/core')).invoke,
+                    listen: (await import('@tauri-apps/api/event')).listen
+                }
+            } else if(window.Capacitor != undefined && window.Capacitor.isNativePlatform()) {
+                runtimeData.tags.clientType = 'capacitor'
+                runtimeData.plantform.capacitor = window.Capacitor;
+                runtimeData.plantform.pulgins = window.Capacitor.Plugins
+            }
+
+            runtimeData.tags.platform = await callBackend(undefined, 'sys:getPlatform', true)
+            runtimeData.tags.release = await callBackend(undefined, 'sys:getRelease', true)
+
             app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(
@@ -306,6 +322,13 @@ export default defineComponent({
             // 初始化功能
             App.createMenu() // Electron：创建菜单
             App.createIpc() // Electron：创建 IPC 通信
+            try {
+                runtimeData.tags.proxyPort = await callBackend(undefined, 'sys:runProxy', true)
+                if(runtimeData.tags.clientType == 'tauri' && !runtimeData.tags.proxyPort) {
+                    logger.error(null, 'Tauri 代理服务似乎没有正常启动，此服务异常将会影响应用内的大部分外部资源的加载。')
+                    this.popInfo.add(PopType.ERR, this.$t('Tauri 代理服务似乎没有正常启动'), false)
+                }
+            } catch (e) { /**/ }
             // 加载开发者相关功能
             if (this.dev) {
                 document.title = 'Stapxs QQ Lite (Dev)'
@@ -315,7 +338,13 @@ export default defineComponent({
                 this.rafLoop()
             }
             // 加载设置项
-            runtimeData.sysConfig = Option.load()
+            runtimeData.sysConfig = await Option.load()
+            if(this.dev) {
+                logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
+                logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
+            } else {
+                logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
+            }
             logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
             // PS：重新再应用部分需要加载完成后才能应用的设置
             Option.run('opt_dark', Option.get('opt_dark'))
@@ -330,12 +359,7 @@ export default defineComponent({
                 if (app) app.classList.add('withBar')
             }
             // 基础初始化完成
-            logger.debug('欢迎使用 Stapxs QQ Lite！')
-            logger.debug('当前启动模式为: ' + this.dev ? 'development' : 'production')
-            logger.add(LogType.DEBUG, 'Electron 环境: '
-                + runtimeData.tags.isElectron, window.electron)
-            logger.add(LogType.DEBUG, 'Capacitor 环境: '
-                + runtimeData.tags.isCapacitor, window.Capacitor)
+            logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
             // 加载移动平台特性
             App.loadMobile()
             // 加载额外样式
@@ -348,9 +372,8 @@ export default defineComponent({
                 baseApp.style.setProperty('--safe-area-left', '0')
                 baseApp.style.setProperty('--safe-area-right', '0')
                 // Capacitor：移动端初始化安全区域
-                if (runtimeData.tags.isCapacitor) {
-                    const safeArea = await runtimeData.plantform.
-                        pulgins.SafeArea?.getSafeArea()
+                if (runtimeData.tags.clientType == 'capacitor') {
+                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
                     if (safeArea) {
                         logger.add(LogType.DEBUG, '安全区域：', safeArea)
                         baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
@@ -375,13 +398,7 @@ export default defineComponent({
                 this.connect()
             }
             // 服务发现
-            if (runtimeData.tags.isElectron) {
-                runtimeData.plantform.reader.send('sys:scanNetwork')
-            }
-            if(runtimeData.tags.isCapacitor) {
-                const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-                Onebot.findService()
-            }
+            callBackend('Onebot', 'sys:findService', false)
             // =============================================================
             // 初始化完成
             // 创建 popstate
@@ -427,18 +444,11 @@ export default defineComponent({
                 const config = {
                     baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
                     websiteId: import.meta.env.VITE_APP_MU_ID,
+                    hostName: runtimeData.tags.clientType + '.stapxs.cn'
                 } as any
-                if (runtimeData.tags.isElectron) {
-                    config.hostName = 'electron.stapxs.cn'
-                }
-                if(runtimeData.tags.isCapacitor) {
-                    config.hostName = 'capacitor.stapxs.cn'
-                }
                 Umami.initialize(config)
             } else if (this.dev) {
-                logger.debug('由于运行在调试模式下，分析组件并未初始化 ……')
-            } else if (Option.get('close_ga')) {
-                logger.debug('统计功能已被关闭，分析组件并未初始化 ……')
+                logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
             App.checkUpdate() // 检查更新
             App.checkOpenTimes() // 检查打开次数
@@ -450,7 +460,7 @@ export default defineComponent({
             // 其他状态监听
             this.$watch(() => runtimeData.baseOnMsgList, () => {
                 // macOS：刷新 Touch Bar 列表
-                if (runtimeData.tags.isElectron) {
+                if (runtimeData.tags.clientType == 'electron') {
                     const list = [] as
                         { id: number, name: string, image?: string }[]
                     runtimeData.baseOnMsgList.forEach((item) => {
@@ -460,7 +470,7 @@ export default defineComponent({
                             image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
                         })
                     })
-                    runtimeData.plantform.reader?.send('sys:flushOnMessage', list)
+                    callBackend(undefined, 'sys:flushOnMessage', false, list)
                 }
 
                 // 刷新列表
@@ -474,13 +484,17 @@ export default defineComponent({
                 '你好世界！',
                 '这只是个普通的彩蛋！'
             ]
-            document.title = titleList[Math.floor(Math.random() * titleList.length)]
+            const title = titleList[Math.floor(Math.random() * titleList.length)]
             if(runtimeData.tags.platform == 'web') {
-                document.title = titleList[Math.floor(Math.random() * titleList.length)] + '- Stapxs QQ Lite'
+                document.title = title + '- Stapxs QQ Lite'
+            } else {
+                document.title = title
+                callBackend(undefined, 'win:setTitle', false, title)
             }
         }
         // 页面关闭前
         window.onbeforeunload = () => {
+            logger.system('开发者阁下—— 唔，阁下离开的太匆忙了！让我来帮开发者阁下收拾下东西吧。')
             new Notify().clear()
             if(import.meta.env.DEV) {
                 Connector.close()
@@ -492,9 +506,7 @@ export default defineComponent({
          * electron 窗口操作
          */
         controllWin(name: string) {
-            if (runtimeData.plantform.reader) {
-                runtimeData.plantform.reader.send('win:' + name)
-            }
+            callBackend(undefined, 'win:' + name, false)
         },
 
         /**
@@ -647,9 +659,7 @@ export default defineComponent({
             }
 
             // 清理通知
-            if (runtimeData.plantform.reader) {
-                runtimeData.plantform.reader.send('sys:closeAllNotice', data.id)
-            }
+            callBackend(undefined, 'sys:closeAllNotice', false, data.id)
         },
 
         /**

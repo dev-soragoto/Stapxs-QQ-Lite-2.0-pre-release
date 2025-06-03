@@ -535,9 +535,7 @@
                             :key=" 'forwardList-' + data.user_id ? data.user_id : data.group_id"
                             @click="forwardMsg(data)">
                             <img loading="lazy"
-                                :title="data.group_name ?
-                                    data.group_name : data.remark === data.nickname ?
-                                        data.nickname : data.remark + '（' + data.nickname + '）'"
+                                :title="getShowName(data.group_name || data.nickname, data.remark)"
                                 :src="data.user_id ?
                                     'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id :
                                     'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'">
@@ -578,6 +576,7 @@
         loadHistory as loadHistoryFirst,
     } from '@renderer/function/utils/appUtil'
     import {
+        addBackendListener,
         getTimeConfig,
         getTrueLang,
         getViewTime,
@@ -586,6 +585,7 @@
         getMsgRawTxt,
         sendMsgRaw,
         getFace,
+        getShowName,
     } from '@renderer/function/utils/msgUtil'
     import { scrollToMsg } from '@renderer/function/utils/appUtil'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -607,6 +607,7 @@
         data() {
             return {
                 uuid,
+                getShowName,
                 fun: {
                     getMsgRawTxt: getMsgRawTxt,
                 },
@@ -731,9 +732,9 @@
                 },
             )
             // Capacitor：系统返回操作（Android）
-            if(runtimeData.tags.isCapacitor && runtimeData.tags.platform === 'android') {
-                const BaseAPI = runtimeData.plantform.capacitor.Plugins.App
-                BaseAPI.addListener('backButton', () => {
+            if(runtimeData.tags.clientType == 'capacitor' &&
+                runtimeData.tags.platform === 'android') {
+                addBackendListener('App', 'backButton', () => {
                     // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
                     this.tags.chatTouch.openSuccess = true
                     this.chatMoveEnd()
@@ -1298,7 +1299,7 @@
 
             showForWard() {
                 this.tags.showForwardPan = true
-                const showList = runtimeData.baseOnMsgList.reverse()
+                const showList = Object.assign(runtimeData.onMsgList).reverse()
                 // 将 forWardList 中 showList 之中的条目挪到最前面
                 showList.forEach((item) => {
                     const index = this.forwardList.indexOf(item)
@@ -1307,7 +1308,6 @@
                         this.forwardList.unshift(item)
                     }
                 })
-                runtimeData.baseOnMsgList.reverse()
             },
 
             forwardSelf() {
@@ -1445,8 +1445,8 @@
                 // 关闭转发窗口
                 this.cancelForward()
                 // 将接收目标加入消息列表并跳转过去
-                if (runtimeData.baseOnMsgList.indexOf(data) < 0) {
-                    runtimeData.baseOnMsgList.push(data)
+                if(runtimeData.baseOnMsgList.get(id) == undefined) {
+                    runtimeData.baseOnMsgList.set(id, data)
                 }
                 this.$nextTick(() => {
                     const user = document.getElementById('user-' + id)
@@ -1533,7 +1533,7 @@
             downloadImg() {
                 const url = this.tags.menuDisplay.downloadImg
                 if (url != false) {
-                    downloadFile(url as string, 'img.png', () => undefined)
+                    downloadFile(url as string, 'img.png', () => undefined, () => undefined)
                 }
                 this.closeMsgMenu()
             },
@@ -2001,7 +2001,7 @@
                             'setMessageRead',
                         )
                     }
-                    if(runtimeData.tags.isElectron) {
+                    if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
                         // 将焦点移动到发送框
                         this.toMainInput()
                     }
@@ -2086,7 +2086,7 @@
                                         const info = {
                                             index: item.message_id,
                                             message_id: item.message_id,
-                                            img_url: msg.url,
+                                            img_url: runtimeData.tags.proxyPort && msg.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(msg.url)}` : msg.url
                                         }
                                         this.getImgList.push(info)
                                     }

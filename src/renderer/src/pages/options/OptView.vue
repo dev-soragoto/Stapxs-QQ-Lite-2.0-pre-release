@@ -35,7 +35,7 @@
                 </select>
             </div>
         </div>
-        <div v-if="runtimeData.tags.isCapacitor" class="ss-card">
+        <div v-if="runtimeData.tags.clientType == 'capacitor'" class="ss-card">
             <header>{{ $t('图标') }}</header>
             <div class="icon-list">
                 <div v-for="item in getIconList()"
@@ -105,7 +105,7 @@
                     </div>
                 </template>
             </template>
-            <template v-if="runtimeData.tags.isElectron && browser.os != 'Linux'">
+            <template v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType) && browser.os != 'Linux'">
                 <div class="opt-item">
                     <div :class="checkDefault('opt_auto_win_color')" />
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
@@ -186,7 +186,7 @@
                     </div>
                 </label>
             </div>
-            <div v-if="isMobile() && !runtimeData.tags.isCapacitor"
+            <div v-if="isMobile() && runtimeData.tags.clientType != 'capacitor'"
                 class="opt-item">
                 <div :class="checkDefault('initial_scale')" />
                 <font-awesome-icon :icon="['fas', 'up-down-left-right']" />
@@ -209,7 +209,7 @@
                 </div>
             </div>
             <div
-                v-if="isMobile() && !runtimeData.tags.isCapacitor"
+                v-if="isMobile() && runtimeData.tags.clientType != 'capacitor'"
                 class="opt-item">
                 <div :class="checkDefault('fs_adaptation')" />
                 <font-awesome-icon :icon="['fas', 'border-top-left']" />
@@ -233,7 +233,7 @@
                 </div>
             </div>
             <div
-                v-if="runtimeData.tags.isElectron"
+                v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType)"
                 class="opt-item">
                 <div :class="checkDefault('opt_always_top')" />
                 <font-awesome-icon :icon="['fas', 'angle-up']" />
@@ -274,7 +274,7 @@
     import { runtimeData } from '../../function/msg'
     import { runASWEvent as save, get, checkDefault } from '../../function/option'
     import { BrowserInfo, detect } from 'detect-browser'
-    import { getDeviceType } from '@renderer/function/utils/systemUtil'
+    import { callBackend, getDeviceType } from '@renderer/function/utils/systemUtil'
 
     import languages from '../../assets/l10n/_l10nconfig.json'
     import { sendStatEvent } from '@renderer/function/utils/appUtil'
@@ -397,9 +397,7 @@
             },
 
             restartapp() {
-                if (runtimeData.plantform.reader) {
-                    runtimeData.plantform.reader.send('win:relaunch')
-                }
+                callBackend(undefined, 'win:relaunch', false)
             },
 
             isMobile() {
@@ -437,11 +435,8 @@
             },
 
             changeIcon(name: string) {
-                const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-                if(Onebot) {
-                    Onebot.changeIcon({ name: name != '' ? (name + 'AppIcon') : name })
-                    this.usedIcon = name
-                }
+                callBackend('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
+                this.usedIcon = name
             },
         },
     })

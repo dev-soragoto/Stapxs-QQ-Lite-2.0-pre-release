@@ -18,6 +18,7 @@ export enum LogType {
     ERR,
     INFO,
     DEBUG,
+    SYSTEM
 }
 
 export class Logger {
@@ -31,6 +32,7 @@ export class Logger {
             ['ff5370', 'fff'],
             ['99b3db', 'fff'],
             ['677480', 'fff'],
+            ['e5a5a9', 'fff'],
         ]
     }
 
@@ -54,6 +56,8 @@ export class Logger {
             this.print(type, args, data, hidden)
         } else if (logLevel === 'err' && type === LogType.ERR) {
             this.print(type, args, data, hidden)
+        } else if(import.meta.env.MODE == 'development' && type == LogType.SYSTEM) {
+            this.print(type, args, data, hidden)
         }
     }
     info(args: string, hidden = false) {
@@ -70,7 +74,9 @@ export class Logger {
     debug(args: string, hidden = false) {
         this.add(LogType.DEBUG, args, undefined, hidden)
     }
-
+    system(args: string) {
+        this.add(LogType.SYSTEM, args, undefined, true)
+    }
     /**
      * 打印一条日志
      * @param type 日志类型

@@ -15,6 +15,7 @@ import { parse, runtimeData } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
+import { callBackend } from './utils/systemUtil'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -37,25 +38,13 @@ export class Connector {
         const { $t } = app.config.globalProperties
         login.creating = true
 
+        logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
+
         // Electron 默认使用后端连接模式
-        if (runtimeData.tags.isElectron) {
+        if (runtimeData.tags.clientType != 'web') {
             logger.add(LogType.WS, '使用后端连接模式')
-            const reader = runtimeData.plantform.reader
-            if (reader) {
-                reader.send('onebot:connect', {
-                    address: address,
-                    token: token,
-                })
-                return
-            }
-        }
-        // Capacitor 默认使用后端连接模式
-        if (runtimeData.tags.isCapacitor) {
-            logger.add(LogType.WS, '使用后端连接模式')
-            const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-            if(Onebot) {
-                Onebot.connect({ url: `${address}?access_token=${token}` })
-            }
+            callBackend('Onebot', 'onebot:connect', false,
+                ['electron', 'tauri'].includes(runtimeData.tags.clientType) ?  { address: address, token: token, } : { url: `${address}?access_token=${token}` })
             return
         }
 
@@ -96,12 +85,6 @@ export class Connector {
                 return
             }
 
-            logger.debug('当前处于 debug 日志模式。连接器将仅输出发出的消息 ……')
-            logger.add(
-                LogType.WS,
-                '当前处于 all 日志模式。连接器将输出全部收发消息 ……',
-            )
-
             let url = `ws://${address}?access_token=${token}`
             if (address.startsWith('ws://') || address.startsWith('wss://')) {
                 url = `${address}?access_token=${token}`
@@ -131,12 +114,14 @@ export class Connector {
                 login.creating = false
                 this.onclose(e.code, e.reason, address, token)
             }
-            // websocket.onerror = (e) => {
-            //     login.creating = false
-            //     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.type, false)
-            //     // 由于此处错误信息不完整，所以交给 onclose 处理
-            //     return
-            // }
+            websocket.onerror = (e) => {
+                login.creating = false
+                if (e instanceof ErrorEvent) {
+                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.message)
+                } else {
+                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知错误'))
+                }
+            }
         }
     }
 
@@ -160,9 +145,10 @@ export class Connector {
         Connector.send('get_version_info', {}, 'getVersionInfo')
         // 更新菜单
         updateMenu({
+            parent: 'account',
             id: 'logout',
             action: 'visible',
-            value: true,
+            value: 'true',
         })
     }
 
@@ -172,26 +158,19 @@ export class Connector {
 
     static onclose(
         code: number,
-        _: string | undefined,
+        msg: string | undefined,
         address: string,
         token: string | undefined,
     ) {
         const { $t } = app.config.globalProperties
 
         websocket = undefined
-        updateMenu({
-            id: 'logout',
-            action: 'visible',
-            value: false,
-        })
-        updateMenu({
-            id: 'userName',
-            action: 'label',
-            value: $t('连接'),
-        })
+        updateMenu({ parent: 'account', id: 'logout', action: 'visible', value: 'false' })
+        updateMenu({ parent: 'account', id: 'userName', action: 'label', value: $t('连接') })
 
-        switch (code) {
+        switch (Number(code)) {
             case 1000:
+                popInfo.add(PopType.INFO, $t('连接已断开') + (msg ? (': ' + msg.replace(':', ' - ')) : ''), false)
                 break // 正常关闭
             case 1006: {
                 // 非正常关闭，尝试重连
@@ -213,7 +192,7 @@ export class Connector {
             }
             default: {
                 login.creating = false
-                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误，WS错误代码 {code}',{ code:code }), false)
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误 {code}',{ code: code }), false)
             }
         }
 
@@ -228,16 +207,8 @@ export class Connector {
      * 正常断开 Websocket 连接
      */
     static close() {
-        if (runtimeData.tags.isElectron) {
-            const reader = runtimeData.plantform.reader
-            if (reader) {
-                reader.send('onebot:close')
-            }
-        } else if(runtimeData.tags.isCapacitor) {
-            const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-            if(Onebot) {
-                Onebot.close()
-            }
+        if(runtimeData.tags.clientType != 'web') {
+            callBackend('Onebot', 'onebot:close', false)
         } else {
             popInfo.add(
                 PopType.INFO,
@@ -290,18 +261,10 @@ export class Connector {
     }
     static sendRaw(json: string) {
         // 发送
-        if (runtimeData.tags.isElectron) {
-            const reader = runtimeData.plantform.reader
-            if (reader) {
-                reader.send('onebot:send', json)
-            }
-        } else if(runtimeData.tags.isCapacitor) {
-            const Onebot = runtimeData.plantform.capacitor.Plugins.Onebot
-            if(Onebot) {
-                Onebot.send({ data: json })
-            }
-        } else {
-            if (websocket) websocket.send(json)
+        if(runtimeData.tags.clientType != 'web') {
+            callBackend('Onebot', 'onebot:send', false, json)
+        } else if (websocket) {
+            websocket.send(json)
         }
 
         if (Option.get('log_level') === 'debug') {
