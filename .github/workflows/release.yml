@@ -122,7 +122,7 @@ jobs:
             - name: Publish Release
               uses: softprops/action-gh-release@v2
               with:
-                  files: ./${{ needs.init.outputs.version }}/*
+                  files: ./${{ needs.init.outputs.version }}-*/*
                   tag_name: v${{ needs.init.outputs.version }}
                   body: |
                       # Release 自动构建
