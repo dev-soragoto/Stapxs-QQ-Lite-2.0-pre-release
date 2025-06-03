@@ -217,7 +217,7 @@ import * as App from './function/utils/appUtil'
 
 import { defineComponent, defineAsyncComponent } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
-import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
+import { Logger, popList, PopInfo, LogType, PopType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
@@ -300,8 +300,7 @@ export default defineComponent({
                 runtimeData.tags.clientType = 'tauri'
                 runtimeData.plantform = {
                     invoke: (await import('@tauri-apps/api/core')).invoke,
-                    listen: (await import('@tauri-apps/api/event')).listen,
-                    // window: (await import('@tauri-apps/api/window')),
+                    listen: (await import('@tauri-apps/api/event')).listen
                 }
             } else if(window.Capacitor != undefined && window.Capacitor.isNativePlatform()) {
                 runtimeData.tags.clientType = 'capacitor'
@@ -325,6 +324,10 @@ export default defineComponent({
             App.createIpc() // Electron：创建 IPC 通信
             try {
                 runtimeData.tags.proxyPort = await callBackend(undefined, 'sys:runProxy', true)
+                if(runtimeData.tags.clientType == 'tauri' && !runtimeData.tags.proxyPort) {
+                    logger.error(null, 'Tauri 代理服务似乎没有正常启动，此服务异常将会影响应用内的大部分外部资源的加载。')
+                    this.popInfo.add(PopType.ERR, this.$t('Tauri 代理服务似乎没有正常启动'), false)
+                }
             } catch (e) { /**/ }
             // 加载开发者相关功能
             if (this.dev) {

@@ -1,10 +1,10 @@
 mod commands;
 
 use commands::utils::http_proxy::ProxyServer;
-use log::info;
+use log::{info, error};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
 use once_cell::sync::OnceCell;
-use tauri::{ menu::{Menu, MenuEvent, MenuItem}, tray::{TrayIcon, TrayIconBuilder, TrayIconEvent}, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder };
+use tauri::{ menu::{Menu, MenuEvent, MenuItem}, tray::{TrayIcon, TrayIconBuilder, TrayIconEvent}, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, Emitter };
 use tauri_plugin_store::StoreBuilder;
 
 pub static PROXY_PORT: OnceCell<u16> = OnceCell::new();

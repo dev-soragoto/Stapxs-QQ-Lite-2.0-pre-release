@@ -281,7 +281,7 @@ const noticeFunctions = {
             info.forEach((item: any) => {
                 switch (item.type) {
                     case 'img':
-                        str += `<img src="${item.src}"/>`
+                        str += `<img src="${runtimeData.tags.proxyPort ? 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + encodeURIComponent(item.src) : item.src }"/>`
                         break
                     case 'nor':
                         str += item.txt

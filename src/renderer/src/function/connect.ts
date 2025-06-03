@@ -114,6 +114,14 @@ export class Connector {
                 login.creating = false
                 this.onclose(e.code, e.reason, address, token)
             }
+            websocket.onerror = (e) => {
+                login.creating = false
+                if (e instanceof ErrorEvent) {
+                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.message)
+                } else {
+                    popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知错误'))
+                }
+            }
         }
     }
 
