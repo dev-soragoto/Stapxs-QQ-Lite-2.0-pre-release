@@ -440,12 +440,14 @@ export default defineComponent({
             }
             // UM：加载 Umami 统计功能
             if (!Option.get('close_ga') && !this.dev) {
-                // 给页面添加一个来源域名方便在 electron 中获取
                 const config = {
                     baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
-                    websiteId: import.meta.env.VITE_APP_MU_ID,
-                    hostName: runtimeData.tags.clientType + '.stapxs.cn'
+                    websiteId: import.meta.env.VITE_APP_MU_ID
                 } as any
+                // 给页面添加一个来源域名方便在 electron 中获取
+                if(runtimeData.tags.clientType !== 'web') {
+                    config.hostName = runtimeData.tags.clientType + '.stapxs.cn'
+                }
                 Umami.initialize(config)
             } else if (this.dev) {
                 logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
