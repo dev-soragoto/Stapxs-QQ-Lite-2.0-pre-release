@@ -41,7 +41,7 @@ import {
     loadJsonMap,
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
-import { reactive, markRaw, defineAsyncComponent } from 'vue'
+import { reactive, markRaw, defineAsyncComponent, nextTick } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import {
@@ -558,7 +558,20 @@ const msgFunctons = {
         saveMsg(msg, 'top')
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
-        saveMsg(msg, 'top')
+        const pan = document.getElementById('msgPan')
+        if(pan) {
+            const oldScrollHeight = pan.scrollHeight
+            saveMsg(msg, 'top')
+            nextTick(() => {
+                setTimeout(() => {
+                    logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                    pan.style.scrollBehavior = 'unset'
+                    // 纠正滚动位置
+                    pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                    pan.style.scrollBehavior = 'smooth'
+                }, 200);
+            })
+        }
     },
 
     getChatHistoryOnMsg: (

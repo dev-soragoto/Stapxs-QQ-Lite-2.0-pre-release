@@ -30,9 +30,9 @@ const logger = new Logger()
 
 /**
  * 滚动到目标消息（不自动加载）
- * @param seqName DOM 名
+ * @param seqName DOM 名（chat-xx）
  */
-export function scrollToMsg(seqName: string, showAnimation: boolean): boolean {
+export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlight = true): boolean {
     const msg = document.getElementById(seqName)
     if (msg) {
         const pan = document.getElementById('msgPan')
@@ -44,14 +44,16 @@ export function scrollToMsg(seqName: string, showAnimation: boolean): boolean {
             }
             pan.scrollTop = msg.offsetTop - msg.offsetHeight + 10
             pan.style.scrollBehavior = 'smooth'
-            msg.style.transition = 'background 1s'
-            msg.style.background = 'rgba(0, 0, 0, 0.06)'
-            setTimeout(() => {
-                msg.style.background = 'unset'
+            if(showHighlight) {
+                msg.style.transition = 'background 1s'
+                msg.style.background = 'rgba(0, 0, 0, 0.06)'
                 setTimeout(() => {
-                    msg.style.transition = 'background .3s'
-                }, 1100)
-            }, 3000)
+                    msg.style.background = 'unset'
+                    setTimeout(() => {
+                        msg.style.transition = 'background .3s'
+                    }, 1100)
+                }, 3000)
+            }
             return true
         }
     }

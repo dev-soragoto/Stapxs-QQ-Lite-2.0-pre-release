@@ -1,7 +1,6 @@
 export enum BotMsgType {
     CQCode,
-    Array,
-    Auto,
+    Array
 }
 
 export interface RunTimeDataElem {

@@ -160,12 +160,10 @@ export function parseMsgList(
     valueMap: { [key: string]: any },
 ): any[] {
     // 判断消息类型
-    if (runtimeData.tags.msgType == BotMsgType.Auto) {
-        if (typeof list[0].message == 'string') {
-            runtimeData.tags.msgType = BotMsgType.CQCode
-        } else {
-            runtimeData.tags.msgType = BotMsgType.Array
-        }
+    if (typeof list[0].message == 'string') {
+        runtimeData.tags.msgType = BotMsgType.CQCode
+    } else {
+        runtimeData.tags.msgType = BotMsgType.Array
     }
     // 消息类型的特殊处理
     switch (runtimeData.tags.msgType) {
@@ -279,6 +277,9 @@ export function getMsgRawTxt(data: any): string {
                         .replaceAll('\n', ' ')
                         .replaceAll('\r', ' ')
                     break
+                case 'forward':
+                    back += '[' + $t('聊天记录') + ']'
+                    break
                 case 'face':
                     back += '[' + $t('表情') + ']'
                     break
@@ -287,7 +288,7 @@ export function getMsgRawTxt(data: any): string {
                     break
                 case 'image':
                     back +=
-                        message[i].summary || message[i].summary == ''? '[' + $t('图片') + ']': message[i].summary
+                        (!message[i].summary || message[i].summary == '') ? '[' + $t('图片') + ']' : message[i].summary
                     break
                 case 'record':
                     back += '[' + $t('语音') + ']'
@@ -302,7 +303,7 @@ export function getMsgRawTxt(data: any): string {
                     try {
                         back += JSON.parse(message[i].data).prompt
                     } catch (error) {
-                        back += '[卡片消息]'
+                        back += '[' + $t('卡片消息') + ']'
                     }
                     break
                 }
@@ -567,7 +568,7 @@ export function updateBaseOnMsgList() {
     ) => {
         if (a.time == b.time || a.time == undefined || b.time == undefined) {
             if (a.py_start == undefined || b.py_start == undefined) {
-                return 1
+                return 0
             }
             return b.py_start.charCodeAt(0) - a.py_start.charCodeAt(0)
         }
