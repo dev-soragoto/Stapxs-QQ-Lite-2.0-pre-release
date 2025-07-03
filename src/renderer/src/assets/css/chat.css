@@ -907,10 +907,25 @@ input {
     text-overflow: ellipsis;
     overflow: hidden;
     max-height: 6rem;
+    display: flex;
 }
 .bulletins > div.base > div.body.all {
     max-height: unset;
+    flex-flow: column;
 }
+.bulletins > div.base > div.body > .img {
+    height: 6rem;
+    width: 6rem;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 7px;
+}
+.bulletins > div.base > div.body > .img.all {
+    margin-top: 1rem;
+    width: unset;
+    height: unset;
+}
+
 .bulletins > div.base > div.body > span {
     white-space: pre-line;
 }
