@@ -515,7 +515,15 @@ const msgFunctons = {
     getGroupMemberList: (_: string, msg: { [key: string]: any }) => {
         const data = msg.data as GroupMemberInfoElem[]
         data.forEach((item: any) => {
-            const name = item.card ? item.card : item.nickname
+            let name: string
+            if (item.card != undefined && item.card != '') {
+                name = item.card
+            }else if (item.nickname != undefined && item.nickname != '') {
+                name = item.nickname
+            }else{
+                name = item.user_id.toString()
+            }
+
             // 获取拼音首字母
             const first = name.substring(0, 1)
             item.py_start = pinyin
