@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use log::info;
 use tauri::{command, LogicalPosition, Manager};
 
 #[command]
@@ -48,6 +49,10 @@ pub fn win_get_window_info(window: tauri::Window) -> HashMap<String, i32> {
 
 #[command]
 pub fn win_move(window: tauri::Window, x: i32, y: i32) {
+    let scale = window.scale_factor().unwrap();
+    // 将像素转换为逻辑位置
+    let x = (x as f64 / scale) as i32;
+    let y = (y as f64 / scale) as i32;
     window.set_position(LogicalPosition::new(x, y)).unwrap();
 }
 

@@ -1140,6 +1140,7 @@
     .link-view-music163 > div:first-child > img {
         border-radius: 7px;
         margin-right: 20px;
+        max-height: 80px;
         width: 25%;
     }
     .link-view-music163 > div:first-child > div {

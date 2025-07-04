@@ -13,6 +13,7 @@ import {
     UserGroupElem,
 } from '../elements/information'
 import { sendStatEvent } from './appUtil'
+import { callBackend } from './systemUtil'
 
 const logger = new Logger()
 
@@ -637,7 +638,7 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 .add({ translateX: 0, duration: 100, easing: 'easeOutSine' })
         }
         timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
-        timeLine.change = () => {
+        timeLine.change = async () => {
             if (animeBody) {
                 animeBody.parentElement?.parentElement?.classList.add( 'poking')
                 const teansformX = animeBody.style.transform
@@ -647,13 +648,10 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 num = Math.round(num)
                 // 输出 translateX
                 if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && windowInfo) {
-                    const { reader } = runtimeData.plantform
-                    if (reader) {
-                        reader.send('win:move', {
+                    await callBackend(undefined, 'win:move', false, {
                             x: windowInfo.x + num,
                             y: windowInfo.y,
                         })
-                    }
                 }
             }
         }
