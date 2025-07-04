@@ -157,7 +157,7 @@
                             </video>
                         </div>
                         <template v-else-if="item.type == 'forward'">
-                            <div v-if="item.content.length > 0"
+                            <div v-if="item.content !== undefined && item.content.length > 0"
                                 class="msg-raw-forward"
                                 @click="View.getForwardMsg(item.id)">
                                 <span>{{ $t('合并转发消息') }}</span>
