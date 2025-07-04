@@ -600,6 +600,7 @@
         UserGroupElem,
     } from '@renderer/function/elements/information'
 
+
     export default defineComponent({
         name: 'ViewChat',
         components: { Info, MsgBody, NoticeBody, FacePan },
@@ -1370,18 +1371,20 @@
                             },
                         },
                     }
-                    msg.message = [
-                        { type: 'json', data: JSON.stringify(jsonMsg), id: '' },
-                    ]
-                    msg.sender = {
-                        user_id: runtimeData.loginInfo.uin,
-                        nickname: runtimeData.loginInfo.nickname,
+                    const previewMsg = {
+                        message: [
+                            { type: 'json', data: JSON.stringify(jsonMsg), id: '' },
+                        ],
+                        sender: {
+                            user_id: runtimeData.loginInfo.uin,
+                            nickname: runtimeData.loginInfo.nickname,
+                        }
                     }
                     // 二次确认转发
                     const popInfo = {
                         title: this.$t('合并转发消息'),
                         template: MsgBody,
-                        templateValue: markRaw({ data: msg, type: 'forward' }),
+                        templateValue: markRaw({ data: previewMsg, type: 'forward' }),
                         button: [
                             {
                                 text: this.$t('取消'),
@@ -1394,10 +1397,16 @@
                                 master: true,
                                 fun: () => {
                                     // 构建消息体
+                                    console.log(this.selectedMsg)
+                                    console.log(this.multipleSelectList)
                                     const msgBody = msgList.map((item) => {
+                                        console.log(item)
                                         return {
                                             type: 'node',
                                             id: item.message_id,
+                                            user_id: item.sender.user_id,
+                                            nickname: item.sender.nickname,
+                                            content: item.message,
                                         }
                                     })
                                     sendMsgRaw(

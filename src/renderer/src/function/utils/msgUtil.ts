@@ -3,7 +3,7 @@ import app from '@renderer/main'
 import anime from 'animejs'
 import option from '@renderer/function/option'
 
-import { Logger } from '@renderer/function/base'
+import { Logger, PopInfo, PopType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { v4 as uuid } from 'uuid'
 import { Connector } from '@renderer/function/connect'
@@ -490,6 +490,11 @@ export function sendMsgRaw(
         }
     }
     if (msg !== undefined && msg.length > 0) {
+        if (runtimeData.jsonMap.name === 'Lagrange.OneBot'){
+            lgrSendMsg(id, msg, type, echo + '_uuid_' + msgUUID)
+            sendStatEvent('sendMsg', { type: type })
+            return
+        }
         switch (type) {
             case 'group':
                 Connector.send(
@@ -683,5 +688,64 @@ export function getShowName(base: string, remark: string) {
         return base.replace(/[\u202A-\u202E\u2066-\u2069]/g, '')
     } else {
         return (remark + '（' + base + '）').replace(/[\u202A-\u202E\u2066-\u2069]/g, '')
+    }
+}
+
+/**
+ * lgr专用发送消息，懒得写了，不做通用适配，胡乱应付下吧
+ * @param msg 消息内容
+ */
+function lgrSendMsg(id: string, msg: any, type: string, cb: string){
+    if (msg[0].type === 'node') {
+        const sendMsgs = []
+        msg.forEach((item) => {
+            const msg = {
+                type: item.type,
+                data: {
+                    user_id: item.data.user_id.toString(),
+                    nickname: item.data.nickname,
+                    content: item.data.content.map((item)=>{
+                        const copy = {...item}
+                        delete copy.type
+                        return {
+                            type: item.type,
+                            data: {...copy}
+                        }
+                    }),
+                },
+            }
+            sendMsgs.push(msg)
+        })
+        if (type === 'group') {
+            Connector.send(
+                'send_group_forward_msg',
+                { group_id: id, messages: sendMsgs },
+                cb,
+            )
+        }else if (type === 'user') {
+            Connector.send(
+                'send_private_forward_msg',
+                { user_id: id, messages: sendMsgs },
+                cb,
+            )
+        }else {
+            new PopInfo().add(PopType.ERR, 'lgr不支持匿名聊天')
+        }
+    }else {
+        if (type === 'group'){
+            Connector.send(
+                'send_group_msg',
+                { group_id: id, message: msg },
+                cb,
+            )
+        }else if (type === 'user'){
+            Connector.send(
+                'send_private_msg',
+                { user_id: id, message: msg },
+                cb,
+            )
+        }else{
+            new PopInfo().add(PopType.ERR, 'lgr不支持匿名聊天')
+        }
     }
 }
