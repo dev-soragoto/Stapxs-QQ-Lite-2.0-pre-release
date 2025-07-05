@@ -64,6 +64,7 @@
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                         <template v-else-if="item.type == 'text'">
                             <div v-if="hasMarkdown()" class="msg-md-title" />
+                            <!-- {{ item.text }} -->
                             <span v-else v-show="item.text !== ''"
                                 class="msg-text" @click="textClick" v-html="textIndex[index]" />
                         </template>
@@ -157,18 +158,20 @@
                             </video>
                         </div>
                         <template v-else-if="item.type == 'forward'">
-                            <div v-if="item.content !== undefined && item.content.length > 0"
-                                class="msg-raw-forward"
-                                @click="View.getForwardMsg(item.id)">
+                            <div class="msg-raw-forward"
+                                @click="openMerge()">
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
-                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)"
+                                    <div v-if="item.content === undefined">
+                                        {{ $t('加载ing') }}
+                                    </div>
+                                    <div v-else-if="item.content.length > 0" v-for="(i, indexItem) in item.content.slice(0, 3)"
                                         :key="'raw-forward-' + indexItem">
                                         {{ i.sender.nickname }}:
                                         <span v-for="(msg, msgIndex) in i.message"
                                             :key="'raw-forward-item-' + msgIndex">
                                             <span v-if="msg.type == 'text'">
-                                                {{ msg.data.text }}
+                                                {{ msg.text }}
                                             </span>
                                             <span v-else-if="msg.type == 'image'">
                                                 [{{ $t('图片') }}]
@@ -193,16 +196,16 @@
                                             </span>
                                         </span>
                                     </div>
+                                    <div v-else>
+                                        {{ $t('加载失败') }}
+                                    </div>
                                 </div>
                                 <div>
-                                    <span>{{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}</span>
+                                    <span v-if="item.content !== undefined">
+                                        {{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}
+                                    </span>
                                 </div>
                             </div>
-                            <span v-else class="msg-unknown"
-                                style="cursor: pointer"
-                                @click="View.getForwardMsg(item.id)">
-                                {{ $t('（点击查看合并转发消息）') }}
-                            </span>
                         </template>
                         <div v-else-if="item.type == 'reply'"
                             :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
@@ -334,7 +337,7 @@
     import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
     import { defineComponent } from 'vue'
     import { Connector } from '@renderer/function/connect'
-    import { runtimeData } from '@renderer/function/msg'
+    import { getMessageList, runtimeData } from '@renderer/function/msg'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
     import { StringifyOptions } from 'querystring'
     import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
@@ -348,6 +351,7 @@
         getTrueLang,
         getViewTime } from '@renderer/function/utils/systemUtil'
     import { linkView } from '@renderer/function/utils/linkViewUtil'
+import { MergeStackData } from '@renderer/function/elements/information'
 
     export default defineComponent({
         name: 'MsgBody',
@@ -401,6 +405,14 @@
                 if(item.type == 'text') {
                     this.parseText(i)
                 }
+            }
+            // 初始化解析合并转发消息
+            if (this.data.message[0].type === 'forward'){
+                Connector.callApi('forward_msg', {id: this.data.message[0].id})
+                .then(data=>{
+                    data = getMessageList(data)
+                    this.data.message[0].content = data
+                })
             }
         },
         methods: {
@@ -1031,6 +1043,41 @@
                         }
                     }
                 }
+            },
+            openMerge(){
+                const data: MergeStackData = {
+                    messageList: [],
+                    imageList: [],
+                    placeCache: 0,
+                    ready: false,
+                    forwardMsg: this.data
+                }
+                const seg = this.data.message[0]
+                if (seg.content !== undefined){
+                    data.ready = true
+                    data.messageList = seg.content
+                    // 提取合并转发中的消息图片列表
+                    const imgList = [] as {
+                        index: number
+                        message_id: string
+                        img_url: string
+                    }[]
+                    let index = 0
+                    data.messageList.forEach((item) => {
+                        item.message.forEach((msg) => {
+                            if (msg.type == 'image') {
+                                imgList.push({
+                                    index: index,
+                                    message_id: item.message_id,
+                                    img_url: msg.url,
+                                })
+                                index++
+                            }
+                        })
+                    })
+                    data.imageList = imgList
+                }
+                runtimeData.mergeMsgStack.push(data)
             }
         },
     })

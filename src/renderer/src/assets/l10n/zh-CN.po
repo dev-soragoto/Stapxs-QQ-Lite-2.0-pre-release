@@ -1190,3 +1190,9 @@ msgstr ""
 
 msgid "连接已断开"
 msgstr ""
+
+msgid "加载ing"
+msgstr ""
+
+msgid "聊天记录"
+msgstr ""

@@ -354,31 +354,7 @@
             <div />
         </div>
         <!-- 合并转发消息预览器 -->
-        <div :class="mergeList != undefined ? 'merge-pan show' : 'merge-pan'">
-            <div @click="closeMergeMsg" />
-            <div class="ss-card">
-                <div>
-                    <font-awesome-icon style="margin-top: 5px" :icon="['fas', 'message']" />
-                    <span>{{ $t('合并消息') }}</span>
-                    <font-awesome-icon :icon="['fas', 'xmark']" @click="closeMergeMsg" />
-                </div>
-                <div :class=" 'loading' + (mergeList && mergeList.length == 0 ? ' show' : '')">
-                    <font-awesome-icon :icon="['fas', 'spinner']" />
-                    <span>{{ $t('加载中') }}</span>
-                </div>
-                <div>
-                    <template v-for="(msgIndex, index) in mergeList" :key="'merge-' + index">
-                        <NoticeBody v-if=" isShowTime( mergeList[index - 1] ?
-                                        mergeList[index - 1].time : undefined, msgIndex.time, index == 0)"
-                            :id="uuid()"
-                            :key="'notice-time-' + index"
-                            :data="{ sub_type: 'time', time: msgIndex.time }" />
-                        <!-- 合并转发消息忽略是不是自己的判定 -->
-                        <MsgBody :data="msgIndex" :type="'merge'" />
-                    </template>
-                </div>
-            </div>
-        </div>
+        <MergePan />
         <!-- At 信息悬浮窗 -->
         <div class="mumber-info">
             <div v-if="Object.keys(mumberInfo).length > 0 && mumberInfo.error === undefined"
@@ -567,6 +543,7 @@
     import MsgBody from '@renderer/components/MsgBody.vue'
     import NoticeBody from '@renderer/components/NoticeBody.vue'
     import FacePan from '@renderer/components/FacePan.vue'
+    import MergePan from '@renderer/components/MergePan.vue'
     import imageCompression from 'browser-image-compression'
 
     import { defineComponent, markRaw, reactive } from 'vue'
@@ -603,7 +580,7 @@
 
     export default defineComponent({
         name: 'ViewChat',
-        components: { Info, MsgBody, NoticeBody, FacePan },
+        components: { Info, MsgBody, NoticeBody, FacePan, MergePan },
         props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
         data() {
             return {
@@ -1627,14 +1604,6 @@
             },
 
             /**
-             * 关闭合并转发弹窗
-             */
-            closeMergeMsg() {
-                this.runtimeData.mergeMessageList = undefined
-                this.runtimeData.mergeMessageImgList = undefined
-            },
-
-            /**
              * 打开好友/群组信息页面
              */
             openChatInfoPan() {
@@ -2506,14 +2475,14 @@
                         if(this.tags.openChatInfo) {
                             this.openChatInfoPan()
                         } else if(this.mergeList != undefined) {
-                            this.closeMergeMsg()
+                            MergePan.closeMergeMsg()
                             setTimeout(() => {
                                 const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                                 if(mergePan) {
                                     mergePan.style.transform = ''
                                 }
                             }, 500)
-                         } else {
+                        } else {
                             runtimeData.chatInfo.show.id = 0
                             runtimeData.tags.openSideBar = true
                             new Logger().add(LogType.UI, '右滑打开侧边栏触发完成')
