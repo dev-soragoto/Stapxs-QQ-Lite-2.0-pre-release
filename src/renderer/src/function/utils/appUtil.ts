@@ -823,6 +823,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
 * 显示使用次数弹窗
 */
 export function checkOpenTimes() {
+    if (import.meta.env.DEV) return     // 开发环境不显示
     const { $t } = app.config.globalProperties
     const times = localStorage.getItem('times')
     if (times != null) {
