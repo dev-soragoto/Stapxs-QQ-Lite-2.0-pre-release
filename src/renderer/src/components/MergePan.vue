@@ -57,7 +57,10 @@
                 () => runtimeData.mergeMsgStack.length,
                 () => {
                     // 最后一个保留下来做展开关闭动画
-                    if(this.stack.length === 0) this
+                    if(this.stack.length === 0) {
+                        // 清理下垃圾
+                        runtimeData.mergeMessageImgList = undefined
+                    }
                     else this.nowData = this.stack.at(-1)
                 }
             )
