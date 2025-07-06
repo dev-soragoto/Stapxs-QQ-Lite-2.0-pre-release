@@ -163,7 +163,10 @@
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
                                     <div v-if="item.content === undefined">
-                                        {{ $t('加载ing') }}
+                                        <div class="loading">
+                                            <font-awesome-icon :icon="['fas', 'spinner']" />
+                                            {{ $t('加载中') }}
+                                        </div>
                                     </div>
                                     <div v-else-if="item.content.length > 0" v-for="(i, indexItem) in item.content.slice(0, 3)"
                                         :key="'raw-forward-' + indexItem">
@@ -203,6 +206,9 @@
                                 <div>
                                     <span v-if="item.content !== undefined">
                                         {{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}
+                                    </span>
+                                    <span v-else>
+                                        {{ $t('聊天记录') }}
                                     </span>
                                 </div>
                             </div>
@@ -351,7 +357,7 @@
         getTrueLang,
         getViewTime } from '@renderer/function/utils/systemUtil'
     import { linkView } from '@renderer/function/utils/linkViewUtil'
-import { MergeStackData } from '@renderer/function/elements/information'
+    import { MergeStackData } from '@renderer/function/elements/information'
 
     export default defineComponent({
         name: 'MsgBody',
