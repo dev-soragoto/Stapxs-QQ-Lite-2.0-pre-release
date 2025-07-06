@@ -259,7 +259,7 @@
                     <span>{{ $t('强迫症的福音～') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.opt_auto_dark"
+                    <input v-model="runtimeData.sysConfig.merge_forward_width_type"
                         type="checkbox" name="merge_forward_width_type" @change="save">
                     <div>
                         <div />
