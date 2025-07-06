@@ -13,7 +13,7 @@
             <span>{{ $t('撤回了一条消息') }}</span>
             <div />
         </div>
-        <div v-if="data.notice_type == 'group_ban'" class="note-ban note-base">
+        <div v-else-if="data.notice_type == 'group_ban'" class="note-ban note-base">
             <template v-if="data.sub_type === 'ban'">
                 <template v-if="isMe(data.user_id)">
                     <span>{{ $t('成员类型_admin') }}</span>
@@ -31,10 +31,14 @@
                 $t('管理员解除了 {name} 的禁言', { name: isMe(data.user_id) ? $t('你') : getName(data.user_id)})
             }}</span>
         </div>
-        <div v-if="data.sub_type === 'poke'"
+        <div v-else-if="data.sub_type === 'delete'" class="note-recall note-base">
+            <span>{{ $t('这条消息迷失在虚空里了') }}</span>
+            <div />
+        </div>
+        <div v-else-if="data.sub_type === 'poke'"
             class="note-notify note-base"
             v-html="data.str + '<div class=\'space\'</div>'" />
-        <div v-if="data.sub_type === 'time' && data.time != undefined"
+        <div v-else-if="data.sub_type === 'time' && data.time != undefined"
             class="note-time note-base">
             <a>{{ Intl.DateTimeFormat(
                 trueLang,

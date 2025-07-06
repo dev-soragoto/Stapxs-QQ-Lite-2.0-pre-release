@@ -80,10 +80,15 @@
                         v-if="isShowTime(list[index - 1] ? list[index - 1].time : undefined, msgIndex.time)"
                         :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
+                    <!-- [已删除]消息 -->
+                    <NoticeBody
+                        v-else-if="isDeleteMsg(msgIndex)"
+                        :key="'delete-' + msgIndex.message_id"
+                        :data="{ sub_type: 'delete' }" />
                     <!-- 消息体 -->
-                    <MsgBody v-if="(msgIndex.post_type === 'message' ||
-                                 msgIndex.post_type === 'message_sent') &&
-                                 msgIndex.message.length > 0"
+                    <MsgBody v-else-if="(msgIndex.post_type === 'message' ||
+                                msgIndex.post_type === 'message_sent') &&
+                                msgIndex.message.length > 0"
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
@@ -96,7 +101,7 @@
                         @touchend="msgMoveEnd($event, msgIndex)"
                         @send-poke="sendPoke" />
                     <!-- 其他通知消息 -->
-                    <NoticeBody v-if="msgIndex.post_type === 'notice'"
+                    <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
                         :id="uuid()"
                         :key="'notice-' + index"
                         :data="msgIndex" />
@@ -563,6 +568,8 @@
         sendMsgRaw,
         getFace,
         getShowName,
+        isShowTime,
+        isDeleteMsg,
     } from '@renderer/function/utils/msgUtil'
     import { scrollToMsg } from '@renderer/function/utils/appUtil'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -673,6 +680,8 @@
                     281, 282, 284, 285, 287, 289, 290, 293, 294, 297, 298, 299,
                     305, 306, 307, 314, 315, 318, 319, 320, 322, 324, 326,
                 ],
+                isShowTime,
+                isDeleteMsg,
             }
         },
         watch: {
@@ -732,22 +741,6 @@
                     this.scrollToMsg(this.tags.openedMenuMsg?.id)
                     this.closeMsgMenu()
                 }, 100)
-            },
-
-            /**
-             * 判断是否需要显示时间戳（上下超过五分钟的消息）
-             * @param timePrv 上条消息的时间戳（10 位）
-             * @param timeNow 当前消息的时间戳（10 位）
-             */
-            isShowTime(
-                timePrv: number | undefined,
-                timeNow: number,
-                alwaysShow = false,
-            ) {
-                if (alwaysShow) return true
-                if (timePrv == undefined) return false
-                // 五分钟 10 位时间戳相差 300
-                return timeNow - timePrv >= 300
             },
 
             /**

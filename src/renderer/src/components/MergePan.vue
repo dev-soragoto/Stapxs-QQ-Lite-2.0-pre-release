@@ -22,6 +22,11 @@
                         :id="uuid()"
                         :key="'notice-time-' + index"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
+                    <!-- [已删除]消息 -->
+                    <NoticeBody
+                        v-else-if="isDeleteMsg(msgIndex)"
+                        :key="'delete-' + msgIndex.message_id"
+                        :data="{ sub_type: 'delete' }" />
                     <!-- 合并转发消息忽略是不是自己的判定 -->
                     <MsgBody :data="msgIndex" :type="'merge'" />
                 </template>
@@ -39,6 +44,8 @@
     import { defineComponent, ref, type Ref } from "vue";
     import { runtimeData } from '@renderer/function/msg';
     import { type MergeStackData } from '@renderer/function/elements/information';
+    import { isDeleteMsg, isShowTime } from '@renderer/function/utils/msgUtil';
+
     export default defineComponent({
         name: 'MergePan',
         components: { NoticeBody, MsgBody },
@@ -49,7 +56,9 @@
                 uuid,
                 runtimeData,
                 stack,
-                nowData
+                nowData,
+                isShowTime,
+                isDeleteMsg
             }
         },
         mounted() {
@@ -112,22 +121,6 @@
              */
             closeMergeMsg() {
                 this.stack.length = 0
-            },
-
-            /**
-             * 判断是否需要显示时间戳（上下超过五分钟的消息）
-             * @param timePrv 上条消息的时间戳（10 位）
-             * @param timeNow 当前消息的时间戳（10 位）
-             */
-            isShowTime(
-                timePrv: number | undefined,
-                timeNow: number,
-                alwaysShow = false,
-            ) {
-                if (alwaysShow) return true
-                if (timePrv == undefined) return false
-                // 五分钟 10 位时间戳相差 300
-                return timeNow - timePrv >= 300
             },
         }
     })

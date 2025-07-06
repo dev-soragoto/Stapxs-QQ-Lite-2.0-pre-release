@@ -692,6 +692,34 @@ export function getShowName(base: string, remark: string) {
 }
 
 /**
+ * 判断是否需要显示时间戳（上下超过五分钟的消息）
+ * @param timePrv 上条消息的时间戳（10 位）
+ * @param timeNow 当前消息的时间戳（10 位）
+ */
+export function isShowTime(
+    timePrv: number | undefined,
+    timeNow: number,
+    alwaysShow = false,
+): boolean {
+    if (alwaysShow) return true
+    if (timePrv == undefined) return false
+    // 五分钟 10 位时间戳相差 300
+    return timeNow - timePrv >= 300
+}
+
+/**
+ * 判断这个消息是不是[已删除]
+ * @param msg
+ */
+export function isDeleteMsg(msg: any): boolean {
+    console.log(runtimeData.sysConfig.dont_parse_delete)
+    if(runtimeData.sysConfig.dont_parse_delete === true)return false
+    if(msg.sender.user_id !== runtimeData.loginInfo.uin)return false
+    if(msg.raw_message !== '&#91;已删除&#93;')return false
+    return true
+}
+
+/**
  * lgr专用发送消息，懒得写了，不做通用适配，胡乱应付下吧
  * @param msg 消息内容
  */

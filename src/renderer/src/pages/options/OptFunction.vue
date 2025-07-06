@@ -179,6 +179,21 @@
                     </div>
                 </label>
             </div>
+            <div class="opt-item">
+                <div :class="checkDefault('dont_parse_delete')" />
+                <font-awesome-icon :icon="['fas', 'delete-left']" />
+                <div>
+                    <span>{{ $t('禁止解析[已删除]') }}</span>
+                    <span>{{ $t('ob会把撤回的消息显示为你自己发的[已删除]') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.dont_parse_delete"
+                        type="checkbox" name="dont_parse_delete" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('浏览') }}</header>
