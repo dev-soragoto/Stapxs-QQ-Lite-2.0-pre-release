@@ -1316,13 +1316,8 @@
                 const id = data.group_id ? data.group_id : data.user_id
                 if (this.multipleSelectList.length > 0 && msg) {
                     // 构造一条假的 json 消息用来渲染
-                    const msgList = this.multipleSelectList.map((item) => {
-                        const msg = runtimeData.messageList.find((msg) => {
-                            return msg.message_id == item
-                        })
-                        if (msg) {
-                            return msg
-                        }
+                    const msgList = runtimeData.messageList.filter((item) => {
+                        return this.multipleSelectList.indexOf(item.message_id) >= 0
                     })
                     // 构造 titleList
                     const jsonMsg = {
