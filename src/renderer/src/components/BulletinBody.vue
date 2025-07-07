@@ -27,8 +27,7 @@
                 v-html="parseText(data.content[0])" />
             <img v-if="data.img_id != ''"
                 :src="`https://p.qlogo.cn/gdynamic/${data.img_id}/0/`"
-                :class="'img' + (!showAll ? '' : ' all')"
-                />
+                :class="'img' + (!showAll ? '' : ' all')">
         </div>
         <span v-show="needShow && !showAll">{{ $t('点击展开') }}</span>
         <div class="info">

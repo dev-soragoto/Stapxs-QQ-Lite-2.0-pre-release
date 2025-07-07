@@ -118,6 +118,7 @@ group_notices:
         content: $.message.text
         sender: /sender_id
         time: /publish_time
+        img_id: $.message.image.0.id
         is_read: null
         read_num: null
 # 获取群精华消息

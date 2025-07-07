@@ -725,7 +725,7 @@ export function isDeleteMsg(msg: any): boolean {
  */
 function lgrSendMsg(id: string, msg: any, type: string, cb: string){
     if (msg[0].type === 'node') {
-        const sendMsgs = []
+        const sendMsgs = [] as any[]
         msg.forEach((item) => {
             const msg = {
                 type: item.type,

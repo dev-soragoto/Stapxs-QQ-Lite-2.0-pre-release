@@ -168,7 +168,7 @@
                                             {{ $t('加载中') }}
                                         </div>
                                     </div>
-                                    <div v-else-if="item.content.length > 0" v-for="(i, indexItem) in item.content.slice(0, 3)"
+                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)" v-else-if="item.content.length > 0"
                                         :key="'raw-forward-' + indexItem">
                                         {{ i.sender.nickname }}:
                                         <span v-for="(msg, msgIndex) in i.message"

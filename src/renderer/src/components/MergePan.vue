@@ -41,7 +41,7 @@
     import MsgBody from '@renderer/components/MsgBody.vue'
     import NoticeBody from '@renderer/components/NoticeBody.vue'
 
-    import { defineComponent, ref, type Ref } from "vue";
+    import { defineComponent, ref, type Ref } from 'vue';
     import { runtimeData } from '@renderer/function/msg';
     import { type MergeStackData } from '@renderer/function/elements/information';
     import { isDeleteMsg, isShowTime } from '@renderer/function/utils/msgUtil';
