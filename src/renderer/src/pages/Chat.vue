@@ -94,7 +94,7 @@
                         :data="msgIndex"
                         @click="msgClick($event, msgIndex)"
                         @scroll-to-msg="scrollToMsg"
-                        @scroll-buttom="imgLoadedScroll"
+                        @image-loaded="imgLoadedScroll"
                         @contextmenu.prevent="showMsgMeun($event, msgIndex)"
                         @touchstart="msgStartMove($event, msgIndex)"
                         @touchmove="msgOnMove"
@@ -128,7 +128,7 @@
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
                         @scroll-to-msg="scrollToMsg"
-                        @scroll-buttom="imgLoadedScroll"
+                        @image-loaded="imgLoadedScroll"
                         @contextmenu.prevent="showMsgMeun($event, msgIndex)"
                         @touchstart="msgStartMove($event, msgIndex)"
                         @touchmove="msgOnMove"
@@ -848,10 +848,15 @@
                     new PopInfo().add(PopType.INFO, this.$t('无法定位上下文'))
                 }
             },
-            imgLoadedScroll() {
+            imgLoadedScroll(height: number) {
                 const pan = document.getElementById('msgPan')
-                if (pan && !this.tags.showBottomButton) {
-                    this.scrollBottom()
+                if(pan) {
+                    if(this.list.length <= 20 && !this.tags.showBottomButton) {
+                        this.scrollBottom()
+                    } else {
+                        // 纠正滚动位置
+                        this.scrollTo(pan.scrollTop + height, false)
+                    }
                 }
             },
 

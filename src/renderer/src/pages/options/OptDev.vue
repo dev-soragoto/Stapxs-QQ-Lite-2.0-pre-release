@@ -22,7 +22,7 @@
                         $t('[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测')
                     }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.msgType"
+                <select v-model="runtimeData.sysConfig.msg_type"
                     name="msg_type"
                     title="msg_type"
                     @change="save">
@@ -552,8 +552,6 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                         return this.$t('CQ 码')
                     case BotMsgType.Array:
                         return this.$t('Array 数组')
-                    case BotMsgType.Auto:
-                        return this.$t('自动检测')
                 }
             },
             getPathMapList() {

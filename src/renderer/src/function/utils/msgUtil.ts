@@ -13,6 +13,7 @@ import {
     UserGroupElem,
 } from '../elements/information'
 import { sendStatEvent } from './appUtil'
+import { callBackend } from './systemUtil'
 
 const logger = new Logger()
 
@@ -160,12 +161,10 @@ export function parseMsgList(
     valueMap: { [key: string]: any },
 ): any[] {
     // 判断消息类型
-    if (runtimeData.tags.msgType == BotMsgType.Auto) {
-        if (typeof list[0].message == 'string') {
-            runtimeData.tags.msgType = BotMsgType.CQCode
-        } else {
-            runtimeData.tags.msgType = BotMsgType.Array
-        }
+    if (typeof list[0].message == 'string') {
+        runtimeData.tags.msgType = BotMsgType.CQCode
+    } else {
+        runtimeData.tags.msgType = BotMsgType.Array
     }
     // 消息类型的特殊处理
     switch (runtimeData.tags.msgType) {
@@ -279,6 +278,9 @@ export function getMsgRawTxt(data: any): string {
                         .replaceAll('\n', ' ')
                         .replaceAll('\r', ' ')
                     break
+                case 'forward':
+                    back += '[' + $t('聊天记录') + ']'
+                    break
                 case 'face':
                     back += '[' + $t('表情') + ']'
                     break
@@ -287,7 +289,7 @@ export function getMsgRawTxt(data: any): string {
                     break
                 case 'image':
                     back +=
-                        message[i].summary || message[i].summary == ''? '[' + $t('图片') + ']': message[i].summary
+                        (!message[i].summary || message[i].summary == '') ? '[' + $t('图片') + ']' : message[i].summary
                     break
                 case 'record':
                     back += '[' + $t('语音') + ']'
@@ -302,7 +304,7 @@ export function getMsgRawTxt(data: any): string {
                     try {
                         back += JSON.parse(message[i].data).prompt
                     } catch (error) {
-                        back += '[卡片消息]'
+                        back += '[' + $t('卡片消息') + ']'
                     }
                     break
                 }
@@ -572,7 +574,7 @@ export function updateBaseOnMsgList() {
     ) => {
         if (a.time == b.time || a.time == undefined || b.time == undefined) {
             if (a.py_start == undefined || b.py_start == undefined) {
-                return 1
+                return 0
             }
             return b.py_start.charCodeAt(0) - a.py_start.charCodeAt(0)
         }
@@ -641,7 +643,7 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 .add({ translateX: 0, duration: 100, easing: 'easeOutSine' })
         }
         timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
-        timeLine.change = () => {
+        timeLine.change = async () => {
             if (animeBody) {
                 animeBody.parentElement?.parentElement?.classList.add( 'poking')
                 const teansformX = animeBody.style.transform
@@ -651,13 +653,10 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 num = Math.round(num)
                 // 输出 translateX
                 if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && windowInfo) {
-                    const { reader } = runtimeData.plantform
-                    if (reader) {
-                        reader.send('win:move', {
+                    await callBackend(undefined, 'win:move', false, {
                             x: windowInfo.x + num,
                             y: windowInfo.y,
                         })
-                    }
                 }
             }
         }

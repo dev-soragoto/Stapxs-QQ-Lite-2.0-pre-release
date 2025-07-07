@@ -15,6 +15,8 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
+		A26F1EE32DFAA87E00748044 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A26F1EE22DFAA87E00748044 /* AppIcon.icon */; };
+		A26F1EE52DFAB23300748044 /* CapacitorAppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A26F1EE42DFAB23300748044 /* CapacitorAppIcon.icon */; };
 		A28365522D1C071C009ED84C /* UIViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28365512D1C0717009ED84C /* UIViewController.swift */; };
 		A2E5D1EB2D1297860071C6EF /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A2E5D1EA2D1297860071C6EF /* Settings.bundle */; };
 /* End PBXBuildFile section */
@@ -29,6 +31,8 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		A26F1EE22DFAA87E00748044 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		A26F1EE42DFAB23300748044 /* CapacitorAppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = CapacitorAppIcon.icon; sourceTree = "<group>"; };
 		A28365512D1C0717009ED84C /* UIViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewController.swift; sourceTree = "<group>"; };
 		A2E5D1EA2D1297860071C6EF /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -78,6 +82,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				A26F1EE62DFAB24500748044 /* Liquid AppIcon */,
 				A28365512D1C0717009ED84C /* UIViewController.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -98,6 +103,15 @@
 				AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		A26F1EE62DFAB24500748044 /* Liquid AppIcon */ = {
+			isa = PBXGroup;
+			children = (
+				A26F1EE42DFAB23300748044 /* CapacitorAppIcon.icon */,
+				A26F1EE22DFAA87E00748044 /* AppIcon.icon */,
+			);
+			path = "Liquid AppIcon";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -165,9 +179,11 @@
 			files = (
 				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
+				A26F1EE52DFAB23300748044 /* CapacitorAppIcon.icon in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
+				A26F1EE32DFAA87E00748044 /* AppIcon.icon in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				A2E5D1EB2D1297860071C6EF /* Settings.bundle in Resources */,
 			);

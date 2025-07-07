@@ -1191,10 +1191,16 @@ msgstr ""
 msgid "连接已断开"
 msgstr ""
 
-msgid "加载ing"
+msgid "聊天记录"
 msgstr ""
 
-msgid "聊天记录"
+msgid "消息"
+msgstr ""
+
+msgid "卡片消息"
+msgstr ""
+
+msgid "加载ing"
 msgstr ""
 
 msgid "固定合并转发宽度"

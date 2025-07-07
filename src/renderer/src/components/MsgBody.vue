@@ -74,14 +74,14 @@
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
                             :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
                             :src="item.url"
-                            @load="scrollButtom"
+                            @load="imageLoaded"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
-                            :title="$t('预览图片')"
+                            :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, index, item.asface)"
                             :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
-                            @load="scrollButtom"
+                            @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
                         <template v-else-if="item.type == 'face'">
@@ -297,15 +297,18 @@
                                         <a v-if="pageViewInfo.data.info.free != null">{{ $t('（试听）') }}</a>
                                     </a>
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
-                                    <audio :src="pageViewInfo.data.play_link"
+                                    <audio :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/proxy?url=${pageViewInfo.data.play_link}` : pageViewInfo.data.play_link"
                                         @loadedmetadata="audioLoaded()"
                                         @timeupdate="audioUpdate()" />
                                     <div>
                                         <input value="0" min="0" step="0.1"
                                             type="range" @input="audioChange()">
                                         <div><div /><div /></div>
-                                        <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
-                                        <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
+                                        <font-awesome-icon v-if="!pageViewInfo.data.loaded" :icon="['fas', 'spinner']" spin />
+                                        <template v-else>
+                                            <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
+                                            <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
+                                        </template>
                                         <span>00:00 / 00:00</span>
                                     </div>
                                 </div>
@@ -363,7 +366,7 @@
         name: 'MsgBody',
         components: { CardMessage },
         props: ['data', 'type', 'selected'],
-        emits: ['scrollToMsg', 'scrollButtom', 'sendPoke'],
+        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
                 md: markdownit({ breaks: true }),
@@ -530,8 +533,9 @@
             /**
              * 图片加载完成，滚到底部
              */
-            scrollButtom() {
-                this.$emit('scrollButtom', null)
+            imageLoaded(event: Event) {
+                const img = event.target as HTMLImageElement
+                this.$emit('imageLoaded', img.offsetHeight)
             },
 
             /**
@@ -975,6 +979,7 @@
                         }
                     }
                 }
+                if(this.pageViewInfo) this.pageViewInfo.data.loaded = true
             },
 
             audioControll() {
@@ -1190,6 +1195,7 @@
     .link-view-music163 > div:first-child > img {
         border-radius: 7px;
         margin-right: 20px;
+        max-height: 80px;
         width: 25%;
     }
     .link-view-music163 > div:first-child > div {
@@ -1216,6 +1222,7 @@
         display: flex;
     }
     .link-view-music163 > div:first-child > div > div > input {
+        appearance: none;
         -webkit-appearance: none;
         width: calc(100% - 20px);
         background: transparent;

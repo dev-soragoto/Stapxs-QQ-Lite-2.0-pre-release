@@ -1,9 +1,9 @@
 PODS:
-  - Capacitor (6.2.0):
+  - Capacitor (6.2.1):
     - CapacitorCordova
   - CapacitorApp (6.0.2):
     - Capacitor
-  - CapacitorCordova (6.2.0)
+  - CapacitorCordova (6.2.1)
   - CapacitorKeyboard (6.0.3):
     - Capacitor
   - CapacitorLocalNotifications (6.1.2):
@@ -49,9 +49,9 @@ EXTERNAL SOURCES:
     :path: "../../../../node_modules/@untiny/capacitor-safe-area"
 
 SPEC CHECKSUMS:
-  Capacitor: 05d35014f4425b0740fc8776481f6a369ad071bf
+  Capacitor: c95400d761e376be9da6be5a05f226c0e865cebf
   CapacitorApp: e1e6b7d05e444d593ca16fd6d76f2b7c48b5aea7
-  CapacitorCordova: b33e7f4aa4ed105dd43283acdd940964374a87d9
+  CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
   CapacitorKeyboard: e89189ad398b815b6ff7e52271f0fb4f911a0a0a
   CapacitorLocalNotifications: 65d718c32cbcb753697627bea76dd4336ef85dc2
   CapacitorOnebotConnctor: 6f9f82cae00c8fe1f1838456d079802613d5732b

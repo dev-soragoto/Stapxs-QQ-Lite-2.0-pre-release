@@ -76,7 +76,7 @@
             <div>
                 <span>{{ $t('外观') }}</span>
                 <a>{{ $t('Stapxs QQ Lite 拥有一个主题色，你可以选择一个主题色作为主要风格！如果你喜欢保持深色主题，也可以关闭自动深色模式自行选择。') }}</a>
-                <div class="opt-item">
+                <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('主题色') }}</span>
                         <span>{{ $t('换个心情 🎵 ~') }}</span>
@@ -95,7 +95,7 @@
                         </label>
                     </div>
                 </div>
-                <div v-if="!runtimeData.sysConfig.opt_auto_dark" id="opt_view_dark" class="opt-item">
+                <div v-if="!runtimeData.sysConfig.opt_auto_dark" id="opt_view_dark" class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('深色模式') }}</span>
                         <span>{{ $t('是五彩斑斓的黑色！') }}</span>
@@ -108,7 +108,7 @@
                         </div>
                     </label>
                 </div>
-                <div class="opt-item">
+                <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('自动深色模式') }}</span>
                         <span>{{ $t('Biubiu ——，自动变黑！') }}</span>
@@ -142,7 +142,7 @@
             <div>
                 <span>{{ $t('群收纳盒') }}</span>
                 <a>{{ $t('群收纳盒将所有的群消息收进一个单独的群消息列表内并提供实时置顶新消息的功能；你可以关闭它来控制群消息的直接通知选项。') }}</a>
-                <div class="opt-item">
+                <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('群收纳盒') }}</span>
                         <span>{{ $t('全都放出来！全都放出来！') }}</span>
@@ -155,7 +155,7 @@
                         </div>
                     </label>
                 </div>
-                <div v-if="!runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+                <div v-if="!runtimeData.sysConfig.bubble_sort_user" class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('群消息通知方式') }}</span>
                         <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
@@ -194,7 +194,7 @@
             <div>
                 <span>{{ $t('图片发送框') }}</span>
                 <a>{{ $t('图片发送框默认启用，所有待发送的图片都将发送在文本之前。如果想要图文混排发送，你需要关闭这个功能以使用纯文本发送模式。') }}</a>
-                <div class="opt-item">
+                <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('禁用图片发送框') }}</span>
                         <span>{{ $t('你也向往自由吗？') }}</span>
@@ -272,7 +272,7 @@
             <div>
                 <span>{{ $t('Stapxs QQ Lite 会将部分使用数据上传到自建的 umami 服务器中用于了解用户使用情况以及制作一些有趣的统计信息。') }}</span>
                 <span style="margin-bottom: 20px;">{{ $t('如果你并不希望上传这些数据，可以选择关闭它。') }}</span>
-                <div class="opt-item"
+                <div class="opt-item wel-opt-item"
                     :style="runtimeData.sysConfig.close_ga !== true ?
                         'background: var(--color-card-1);' : ''">
                     <font-awesome-icon :icon="['fas', 'cloud']" />
@@ -499,6 +499,12 @@
         margin-bottom: 20px;
         text-align: center;
         font-size: 0.8rem;
+    }
+
+    .wel-opt-item > div:first-child {
+        margin-left: 0 !important;
+        max-width: unset !important;
+        height: unset !important;
     }
 
     .l10n-info {
