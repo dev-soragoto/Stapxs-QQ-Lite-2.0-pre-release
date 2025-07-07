@@ -82,7 +82,7 @@
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
                     <!-- [已删除]消息 -->
                     <NoticeBody
-                        v-else-if="isDeleteMsg(msgIndex)"
+                        v-if="isDeleteMsg(msgIndex)"
                         :key="'delete-' + msgIndex.message_id"
                         :data="{ sub_type: 'delete' }" />
                     <!-- 消息体 -->
