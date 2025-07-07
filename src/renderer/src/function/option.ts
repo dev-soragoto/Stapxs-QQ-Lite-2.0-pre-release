@@ -54,6 +54,7 @@ export const optDefault: { [key: string]: any } = {
     fs_adaptation: 0,
     opt_always_top: false,
     opt_revolve: false,
+    merge_forward_width_type: 'fixed',
     // Function
     close_notice: false,
     bubble_sort_user: true,
@@ -67,6 +68,7 @@ export const optDefault: { [key: string]: any } = {
     close_browser: false,
     close_ga: false,
     open_ga_bot: true,
+    dont_parse_delete: false,
     // Dev
     msg_type: 2,
     log_level: 'err',
@@ -88,6 +90,23 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_always_top: viewAlwaysTop,
     opt_fast_animation: updateFarstAnimation,
     bubble_sort_user: clearGroupAssist,
+    merge_forward_width_type: setMergeForwardWidth,
+}
+
+function setMergeForwardWidth(value: boolean|null){
+    if(value === null){
+        value = false
+    }
+    let css: string
+    if (value){
+        css = '17rem'
+    }else {
+        css = 'auto'
+    }
+    document.documentElement.style.setProperty(
+        '--merge-forward-width',
+        css,
+    )
 }
 
 function clearGroupAssist() {

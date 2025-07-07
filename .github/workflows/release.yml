@@ -44,6 +44,8 @@ jobs:
         uses: ./.github/workflows/build-docker.yml
         with:
             version: ${{ needs.init.outputs.version }}
+        secrets:
+            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
     # ==================== 构建 Github Pages 版本 =====================
     build-pages:
@@ -79,13 +81,13 @@ jobs:
                   folder: dist
 
     # ========================= 构建 Electron 版本 =========================
-    build-electron:
-        name: 构建 Electron
-        needs: init
+    # build-electron:
+    #     name: 构建 Electron
+    #     needs: init
 
-        uses: ./.github/workflows/build-electron.yml
-        with:
-            version: ${{ needs.init.outputs.version }}
+    #     uses: ./.github/workflows/build-electron.yml
+    #     with:
+    #         version: ${{ needs.init.outputs.version }}
 
     # ========================= 构建 Tauri 版本 =========================
 
@@ -120,7 +122,7 @@ jobs:
             - name: Publish Release
               uses: softprops/action-gh-release@v2
               with:
-                  files: ./${{ needs.init.outputs.version }}/*
+                  files: ./${{ needs.init.outputs.version }}-*/*
                   tag_name: v${{ needs.init.outputs.version }}
                   body: |
                       # Release 自动构建

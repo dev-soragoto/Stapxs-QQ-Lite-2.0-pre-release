@@ -11,11 +11,14 @@ import app from '@renderer/main'
 
 import { reactive } from 'vue'
 import { LogType, Logger, PopType, PopInfo } from './base'
-import { parse, runtimeData } from './msg'
+import { handleEvent, parse, runtimeData } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
 import { callBackend } from './utils/systemUtil'
+
+import { v4 as uuid } from 'uuid'
+import { getMsgData } from './utils/msgUtil'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -23,6 +26,14 @@ const popInfo = new PopInfo()
 let retry = 0
 
 export let websocket: WebSocket | undefined = undefined
+
+class TimeoutError extends Error {
+    echo: string
+    constructor(echo: string) {
+        super()
+        this.echo = echo
+    }
+}
 
 export class Connector {
     /**
@@ -153,7 +164,51 @@ export class Connector {
     }
 
     static onmessage(message: string) {
-        parse(message)
+        const data = JSON.parse(message)
+        logger.add(LogType.WS, 'GET：', data)
+        if (data.echo === undefined){
+            handleEvent(data)
+        }
+        if (data.echo) {
+            let echo: string = data.echo
+            delete data.echo
+            // 旧回调系统处理
+            if (echo.startsWith('send_')) {
+                echo = echo.slice(5)
+                parse(data, echo)
+                return
+            }
+            this.ReMap.set(echo, data)
+        }
+    }
+
+    /**
+     * 返回值Map
+     */
+    private static ReMap: Map<string, any> = new Map()
+
+    private static waitReturn(echo: string, timeout: number=5000): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now()
+
+            const check = () => {
+                if (this.ReMap.has(echo)) {
+                    const re = this.ReMap.get(echo)
+                    this.ReMap.delete(echo)
+                    resolve(re)
+                    return
+                }
+
+                if (Date.now() - startTime > timeout) {
+                    reject(new TimeoutError(echo))
+                    return
+                }
+
+                setTimeout(check, 20)
+            }
+
+            check()
+        })
     }
 
     static onclose(
@@ -219,47 +274,108 @@ export class Connector {
     }
 
     /**
+     * 调用 api
+     * TODO 标准API适配
+     * @param api  api名称,该api应该为映射Map里存在的键
+     * @param args 参数
+     * @returns undefined 表示无此API, null表示调用失败, 其余为经getMsgData过滤的返回值
+     */
+    static async callApi(api: string, args: {[key: string]: any}): Promise<any|undefined|null>{
+        // 组建信息
+        const echo = uuid()
+        const apiMap = runtimeData.jsonMap[api]
+        if (!apiMap) {
+            logger.debug(`${runtimeData.jsonMap.name} 未适配 API ${api}`)
+            return undefined
+        }
+
+        // 发送信息
+        if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
+            // 使用 http POST 请求 /api/$name,body 为 json
+            this.sendSeeMod(apiMap.name, args, echo)
+        } else {
+            this.sendRaw(apiMap.name, args, echo)
+        }
+
+        // 处理响应
+        try{
+            const re = await this.waitReturn(echo)
+            return getMsgData(api, re, apiMap)
+        }catch (e) {
+            if (e instanceof TimeoutError) {
+                logger.error(e, `API ${api} 请求超时`)
+            }else {
+                logger.error(e as Error, `API ${api} 请求失败`)
+            }
+        }
+        return null
+    }
+
+    /**
      * 发送 Websocket 消息
      * @param name 事件名
      * @param value 参数
      * @param echo 回调名
+     * @deprecated 该函数看似在掉api,其实还有去指定对象调用回调函数,无法拿到api返回值
      */
     static send(
         name: string,
         value: { [key: string]: any },
         echo: string = name,
     ) {
+        echo = 'send_' + echo
         if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
             // 使用 http POST 请求 /api/$name,body 为 json
-            const body = JSON.stringify(value)
-            fetch(`${import.meta.env.VITE_APP_SSE_HTTP_ADDRESS}/${name}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': login.token,
-                },
-                body: body,
-            }).then((response) => {
-                if (response.ok) {
-                    response.json().then((data) => {
-                        data.echo = echo
-                        parse(JSON.stringify(data))
-                    })
-                }
-            }).catch((error) => {
-                logger.error(error, ' 请求 API ' + name + ' 失败')
-            })
+            this.sendSeeMod(name,value,echo)
         } else {
-            // 构建 JSON
-            const json = JSON.stringify({
-                action: name,
-                params: value,
-                echo: echo,
-            } as BotActionElem)
-            this.sendRaw(json)
+            this.sendRaw(name, value, echo)
         }
     }
-    static sendRaw(json: string) {
+    /**
+     * 使用 see 模式发请求，请求结果会一并送到onmessage方法上
+     * @param name api名称
+     * @param args 参数
+     * @param echo 回调标识
+     */
+    static sendSeeMod(
+        name: string,
+        args: { [key: string]: any },
+        echo: string = name,
+    ) {
+        fetch(`${import.meta.env.VITE_APP_SSE_HTTP_ADDRESS}/${name}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': login.token,
+            },
+            body: JSON.stringify(args),
+        }).then((response) => {
+            if (response.ok) {
+                response.json().then((data) => {
+                    data.echo = echo
+                    this.onmessage(data)
+                })
+            }
+        }).catch((error) => {
+            logger.error(error, ' 请求 API ' + name + ' 失败')
+        })
+    }
+    /**
+     * 使用 ws 模式发请求，请求结果会送到onmessage方法上
+     * @param name api名称
+     * @param args 参数
+     * @param echo 回调标识
+     */
+    static sendRaw(
+        name: string,
+        args: { [key: string]: any },
+        echo: string = name,
+    ) {
+        const json = JSON.stringify({
+            action: name,
+            params: args,
+            echo: echo,
+        } as BotActionElem)
         // 发送
         if(runtimeData.tags.clientType != 'web') {
             callBackend('Onebot', 'onebot:send', false, json)

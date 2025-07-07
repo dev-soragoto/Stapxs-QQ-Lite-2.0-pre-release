@@ -77,46 +77,36 @@ let heartbeatTime = -1
 /**
  * 处理分发消息
  * @param str 原始消息
+ * @deprecated 旧回调系统
  */
-export function parse(str: string) {
+export function parse(msg: { [key: string]: any }, echo: string) {
     let name = 'unknown'
-    let msg = undefined as { [key: string]: any } | undefined
 
     try {
-        msg = JSON.parse(str)
-        if ((str as string).indexOf('"meta_event_type":"heartbeat"') < 0) {
-            logger.add(LogType.WS, 'GET：', msg)
-        }
+        const echoList = echo.split('_')
+        const head = echoList[0]
+        name = head
+        msgFunctons[head](head, msg, echoList)
     } catch (e) {
-        if ((str as string).indexOf('"meta_event_type":"heartbeat"') < 0) {
-            logger.add(LogType.WS, 'GET：' + str)
-        }
+        logger.error(e as Error, `处理消息 - ${name}：\n${msg}`)
     }
+}
 
+export function handleEvent(event: { [key: string]: any }){
+    let type = event.post_type
+    if (type == 'notice') {
+        // 通知类型，如果没有 sub_type 则使用 notice_type
+        type = event.sub_type ?? event.notice_type
+    }
+    const name = type
     try {
-        if (msg) {
-            if (msg.echo !== undefined) {
-                const echoList = msg.echo.split('_')
-                const head = echoList[0]
-                name = head
-                msgFunctons[head](head, msg, echoList)
-            } else {
-                let type = msg.post_type
-                if (type == 'notice') {
-                    // 通知类型，如果没有 sub_type 则使用 notice_type
-                    type = msg.sub_type ?? msg.notice_type
-                }
-                name = type
-                noticeFunctions[type](type, msg)
-            }
-        }
+        noticeFunctions[type](type, event)
     } catch (e) {
-        logger.error(e as Error, `处理消息或通知错误 - ${name}：\n${str}`)
+        logger.error(e as Error, `处理事件 - ${name}：\n${event}`)
     }
 }
 
 // ==============================================================
-
 const noticeFunctions = {
     /**
      * 心跳包
@@ -515,7 +505,15 @@ const msgFunctons = {
     getGroupMemberList: (_: string, msg: { [key: string]: any }) => {
         const data = msg.data as GroupMemberInfoElem[]
         data.forEach((item: any) => {
-            const name = item.card ? item.card : item.nickname
+            let name: string
+            if (item.card != undefined && item.card != '') {
+                name = item.card
+            }else if (item.nickname != undefined && item.nickname != '') {
+                name = item.nickname
+            }else{
+                name = item.user_id.toString()
+            }
+
             // 获取拼音首字母
             const first = name.substring(0, 1)
             item.py_start = pinyin
@@ -1437,7 +1435,7 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
     }
 }
 
-function getMessageList(list: any[] | undefined) {
+export function getMessageList(list: any[] | undefined) {
     if (list != undefined) {
         list = parseMsgList(
             list,
@@ -1879,6 +1877,7 @@ const baseRuntime = {
     sysConfig: {},
     messageList: [],
     popBoxList: [],
+    mergeMsgStack: [],
 }
 
 export const runtimeData: RunTimeDataElem = reactive(baseRuntime)

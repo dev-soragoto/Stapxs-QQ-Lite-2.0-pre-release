@@ -66,3 +66,14 @@ get_message: $.message
 message_value: # 这是消息转义，防止某些消息字段不同
     image:
         url: $.file
+# 获取群公告
+group_notices:
+    name: _get_group_notice
+    source: $.data[*]
+    list:
+        content: $.message.text
+        sender: $.sender_id
+        time: $.publish_time
+        img_id: $.message.images.0.id
+        is_read: null
+        read_num: null
