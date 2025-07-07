@@ -415,8 +415,10 @@
             // 初始化解析合并转发消息
             if (this.data.message[0].type === 'forward'){
                 Connector.callApi('forward_msg', {id: this.data.message[0].id})
-                .then(data=>{
+                .then(data => {
                     data = getMessageList(data)
+                    // PS：这个写法其实不合规，但是影响不大就这样罢
+                    // eslint-disable-next-line vue/no-mutating-props
                     this.data.message[0].content = data
                 })
             }
