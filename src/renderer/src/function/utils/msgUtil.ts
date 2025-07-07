@@ -711,8 +711,8 @@ export function isShowTime(
  * @param msg
  */
 export function isDeleteMsg(msg: any): boolean {
-    console.log(runtimeData.sysConfig.dont_parse_delete)
     if(runtimeData.sysConfig.dont_parse_delete === true)return false
+    if(!['message', 'message_sent'].includes(msg.post_type)) return false
     if(msg.sender.user_id !== runtimeData.loginInfo.uin)return false
     if(msg.raw_message !== '&#91;已删除&#93;')return false
     return true
