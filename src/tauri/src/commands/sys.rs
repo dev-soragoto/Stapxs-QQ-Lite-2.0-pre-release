@@ -223,7 +223,8 @@ pub async fn sys_send_notice(
         let icon = data.get("icon").and_then(|v| v.as_str()).unwrap_or("");
         let final_image = if !image.is_empty() {
             image
-        } else if !icon.is_empty() {
+            // windows 不显示图标
+        } else if !icon.is_empty() && cfg!(not(target_os = "windows")) {
             icon
         } else {
             ""

@@ -3,11 +3,11 @@
 //! or as a fallback for tauri's devmode that runs the app without a bundle id
 
 use std::collections::HashMap;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, OnceLock, Mutex};
 
 use async_trait::async_trait;
-use windows::Foundation::Collections::StringMap;
-use windows::Foundation::TypedEventHandler;
+use windows::Foundation::Collections::{StringMap, ValueSet};
+use windows::Foundation::{TypedEventHandler, IPropertyValue};
 use windows::UI::Notifications::{
     NotificationData, ToastActivatedEventArgs, ToastDismissalReason, ToastDismissedEventArgs,
     ToastNotifier,
@@ -53,6 +53,7 @@ pub struct NotificationManagerWindows {
         Arc<OnceLock<Box<dyn Fn(crate::NotificationResponse) + Send + Sync + 'static>>>,
     app_id: String,
     notification_protocol: Option<String>,
+    categories: Arc<Mutex<Vec<crate::NotificationCategory>>>,
 }
 
 impl std::fmt::Debug for NotificationManagerWindows {
@@ -80,6 +81,7 @@ impl NotificationManagerWindows {
             handler_callback: Arc::new(OnceLock::new()),
             app_id,
             notification_protocol,
+            categories: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -137,6 +139,25 @@ impl NotificationManagerWindows {
             })
         }
 
+        fn get_action_user_text(insp: &Option<IInspectable>) -> Option<String> {
+            insp.as_ref().and_then(|insp| {
+                let args: ToastActivatedEventArgs = insp.cast().ok()?;
+                let inputs: ValueSet = args.UserInput().ok()?;
+
+                let iterator = inputs.First().ok()?;
+                while iterator.HasCurrent().ok()? {
+                    let pair = iterator.Current().ok()?;
+                    let value = pair.Value().ok()?;
+
+                    let prop_val: IPropertyValue = value.cast().ok()?;
+                    let text = prop_val.GetString().ok()?;
+                    return Some(text.to_string());
+                }
+
+                None
+            })
+        }
+
         fn get_dismissed_reason(
             args: &Option<ToastDismissedEventArgs>,
         ) -> Option<ToastDismissalReason> {
@@ -151,6 +172,7 @@ impl NotificationManagerWindows {
         let handler_callback = self.handler_callback.clone();
         let activation_handler = TypedEventHandler::new(move |_, insp| {
             let action = get_activated_action(&insp);
+            let user_text = get_action_user_text(&insp);
             if let Some(handler) = handler_callback.get() {
                 handler(crate::NotificationResponse {
                     notification_id: notification_id_clone.clone(),
@@ -164,7 +186,7 @@ impl NotificationManagerWindows {
                                 .ok()
                         })
                         .unwrap_or(NotificationResponseAction::Default),
-                    user_text: None,
+                    user_text,
                     user_info: user_info_clone.clone(),
                 })
             }
@@ -217,6 +239,11 @@ impl NotificationManager for NotificationManagerWindows {
         categories: Vec<crate::NotificationCategory>,
     ) -> Result<(), crate::Error> {
         log::info!("NotificationManagerWindows::register {categories:?}");
+
+        {
+            let mut cats = self.categories.lock().unwrap();
+            *cats = categories.clone();
+        }
 
         self.handler_callback
             .set(handler_callback)
@@ -317,7 +344,7 @@ impl NotificationManager for NotificationManagerWindows {
             .image
             .map(|image_path| {
                 format!(
-                    r#"<image id="1" src="file:///{}" />"#, // alt="image"
+                    r#"<image placement="hero" id="1" src="file:///{}" />"#, // alt="image"
                     quick_xml::escape::escape(image_path.display().to_string())
                 )
             })
@@ -350,21 +377,56 @@ impl NotificationManager for NotificationManagerWindows {
             })
             .unwrap_or("{}".to_string());
 
-        let launch_options =
-            if let Some(notification_protocol) = self.notification_protocol.as_ref() {
-                let launch_url = encode_deeplink(
-                    notification_protocol,
-                    &NotificationResponse {
-                        notification_id: id.clone(),
-                        action: NotificationResponseAction::Default,
-                        user_text: None,
-                        user_info: builder.user_info.clone().unwrap_or_default(),
-                    },
-                );
-                format!(r#"launch="{launch_url}" activationType="protocol""#)
-            } else {
-                "".to_owned()
-            };
+        let launch_url = if let Some(notification_protocol) = self.notification_protocol.as_ref() {
+            encode_deeplink(
+                notification_protocol,
+                &NotificationResponse {
+                    notification_id: id.clone(),
+                    action: NotificationResponseAction::Default,
+                    user_text: None,
+                    user_info: builder.user_info.clone().unwrap_or_default(),
+                },
+            )
+        } else {
+            "".to_owned()
+        };
+        let launch_options = if !launch_url.is_empty() {
+            format!(r#"launch="{launch_url}" activationType="protocol""#)
+        } else {
+            "".to_owned()
+        };
+
+        let categories = self.categories.lock().unwrap();
+        log::info!("available categories: {:?}", *categories);
+
+        // Actions XML logic: collect all actions from all categories
+        let mut actions_xml = String::new();
+        actions_xml.push_str("<actions>");
+        for category in categories.iter() {
+            for action in &category.actions {
+                match action {
+                    crate::NotificationCategoryAction::TextInputAction {
+                        identifier,
+                        input_placeholder,
+                        input_button_title,
+                        ..
+                    } => {
+                        actions_xml.push_str(&format!(
+                            r#"<input id="{identifier}" type="text" placeHolderContent="{input_placeholder}" />"#
+                        ));
+                        actions_xml.push_str(&format!(
+                            r#"<action content="{input_button_title}" activationType="protocol" arguments="{launch_url}" />"#,
+                        ));
+                    }
+                    crate::NotificationCategoryAction::Action { identifier, title } => {
+                        actions_xml.push_str(&format!(
+                            r#"<action content="{title}" activationType="protocol" arguments="{launch_url}" />"#,
+                        ));
+                    }
+                }
+            }
+        }
+        actions_xml.push_str("</actions>");
 
         let toast_xml = XmlDocument::new()?;
         // https://learn.microsoft.com/uwp/schemas/tiles/toastschema/schema-root
@@ -382,7 +444,9 @@ impl NotificationManager for NotificationManagerWindows {
                     </visual>
                     <audio src="ms-winsoundevent:Notification.SMS" />
                     <!-- <audio silent="true" /> -->
-                </toast>"#
+                    {actions_xml}
+                </toast>"#,
+                actions_xml = actions_xml
             )))
             .expect("the xml is malformed");
 

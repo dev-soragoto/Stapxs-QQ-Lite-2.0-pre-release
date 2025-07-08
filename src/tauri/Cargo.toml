@@ -43,6 +43,7 @@ http = "1"
 rand = "0.9.1"
 base64 = "0.22.1"
 rfd = "0.15.3"
+tauri-plugin-deep-link = "2.0.0"
 
 user-notify = { path = "crates/user-notify" }
 

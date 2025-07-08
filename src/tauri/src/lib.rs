@@ -71,7 +71,7 @@ pub fn run() {
             // 初始化全局通知管理器 ============
             let app_id = app.config().identifier.clone();
             let manager =
-                get_notification_manager(app_id, Some("dcnotification".to_owned()));
+                get_notification_manager(app_id, Some("stapxs-qq-lite".to_owned()));
             let categories = vec![NotificationCategory {
                 identifier: "cn.stapxs.qqweb.reply".to_string(),
                 actions: vec![NotificationCategoryAction::TextInputAction {
@@ -88,16 +88,27 @@ pub fn run() {
                     Box::new(move |response| {
                         let app_handle_clone = app_handle.clone();
                         rt.spawn(async move {
-                            info!("Received notification response: {:?}", response);
                             let action = response.action;
                             let user_info = response.user_info.get("NotificationPayload")
                                 .and_then(|v| Some(v.as_str()))
                                 .unwrap_or("");
+                            let user_text = response.user_text.unwrap_or_default();
+                            let parts: Vec<&str> = user_info.split('/').collect();
+                            info!("收到通知回调，类型 {:?}，输入文本：{}", action, user_text);
                             match action {
                                 user_notify::NotificationResponseAction::Default => {
-                                    // 点击消息的默认操作
-                                    let parts: Vec<&str> = user_info.split('/').collect();
-                                    if parts.len() >= 2 {
+                                    if parts.len() >= 3 && !user_text.is_empty() {
+                                        let user_id = parts[0];
+                                        let message_id = parts[1];
+                                        let chat_type = parts[2];
+                                        // 提交前端
+                                        let mut payload = HashMap::new();
+                                        payload.insert("id", user_id.to_string());
+                                        payload.insert("msg", message_id.to_string());
+                                        payload.insert("type", chat_type.to_string());
+                                        payload.insert("content", user_text);
+                                        app_handle_clone.emit("bot:quickReply", payload).unwrap();
+                                    } else if parts.len() >= 2 {
                                         let user_id = parts[0];
                                         let message_id = parts[1];
                                         // 提交前端
@@ -111,8 +122,6 @@ pub fn run() {
                                     // do nothing
                                 }
                                 user_notify::NotificationResponseAction::Other(action_id) => {
-                                    let user_text = response.user_text.unwrap_or_default();
-                                    let parts: Vec<&str> = user_info.split('/').collect();
                                     if parts.len() >= 3 && !user_text.is_empty()
                                             && action_id == "cn.stapxs.qqweb.reply.action" {
                                         let user_id = parts[0];
