@@ -377,8 +377,9 @@ impl NotificationManager for NotificationManagerWindows {
             })
             .unwrap_or("{}".to_string());
 
-        let launch_url = if let Some(notification_protocol) = self.notification_protocol.as_ref() {
-            encode_deeplink(
+        let launch_options =
+            if let Some(notification_protocol) = self.notification_protocol.as_ref() {
+                let launch_url = encode_deeplink(
                 notification_protocol,
                 &NotificationResponse {
                     notification_id: id.clone(),
@@ -386,11 +387,7 @@ impl NotificationManager for NotificationManagerWindows {
                     user_text: None,
                     user_info: builder.user_info.clone().unwrap_or_default(),
                 },
-            )
-        } else {
-            "".to_owned()
-        };
-        let launch_options = if !launch_url.is_empty() {
+                );
             format!(r#"launch="{launch_url}" activationType="protocol""#)
         } else {
             "".to_owned()
@@ -411,16 +408,35 @@ impl NotificationManager for NotificationManagerWindows {
                         input_button_title,
                         ..
                     } => {
+                        log::error!("{}", identifier.clone());
+                        let action_launch_url = encode_deeplink(
+                            self.notification_protocol.as_deref().unwrap_or("dcnotification"),
+                            &NotificationResponse {
+                                notification_id: id.clone(),
+                                action: NotificationResponseAction::Other(identifier.clone()),
+                                user_text: None,
+                                user_info: builder.user_info.clone().unwrap_or_default(),
+                            },
+                        );
                         actions_xml.push_str(&format!(
                             r#"<input id="{identifier}" type="text" placeHolderContent="{input_placeholder}" />"#
                         ));
                         actions_xml.push_str(&format!(
-                            r#"<action content="{input_button_title}" activationType="protocol" arguments="{launch_url}" />"#,
+                            r#"<action content="{input_button_title}" activationType="protocol" arguments="{action_launch_url}" />"#,
                         ));
                     }
                     crate::NotificationCategoryAction::Action { identifier, title } => {
+                        let action_launch_url = encode_deeplink(
+                            self.notification_protocol.as_deref().unwrap_or("dcnotification"),
+                            &NotificationResponse {
+                                notification_id: id.clone(),
+                                action: NotificationResponseAction::Other(identifier.clone()),
+                                user_text: None,
+                                user_info: builder.user_info.clone().unwrap_or_default(),
+                            },
+                        );
                         actions_xml.push_str(&format!(
-                            r#"<action content="{title}" activationType="protocol" arguments="{launch_url}" />"#,
+                            r#"<action content="{title}" activationType="protocol" arguments="{action_launch_url}" />"#,
                         ));
                     }
                 }
@@ -443,8 +459,8 @@ impl NotificationManager for NotificationManagerWindows {
                         </binding>
                     </visual>
                     <audio src="ms-winsoundevent:Notification.SMS" />
-                    <!-- <audio silent="true" /> -->
                     {actions_xml}
+                    <!-- <audio silent="true" /> -->
                 </toast>"#,
                 actions_xml = actions_xml
             )))
