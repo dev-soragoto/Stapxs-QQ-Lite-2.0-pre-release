@@ -44,6 +44,8 @@ rand = "0.9.1"
 base64 = "0.22.1"
 rfd = "0.15.3"
 
+user-notify = { path = "crates/user-notify" }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.26.0"
 objc2 = "0.6.1"

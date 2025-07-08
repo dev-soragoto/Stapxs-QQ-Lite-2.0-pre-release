@@ -105,6 +105,16 @@
                     <div>Apache 2.0</div>
                     <font-awesome-icon :icon="['fas', 'angle-right']" />
                 </div>
+                <div v-if="runtimeData.tags.clientType == 'tauri'"
+                    class="ss-card jump-card"
+                    @click="openLink('https://github.com/deltachat/deltachat-desktop')">
+                    <header>
+                        <div />
+                        <div>DeltaChat<span>user-notify crates</span></div>
+                    </header>
+                    <div>GPL 3.0</div>
+                    <font-awesome-icon :icon="['fas', 'angle-right']" />
+                </div>
                 <div class="ss-card jump-card"
                     @click="openLink('http://fontawesome.com')">
                     <header><div />Font Awesome</header>

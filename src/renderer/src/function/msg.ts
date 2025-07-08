@@ -579,23 +579,27 @@ const msgFunctons = {
     ) => {
         const id = Number(echoList[1])
         if (id) {
-            // 对消息进行一次格式化处理
-            let list = getMsgData('message_list', msg, msgPath.message_list)
-            if (list != undefined) {
-                list = parseMsgList(
-                    list,
-                    msgPath.message_list.type,
-                    msgPath.message_value,
-                )
-                const raw = getMsgRawTxt(list[0])
-                const time = list[0].time
-                // 更新消息列表
-                const onmsg = runtimeData.baseOnMsgList.get(Number(id))
-                if(onmsg) {
-                    onmsg.raw_msg = raw
-                    onmsg.time = getViewTime(Number(time))
-                    runtimeData.baseOnMsgList.set(id, onmsg)
+                try {
+                // 对消息进行一次格式化处理
+                let list = getMsgData('message_list', msg, msgPath.message_list)
+                if (list != undefined) {
+                    list = parseMsgList(
+                        list,
+                        msgPath.message_list.type,
+                        msgPath.message_value,
+                    )
+                    const raw = getMsgRawTxt(list[0])
+                    const time = list[0].time
+                    // 更新消息列表
+                    const onmsg = runtimeData.baseOnMsgList.get(Number(id))
+                    if(onmsg) {
+                        onmsg.raw_msg = raw
+                        onmsg.time = getViewTime(Number(time))
+                        runtimeData.baseOnMsgList.set(id, onmsg)
+                    }
                 }
+            } catch (e) {
+                // do nothing
             }
         }
     },

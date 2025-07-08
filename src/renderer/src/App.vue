@@ -399,6 +399,7 @@ export default defineComponent({
             }
             // 服务发现
             callBackend('Onebot', 'sys:findService', false)
+            callBackend('OneBot', 'sys:frontLoaded', false)
             // =============================================================
             // 初始化完成
             // 创建 popstate

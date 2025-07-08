@@ -45,7 +45,7 @@ export interface NotificationElem {
 }
 
 export interface NotifyInfo {
-    base_type: string,
+    base_type: 'msg' | 'app',
 
     title: string
     body: string
