@@ -74,35 +74,34 @@ const logger = new Logger()
 let firstHeartbeatTime = -1
 let heartbeatTime = -1
 
-/**
- * 处理分发消息
- * @param str 原始消息
- * @deprecated 旧回调系统
- */
-export function parse(msg: { [key: string]: any }, echo: string) {
-    let name = 'unknown'
+export function dispatch(raw: string | { [k: string]: any }, echo?: string) {
+    let msg: any;
 
-    try {
-        const echoList = echo.split('_')
-        const head = echoList[0]
-        name = head
-        msgFunctons[head](head, msg, echoList)
-    } catch (e) {
-        logger.error(e as Error, `处理消息 - ${name}：\n${msg}`)
+    // 1) 如有需要先 parse
+    if (typeof raw === 'string') {
+        try {
+            msg = JSON.parse(raw);
+        } catch {
+            if (!raw.includes('"meta_event_type":"heartbeat"')) {
+                logger.add(LogType.WS, 'GET：' + raw);
+            }
+            return;
+        }
+    } else {
+        msg = raw;
     }
-}
 
-export function handleEvent(event: { [key: string]: any }){
-    let type = event.post_type
-    if (type == 'notice') {
-        // 通知类型，如果没有 sub_type 则使用 notice_type
-        type = event.sub_type ?? event.notice_type
-    }
-    const name = type
+    // 2) 決定 name/key
+    const name = echo ? echo.split('_')[0] : msg.post_type === 'notice' ? msg.sub_type ?? msg.notice_type : msg.post_type;
+
+    // 3) 安全調用 handler
     try {
-        noticeFunctions[type](type, event)
+        const fn = handlers[name];
+        if (!fn) throw new Error(`No handler for "${name}"`);
+        const metaArgs = echo ? echo.split('_') : undefined;
+        fn(msg, metaArgs);
     } catch (e) {
-        logger.error(e as Error, `处理事件 - ${name}：\n${event}`)
+        logger.error(e as Error, `跳转事件处理错误 - ${name}:\n${JSON.stringify(msg)}`);
     }
 }
 
@@ -332,7 +331,7 @@ const noticeFunctions = {
     },
 } as { [key: string]: (name: string, msg: { [key: string]: any }) => void }
 
-const msgFunctons = {
+const msgFunctions = {
     /**
      * 修改群成员信息回调
      */
@@ -589,7 +588,7 @@ const msgFunctons = {
                         msgPath.message_value,
                     )
                     const raw = getMsgRawTxt(list[0])
-                    const time = list[0].time
+                    const {time} = list[0]
                     // 更新消息列表
                     const onmsg = runtimeData.baseOnMsgList.get(Number(id))
                     if(onmsg) {
@@ -692,7 +691,7 @@ const msgFunctons = {
         echoList: string[],
     ) => {
         runtimeData.popBoxList.shift()
-        msgFunctons['sendMsgBack'](_, msg, echoList)
+        msgFunctions['sendMsgBack'](_, msg, echoList)
     },
 
     /**
@@ -1187,6 +1186,17 @@ const msgFunctons = {
         echoList?: string[],
     ) => void
 }
+
+const handlers: Record<string, (payload: any, metaArgs?: string[]) => void> = {
+  ...(Object.entries(msgFunctions).reduce((acc, [key, fn]) => ({
+    ...acc,
+    [key]: (payload: any, metaArgs?: string[]) => fn(key, payload, metaArgs)
+  }), {})),
+  ...(Object.entries(noticeFunctions).reduce((acc, [key, fn]) => ({
+    ...acc,
+    [key]: (payload: any) => fn(key, payload)
+  }), {}))
+};
 
 // ==========================================
 

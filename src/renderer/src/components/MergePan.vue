@@ -1,5 +1,4 @@
 <template>
-    <!-- <div :class="mergeList != undefined ? 'merge-pan show' : 'merge-pan'"> -->
     <div :class="'merge-pan' + (runtimeData.mergeMsgStack.length > 0 ? ' show' : '')">
         <div @click="closeMergeMsg" />
         <div class="ss-card">
@@ -122,6 +121,10 @@
             closeMergeMsg() {
                 this.stack.length = 0
             },
+
+            isMergeOpen() {
+                return this.stack.length > 0
+            }
         }
     })
 </script>

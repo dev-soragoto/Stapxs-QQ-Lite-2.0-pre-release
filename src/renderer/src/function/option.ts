@@ -54,7 +54,7 @@ export const optDefault: { [key: string]: any } = {
     fs_adaptation: 0,
     opt_always_top: false,
     opt_revolve: false,
-    merge_forward_width_type: 'fixed',
+    merge_forward_width_type: false,
     // Function
     close_notice: false,
     bubble_sort_user: true,
@@ -93,14 +93,14 @@ const configFunction: { [key: string]: (value: any) => void } = {
     merge_forward_width_type: setMergeForwardWidth,
 }
 
-function setMergeForwardWidth(value: boolean|null){
-    if(value === null){
+function setMergeForwardWidth(value: boolean | null) {
+    if (value === null) {
         value = false
     }
     let css: string
-    if (value){
+    if (value) {
         css = '17rem'
-    }else {
+    } else {
         css = 'auto'
     }
     document.documentElement.style.setProperty(

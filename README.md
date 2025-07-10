@@ -203,7 +203,7 @@ XCode 的构建结果将最终输出在 `src/mobile/ios/build` 目录下，脚�
 | build:android  | 构建 Android 应用   |
 
 ## 📜 额外依赖声明
-Stapxs QQ Lite 使用了 [DetalChat](https://github.com/deltachat/deltachat-desktop) 的 user-notify crates，这是个 rust 通知库，提供了完善的跨平台通知功能；由于它未提供可用的 cargo 包，所以它直接通过复制源码的方式存在在了本项目的 `src/tauri/crates/user-notify` 目录下。此部分代码已通过 .gitattributes 忽略了代码统计。
+Stapxs QQ Lite 使用了 [DeltaChat](https://github.com/deltachat/deltachat-desktop) 的 user-notify crate，这是个 Rust 通知库，提供了完善的跨平台通知功能。由于它未提供可用的 cargo 包，因此其源码被复制到本项目的 `src/tauri/crates/user-notify` 目录下。此部分代码已通过 .gitattributes 文件将其排除在代码统计之外。
 
 ## 🎉 鸣谢
 

@@ -216,7 +216,7 @@
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { runtimeData, parse } from '@renderer/function/msg'
+    import { runtimeData, dispatch } from '@renderer/function/msg'
     import { BrowserInfo, detect } from 'detect-browser'
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
@@ -253,14 +253,14 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     this.ws_text = ''
                     // 修改 echo 防止被消息处理机处理
                     info.echo = 'websocketTest'
-                    Connector.sendRaw(JSON.stringify(info))
+                    Connector.sendRawJson(JSON.stringify(info))
                 }
             },
             sendTestParse(event: KeyboardEvent) {
                 // 发送测试解析消息
                 if (event.keyCode === 13 && this.parse_text !== '') {
                     const info = JSON.parse(this.parse_text)
-                    parse(info)
+                    dispatch(info)
                     this.parse_text = ''
                 }
             },

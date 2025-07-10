@@ -359,7 +359,7 @@
             <div />
         </div>
         <!-- 合并转发消息预览器 -->
-        <MergePan />
+        <MergePan ref="mergePan" />
         <!-- At 信息悬浮窗 -->
         <div class="mumber-info">
             <div v-if="Object.keys(mumberInfo).length > 0 && mumberInfo.error === undefined"
@@ -588,7 +588,7 @@
     export default defineComponent({
         name: 'ViewChat',
         components: { Info, MsgBody, NoticeBody, FacePan, MergePan },
-        props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
+        props: ['chat', 'list', 'mumberInfo', 'imgView'],
         data() {
             return {
                 uuid,
@@ -1367,10 +1367,7 @@
                                 master: true,
                                 fun: () => {
                                     // 构建消息体
-                                    console.log(this.selectedMsg)
-                                    console.log(this.multipleSelectList)
                                     const msgBody = msgList.map((item) => {
-                                        console.log(item)
                                         return {
                                             type: 'node',
                                             id: item.message_id,
@@ -2409,6 +2406,7 @@
                         && moveY < heightAllow
                         && x - this.tags.chatTouch.startX > 0
                     if(allowMove) {
+                        const isMergeShow = (this.$refs.mergePan as InstanceType<typeof MergePan>).isMergeOpen()
                         if(this.tags.openChatInfo) {
                             // 聊天信息面板返回
                             const infoPan = chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
@@ -2419,7 +2417,7 @@
                                 this.tags.chatTouch.openSuccess =
                                     moveX > width / 3
                             }
-                        } else if(this.mergeList != undefined) {
+                        } else if(isMergeShow) {
                             // 合并转发面板返回
                             const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                             if(mergePan) {
@@ -2449,6 +2447,7 @@
                 this.tags.chatTouch.startY = -1
                 const chatPan = document.getElementById('chat-pan')
                 if(chatPan) {
+                    const isMergeShow = (this.$refs.mergePan as InstanceType<typeof MergePan>).isMergeOpen()
                     if(!this.tags.chatTouch.openSuccess) {
                         if(this.tags.openChatInfo) {
                             const infoPan = chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
@@ -2456,7 +2455,7 @@
                                 infoPan.style.transition = 'transform 0.3s'
                                 infoPan.style.transform = ''
                             }
-                        } else if(this.mergeList != undefined) {
+                        } else if(isMergeShow) {
                             const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                             if(mergePan) {
                                 mergePan.style.transform = ''
@@ -2467,8 +2466,8 @@
                     } else {
                         if(this.tags.openChatInfo) {
                             this.openChatInfoPan()
-                        } else if(this.mergeList != undefined) {
-                            MergePan.closeMergeMsg()
+                        } else if(isMergeShow) {
+                            (this.$refs.mergePan as InstanceType<typeof MergePan>).closeMergeMsg()
                             setTimeout(() => {
                                 const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                                 if(mergePan) {

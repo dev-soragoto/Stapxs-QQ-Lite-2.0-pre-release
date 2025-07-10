@@ -11,7 +11,7 @@ import app from '@renderer/main'
 
 import { reactive } from 'vue'
 import { LogType, Logger, PopType, PopInfo } from './base'
-import { handleEvent, parse, runtimeData } from './msg'
+import { dispatch, runtimeData } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
@@ -167,7 +167,7 @@ export class Connector {
         const data = JSON.parse(message)
         logger.add(LogType.WS, 'GET：', data)
         if (data.echo === undefined){
-            handleEvent(data)
+            dispatch(data)
         }
         if (data.echo) {
             let echo: string = data.echo
@@ -175,7 +175,7 @@ export class Connector {
             // 旧回调系统处理
             if (echo.startsWith('send_')) {
                 echo = echo.slice(5)
-                parse(data, echo)
+                dispatch(data, echo)
                 return
             }
             this.ReMap.set(echo, data)
@@ -349,15 +349,18 @@ export class Connector {
                 'Authorization': login.token,
             },
             body: JSON.stringify(args),
-        }).then((response) => {
+        }).then(async (response) => {
             if (response.ok) {
-                response.json().then((data) => {
+                try {
+                    const data = await response.json()
                     data.echo = echo
-                    this.onmessage(data)
-                })
+                    this.onmessage(JSON.stringify(data))
+                } catch (e) {
+                    logger.error(null, `API ${name} 返回非 JSON 数据`)
+                }
             }
         }).catch((error) => {
-            logger.error(error, ' 请求 API ' + name + ' 失败')
+            logger.error(error, ` 请求 API ${name} 失败`)
         })
     }
     /**
@@ -388,6 +391,14 @@ export class Connector {
         } else {
             logger.add(LogType.WS, 'PUT：', JSON.parse(json))
         }
+    }
+    static sendRawJson(str: string) {
+        const json = JSON.parse(str)
+        this.sendRaw(
+            json.action,
+            json.params,
+            json.echo,
+        )
     }
 }
 
