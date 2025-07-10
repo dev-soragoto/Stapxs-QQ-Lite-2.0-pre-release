@@ -223,7 +223,7 @@ pub async fn sys_send_notice(
         let icon = data.get("icon").and_then(|v| v.as_str()).unwrap_or("");
         let final_image = if !image.is_empty() {
             image
-            // windows 不显示图标
+            // windows 不显示头像
         } else if !icon.is_empty() && cfg!(not(target_os = "windows")) {
             icon
         } else {
@@ -357,10 +357,10 @@ pub fn sys_run_command(data: String) -> HashMap<String, Value> {
     return ret;
 }
 
-#[command]
-pub fn sys_get_gnome_ext() -> String {
-    return "".to_string();
-}
+// #[command]
+// pub fn sys_get_gnome_ext() -> String {
+//     return "".to_string();
+// }
 
 #[command]
 pub fn sys_open_in_browser(app_handle: tauri::AppHandle, data: String) {
@@ -527,7 +527,7 @@ pub fn sys_get_win_color() -> Option<String> {
             let accent_color: *mut AnyObject = msg_send![ns_color_class, controlAccentColor];
             if accent_color.is_null() {
                 error!("获取强调色失败 ……");
-                return Some("00000000".to_string());
+                return Some("636e79".to_string());
             } else {
                 debug!("accent color: {:?}", accent_color);
             }
@@ -537,7 +537,7 @@ pub fn sys_get_win_color() -> Option<String> {
             let rgb_color: *mut AnyObject = msg_send![accent_color, colorUsingColorSpace: device_rgb];
             if rgb_color.is_null() {
                 error!("转换强调色色彩空间失败 ……");
-                return Some("00000000".to_string());
+                return Some("636e79".to_string());
             } else {
                 debug!("rgb color: {:?}", rgb_color);
             }
@@ -570,11 +570,10 @@ pub fn sys_get_win_color() -> Option<String> {
                 return Some(color)
             } else {
                 info!("获取强调色失败 ……");
-                return Some("00000000".to_string())
+                return Some("636e79".to_string());
             }
         }
     }
-    return Some("00000000".to_string())
 }
 
 // macOS：Touch Bar 支持

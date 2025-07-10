@@ -1,11 +1,11 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "private": false,
   "author": "Stapx Steve [林槐]",
   "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
   "homepage": "http://github.com/Stapxs/Stapxs-QQ-Lite-2.0",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "main": "./out/main/index.js",
   "type": "module",
   "scripts": {

@@ -139,7 +139,7 @@ pub fn run() {
                 // as they probably don't work anymore and are just stuck
                 //
                 // https://github.com/deltachat/deltachat-desktop/issues/2438#issuecomment-1090735045
-                if let Err(err) = self.manager.remove_all_delivered_notifications() {
+                if let Err(err) = manager.remove_all_delivered_notifications() {
                     log::error!("remove_all_delivered_notifications: {err:?}");
                 }
             }
@@ -235,9 +235,14 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .hidden_title(true)
         .background_color(tauri::window::Color(0, 0, 0, 1))
+        .accept_first_mouse(true)
         .effects(tauri::window::EffectsBuilder::new()
             .effects(vec![tauri::window::Effect::Sidebar])
             .build());
+    #[cfg(target_os = "linux")]
+    let win_builder = win_builder
+        .decorations(false)
+        .disable_drag_drop_handler();
     let window = win_builder.build()?;
     #[cfg(target_os = "windows")] {
         let _ = window.set_decorations(false);

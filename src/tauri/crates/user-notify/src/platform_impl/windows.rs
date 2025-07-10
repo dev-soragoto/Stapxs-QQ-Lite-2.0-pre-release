@@ -410,7 +410,7 @@ impl NotificationManager for NotificationManagerWindows {
                     } => {
                         log::error!("{}", identifier.clone());
                         let action_launch_url = encode_deeplink(
-                            self.notification_protocol.as_deref().unwrap_or("dcnotification"),
+                            self.notification_protocol.as_deref().unwrap_or("stapxs-qq-lite"),
                             &NotificationResponse {
                                 notification_id: id.clone(),
                                 action: NotificationResponseAction::Other(identifier.clone()),
@@ -427,7 +427,7 @@ impl NotificationManager for NotificationManagerWindows {
                     }
                     crate::NotificationCategoryAction::Action { identifier, title } => {
                         let action_launch_url = encode_deeplink(
-                            self.notification_protocol.as_deref().unwrap_or("dcnotification"),
+                            self.notification_protocol.as_deref().unwrap_or("stapxs-qq-lite"),
                             &NotificationResponse {
                                 notification_id: id.clone(),
                                 action: NotificationResponseAction::Other(identifier.clone()),

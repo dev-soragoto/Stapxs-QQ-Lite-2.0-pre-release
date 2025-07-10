@@ -29,7 +29,7 @@
         "longDescription": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
         "shortDescription": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
         "publisher": "stapxs",
-        "license": "Apache-2.0",
+        "license": "AGPL-3.0-only",
         "targets": "all",
         "useLocalToolsDir": true,
         "icon": [
