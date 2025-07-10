@@ -64,6 +64,7 @@
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                         <template v-else-if="item.type == 'text'">
                             <div v-if="hasMarkdown()" class="msg-md-title" />
+                            <!-- {{ item.text }} -->
                             <span v-else v-show="item.text !== ''"
                                 class="msg-text" @click="textClick" v-html="textIndex[index]" />
                         </template>
@@ -73,14 +74,14 @@
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
                             :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
                             :src="item.url"
-                            @load="scrollButtom"
+                            @load="imageLoaded"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
-                            :title="$t('预览图片')"
+                            :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, index, item.asface)"
                             :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
-                            @load="scrollButtom"
+                            @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
                         <template v-else-if="item.type == 'face'">
@@ -157,18 +158,23 @@
                             </video>
                         </div>
                         <template v-else-if="item.type == 'forward'">
-                            <div v-if="item.content.length > 0"
-                                class="msg-raw-forward"
-                                @click="View.getForwardMsg(item.id)">
+                            <div class="msg-raw-forward"
+                                @click="openMerge()">
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
-                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)"
+                                    <div v-if="item.content === undefined">
+                                        <div class="loading">
+                                            <font-awesome-icon :icon="['fas', 'spinner']" />
+                                            {{ $t('加载中') }}
+                                        </div>
+                                    </div>
+                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)" v-else-if="item.content.length > 0"
                                         :key="'raw-forward-' + indexItem">
                                         {{ i.sender.nickname }}:
                                         <span v-for="(msg, msgIndex) in i.message"
                                             :key="'raw-forward-item-' + msgIndex">
                                             <span v-if="msg.type == 'text'">
-                                                {{ msg.data.text }}
+                                                {{ msg.text }}
                                             </span>
                                             <span v-else-if="msg.type == 'image'">
                                                 [{{ $t('图片') }}]
@@ -193,16 +199,19 @@
                                             </span>
                                         </span>
                                     </div>
+                                    <div v-else>
+                                        {{ $t('加载失败') }}
+                                    </div>
                                 </div>
                                 <div>
-                                    <span>{{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}</span>
+                                    <span v-if="item.content !== undefined">
+                                        {{ $t('查看 {count} 条转发消息', { count: item.content.length }) }}
+                                    </span>
+                                    <span v-else>
+                                        {{ $t('聊天记录') }}
+                                    </span>
                                 </div>
                             </div>
-                            <span v-else class="msg-unknown"
-                                style="cursor: pointer"
-                                @click="View.getForwardMsg(item.id)">
-                                {{ $t('（点击查看合并转发消息）') }}
-                            </span>
                         </template>
                         <div v-else-if="item.type == 'reply'"
                             :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
@@ -256,7 +265,7 @@
                         <!-- 特殊 URL 的预览 -->
                         <div v-if="pageViewInfo.type == 'bilibili'" class="link-view-bilibili">
                             <div class="user">
-                                <img :src="pageViewInfo.data.owner.face">
+                                <img :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(pageViewInfo.data.owner.face)}` : pageViewInfo.data.owner.face">
                                 <span>{{ pageViewInfo.data.owner.name }}</span>
                                 <a>{{ Intl.DateTimeFormat(trueLang, {
                                     year: 'numeric',
@@ -266,7 +275,7 @@
                                     minute: 'numeric'
                                 }).format(getViewTime(pageViewInfo.data.public)) }}</a>
                             </div>
-                            <img :src="pageViewInfo.data.pic">
+                            <img :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(pageViewInfo.data.pic)}` : pageViewInfo.data.pic">
                             <span>{{ pageViewInfo.data.title }}</span>
                             <a>{{ pageViewInfo.data.desc }}</a>
                             <div class="data">
@@ -288,15 +297,18 @@
                                         <a v-if="pageViewInfo.data.info.free != null">{{ $t('（试听）') }}</a>
                                     </a>
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
-                                    <audio :src="pageViewInfo.data.play_link"
+                                    <audio :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/proxy?url=${pageViewInfo.data.play_link}` : pageViewInfo.data.play_link"
                                         @loadedmetadata="audioLoaded()"
                                         @timeupdate="audioUpdate()" />
                                     <div>
                                         <input value="0" min="0" step="0.1"
                                             type="range" @input="audioChange()">
                                         <div><div /><div /></div>
-                                        <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
-                                        <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
+                                        <font-awesome-icon v-if="!pageViewInfo.data.loaded" :icon="['fas', 'spinner']" spin />
+                                        <template v-else>
+                                            <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
+                                            <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
+                                        </template>
                                         <span>00:00 / 00:00</span>
                                     </div>
                                 </div>
@@ -334,7 +346,7 @@
     import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
     import { defineComponent } from 'vue'
     import { Connector } from '@renderer/function/connect'
-    import { runtimeData } from '@renderer/function/msg'
+    import { getMessageList, runtimeData } from '@renderer/function/msg'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
     import { StringifyOptions } from 'querystring'
     import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
@@ -348,12 +360,13 @@
         getTrueLang,
         getViewTime } from '@renderer/function/utils/systemUtil'
     import { linkView } from '@renderer/function/utils/linkViewUtil'
+    import { MergeStackData } from '@renderer/function/elements/information'
 
     export default defineComponent({
         name: 'MsgBody',
         components: { CardMessage },
         props: ['data', 'type', 'selected'],
-        emits: ['scrollToMsg', 'scrollButtom', 'sendPoke'],
+        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
                 md: markdownit({ breaks: true }),
@@ -401,6 +414,16 @@
                 if(item.type == 'text') {
                     this.parseText(i)
                 }
+            }
+            // 初始化解析合并转发消息
+            if (this.data.message[0].type === 'forward'){
+                Connector.callApi('forward_msg', {id: this.data.message[0].id})
+                .then(data => {
+                    data = getMessageList(data)
+                    // PS：这个写法其实不合规，但是影响不大就这样罢
+                    // eslint-disable-next-line vue/no-mutating-props
+                    this.data.message[0].content = data
+                })
             }
         },
         methods: {
@@ -510,8 +533,9 @@
             /**
              * 图片加载完成，滚到底部
              */
-            scrollButtom() {
-                this.$emit('scrollButtom', null)
+            imageLoaded(event: Event) {
+                const img = event.target as HTMLImageElement
+                this.$emit('imageLoaded', img.offsetHeight)
             },
 
             /**
@@ -955,6 +979,7 @@
                         }
                     }
                 }
+                if(this.pageViewInfo) this.pageViewInfo.data.loaded = true
             },
 
             audioControll() {
@@ -1031,6 +1056,41 @@
                         }
                     }
                 }
+            },
+            openMerge(){
+                const data: MergeStackData = {
+                    messageList: [],
+                    imageList: [],
+                    placeCache: 0,
+                    ready: false,
+                    forwardMsg: this.data
+                }
+                const seg = this.data.message[0]
+                if (seg.content !== undefined){
+                    data.ready = true
+                    data.messageList = seg.content
+                    // 提取合并转发中的消息图片列表
+                    const imgList = [] as {
+                        index: number
+                        message_id: string
+                        img_url: string
+                    }[]
+                    let index = 0
+                    data.messageList.forEach((item) => {
+                        item.message.forEach((msg) => {
+                            if (msg.type == 'image') {
+                                imgList.push({
+                                    index: index,
+                                    message_id: item.message_id,
+                                    img_url: msg.url,
+                                })
+                                index++
+                            }
+                        })
+                    })
+                    data.imageList = imgList
+                }
+                runtimeData.mergeMsgStack.push(data)
             }
         },
     })
@@ -1135,6 +1195,7 @@
     .link-view-music163 > div:first-child > img {
         border-radius: 7px;
         margin-right: 20px;
+        max-height: 80px;
         width: 25%;
     }
     .link-view-music163 > div:first-child > div {
@@ -1161,6 +1222,7 @@
         display: flex;
     }
     .link-view-music163 > div:first-child > div > div > input {
+        appearance: none;
         -webkit-appearance: none;
         width: calc(100% - 20px);
         background: transparent;

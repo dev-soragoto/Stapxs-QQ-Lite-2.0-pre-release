@@ -41,7 +41,7 @@ import {
     loadJsonMap,
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
-import { reactive, markRaw, defineAsyncComponent } from 'vue'
+import { reactive, markRaw, defineAsyncComponent, nextTick } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import {
@@ -74,49 +74,38 @@ const logger = new Logger()
 let firstHeartbeatTime = -1
 let heartbeatTime = -1
 
-/**
- * 处理分发消息
- * @param str 原始消息
- */
-export function parse(str: string) {
-    let name = 'unknown'
-    let msg = undefined as { [key: string]: any } | undefined
+export function dispatch(raw: string | { [k: string]: any }, echo?: string) {
+    let msg: any;
 
-    try {
-        msg = JSON.parse(str)
-        if ((str as string).indexOf('"meta_event_type":"heartbeat"') < 0) {
-            logger.add(LogType.WS, 'GET：', msg)
+    // 1) 如有需要先 parse
+    if (typeof raw === 'string') {
+        try {
+            msg = JSON.parse(raw);
+        } catch {
+            if (!raw.includes('"meta_event_type":"heartbeat"')) {
+                logger.add(LogType.WS, 'GET：' + raw);
+            }
+            return;
         }
-    } catch (e) {
-        if ((str as string).indexOf('"meta_event_type":"heartbeat"') < 0) {
-            logger.add(LogType.WS, 'GET：' + str)
-        }
+    } else {
+        msg = raw;
     }
 
+    // 2) 決定 name/key
+    const name = echo ? echo.split('_')[0] : msg.post_type === 'notice' ? msg.sub_type ?? msg.notice_type : msg.post_type;
+
+    // 3) 安全調用 handler
     try {
-        if (msg) {
-            if (msg.echo !== undefined) {
-                const echoList = msg.echo.split('_')
-                const head = echoList[0]
-                name = head
-                msgFunctons[head](head, msg, echoList)
-            } else {
-                let type = msg.post_type
-                if (type == 'notice') {
-                    // 通知类型，如果没有 sub_type 则使用 notice_type
-                    type = msg.sub_type ?? msg.notice_type
-                }
-                name = type
-                noticeFunctions[type](type, msg)
-            }
-        }
+        const fn = handlers[name];
+        if (!fn) throw new Error(`No handler for "${name}"`);
+        const metaArgs = echo ? echo.split('_') : undefined;
+        fn(msg, metaArgs);
     } catch (e) {
-        logger.error(e as Error, `处理消息或通知错误 - ${name}：\n${str}`)
+        logger.error(e as Error, `跳转事件处理错误 - ${name}:\n${JSON.stringify(msg)}`);
     }
 }
 
 // ==============================================================
-
 const noticeFunctions = {
     /**
      * 心跳包
@@ -342,7 +331,7 @@ const noticeFunctions = {
     },
 } as { [key: string]: (name: string, msg: { [key: string]: any }) => void }
 
-const msgFunctons = {
+const msgFunctions = {
     /**
      * 修改群成员信息回调
      */
@@ -515,7 +504,15 @@ const msgFunctons = {
     getGroupMemberList: (_: string, msg: { [key: string]: any }) => {
         const data = msg.data as GroupMemberInfoElem[]
         data.forEach((item: any) => {
-            const name = item.card ? item.card : item.nickname
+            let name: string
+            if (item.card != undefined && item.card != '') {
+                name = item.card
+            }else if (item.nickname != undefined && item.nickname != '') {
+                name = item.nickname
+            }else{
+                name = item.user_id.toString()
+            }
+
             // 获取拼音首字母
             const first = name.substring(0, 1)
             item.py_start = pinyin
@@ -558,7 +555,20 @@ const msgFunctons = {
         saveMsg(msg, 'top')
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
-        saveMsg(msg, 'top')
+        const pan = document.getElementById('msgPan')
+        if(pan) {
+            const oldScrollHeight = pan.scrollHeight
+            saveMsg(msg, 'top')
+            nextTick(() => {
+                setTimeout(() => {
+                    logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                    pan.style.scrollBehavior = 'unset'
+                    // 纠正滚动位置
+                    pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                    pan.style.scrollBehavior = 'smooth'
+                }, 200);
+            })
+        }
     },
 
     getChatHistoryOnMsg: (
@@ -568,23 +578,27 @@ const msgFunctons = {
     ) => {
         const id = Number(echoList[1])
         if (id) {
-            // 对消息进行一次格式化处理
-            let list = getMsgData('message_list', msg, msgPath.message_list)
-            if (list != undefined) {
-                list = parseMsgList(
-                    list,
-                    msgPath.message_list.type,
-                    msgPath.message_value,
-                )
-                const raw = getMsgRawTxt(list[0])
-                const time = list[0].time
-                // 更新消息列表
-                const onmsg = runtimeData.baseOnMsgList.get(Number(id))
-                if(onmsg) {
-                    onmsg.raw_msg = raw
-                    onmsg.time = getViewTime(Number(time))
-                    runtimeData.baseOnMsgList.set(id, onmsg)
+                try {
+                // 对消息进行一次格式化处理
+                let list = getMsgData('message_list', msg, msgPath.message_list)
+                if (list != undefined) {
+                    list = parseMsgList(
+                        list,
+                        msgPath.message_list.type,
+                        msgPath.message_value,
+                    )
+                    const raw = getMsgRawTxt(list[0])
+                    const {time} = list[0]
+                    // 更新消息列表
+                    const onmsg = runtimeData.baseOnMsgList.get(Number(id))
+                    if(onmsg) {
+                        onmsg.raw_msg = raw
+                        onmsg.time = getViewTime(Number(time))
+                        runtimeData.baseOnMsgList.set(id, onmsg)
+                    }
                 }
+            } catch (e) {
+                // do nothing
             }
         }
     },
@@ -677,7 +691,7 @@ const msgFunctons = {
         echoList: string[],
     ) => {
         runtimeData.popBoxList.shift()
-        msgFunctons['sendMsgBack'](_, msg, echoList)
+        msgFunctions['sendMsgBack'](_, msg, echoList)
     },
 
     /**
@@ -1173,6 +1187,17 @@ const msgFunctons = {
     ) => void
 }
 
+const handlers: Record<string, (payload: any, metaArgs?: string[]) => void> = {
+  ...(Object.entries(msgFunctions).reduce((acc, [key, fn]) => ({
+    ...acc,
+    [key]: (payload: any, metaArgs?: string[]) => fn(key, payload, metaArgs)
+  }), {})),
+  ...(Object.entries(noticeFunctions).reduce((acc, [key, fn]) => ({
+    ...acc,
+    [key]: (payload: any) => fn(key, payload)
+  }), {}))
+};
+
 // ==========================================
 
 function saveUser(msg: { [key: string]: any }, type: string) {
@@ -1424,7 +1449,7 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
     }
 }
 
-function getMessageList(list: any[] | undefined) {
+export function getMessageList(list: any[] | undefined) {
     if (list != undefined) {
         list = parseMsgList(
             list,
@@ -1866,6 +1891,7 @@ const baseRuntime = {
     sysConfig: {},
     messageList: [],
     popBoxList: [],
+    mergeMsgStack: [],
 }
 
 export const runtimeData: RunTimeDataElem = reactive(baseRuntime)

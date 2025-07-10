@@ -351,8 +351,8 @@ export default defineComponent({
             Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.run('theme_color', Option.get('theme_color'))
             Option.run(
-                'opt_auto_win_color',
-                Option.get('opt_auto_win_color'),
+                'merge_forward_width_type',
+                Option.get('merge_forward_width_type'),
             )
             if (['linux', 'win32'].includes(runtimeData.tags.platform ?? '')) {
                 const app = document.getElementById('base-app')
@@ -399,6 +399,7 @@ export default defineComponent({
             }
             // 服务发现
             callBackend('Onebot', 'sys:findService', false)
+            callBackend('OneBot', 'sys:frontLoaded', false)
             // =============================================================
             // 初始化完成
             // 创建 popstate

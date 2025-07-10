@@ -1190,3 +1190,30 @@ msgstr ""
 
 msgid "连接已断开"
 msgstr ""
+
+msgid "聊天记录"
+msgstr ""
+
+msgid "消息"
+msgstr ""
+
+msgid "卡片消息"
+msgstr ""
+
+msgid "加载ing"
+msgstr ""
+
+msgid "固定合并转发宽度"
+msgstr ""
+
+msgid "强迫症的福音～"
+msgstr ""
+
+msgid "禁止解析[已删除]"
+msgstr ""
+
+msgid "ob会把撤回的消息显示为你自己发的[已删除]"
+msgstr ""
+
+msgid "这条消息迷失在虚空里了"
+msgstr ""

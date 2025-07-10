@@ -15,6 +15,13 @@
             "csp": null
         }
     },
+    "plugins": {
+        "deep-link": {
+            "desktop": {
+                "schemes": ["stapxs-qq-lite"]
+            }
+        }
+    },
     "bundle": {
         "active": true,
         "copyright": "Copyright © 2022-2025 Stapx Steve [林槐]",
@@ -22,7 +29,7 @@
         "longDescription": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
         "shortDescription": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
         "publisher": "stapxs",
-        "license": "Apache-2.0",
+        "license": "AGPL-3.0-only",
         "targets": "all",
         "useLocalToolsDir": true,
         "icon": [
@@ -31,6 +38,7 @@
             "../../build/icon-client-others.ico"
         ],
         "macOS": {
+            "signingIdentity": "NL8AW5AD94",
             "dmg": {
                 "appPosition": {
                     "x": 112,

@@ -1,14 +1,32 @@
-use std::{collections::HashMap, ffi::CStr, fs::File, process::Command, time::Duration, io::{self, Write}};
-use crate::PROXY_PORT;
+use std::{collections::HashMap, ffi::CStr, fs::File, io::{self, Write}, path::PathBuf, process::Command, str::FromStr, sync::Arc, time::Duration};
+use crate::{PROXY_PORT};
 
 use log::{debug, error, info};
 use reqwest::Client;
 use rfd::MessageLevel;
 use serde_json::Value;
-use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter};
-use tauri_plugin_notification::NotificationExt;
+use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter, Manager, State};
 use tauri_plugin_opener::OpenerExt;
 use futures_util::StreamExt;
+use user_notify::NotificationManager;
+
+#[command]
+pub async fn sys_front_loaded(
+    app: AppHandle,
+    notifications: State<'_, Arc<dyn NotificationManager>>) -> Result<String, String> {
+    match notifications.first_time_ask_for_notification_permission().await {
+        Err(err) => {
+            log::error!("请求通知权限失败: {}", err);
+        }
+        Ok(false) => {
+            log::info!("通知权限被拒绝");
+        }
+        Ok(true) => {
+            log::info!("通知权限已授予");
+        }
+    }
+    return Ok("".to_string());
+}
 
 #[command]
 pub fn sys_get_platform() -> String {
@@ -176,29 +194,149 @@ pub async fn sys_download(app_handle: AppHandle, downloadPath: String, fileName:
 }
 
 #[command]
-pub fn sys_send_notice(app: AppHandle, data: HashMap<String, Value>) {
-    app.notification().builder()
-        .title(data.get("title").unwrap().as_str().unwrap())
-        .body(data.get("body").unwrap().as_str().unwrap())
-        .icon("../../build/icon-client-others.png")
-        .show()
-        .unwrap();
+pub async fn sys_send_notice(
+    app: AppHandle,
+    manager: State<'_, Arc<dyn NotificationManager>>,
+    data: HashMap<String, Value>
+) -> Result<(), String> {
+    debug!("发送通知: {:?}", data.get("body"));
+    let mut notification = user_notify::NotificationBuilder::new();
+    let base_type = data.get("base_type").unwrap().as_str().unwrap();
+
+    if base_type == "msg" {
+        notification = notification
+            .title(data.get("title").unwrap().as_str().unwrap())
+            .body(data.get("body").unwrap().as_str().unwrap())
+            .set_thread_id(data.get("tag").unwrap().as_str().unwrap())
+            .set_xdg_category(user_notify::XdgNotificationCategory::ImReceived)
+            .set_category_id("cn.stapxs.qqweb.reply");
+        // 设置 payload
+        let mut user_info = HashMap::new();
+        user_info.insert(
+            "NotificationPayload".to_owned(),
+            data.get("tag").unwrap().as_str().unwrap().to_owned() +
+                "/" + data.get("type").unwrap().as_str().unwrap()
+        );
+        notification = notification.set_user_info(user_info);
+        // 获取图片，优先 image，没有为 icon；都是 url
+        let image = data.get("image").and_then(|v| v.as_str()).unwrap_or("");
+        let icon = data.get("icon").and_then(|v| v.as_str()).unwrap_or("");
+        let final_image = if !image.is_empty() {
+            image
+            // windows 不显示头像
+        } else if !icon.is_empty() && cfg!(not(target_os = "windows")) {
+            icon
+        } else {
+            ""
+        };
+        if !final_image.is_empty() {
+            if final_image.starts_with("http://") || final_image.starts_with("https://") {
+                // 下载图片缓存
+                let client = Client::new();
+                let response = client.get(final_image).send().await.map_err(|e| format!("请求失败: {}", e))?;
+                if response.status().is_success() {
+                    let bytes = response.bytes().await.map_err(|e| format!("读取响应失败: {}", e))?;
+                    let temp_file_path = app.path().app_cache_dir().unwrap().join("notification_image.png");
+                    let mut file = File::create(&temp_file_path).map_err(|e| format!("创建临时文件失败: {}", e))?;
+                    file.write_all(&bytes).map_err(|e| format!("写入临时文件失败: {}", e))?;
+                    notification = notification.set_image(temp_file_path);
+                } else {
+                    return Err(format!("下载图片失败: {}", response.status()));
+                }
+            }
+        }
+    } else {
+        notification = notification
+            .title(data.get("title").unwrap().as_str().unwrap())
+            .body(data.get("body").unwrap().as_str().unwrap())
+            .set_thread_id(data.get("tag").unwrap().as_str().unwrap())
+            .set_xdg_category(user_notify::XdgNotificationCategory::ImReceived);
+    }
+
+    manager.send_notification(notification).await.map_err(|e| {
+        error!("发送通知失败: {:?}", e);
+        e.to_string()
+    })?;
+
+    Ok(())
 }
 
-// #[command]
-// pub fn sys_close_notice() -> String {
-//     return "".to_string();
-// }
+#[command]
+pub async fn sys_close_notice(
+    manager: State<'_, Arc<dyn NotificationManager>>,
+    data: String
+) -> Result<String, String> {
+    debug!("关闭通知: {}", data);
+    let notifications = manager.get_active_notifications().await.map_err(|e| {
+        error!("获取通知列表失败: {:?}", e);
+        e.to_string()
+    })?;
+    let notifications_to_clear: Vec<_> = notifications
+        .iter()
+        .filter(|notification| {
+            let user_info = notification.get_user_info();
+            if let Some(payload) = user_info.get("NotificationPayload") {
+                let payload_str = payload.to_string();
+                return payload_str.starts_with(&data);
+            }
+            false
+        })
+        .map(|notification| notification.get_id().to_string())
+        .collect();
 
-// #[command]
-// pub fn sys_clear_notice() -> String {
-//     return "".to_string();
-// }
+    manager.remove_delivered_notifications(
+        notifications_to_clear
+            .iter()
+            .map(|id| id.as_str())
+            .collect(),
+    ).map_err(|e| e.to_string())?;
 
-// #[command]
-// pub fn sys_close_all_notice() -> String {
-//     return "".to_string();
-// }
+    return Ok("success".to_string());
+}
+
+#[command]
+pub fn sys_clear_notice(manager: State<'_, Arc<dyn NotificationManager>>) -> String {
+    debug!("关闭所有通知");
+    if let Err(err) = manager.remove_all_delivered_notifications() {
+        error!("清除所有通知失败: {}", err);
+        return err.to_string();
+    } else {
+        return "success".to_string();
+    }
+}
+
+#[command]
+pub async fn sys_close_all_notice(
+    manager: State<'_, Arc<dyn NotificationManager>>,
+    data: String
+) -> Result<String, String> {
+    debug!("关闭 {} 的所有通知", data);
+    let notifications = manager.get_active_notifications().await.map_err(|e| {
+        error!("获取通知列表失败: {:?}", e);
+        e.to_string()
+    })?;
+    let notifications_to_clear: Vec<_> = notifications
+        .iter()
+        .filter(|notification| {
+            let user_info = notification.get_user_info();
+            if let Some(payload) = user_info.get("NotificationPayload") {
+                let payload_str = payload.to_string();
+                return payload_str.starts_with(&data);
+            }
+            false
+        })
+        .map(|notification| notification.get_id().to_string())
+        .collect();
+
+    manager.remove_delivered_notifications(
+        notifications_to_clear
+            .iter()
+            .map(|id| id.as_str())
+            .collect(),
+    ).map_err(|e| e.to_string())?;
+
+    return Ok("success".to_string());
+}
 
 #[command]
 pub fn sys_run_command(data: String) -> HashMap<String, Value> {
@@ -219,10 +357,10 @@ pub fn sys_run_command(data: String) -> HashMap<String, Value> {
     return ret;
 }
 
-#[command]
-pub fn sys_get_gnome_ext() -> String {
-    return "".to_string();
-}
+// #[command]
+// pub fn sys_get_gnome_ext() -> String {
+//     return "".to_string();
+// }
 
 #[command]
 pub fn sys_open_in_browser(app_handle: tauri::AppHandle, data: String) {
@@ -389,7 +527,7 @@ pub fn sys_get_win_color() -> Option<String> {
             let accent_color: *mut AnyObject = msg_send![ns_color_class, controlAccentColor];
             if accent_color.is_null() {
                 error!("获取强调色失败 ……");
-                return Some("00000000".to_string());
+                return Some("636e79".to_string());
             } else {
                 debug!("accent color: {:?}", accent_color);
             }
@@ -399,7 +537,7 @@ pub fn sys_get_win_color() -> Option<String> {
             let rgb_color: *mut AnyObject = msg_send![accent_color, colorUsingColorSpace: device_rgb];
             if rgb_color.is_null() {
                 error!("转换强调色色彩空间失败 ……");
-                return Some("00000000".to_string());
+                return Some("636e79".to_string());
             } else {
                 debug!("rgb color: {:?}", rgb_color);
             }
@@ -432,11 +570,11 @@ pub fn sys_get_win_color() -> Option<String> {
                 return Some(color)
             } else {
                 info!("获取强调色失败 ……");
-                return Some("00000000".to_string())
+                return Some("636e79".to_string());
             }
         }
     }
-    return Some("00000000".to_string())
+    return Some("636e79".to_string());
 }
 
 // macOS：Touch Bar 支持

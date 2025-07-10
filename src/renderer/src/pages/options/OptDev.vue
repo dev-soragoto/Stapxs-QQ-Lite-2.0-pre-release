@@ -22,7 +22,7 @@
                         $t('[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测')
                     }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.msgType"
+                <select v-model="runtimeData.sysConfig.msg_type"
                     name="msg_type"
                     title="msg_type"
                     @change="save">
@@ -216,7 +216,7 @@
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { runtimeData, parse } from '@renderer/function/msg'
+    import { runtimeData, dispatch } from '@renderer/function/msg'
     import { BrowserInfo, detect } from 'detect-browser'
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
@@ -253,14 +253,14 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     this.ws_text = ''
                     // 修改 echo 防止被消息处理机处理
                     info.echo = 'websocketTest'
-                    Connector.sendRaw(JSON.stringify(info))
+                    Connector.sendRawJson(JSON.stringify(info))
                 }
             },
             sendTestParse(event: KeyboardEvent) {
                 // 发送测试解析消息
                 if (event.keyCode === 13 && this.parse_text !== '') {
                     const info = JSON.parse(this.parse_text)
-                    parse(info)
+                    dispatch(info)
                     this.parse_text = ''
                 }
             },
@@ -552,8 +552,6 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                         return this.$t('CQ 码')
                     case BotMsgType.Array:
                         return this.$t('Array 数组')
-                    case BotMsgType.Auto:
-                        return this.$t('自动检测')
                 }
             },
             getPathMapList() {

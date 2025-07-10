@@ -1,11 +1,14 @@
 mod commands;
 
+use std::collections::HashMap;
+
 use commands::utils::http_proxy::ProxyServer;
 use log::{info, error};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
 use once_cell::sync::OnceCell;
-use tauri::{ menu::{Menu, MenuEvent, MenuItem}, tray::{TrayIcon, TrayIconBuilder, TrayIconEvent}, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, Emitter };
+use tauri::{ async_runtime::handle, menu::{Menu, MenuEvent, MenuItem}, tray::{TrayIcon, TrayIconBuilder, TrayIconEvent}, AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder };
 use tauri_plugin_store::StoreBuilder;
+use user_notify::{get_notification_manager, NotificationCategory, NotificationCategoryAction};
 
 pub static PROXY_PORT: OnceCell<u16> = OnceCell::new();
 
@@ -13,12 +16,15 @@ pub static PROXY_PORT: OnceCell<u16> = OnceCell::new();
 /// Tauri 应用程序入口
 pub fn run() {
     let rt = tokio::runtime::Runtime::new().unwrap();
+
+    // 初始化本地代理服务器 ============
     let proxy = rt.block_on(async {
         let proxy = ProxyServer::new().await;
         proxy
     });
     PROXY_PORT.set(proxy.port).unwrap();
 
+    // 初始化 Tauri 应用程序 ============
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -62,6 +68,86 @@ pub fn run() {
                 info!("代理服务器已启动，端口：{}", PROXY_PORT.get().unwrap());
             }
 
+            // 初始化全局通知管理器 ============
+            let app_id = app.config().identifier.clone();
+            let manager =
+                get_notification_manager(app_id, Some("stapxs-qq-lite".to_owned()));
+            let categories = vec![NotificationCategory {
+                identifier: "cn.stapxs.qqweb.reply".to_string(),
+                actions: vec![NotificationCategoryAction::TextInputAction {
+                    identifier: "cn.stapxs.qqweb.reply.action".to_string(),
+                    title: "回复".to_string(),
+                    input_button_title: "发送".to_string(),
+                    input_placeholder: "输入以快速回复".to_string(),
+                }],
+            }];
+            let rt = handle();
+
+            let app_handle = app.handle().clone();
+            manager.register(
+                    Box::new(move |response| {
+                        let app_handle_clone = app_handle.clone();
+                        rt.spawn(async move {
+                            info!("response {:?}", response);
+                            let action = response.action;
+                            let user_info = response.user_info.get("NotificationPayload")
+                                .and_then(|v| Some(v.as_str()))
+                                .unwrap_or("");
+                            let user_text = response.user_text.unwrap_or_default();
+                            let parts: Vec<&str> = user_info.split('/').collect();
+                            match action {
+                                user_notify::NotificationResponseAction::Default => {
+                                    if parts.len() >= 2 {
+                                        let user_id = parts[0];
+                                        let message_id = parts[1];
+                                        // 提交前端
+                                        let mut payload = HashMap::new();
+                                        payload.insert("userId", user_id.to_string());
+                                        payload.insert("msgId", message_id.to_string());
+                                        app_handle_clone.emit("app:jumpChat", payload).unwrap();
+                                    }
+                                }
+                                user_notify::NotificationResponseAction::Dismiss => {
+                                    // do nothing
+                                }
+                                user_notify::NotificationResponseAction::Other(action_id) => {
+                                    // action_id 前面可能会有个斜杠，去除
+                                    let action_id = action_id.trim_start_matches('/');
+                                    if parts.len() >= 3 && !user_text.is_empty()
+                                            && action_id == "cn.stapxs.qqweb.reply.action" {
+                                        let user_id = parts[0];
+                                        let message_id = parts[1];
+                                        let chat_type = parts[2];
+                                        // 提交前端
+                                        let mut payload = HashMap::new();
+                                        payload.insert("id", user_id.to_string());
+                                        payload.insert("msg", message_id.to_string());
+                                        payload.insert("type", chat_type.to_string());
+                                        payload.insert("content", user_text);
+                                        app_handle_clone.emit("bot:quickReply", payload).unwrap();
+                                    }
+                                }
+                            }
+                        });
+                    }),
+                    categories,
+                )
+                .unwrap();
+            #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+            {
+                // remove all notifications that are still there from previous sessions,
+                // as they probably don't work anymore and are just stuck
+                //
+                // https://github.com/deltachat/deltachat-desktop/issues/2438#issuecomment-1090735045
+                if let Err(err) = manager.remove_all_delivered_notifications() {
+                    log::error!("remove_all_delivered_notifications: {err:?}");
+                }
+            }
+            app.manage(manager);
+
+            info!("初始化通知管理器完成");
+
+            // 创建主窗体 ============
             info!("欢迎使用 Stapxs QQ Lite, 当前版本: {}", env!("CARGO_PKG_VERSION"));
             info!("启动平台架构：{}", std::env::consts::OS);
             info!("正在创建窗体 ……");
@@ -85,6 +171,7 @@ pub fn run() {
             // 创建托盘
             #[cfg(not(target_os = "macos"))]
             build_tray(app.handle().clone());
+
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -98,12 +185,16 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
+            commands::sys::sys_front_loaded,
             commands::sys::sys_get_platform,
             commands::sys::sys_get_release,
             commands::sys::sys_create_menu,
             commands::sys::sys_update_menu,
             commands::sys::sys_run_proxy,
             commands::sys::sys_send_notice,
+            commands::sys::sys_close_notice,
+            commands::sys::sys_close_all_notice,
+            commands::sys::sys_clear_notice,
             commands::sys::sys_open_in_browser,
             commands::sys::sys_run_command,
             commands::sys::sys_get_win_color,
@@ -144,9 +235,14 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .hidden_title(true)
         .background_color(tauri::window::Color(0, 0, 0, 1))
+        .accept_first_mouse(true)
         .effects(tauri::window::EffectsBuilder::new()
             .effects(vec![tauri::window::Effect::Sidebar])
             .build());
+    #[cfg(target_os = "linux")]
+    let win_builder = win_builder
+        .decorations(false)
+        .disable_drag_drop_handler();
     let window = win_builder.build()?;
     #[cfg(target_os = "windows")] {
         let _ = window.set_decorations(false);

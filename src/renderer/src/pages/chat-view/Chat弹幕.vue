@@ -342,7 +342,7 @@
     export default defineComponent({
         name: 'ChatDan',
         components: { vueDanmaku },
-        props: ['chat', 'list', 'mergeList', 'mumberInfo'],
+        props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
                 opt: {

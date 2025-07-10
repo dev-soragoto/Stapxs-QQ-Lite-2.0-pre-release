@@ -80,8 +80,13 @@
                         v-if="isShowTime(list[index - 1] ? list[index - 1].time : undefined, msgIndex.time)"
                         :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
+                    <!-- [已删除]消息 -->
+                    <NoticeBody
+                        v-if="isDeleteMsg(msgIndex)"
+                        :key="'delete-' + msgIndex.message_id"
+                        :data="{ sub_type: 'delete' }" />
                     <!-- 消息体 -->
-                    <MsgBody v-if="(msgIndex.post_type === 'message' ||
+                    <MsgBody v-else-if="(msgIndex.post_type === 'message' ||
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
@@ -89,14 +94,14 @@
                         :data="msgIndex"
                         @click="msgClick($event, msgIndex)"
                         @scroll-to-msg="scrollToMsg"
-                        @scroll-buttom="imgLoadedScroll"
+                        @image-loaded="imgLoadedScroll"
                         @contextmenu.prevent="showMsgMeun($event, msgIndex)"
                         @touchstart="msgStartMove($event, msgIndex)"
                         @touchmove="msgOnMove"
                         @touchend="msgMoveEnd($event, msgIndex)"
                         @send-poke="sendPoke" />
                     <!-- 其他通知消息 -->
-                    <NoticeBody v-if="msgIndex.post_type === 'notice'"
+                    <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
                         :id="uuid()"
                         :key="'notice-' + index"
                         :data="msgIndex" />
@@ -123,7 +128,7 @@
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
                         :data="msgIndex"
                         @scroll-to-msg="scrollToMsg"
-                        @scroll-buttom="imgLoadedScroll"
+                        @image-loaded="imgLoadedScroll"
                         @contextmenu.prevent="showMsgMeun($event, msgIndex)"
                         @touchstart="msgStartMove($event, msgIndex)"
                         @touchmove="msgOnMove"
@@ -354,31 +359,7 @@
             <div />
         </div>
         <!-- 合并转发消息预览器 -->
-        <div :class="mergeList != undefined ? 'merge-pan show' : 'merge-pan'">
-            <div @click="closeMergeMsg" />
-            <div class="ss-card">
-                <div>
-                    <font-awesome-icon style="margin-top: 5px" :icon="['fas', 'message']" />
-                    <span>{{ $t('合并消息') }}</span>
-                    <font-awesome-icon :icon="['fas', 'xmark']" @click="closeMergeMsg" />
-                </div>
-                <div :class=" 'loading' + (mergeList && mergeList.length == 0 ? ' show' : '')">
-                    <font-awesome-icon :icon="['fas', 'spinner']" />
-                    <span>{{ $t('加载中') }}</span>
-                </div>
-                <div>
-                    <template v-for="(msgIndex, index) in mergeList" :key="'merge-' + index">
-                        <NoticeBody v-if=" isShowTime( mergeList[index - 1] ?
-                                        mergeList[index - 1].time : undefined, msgIndex.time, index == 0)"
-                            :id="uuid()"
-                            :key="'notice-time-' + index"
-                            :data="{ sub_type: 'time', time: msgIndex.time }" />
-                        <!-- 合并转发消息忽略是不是自己的判定 -->
-                        <MsgBody :data="msgIndex" :type="'merge'" />
-                    </template>
-                </div>
-            </div>
-        </div>
+        <MergePan ref="mergePan" />
         <!-- At 信息悬浮窗 -->
         <div class="mumber-info">
             <div v-if="Object.keys(mumberInfo).length > 0 && mumberInfo.error === undefined"
@@ -567,6 +548,7 @@
     import MsgBody from '@renderer/components/MsgBody.vue'
     import NoticeBody from '@renderer/components/NoticeBody.vue'
     import FacePan from '@renderer/components/FacePan.vue'
+    import MergePan from '@renderer/components/MergePan.vue'
     import imageCompression from 'browser-image-compression'
 
     import { defineComponent, markRaw, reactive } from 'vue'
@@ -586,6 +568,8 @@
         sendMsgRaw,
         getFace,
         getShowName,
+        isShowTime,
+        isDeleteMsg,
     } from '@renderer/function/utils/msgUtil'
     import { scrollToMsg } from '@renderer/function/utils/appUtil'
     import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -600,10 +584,11 @@
         UserGroupElem,
     } from '@renderer/function/elements/information'
 
+
     export default defineComponent({
         name: 'ViewChat',
-        components: { Info, MsgBody, NoticeBody, FacePan },
-        props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
+        components: { Info, MsgBody, NoticeBody, FacePan, MergePan },
+        props: ['chat', 'list', 'mumberInfo', 'imgView'],
         data() {
             return {
                 uuid,
@@ -695,6 +680,8 @@
                     281, 282, 284, 285, 287, 289, 290, 293, 294, 297, 298, 299,
                     305, 306, 307, 314, 315, 318, 319, 320, 322, 324, 326,
                 ],
+                isShowTime,
+                isDeleteMsg,
             }
         },
         watch: {
@@ -754,22 +741,6 @@
                     this.scrollToMsg(this.tags.openedMenuMsg?.id)
                     this.closeMsgMenu()
                 }, 100)
-            },
-
-            /**
-             * 判断是否需要显示时间戳（上下超过五分钟的消息）
-             * @param timePrv 上条消息的时间戳（10 位）
-             * @param timeNow 当前消息的时间戳（10 位）
-             */
-            isShowTime(
-                timePrv: number | undefined,
-                timeNow: number,
-                alwaysShow = false,
-            ) {
-                if (alwaysShow) return true
-                if (timePrv == undefined) return false
-                // 五分钟 10 位时间戳相差 300
-                return timeNow - timePrv >= 300
             },
 
             /**
@@ -877,10 +848,15 @@
                     new PopInfo().add(PopType.INFO, this.$t('无法定位上下文'))
                 }
             },
-            imgLoadedScroll() {
+            imgLoadedScroll(height: number) {
                 const pan = document.getElementById('msgPan')
-                if (pan && !this.tags.showBottomButton) {
-                    this.scrollBottom()
+                if(pan) {
+                    if(this.list.length <= 20 && !this.tags.showBottomButton) {
+                        this.scrollBottom()
+                    } else {
+                        // 纠正滚动位置
+                        this.scrollTo(pan.scrollTop + height, false)
+                    }
                 }
             },
 
@@ -1338,13 +1314,8 @@
                 const id = data.group_id ? data.group_id : data.user_id
                 if (this.multipleSelectList.length > 0 && msg) {
                     // 构造一条假的 json 消息用来渲染
-                    const msgList = this.multipleSelectList.map((item) => {
-                        const msg = runtimeData.messageList.find((msg) => {
-                            return msg.message_id == item
-                        })
-                        if (msg) {
-                            return msg
-                        }
+                    const msgList = runtimeData.messageList.filter((item) => {
+                        return this.multipleSelectList.indexOf(item.message_id) >= 0
                     })
                     // 构造 titleList
                     const jsonMsg = {
@@ -1370,18 +1341,20 @@
                             },
                         },
                     }
-                    msg.message = [
-                        { type: 'json', data: JSON.stringify(jsonMsg), id: '' },
-                    ]
-                    msg.sender = {
-                        user_id: runtimeData.loginInfo.uin,
-                        nickname: runtimeData.loginInfo.nickname,
+                    const previewMsg = {
+                        message: [
+                            { type: 'json', data: JSON.stringify(jsonMsg), id: '' },
+                        ],
+                        sender: {
+                            user_id: runtimeData.loginInfo.uin,
+                            nickname: runtimeData.loginInfo.nickname,
+                        }
                     }
                     // 二次确认转发
                     const popInfo = {
                         title: this.$t('合并转发消息'),
                         template: MsgBody,
-                        templateValue: markRaw({ data: msg, type: 'forward' }),
+                        templateValue: markRaw({ data: previewMsg, type: 'forward' }),
                         button: [
                             {
                                 text: this.$t('取消'),
@@ -1398,6 +1371,9 @@
                                         return {
                                             type: 'node',
                                             id: item.message_id,
+                                            user_id: item.sender.user_id,
+                                            nickname: item.sender.nickname,
+                                            content: item.message,
                                         }
                                     })
                                     sendMsgRaw(
@@ -1615,14 +1591,6 @@
                     // 重置菜单显示状态
                     this.initMenuDisplay()
                 }, 300)
-            },
-
-            /**
-             * 关闭合并转发弹窗
-             */
-            closeMergeMsg() {
-                this.runtimeData.mergeMessageList = undefined
-                this.runtimeData.mergeMessageImgList = undefined
             },
 
             /**
@@ -2438,6 +2406,7 @@
                         && moveY < heightAllow
                         && x - this.tags.chatTouch.startX > 0
                     if(allowMove) {
+                        const isMergeShow = (this.$refs.mergePan as InstanceType<typeof MergePan>).isMergeOpen()
                         if(this.tags.openChatInfo) {
                             // 聊天信息面板返回
                             const infoPan = chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
@@ -2448,7 +2417,7 @@
                                 this.tags.chatTouch.openSuccess =
                                     moveX > width / 3
                             }
-                        } else if(this.mergeList != undefined) {
+                        } else if(isMergeShow) {
                             // 合并转发面板返回
                             const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                             if(mergePan) {
@@ -2478,6 +2447,7 @@
                 this.tags.chatTouch.startY = -1
                 const chatPan = document.getElementById('chat-pan')
                 if(chatPan) {
+                    const isMergeShow = (this.$refs.mergePan as InstanceType<typeof MergePan>).isMergeOpen()
                     if(!this.tags.chatTouch.openSuccess) {
                         if(this.tags.openChatInfo) {
                             const infoPan = chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
@@ -2485,7 +2455,7 @@
                                 infoPan.style.transition = 'transform 0.3s'
                                 infoPan.style.transform = ''
                             }
-                        } else if(this.mergeList != undefined) {
+                        } else if(isMergeShow) {
                             const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                             if(mergePan) {
                                 mergePan.style.transform = ''
@@ -2496,15 +2466,15 @@
                     } else {
                         if(this.tags.openChatInfo) {
                             this.openChatInfoPan()
-                        } else if(this.mergeList != undefined) {
-                            this.closeMergeMsg()
+                        } else if(isMergeShow) {
+                            (this.$refs.mergePan as InstanceType<typeof MergePan>).closeMergeMsg()
                             setTimeout(() => {
                                 const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
                                 if(mergePan) {
                                     mergePan.style.transform = ''
                                 }
                             }, 500)
-                         } else {
+                        } else {
                             runtimeData.chatInfo.show.id = 0
                             runtimeData.tags.openSideBar = true
                             new Logger().add(LogType.UI, '右滑打开侧边栏触发完成')

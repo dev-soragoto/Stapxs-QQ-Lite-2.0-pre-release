@@ -192,7 +192,7 @@
 
     export default defineComponent({
         name: 'ChatShell',
-        props: ['chat', 'list', 'mergeList', 'mumberInfo'],
+        props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
                 tags: {

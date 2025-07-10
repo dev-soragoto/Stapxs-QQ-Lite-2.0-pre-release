@@ -3,7 +3,7 @@ import app from '@renderer/main'
 import anime from 'animejs'
 import option from '@renderer/function/option'
 
-import { Logger } from '@renderer/function/base'
+import { Logger, PopInfo, PopType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { v4 as uuid } from 'uuid'
 import { Connector } from '@renderer/function/connect'
@@ -13,6 +13,7 @@ import {
     UserGroupElem,
 } from '../elements/information'
 import { sendStatEvent } from './appUtil'
+import { callBackend } from './systemUtil'
 
 const logger = new Logger()
 
@@ -160,12 +161,10 @@ export function parseMsgList(
     valueMap: { [key: string]: any },
 ): any[] {
     // 判断消息类型
-    if (runtimeData.tags.msgType == BotMsgType.Auto) {
-        if (typeof list[0].message == 'string') {
-            runtimeData.tags.msgType = BotMsgType.CQCode
-        } else {
-            runtimeData.tags.msgType = BotMsgType.Array
-        }
+    if (typeof list[0].message == 'string') {
+        runtimeData.tags.msgType = BotMsgType.CQCode
+    } else {
+        runtimeData.tags.msgType = BotMsgType.Array
     }
     // 消息类型的特殊处理
     switch (runtimeData.tags.msgType) {
@@ -279,6 +278,9 @@ export function getMsgRawTxt(data: any): string {
                         .replaceAll('\n', ' ')
                         .replaceAll('\r', ' ')
                     break
+                case 'forward':
+                    back += '[' + $t('聊天记录') + ']'
+                    break
                 case 'face':
                     back += '[' + $t('表情') + ']'
                     break
@@ -287,7 +289,7 @@ export function getMsgRawTxt(data: any): string {
                     break
                 case 'image':
                     back +=
-                        message[i].summary || message[i].summary == ''? '[' + $t('图片') + ']': message[i].summary
+                        (!message[i].summary || message[i].summary == '') ? '[' + $t('图片') + ']' : message[i].summary
                     break
                 case 'record':
                     back += '[' + $t('语音') + ']'
@@ -302,7 +304,7 @@ export function getMsgRawTxt(data: any): string {
                     try {
                         back += JSON.parse(message[i].data).prompt
                     } catch (error) {
-                        back += '[卡片消息]'
+                        back += '[' + $t('卡片消息') + ']'
                     }
                     break
                 }
@@ -490,6 +492,11 @@ export function sendMsgRaw(
         }
     }
     if (msg !== undefined && msg.length > 0) {
+        if (runtimeData.jsonMap.name === 'Lagrange.OneBot'){
+            lgrSendMsg(id, msg, type, echo + '_uuid_' + msgUUID)
+            sendStatEvent('sendMsg', { type: type })
+            return
+        }
         switch (type) {
             case 'group':
                 Connector.send(
@@ -567,7 +574,7 @@ export function updateBaseOnMsgList() {
     ) => {
         if (a.time == b.time || a.time == undefined || b.time == undefined) {
             if (a.py_start == undefined || b.py_start == undefined) {
-                return 1
+                return 0
             }
             return b.py_start.charCodeAt(0) - a.py_start.charCodeAt(0)
         }
@@ -636,7 +643,7 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 .add({ translateX: 0, duration: 100, easing: 'easeOutSine' })
         }
         timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
-        timeLine.change = () => {
+        timeLine.change = async () => {
             if (animeBody) {
                 animeBody.parentElement?.parentElement?.classList.add( 'poking')
                 const teansformX = animeBody.style.transform
@@ -646,13 +653,10 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 num = Math.round(num)
                 // 输出 translateX
                 if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && windowInfo) {
-                    const { reader } = runtimeData.plantform
-                    if (reader) {
-                        reader.send('win:move', {
+                    await callBackend(undefined, 'win:move', false, {
                             x: windowInfo.x + num,
                             y: windowInfo.y,
                         })
-                    }
                 }
             }
         }
@@ -683,5 +687,92 @@ export function getShowName(base: string, remark: string) {
         return base.replace(/[\u202A-\u202E\u2066-\u2069]/g, '')
     } else {
         return (remark + '（' + base + '）').replace(/[\u202A-\u202E\u2066-\u2069]/g, '')
+    }
+}
+
+/**
+ * 判断是否需要显示时间戳（上下超过五分钟的消息）
+ * @param timePrv 上条消息的时间戳（10 位）
+ * @param timeNow 当前消息的时间戳（10 位）
+ */
+export function isShowTime(
+    timePrv: number | undefined,
+    timeNow: number,
+    alwaysShow = false,
+): boolean {
+    if (alwaysShow) return true
+    if (timePrv == undefined) return false
+    // 五分钟 10 位时间戳相差 300
+    return timeNow - timePrv >= 300
+}
+
+/**
+ * 判断这个消息是不是[已删除]
+ * @param msg
+ */
+export function isDeleteMsg(msg: any): boolean {
+    if(runtimeData.sysConfig.dont_parse_delete === true)return false
+    if(!['message', 'message_sent'].includes(msg.post_type)) return false
+    if(msg.sender.user_id !== runtimeData.loginInfo.uin)return false
+    if(msg.raw_message !== '&#91;已删除&#93;')return false
+    return true
+}
+
+/**
+ * lgr专用发送消息，懒得写了，不做通用适配，胡乱应付下吧
+ * @param msg 消息内容
+ */
+function lgrSendMsg(id: string, msg: any, type: string, cb: string){
+    if (msg[0].type === 'node') {
+        const sendMsgs = [] as any[]
+        msg.forEach((item) => {
+            const msg = {
+                type: item.type,
+                data: {
+                    user_id: item.data.user_id.toString(),
+                    nickname: item.data.nickname,
+                    content: item.data.content.map((item)=>{
+                        const copy = {...item}
+                        delete copy.type
+                        return {
+                            type: item.type,
+                            data: {...copy}
+                        }
+                    }),
+                },
+            }
+            sendMsgs.push(msg)
+        })
+        if (type === 'group') {
+            Connector.send(
+                'send_group_forward_msg',
+                { group_id: id, messages: sendMsgs },
+                cb,
+            )
+        }else if (type === 'user') {
+            Connector.send(
+                'send_private_forward_msg',
+                { user_id: id, messages: sendMsgs },
+                cb,
+            )
+        }else {
+            new PopInfo().add(PopType.ERR, 'lgr不支持匿名聊天')
+        }
+    }else {
+        if (type === 'group'){
+            Connector.send(
+                'send_group_msg',
+                { group_id: id, message: msg },
+                cb,
+            )
+        }else if (type === 'user'){
+            Connector.send(
+                'send_private_msg',
+                { user_id: id, message: msg },
+                cb,
+            )
+        }else{
+            new PopInfo().add(PopType.ERR, 'lgr不支持匿名聊天')
+        }
     }
 }
