@@ -234,7 +234,8 @@
                         :key="data.message_id + '-m-' + index">
                         <CardMessage v-if="item.type == 'xml' || item.type == 'json'"
                             :id="data.message_id"
-                            :item="item" />
+                            :item="item"
+                            @page-view="loadLinkPreview" />
                     </template>
                 </template>
                 <!-- 链接预览框 -->

@@ -13,7 +13,8 @@ import { PopInfo, PopType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { Connector } from '@renderer/function/connect'
 import { openLink } from '@renderer/function/utils/appUtil'
-import { getDeviceType } from '@renderer/function/utils/systemUtil'
+import { callBackend, getDeviceType } from '@renderer/function/utils/systemUtil'
+import { linkView } from '../utils/linkViewUtil'
 
 const popInfo = new PopInfo()
 
@@ -180,7 +181,8 @@ export class MsgBodyFuns {
      * @param msg 消息
      * @returns { type: string, app: any }
      */
-    static getJSONType(msg: any) {
+    static getJSONType(card: any) {
+        const msg = card.item
         if (msg.type != 'xml') {
             const data = msg.data
             const json = JSON.parse(data)
@@ -195,6 +197,14 @@ export class MsgBodyFuns {
                 info.preview = undefined
                 info.icon = ''
                 info.name = json.desc
+            }
+            if (json.app == 'com.tencent.mannounce') {
+                // base64 编码的群公告
+                info.title = this.decodeBase64Unicode(json.meta.mannounce.title)
+                info.desc = this.decodeBase64Unicode(json.meta.mannounce.text).replaceAll('\n', '<br>')
+                info.icon = ''
+                info.preview = undefined
+                info.name = this.decodeBase64Unicode(json.meta.mannounce.title)
             }
             if (json.app == 'com.tencent.multimsg') {
                 info.title = json.meta.detail.source
@@ -230,6 +240,18 @@ export class MsgBodyFuns {
                 }
                 info.desc = json.meta['Location.Search'].address
                 type = 'tencent.map'
+            }
+            if (json.app == 'com.tencent.miniapp_01' && info.name == '哔哩哔哩') {
+                try {
+                    callBackend('Onebot', 'sys:getFinalRedirectUrl', true, info.url).then((fistLink) => {
+                        linkView.bilibili(fistLink).then((result) => {
+                            card.$emit('page-view', fistLink, result)
+                        })
+                    })
+                } catch (_) { /**/ }
+                if (runtimeData.tags.clientType != 'web') {
+                    return null
+                }
             }
 
             return { type, app: info, append }
@@ -302,5 +324,11 @@ export class MsgBodyFuns {
         text = xss(text, { whiteList: { a: ['href', 'target'] } })
         // 返回
         return text
+    }
+
+    static decodeBase64Unicode(base64) {
+        const binary = atob(base64);
+        const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
     }
 }
