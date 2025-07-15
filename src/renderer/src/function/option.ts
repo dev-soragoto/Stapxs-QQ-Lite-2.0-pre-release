@@ -23,12 +23,11 @@ import {
     updateWinColor,
 } from '@renderer/function/utils/appUtil'
 import {
-    addBackendListener,
-    callBackend,
     getPortableFileLang,
     getTrueLang,
 } from '@renderer/function/utils/systemUtil'
 import { updateBaseOnMsgList } from './utils/msgUtil'
+import { backend } from '@renderer/runtime/backend'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -131,7 +130,7 @@ function updateFarstAnimation(value: boolean) {
 }
 
 function viewAlwaysTop(value: boolean) {
-    callBackend(undefined, 'win:alwaysTop', false, value)
+    backend.call(undefined, 'win:alwaysTop', false, value)
 }
 
 function viewRevolve(value: boolean) {
@@ -150,7 +149,7 @@ function viewRevolve(value: boolean) {
 
 function updateWinColorOpt(value: boolean) {
     if (value == true) {
-        addBackendListener(undefined, 'sys:WinColorChanged', (_, params) => {
+        backend.addListener(undefined, 'sys:WinColorChanged', (_, params) => {
             updateWinColor(params)
         })
         loadWinColor()
@@ -329,12 +328,12 @@ function changeColorMode(mode: string) {
     // 记录
     runtimeData.tags.darkMode = mode === 'dark'
     // Capacitor: 状态栏颜色（Android）
-    if(runtimeData.tags.clientType == 'capacitor') {
-        callBackend('StatusBar', 'setStyle', false, { style: mode.toUpperCase() })
+    if(backend.isMobile()) {
+        backend.call('StatusBar', 'setStyle', false, { style: mode.toUpperCase() })
     }
     // Capacitor: VConsole 颜色
-    if(runtimeData.plantform.vConsole) {
-        runtimeData.plantform.vConsole.setOption('theme', mode)
+    if(backend.function && 'vConsole' in backend.function && backend.function.vConsole) {
+        backend.function.vConsole.setOption('theme', mode)
     }
 }
 
@@ -382,10 +381,10 @@ function changeChatView(name: string | undefined) {
 export async function load(): Promise<{ [key: string]: any }> {
     let data = {} as { [key: string]: any }
 
-    if ('electron' == runtimeData.tags.clientType) {
-        data = runtimeData.plantform.sendSync('opt:getAll')
-    } else if('tauri' == runtimeData.tags.clientType) {
-        data = await callBackend(undefined, 'opt:getAll', true)
+    if ('electron' == backend.type) {
+        data = backend.callSync('opt:getAll')
+    } else if('tauri' == backend.type) {
+        data = await backend.call(undefined, 'opt:getAll', true)
         // 处理下 json 字符串
         Object.keys(data).forEach((key) => {
             const value = data[key]
@@ -499,10 +498,10 @@ export function get(name: string): any {
  * 在 Web 端和 Capacitor 端使用时由于存储在 WebStorage 中，需要特别注意预防上述未转换导致的错误。
  */
 export function getRaw(name: string) {
-    if (runtimeData.tags.clientType == 'electron') {
-        return runtimeData.plantform.sendSync('opt:get', name)
-    } else if(runtimeData.tags.clientType == 'tauri') {
-        return callBackend(undefined, 'opt:get', true, name)
+    if ('electron' == backend.type) {
+        return backend.callSync('opt:get', name)
+    } else if('tauri' == backend.type) {
+        return backend.call(undefined, 'opt:get', true, name)
     } else {
         // 解析拆分并执行各个设置项的初始化方法
         const str = localStorage.getItem('options')
@@ -550,14 +549,14 @@ export function saveAll(config = {} as { [key: string]: any }) {
     localStorage.setItem('options', str)
 
     // electron：将配置保存
-    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+    if (backend.isDesktop()) {
         const saveConfig = config
         Object.keys(config).forEach((key) => {
             const isObject = typeof config[key] == 'object'
             saveConfig[key] = isObject ? JSON.stringify(config[key]): config[key]
         })
-        callBackend(undefined, 'opt:saveAll', false,
-            runtimeData.tags.clientType == 'tauri' ? { data: saveConfig } : saveConfig)
+        backend.call(undefined, 'opt:saveAll', false,
+            backend.type == 'tauri' ? { data: saveConfig } : saveConfig)
     }
 }
 
@@ -628,8 +627,8 @@ export function runASWEvent(event: Event) {
                 {
                     text: app.config.globalProperties.$t('确定'),
                     fun: () => {
-                        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-                            callBackend(undefined, 'win:relaunch', false)
+                        if (backend.isDesktop()) {
+                            backend.call(undefined, 'win:relaunch', false)
                         } else {
                             location.reload()
                         }

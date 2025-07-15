@@ -13,7 +13,7 @@
         :class="
             'chat-pan' +
                 (runtimeData.tags.openSideBar ? ' open' : '') +
-                (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')
+                (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')
         ">
         <div class="danmu-pan">
             <vue-danmaku
@@ -338,6 +338,7 @@
     } from '@renderer/function/elements/information'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
+import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ChatDan',
@@ -345,6 +346,7 @@
         props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
+                backend,
                 opt: {
                     speeds: 140,
                     loop: true,

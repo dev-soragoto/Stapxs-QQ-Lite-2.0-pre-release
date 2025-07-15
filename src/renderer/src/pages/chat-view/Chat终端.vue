@@ -18,7 +18,7 @@
         :class="
             'chat-pan' +
                 (runtimeData.tags.openSideBar ? ' open' : '') +
-                (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')
+                (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')
         ">
         <div
             id="shell-pan"
@@ -189,12 +189,14 @@
     } from '@renderer/function/base'
     import { sendMsgRaw, getMsgRawTxt } from '@renderer/function/utils/msgUtil'
     import { uptime } from '@renderer/main'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ChatShell',
         props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
+                backend,
                 tags: {
                     fullscreen: false,
                     fistget: true,
@@ -478,7 +480,7 @@
                                 'x' +
                                 window.screen.height,
                         } as { [key: string]: string }
-                        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                        if (backend.isDesktop()) {
                             infoList.Kernel = packageInfo.version + '-electron'
                         }
                         let info = ''

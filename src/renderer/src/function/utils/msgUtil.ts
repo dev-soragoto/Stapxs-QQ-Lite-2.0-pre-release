@@ -13,7 +13,7 @@ import {
     UserGroupElem,
 } from '../elements/information'
 import { sendStatEvent } from './appUtil'
-import { callBackend } from './systemUtil'
+import { backend } from '@renderer/runtime/backend'
 
 const logger = new Logger()
 
@@ -652,8 +652,8 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 // 取整
                 num = Math.round(num)
                 // 输出 translateX
-                if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && windowInfo) {
-                    await callBackend(undefined, 'win:move', false, {
+                if (backend.isDesktop() && windowInfo) {
+                    await backend.call(undefined, 'win:move', false, {
                             x: windowInfo.x + num,
                             y: windowInfo.y,
                         })

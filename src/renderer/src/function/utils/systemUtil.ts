@@ -2,8 +2,8 @@ import app from '@renderer/main'
 
 import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
-import { runtimeData } from '../msg';
-import { Logger, LogType } from '../base';
+import { Logger } from '../base';
+import { backend } from '@renderer/runtime/backend';
 
 /**
  * 异步延迟
@@ -390,109 +390,6 @@ export function getTimeConfig(date: Date) {
 }
 
 /**
- * 调用后端方法
- *
- * #### 方法名称
- * 请使用统一的 electron 方法名称，其余平台会自动转换
- * - electron 将调用 sys: 前缀的名称如 > sys:getConfig
- * - capacitor 将调用去除 sys: 前缀的名称如 > getConfig
- * - tauri 将调用 sys_ 前缀加下划线小写的名称如 > sys_get_config
- *
- * #### 备注
- * - 在 capacitor 和 tauri 中。args 必须是一个对象，如果你传递了其他类型的参数，此方法会自行转换为 ```{data: args[0]}```; 请在后端获取 data 在进行处理。
- * - capacitor 的返回也必须是一个对象，此方法会主动将有且只有一个参数的返回值拆出来，不用特别在意获取。
- * - 返回值如有大多为 Promise（在 electron 中一定是），请使用 async/await 调用。
- *
- * ---
- *
- * @param type capacitor：插件类型
- * @param name 方法名称
- * @param needBack electron：是否需要返回值
- * @param args 参数列表
- * @returns 返回值
- */
-export async function callBackend(type: string | undefined, name: string, needBack: boolean, ...args: any[]) {
-    // 处理名称
-    if(runtimeData.tags.clientType == 'tauri') {
-        // 将冒号替换为下划线同时拆分
-        name = name.replaceAll(':', '_')
-            .replace(/([A-Z])/g, '_$1')
-            .toLowerCase()
-    }
-    if(runtimeData.tags.clientType == 'capacitor' && name.includes(':')) {
-        name = name.split(':')[1]
-    }
-    // 调用对应方法
-    try {
-        if('electron' == runtimeData.tags.clientType) {
-            if(needBack) {
-                return await runtimeData.plantform.invoke(name, ...args)
-            } else {
-                runtimeData.plantform.send(name, ...args)
-                return undefined
-            }
-        } else if('tauri' == runtimeData.tags.clientType) {
-            // tauri 这边必须传入一个字典
-            if(args.length == 0 || Object.prototype.toString.call(args[0]) !== '[object Object]') {
-                args = [{ data: args[0] }]
-            }
-            return await runtimeData.plantform.invoke(name, args[0])
-        } else if('capacitor' == runtimeData.tags.clientType) {
-            // capacitor 这边必须传入一个字典
-            if(args.length == 0 || Object.prototype.toString.call(args[0]) !== '[object Object]') {
-                args = [{ data: args[0] }]
-            }
-            let functionGet = runtimeData.plantform.capacitor[name]
-            if(type != undefined && functionGet == undefined) {
-                functionGet = runtimeData.plantform.pulgins[type][name] ??
-                runtimeData.plantform.capacitor[type][name]
-            }
-            const back = await functionGet(args[0])
-            if(Object.prototype.toString.call(back) === '[object Object]' && Object.keys(back).length == 1) {
-                return back[Object.keys(back)[0]]
-            } else {
-                return back
-            }
-        }
-    } catch(ex) {
-        let appendString = ''
-        if('capacitor' == runtimeData.tags.clientType) {
-            let functions = runtimeData.plantform.capacitor
-            if(type != undefined) {
-                functions = runtimeData.plantform.pulgins[type]
-            }
-            if(functions != undefined) {
-                appendString += `方法不存在，插件 ${type} 可用方法：`
-            } else {
-                functions = runtimeData.plantform.pulgins
-                appendString += '插件不存在，可用插件：'
-            }
-            // 获取 functions 的所有方法，将方法名使用逗号连接
-            const functionNames = Object.keys(functions).join(', ')
-            appendString += `${functionNames}`
-        }
-        new Logger().add(LogType.ERR, `调用后端方法 ${(type ?? '') + ' - '}${name} 失败：${appendString}`, ex)
-        return undefined
-    }
-}
-
-/**
- * 添加后端监听，名称统一为 sys: 前缀
- * @param type capacitor：插件类型
- * @param name 事件名称
- * @param callBack 回调函数
- */
-export function addBackendListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
-    if('electron' == runtimeData.tags.clientType) {
-        runtimeData.plantform.on(name, callBack)
-    } else if('tauri' == runtimeData.tags.clientType) {
-        runtimeData.plantform.listen(name, callBack)
-    } else if('capacitor' == runtimeData.tags.clientType && type != undefined) {
-        runtimeData.plantform.pulgins[type].addListener(name, callBack)
-    }
-}
-
-/**
  * 请求 API，暂时未支持 method: string, data: any
  * @param url 请求的地址
  */
@@ -506,8 +403,8 @@ export async function getApi(url: string) {
         }
     } catch (error) {
         new Logger().error(error as Error, '前端请求 API 失败，尝试后端请求……')
-        if(runtimeData.tags.clientType != 'web') {
-            return await callBackend('Onebot', 'sys:getApi', true, url)
+        if(!backend.isWeb()) {
+            return await backend.call('Onebot', 'sys:getApi', true, url)
         } else {
             return null
         }

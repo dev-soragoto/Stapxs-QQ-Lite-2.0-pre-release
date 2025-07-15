@@ -13,7 +13,7 @@
     <div id="chat-pan"
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
-            (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')"
+            (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @touchmove="ChatOnMove"
         @touchend="chatMoveEnd">
@@ -394,7 +394,7 @@
             </div>
         </div>
         <!-- 消息右击菜单 -->
-        <div :class="'msg-menu' + (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
+        <div :class="'msg-menu' + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
             <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
             <div id="msgMenu" :class="tags.showMsgMenu ?
                 'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
@@ -558,7 +558,6 @@
         loadHistory as loadHistoryFirst,
     } from '@renderer/function/utils/appUtil'
     import {
-        addBackendListener,
         getTimeConfig,
         getTrueLang,
         getViewTime,
@@ -583,6 +582,7 @@
         UserFriendElem,
         UserGroupElem,
     } from '@renderer/function/elements/information'
+    import { backend } from '@renderer/runtime/backend'
 
 
     export default defineComponent({
@@ -591,6 +591,7 @@
         props: ['chat', 'list', 'mumberInfo', 'imgView'],
         data() {
             return {
+                backend,
                 uuid,
                 getShowName,
                 fun: {
@@ -719,9 +720,8 @@
                 },
             )
             // Capacitor：系统返回操作（Android）
-            if(runtimeData.tags.clientType == 'capacitor' &&
-                runtimeData.tags.platform === 'android') {
-                addBackendListener('App', 'backButton', () => {
+            if(backend.type == 'capacitor' && backend.platform === 'android') {
+                backend.addListener('App', 'backButton', () => {
                     // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
                     this.tags.chatTouch.openSuccess = true
                     this.chatMoveEnd()
@@ -1969,7 +1969,7 @@
                             'setMessageRead',
                         )
                     }
-                    if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                    if(backend.isDesktop()) {
                         // 将焦点移动到发送框
                         this.toMainInput()
                     }
@@ -2054,7 +2054,7 @@
                                         const info = {
                                             index: item.message_id,
                                             message_id: item.message_id,
-                                            img_url: runtimeData.tags.proxyPort && msg.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(msg.url)}` : msg.url
+                                            img_url: backend.proxyUrl(msg.url)
                                         }
                                         this.getImgList.push(info)
                                     }

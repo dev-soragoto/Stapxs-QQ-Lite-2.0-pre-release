@@ -35,7 +35,7 @@
                 </select>
             </div>
         </div>
-        <div v-if="runtimeData.tags.clientType == 'capacitor'" class="ss-card">
+        <div v-if="backend.isMobile()" class="ss-card">
             <header>{{ $t('图标') }}</header>
             <div class="icon-list">
                 <div v-for="item in getIconList()"
@@ -105,7 +105,7 @@
                     </div>
                 </template>
             </template>
-            <template v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType) && browser.os != 'Linux'">
+            <template v-if="backend.isDesktop() && browser.os != 'Linux'">
                 <div class="opt-item">
                     <div :class="checkDefault('opt_auto_win_color')" />
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
@@ -186,7 +186,7 @@
                     </div>
                 </label>
             </div>
-            <div v-if="isMobile() && runtimeData.tags.clientType != 'capacitor'"
+            <div v-if="isMobile() && !backend.isMobile()"
                 class="opt-item">
                 <div :class="checkDefault('initial_scale')" />
                 <font-awesome-icon :icon="['fas', 'up-down-left-right']" />
@@ -209,7 +209,7 @@
                 </div>
             </div>
             <div
-                v-if="isMobile() && runtimeData.tags.clientType != 'capacitor'"
+                v-if="isMobile() && !backend.isMobile()"
                 class="opt-item">
                 <div :class="checkDefault('fs_adaptation')" />
                 <font-awesome-icon :icon="['fas', 'border-top-left']" />
@@ -233,7 +233,7 @@
                 </div>
             </div>
             <div
-                v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType)"
+                v-if="backend.isDesktop()"
                 class="opt-item">
                 <div :class="checkDefault('opt_always_top')" />
                 <font-awesome-icon :icon="['fas', 'angle-up']" />
@@ -289,15 +289,17 @@
     import { runtimeData } from '../../function/msg'
     import { runASWEvent as save, get, checkDefault } from '../../function/option'
     import { BrowserInfo, detect } from 'detect-browser'
-    import { callBackend, getDeviceType } from '@renderer/function/utils/systemUtil'
+    import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
     import languages from '../../assets/l10n/_l10nconfig.json'
     import { sendStatEvent } from '@renderer/function/utils/appUtil'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ViewOptTheme',
         data() {
             return {
+                backend: backend,
                 get: get,
                 runtimeData: runtimeData,
                 checkDefault: checkDefault,
@@ -412,7 +414,7 @@
             },
 
             restartapp() {
-                callBackend(undefined, 'win:relaunch', false)
+                backend.call(undefined, 'win:relaunch', false)
             },
 
             isMobile() {
@@ -450,7 +452,7 @@
             },
 
             changeIcon(name: string) {
-                callBackend('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
+                backend.call('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
                 this.usedIcon = name
             },
         },

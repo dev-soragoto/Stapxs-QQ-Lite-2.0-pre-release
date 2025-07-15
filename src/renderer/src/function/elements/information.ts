@@ -19,7 +19,6 @@ export interface RunTimeDataElem {
         chatView: any
         msgView: any
     }
-    plantform: {[key: string]: any},
     tags: {
         firstLoad: boolean
         msgType: BotMsgType
@@ -30,22 +29,6 @@ export interface RunTimeDataElem {
             index: number
         }
         loginWaveTimer?: any
-        /**
-         * 客户端类型
-         */
-        clientType: 'electron' | 'tauri' | 'capacitor' | 'web'
-        /**
-         * 平台类型
-         */
-        platform: 'win32' | 'darwin' | 'linux' | 'android' | 'ios' | 'web' | undefined
-        /**
-         * 系统发行版本
-         */
-        release: string | undefined
-        /**
-         * 代理服务器端口
-         */
-        proxyPort?: number
         connectSsl: boolean
         classes: any[]
         sw?: boolean

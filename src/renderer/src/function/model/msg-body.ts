@@ -13,8 +13,9 @@ import { PopInfo, PopType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { Connector } from '@renderer/function/connect'
 import { openLink } from '@renderer/function/utils/appUtil'
-import { callBackend, getDeviceType } from '@renderer/function/utils/systemUtil'
+import { getDeviceType } from '@renderer/function/utils/systemUtil'
 import { linkView } from '../utils/linkViewUtil'
+import { backend } from '@renderer/runtime/backend'
 
 const popInfo = new PopInfo()
 
@@ -243,13 +244,13 @@ export class MsgBodyFuns {
             }
             if (json.app == 'com.tencent.miniapp_01' && info.name == '哔哩哔哩') {
                 try {
-                    callBackend('Onebot', 'sys:getFinalRedirectUrl', true, info.url).then((fistLink) => {
+                    backend.call('Onebot', 'sys:getFinalRedirectUrl', true, info.url).then((fistLink) => {
                         linkView.bilibili(fistLink).then((result) => {
                             card.$emit('page-view', fistLink, result)
                         })
                     })
                 } catch (_) { /**/ }
-                if (runtimeData.tags.clientType != 'web') {
+                if (!backend.isWeb()) {
                     return null
                 }
             }
