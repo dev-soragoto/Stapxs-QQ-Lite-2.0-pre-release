@@ -83,7 +83,7 @@ jobs:
           sed -i 's#/Stapxs-QQ-Lite-2.0#/Stapxs-QQ-Lite-2.0-pre-release#gI' vite.config.ts
 
           rm -rf .github/
-          git restore --source=origin/main .github/workflows/build-app.yml
+          git checkout origin/main -- .github/workflows/build-app.yml
 
           git commit -a -m "" --allow-empty-message
 
