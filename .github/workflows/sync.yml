@@ -84,6 +84,7 @@ jobs:
 
           rm -rf .github/
           git checkout origin/main -- .github/workflows/build-app.yml
+          git checkout origin/main -- electron-builder.yml
 
           git commit -a -m "" --allow-empty-message
 
