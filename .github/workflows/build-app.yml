@@ -117,7 +117,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2019, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
     outputs:
       version: ${{ needs.init.outputs.version }}
 
@@ -140,7 +140,7 @@ jobs:
 
       # 构建 electron 版本（Windows）
       - name: Build Electron (Windows)
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-latest'
         run: yarn build:electron
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
