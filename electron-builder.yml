@@ -26,6 +26,7 @@ win:
     icon: build/icon-client-others.png
     legalTrademarks: Copyright © 2022-2025 Stapx Steve [林槐]
     publisherName: stapxs
+    artifactName: ${productName}.${version}-${arch}.${ext}
 
 # macOS 配置
 mac:
