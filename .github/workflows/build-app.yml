@@ -147,7 +147,7 @@ jobs:
       # windows-arm-build
       - name: Build Electron (Windows-arm)
         if: matrix.os == 'windows-11-arm'
-        run: yarn build:electron -- --win portable --arm64
+        run: yarn build:electron -- --win portable zip --arm64
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
       # linux-build
