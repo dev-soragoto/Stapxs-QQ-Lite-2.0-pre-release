@@ -124,33 +124,33 @@ jobs:
     needs: init
 
     steps:
-      # 拉取代码
+      # pull 
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      # 设置 Node.js 版本
+      # init node 
       - name: Load Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-      # 更新依赖
+      # yarn install
       - name: Install
         run: yarn
 
-      # 构建 electron 版本（Windows）
+      # windows-x64-build
       - name: Build Electron (Windows)
         if: matrix.os == 'windows-latest'
-        run: yarn build:electron
+        run: yarn build:electron -- --win portable --x64
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
-      # 构建 electron 版本（Windows-arm）
+      # windows-arm-build
       - name: Build Electron (Windows-arm)
         if: matrix.os == 'windows-11-arm'
         run: yarn build:electron -- --win portable --arm64
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
-      # 构建 electron 版本（Linux）
+      # linux-build
       - name: Install Dependencies for Packaging (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -162,7 +162,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
 
-      # 上传构建结果
+      # upload
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -177,7 +177,7 @@ jobs:
       - build-electron
       - init
     steps:
-      # 下载构建结果
+      # download 
       - name: Download Artifacts
         id: download-artifact
         uses: actions/download-artifact@v4
@@ -187,7 +187,7 @@ jobs:
           merge-multiple: true
       - name: Artifacts List
         run: ls -R
-      # 发布构建结果
+      # publish
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:

@@ -19,9 +19,6 @@ asarUnpack:
 
 # Windows 配置
 win:
-    target:
-        - { target: portable, arch: x64 }
-        - { target: portable, arch: arm64}
     executableName: Stapxs QQ Lite
     icon: build/icon-client-others.png
     legalTrademarks: Copyright © 2022-2025 Stapx Steve [林槐]
