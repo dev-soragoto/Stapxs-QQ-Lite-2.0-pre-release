@@ -117,7 +117,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest, windows-latest-arm64]
     outputs:
       version: ${{ needs.init.outputs.version }}
 
@@ -142,6 +142,12 @@ jobs:
       - name: Build Electron (Windows)
         if: matrix.os == 'windows-latest'
         run: yarn build:electron
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN }}
+      # 构建 electron 版本（Windows-arm）
+      - name: Build Electron (Windows-arm)
+        if: matrix.os == 'windows-latest-arm64'
+        run: yarn build:electron -- --win portable --arm64
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
       # 构建 electron 版本（Linux）

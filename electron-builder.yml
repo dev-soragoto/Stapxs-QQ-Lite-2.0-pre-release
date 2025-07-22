@@ -31,7 +31,6 @@ win:
 # macOS 配置
 mac:
     target:
-        - { target: dmg, arch: arm64 }
         - { target: dmg, arch: x64 }
     entitlementsInherit: build/entitlements.mac.plist
     icon: build/icon-client-mac.icns
