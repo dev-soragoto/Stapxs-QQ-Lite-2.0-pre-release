@@ -162,3 +162,6 @@ ban_mumber:
 # 设置群头衔（包括成员）
 set_group_title:
     name: set_group_special_title
+# 设置消息回应
+send_respond:
+    name: set_group_reaction

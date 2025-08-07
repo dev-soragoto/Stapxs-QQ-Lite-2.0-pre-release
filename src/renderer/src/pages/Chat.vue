@@ -1443,8 +1443,10 @@
                     Connector.send(
                         runtimeData.jsonMap.send_respond.name,
                         {
+							group_id: this.chat.show.id,
                             message_id: msgId,
                             emoji_id: String(num),
+							code: String(num),
                         },
                         'SendRespondBack_' + msgId + '_' + num,
                     )
