@@ -103,3 +103,15 @@ file_download:
 # 获取群文件夹内文件
 group_folder_files:
     name: get_group_files_by_folder
+# 获取群精华消息
+group_essence:
+    name: get_essence_msg_list
+    source: $.data[*]
+    list:
+        sender_uin: /sender_id
+        sender_nick: /sender_nick
+        sender_time: /sender_time
+        content: /content
+        add_digest_uin: /operator_id
+        add_digest_nick: /operator_nick
+        add_digest_time: /operator_time
