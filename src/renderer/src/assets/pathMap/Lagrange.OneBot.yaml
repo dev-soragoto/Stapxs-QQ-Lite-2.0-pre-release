@@ -148,3 +148,5 @@ group_member_info:
         is_robot: /is_robot
         shut_up_timestamp: /shut_up_timestamp
         role: /role
+set_group_nickname:
+    name: set_group_card

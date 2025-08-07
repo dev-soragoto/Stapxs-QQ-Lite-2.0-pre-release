@@ -1226,3 +1226,12 @@ msgstr ""
 
 msgid "注册时间"
 msgstr ""
+
+msgid "确认修改昵称？"
+msgstr ""
+
+msgid "确认"
+msgstr ""
+
+msgid "正在确认操作……"
+msgstr ""
