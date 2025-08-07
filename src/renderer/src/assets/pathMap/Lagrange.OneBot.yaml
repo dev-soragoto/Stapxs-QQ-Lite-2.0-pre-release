@@ -150,3 +150,6 @@ group_member_info:
         role: /role
 set_group_nickname:
     name: set_group_card
+# 退出群聊
+leave_group:
+    name: set_group_leave
