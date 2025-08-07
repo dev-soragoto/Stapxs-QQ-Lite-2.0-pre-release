@@ -159,3 +159,6 @@ set_group_name:
 # 禁言成员
 ban_mumber:
     name: set_group_ban
+# 设置群头衔（包括成员）
+set_group_title:
+    name: set_group_special_title

@@ -1238,3 +1238,6 @@ msgstr ""
 
 msgid "确认禁言？"
 msgstr ""
+
+msgid "确认修改头衔？"
+msgstr ""
