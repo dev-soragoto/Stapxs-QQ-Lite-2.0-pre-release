@@ -153,3 +153,6 @@ set_group_nickname:
 # 退出群聊
 leave_group:
     name: set_group_leave
+# 设置群名
+set_group_name:
+    name: set_group_name
