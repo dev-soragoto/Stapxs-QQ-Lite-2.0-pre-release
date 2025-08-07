@@ -737,6 +737,7 @@ const msgFunctions = {
         // runtimeData.chatInfo.info.user_info =
         //     msg.data.data.result.buddy.info_list[0]
         const data = getMsgData('friend_info', msg, msgPath.friend_info)[0]
+		data.regTime = new Date(data.reg_time).getTime()
         if(data) {
             runtimeData.chatInfo.info.user_info = data
         }

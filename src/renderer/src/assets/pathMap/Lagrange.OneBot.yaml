@@ -115,3 +115,20 @@ group_essence:
         add_digest_uin: /operator_id
         add_digest_nick: /operator_nick
         add_digest_time: /operator_time
+# 群/好友信息
+friend_info:
+    name: get_stranger_info
+    source: $.data
+    list:
+        longNick: /sign                 # 签名
+        qid: /q_id                      # 个性 QQ 账号
+        country: null                   # 国家
+        province: null                  # 省份
+        city: null                      # 城市
+        regTime: /RegisterTime          # 注册时间
+        qqLevel: /level                 # QQ 等级
+        birthday_year: null             # 生日年份
+        birthday_month: null            # 生日月份
+        birthday_day: null              # 生日日期
+        age: /age                       # 年龄
+        sex: /sex                       # 性别
