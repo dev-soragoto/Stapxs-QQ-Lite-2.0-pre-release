@@ -132,3 +132,19 @@ friend_info:
         birthday_day: null              # 生日日期
         age: /age                       # 年龄
         sex: /sex                       # 性别
+# 获取群成员信息
+group_member_info:
+    name: get_group_member_info
+    source: $.data
+    list:
+        group_id: /group_id
+        user_id: /user_id
+        nickname: /nickname
+        card: /card
+        sex: /sex
+        age: /age
+        join_time: /join_time
+        last_sent_time: /last_sent_time
+        is_robot: /is_robot
+        shut_up_timestamp: /shut_up_timestamp
+        role: /role
