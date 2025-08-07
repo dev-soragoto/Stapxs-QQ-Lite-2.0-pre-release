@@ -1235,3 +1235,6 @@ msgstr ""
 
 msgid "正在确认操作……"
 msgstr ""
+
+msgid "确认禁言？"
+msgstr ""

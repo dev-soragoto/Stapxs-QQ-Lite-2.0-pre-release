@@ -156,3 +156,6 @@ leave_group:
 # 设置群名
 set_group_name:
     name: set_group_name
+# 禁言成员
+ban_mumber:
+    name: set_group_ban
