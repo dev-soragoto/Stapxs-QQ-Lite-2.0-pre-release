@@ -23,9 +23,9 @@
                     class="small">
                     <label>
                         <input
-							v-auto-focus
-							id="friend-search-small"
-                            v-model="searchInfo" type="text"
+                            id="friend-search-small"
+                            v-model="searchInfo"
+                            v-auto-focus type="text"
                             :placeholder="$t('搜索 ……')" @input="search">
                         <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                     </label>
@@ -38,10 +38,10 @@
                 </div>
                 <label>
                     <input
-						v-auto-focus
-						id="friend-search"
-						v-model="searchInfo"
-						type="text"
+                        id="friend-search"
+                        v-model="searchInfo"
+                        v-auto-focus
+                        type="text"
                         :placeholder="$t('搜索 ……')" @input="search">
                     <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                 </label>
