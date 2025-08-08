@@ -444,12 +444,23 @@ function loadOptData(data: { [key: string]: any }) {
         }
     })
     // 删除不存在的设置项
-    Object.keys(options).forEach((key) => {
-        if (optDefault[key] === undefined) {
-            optChanged = true
-            delete options[key]
-        }
-    })
+	const needless: string[] = []
+	for (const key in options) {
+		if (optDefault[key] === undefined)
+			needless.push(key)
+	}
+    if (!import.meta.env.DEV){
+        for (const key of needless) {
+			delete options[key]
+		}
+    }else if (needless.length > 0) {
+		new PopInfo().add(
+			PopType.INFO,
+			'发现' + needless.length + '条未使用的配置属性',
+			false,
+		)
+	}
+    
     // 保存
     if (optChanged) {
         saveAll(options)

@@ -1220,3 +1220,9 @@ msgstr ""
 
 msgid "空消息"
 msgstr ""
+
+msgid "移除未使用的配置"
+msgstr ""
+
+msgid "sudo rm -rf /etc"
+msgstr ""
