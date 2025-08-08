@@ -539,8 +539,9 @@
                 <div class="bg" @click="cancelForward" />
             </div>
         </Transition>
-        <div class="bg" :style=" runtimeData.sysConfig.option_view_background ?
-            `backdrop-filter: blur(${runtimeData.sysConfig .chat_background_blur}px);` : ''" />
+        <div class="bg" :style="{
+            'backdrop-filter': `blur(${runtimeData.sysConfig .chat_background_blur}px)`
+        }" />
     </div>
 </template>
 
@@ -560,6 +561,7 @@
     import {
         downloadFile,
         loadHistory as loadHistoryFirst,
+		shouldAutoFocus,
     } from '@renderer/function/utils/appUtil'
     import {
         addBackendListener,
@@ -1449,8 +1451,10 @@
                     Connector.send(
                         runtimeData.jsonMap.send_respond.name,
                         {
+							group_id: this.chat.show.id,
                             message_id: msgId,
                             emoji_id: String(num),
+							code: String(num),
                         },
                         'SendRespondBack_' + msgId + '_' + num,
                     )
@@ -1975,7 +1979,7 @@
                             'setMessageRead',
                         )
                     }
-                    if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                    if(shouldAutoFocus()) {
                         // 将焦点移动到发送框
                         this.toMainInput()
                     }
