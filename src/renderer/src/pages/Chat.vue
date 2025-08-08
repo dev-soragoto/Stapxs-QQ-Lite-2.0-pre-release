@@ -556,6 +556,7 @@
     import {
         downloadFile,
         loadHistory as loadHistoryFirst,
+		shouldAutoFocus,
     } from '@renderer/function/utils/appUtil'
     import {
         addBackendListener,
@@ -1969,7 +1970,7 @@
                             'setMessageRead',
                         )
                     }
-                    if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                    if(shouldAutoFocus()) {
                         // 将焦点移动到发送框
                         this.toMainInput()
                     }

@@ -22,7 +22,9 @@
                     id="friend-small-search"
                     class="small">
                     <label>
-                        <input id="friend-search-small"
+                        <input
+							v-auto-focus
+							id="friend-search-small"
                             v-model="searchInfo" type="text"
                             :placeholder="$t('搜索 ……')" @input="search">
                         <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
@@ -35,7 +37,11 @@
                     </div>
                 </div>
                 <label>
-                    <input id="friend-search" v-model="searchInfo" type="text"
+                    <input
+						v-auto-focus
+						id="friend-search"
+						v-model="searchInfo"
+						type="text"
                         :placeholder="$t('搜索 ……')" @input="search">
                     <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                 </label>
@@ -131,6 +137,9 @@
     </div>
 </template>
 
+<script setup lang="ts">
+	import { vAutoFocus } from '@renderer/function/utils/appUtil'
+</script>
 <script lang="ts">
     import FriendBody from '@renderer/components/FriendBody.vue'
 
@@ -144,7 +153,7 @@
     import { runtimeData } from '@renderer/function/msg'
     import { reloadUsers } from '@renderer/function/utils/appUtil'
     import { login as loginInfo } from '@renderer/function/connect'
-import { callBackend } from '@renderer/function/utils/systemUtil'
+	import { callBackend } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'ViewFriends',
