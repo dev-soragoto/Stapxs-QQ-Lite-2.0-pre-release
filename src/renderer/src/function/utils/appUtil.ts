@@ -355,6 +355,8 @@ export function createMenu() {
         menuTitles.unhide = $t('全部显示')
         menuTitles.quit = $t('退出') + ' ' + $t('Stapxs QQ Lite')
 
+        menuTitles.close = $t('关闭窗口')
+
         menuTitles.edit = $t('编辑')
         menuTitles.undo = $t('撤销')
         menuTitles.redo = $t('重做')

@@ -383,6 +383,8 @@ pub fn sys_create_menu(app: tauri::AppHandle, data: HashMap<String, String>) -> 
             .hide_others_with_text(data.get("hideOthers").unwrap())
             .show_all_with_text(data.get("unhide").unwrap())
             .separator()
+            .close_window_with_text(data.get("close").unwrap())
+            .separator()
             .quit_with_text(data.get("quit").unwrap())
             .id("app")
             .build().map_err(|e| e.to_string())?;
