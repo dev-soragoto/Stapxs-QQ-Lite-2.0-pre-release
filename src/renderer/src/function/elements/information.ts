@@ -24,6 +24,7 @@ export interface RunTimeDataElem {
         firstLoad: boolean
         msgType: BotMsgType
         canLoadHistory: boolean
+		loadHistoryFail: boolean
         openSideBar: boolean
         viewer: {
             show?: boolean

@@ -557,6 +557,7 @@ const msgFunctions = {
                 PopType.ERR,
                 app.config.globalProperties.$t('获取历史记录失败'),
             )
+            runtimeData.tags.loadHistoryFail = true
             return
         }
         saveMsg(msg, 'top')
@@ -567,6 +568,7 @@ const msgFunctions = {
                 PopType.ERR,
                 app.config.globalProperties.$t('获取历史记录失败'),
             )
+            runtimeData.tags.loadHistoryFail = true
             return
         }
         const pan = document.getElementById('msgPan')
@@ -1854,6 +1856,7 @@ const baseRuntime = {
     tags: {
         firstLoad: false,
         canLoadHistory: true,
+        loadHistoryFail: false,
         openSideBar: true,
         viewer: { index: 0 },
         msgType: BotMsgType.Array,
