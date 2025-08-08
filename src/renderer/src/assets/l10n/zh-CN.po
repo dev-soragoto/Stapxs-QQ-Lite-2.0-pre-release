@@ -1218,6 +1218,9 @@ msgstr ""
 msgid "这条消息迷失在虚空里了"
 msgstr ""
 
+msgid "空消息"
+msgstr ""
+
 msgid "移除未使用的配置"
 msgstr ""
 
