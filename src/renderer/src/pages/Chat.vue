@@ -536,8 +536,8 @@
             </div>
         </Transition>
         <div class="bg" :style="{
-			'backdrop-filter': `blur(${runtimeData.sysConfig .chat_background_blur}px)`
-			}" />
+            'backdrop-filter': `blur(${runtimeData.sysConfig .chat_background_blur}px)`
+        }" />
     </div>
 </template>
 

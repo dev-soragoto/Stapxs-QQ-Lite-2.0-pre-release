@@ -600,7 +600,7 @@
                     html: `
                         <header>以下配置将被删除</header>
                         <div style="color: var(--color-red);font-weight: 700;">
-                    ` + needless.join('<br>') + `</div>`,
+                    ` + needless.join('<br>') + '</div>',
                     button: [
                         {
                             text: this.$t('取消'),
