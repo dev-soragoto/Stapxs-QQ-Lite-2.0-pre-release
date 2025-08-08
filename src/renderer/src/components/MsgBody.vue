@@ -542,7 +542,7 @@
 				let imgWidth = img.naturalWidth || img.width
 				if (imgHeight > vh * 0.35)
 					imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
-				img.setAttribute('style', `--width: ${imgWidth}px`)
+				img.style.setProperty('--width', `${imgWidth}px`)  
                 this.$emit('imageLoaded', img.offsetHeight)
             },
 
