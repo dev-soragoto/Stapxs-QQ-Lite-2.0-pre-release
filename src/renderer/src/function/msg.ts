@@ -552,9 +552,23 @@ const msgFunctions = {
      * 保存聊天记录
      */
     getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
+        if (msg.data === null) {
+            new PopInfo().add(
+                PopType.ERR,
+                app.config.globalProperties.$t('获取历史记录失败'),
+            )
+            return
+        }
         saveMsg(msg, 'top')
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
+        if (msg.data === null) {
+            new PopInfo().add(
+                PopType.ERR,
+                app.config.globalProperties.$t('获取历史记录失败'),
+            )
+            return
+        }
         const pan = document.getElementById('msgPan')
         if(pan) {
             const oldScrollHeight = pan.scrollHeight
