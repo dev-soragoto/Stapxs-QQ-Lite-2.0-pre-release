@@ -1102,7 +1102,9 @@
             },
 			isFace(item: any) {
 				if (item.asface) return true
+				// 这是神马鬼玩意？一个驼峰，一个下划线，真是一个协议段一个协议啊
 				else if (item.subType == 7) return true
+				else if (item.sub_type == 7) return true
 				return false
 			}
         },
