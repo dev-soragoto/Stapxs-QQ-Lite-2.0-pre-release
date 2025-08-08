@@ -125,6 +125,17 @@
                 <input v-model="appmsg_text" class="ss-input"
                     style="width: 150px" type="text" @keyup="sendTestAppmsg">
             </div>
+            <div v-if="dev" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'trash']" />
+                <div>
+                    <span>{{ $t('移除未使用的配置') }}</span>
+                    <span>{{ $t('sudo rm -rf /etc') }}</span>
+                </div>
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click="rmNeedlessOption">
+                    {{ $t('执行') }}
+                </button>
+            </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'file-invoice']" />
                 <div>
@@ -213,6 +224,7 @@
         runASWEvent as save,
         saveAll,
         checkDefault,
+        optDefault,
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
@@ -221,12 +233,13 @@
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
-import { callBackend } from '@renderer/function/utils/systemUtil'
+    import { callBackend } from '@renderer/function/utils/systemUtil'
 
     export default defineComponent({
         name: 'ViewOptDev',
         data() {
             return {
+                dev: import.meta.env.DEV,
                 jsonMapName: runtimeData.jsonMap?.name ?? '',
 
                 checkDefault: checkDefault,
@@ -566,6 +579,49 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
             changeJsonMap() {
                 const getPath = loadJsonMap(this.jsonMapName)
                 if (getPath) runtimeData.jsonMap = getPath
+            },
+            // 查看配置文件
+            rmNeedlessOption() {
+                const needless: string[] = []
+                for (const key of Object.keys(runtimeData.sysConfig)) {
+                    if (optDefault[key] === undefined) {
+                        needless.push(key)
+                    }
+                }
+                if (needless.length === 0) {
+                    new PopInfo().add(
+                        PopType.INFO,
+                        this.$t('没有需要删除的配置项'),
+                    )
+                    return
+                }
+                const popInfo = {
+                    title: this.$t('转发消息'),
+                    html: `
+                        <header>以下配置将被删除</header>
+                        <div style="color: var(--color-red);font-weight: 700;">
+                    ` + needless.join('<br>') + `</div>`,
+                    button: [
+                        {
+                            text: this.$t('取消'),
+                            master: true,
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                        {
+                            text: this.$t('确定'),
+                            fun: () => {
+                                for (const key of needless) {
+                                    delete runtimeData.sysConfig[key]
+                                }
+                                saveAll(runtimeData.sysConfig)
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
             },
         },
     })

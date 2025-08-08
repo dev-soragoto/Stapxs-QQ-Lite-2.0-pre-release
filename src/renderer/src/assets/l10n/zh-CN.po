@@ -1241,3 +1241,9 @@ msgstr ""
 
 msgid "确认修改头衔？"
 msgstr ""
+
+msgid "移除未使用的配置"
+msgstr ""
+
+msgid "sudo rm -rf /etc"
+msgstr ""
