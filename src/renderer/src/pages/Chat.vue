@@ -1149,7 +1149,7 @@ import { wheelMask } from '@renderer/function/input'
                         const item = menu.children[0] as HTMLDivElement
                         menuWidth = item.clientWidth
                     }
-                    const maxWidth = document.body.clientWidth
+                    const maxWidth = window.innerWidth
                     if (pointX + menuWidth > maxWidth + 27) {
                         menu.style.marginLeft = maxWidth + 7 - menuWidth + 'px'
                     }

@@ -1136,19 +1136,20 @@ export function useStayEvent<T extends Event,C>(
     let startEventData: MenuEventData
     // 额外参数
     let ctx: C | undefined
-    function handle(event: T, _ctx?: C|undefined) {
+    const handle = (event: T, _ctx?: C|undefined) => {
         if (end) _acceptStartEvent(event, _ctx)
         else _acceptUpdateEvent(event)
     }
-    function handleEnd(event: T) {
+    const handleEnd = (event: T) => {
         if (end) return
         _acceptEndEvent(event)
     }
-    function _acceptStartEvent(event: T, _ctx?: C|undefined) {
+    const _acceptStartEvent = (event: T, _ctx?: C|undefined) => {
         fit = false
         end = false
         ctx = _ctx
         startPos = getPos(event) as {x: number, y: number}
+		if (!startPos) return
         startEventData = {
             x: startPos.x,
             y: startPos.y,
@@ -1159,7 +1160,7 @@ export function useStayEvent<T extends Event,C>(
             _callFit()
         }, continueTime) as unknown as number
     }
-    function _acceptUpdateEvent(event: T) {
+    const _acceptUpdateEvent = (event: T) => {
         if (end) return
         const pos = getPos(event)
         if (!pos) return
@@ -1170,20 +1171,20 @@ export function useStayEvent<T extends Event,C>(
                 _setEnd()
             }
     }
-    function _acceptEndEvent(event: T) {
+    const _acceptEndEvent = (event: T) => {
         if (end) return
         _setEnd()
         if (getPos(event)) _acceptUpdateEvent(event)
     }
     // ==工具函数=====================================
-    function _setEnd() {
+    const _setEnd = () => {
         end = true
         if (fit) _callLeave()
         else _callFail()
         // 清除定时器
         clearTimeout(timeout)
     }
-    function _callFit() {
+    const _callFit = () => {
         if (hooks.onFit?.length === 0) {
             (hooks.onFit as () => void)()
         } else if (hooks.onFit?.length === 1) {
@@ -1196,14 +1197,14 @@ export function useStayEvent<T extends Event,C>(
             (hooks.onFit as (eventData: MenuEventData, ctx?: C) => void)(startEventData, ctx)
         }
     }
-    function _callLeave() {
+    const _callLeave = () => {
         if (hooks.onLeave?.length === 0) {
             (hooks.onLeave as () => void)()
         } else if (hooks.onLeave?.length === 1) {
             (hooks.onLeave as (ctx?: C) => void)(ctx)
         }
     }
-    function _callFail() {
+    const _callFail = () => {
         if (hooks.onFail?.length === 0) {
             (hooks.onFail as () => void)()
         } else if (hooks.onFail?.length === 1) {
@@ -1249,7 +1250,7 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
     )
 
     // 创建指令
-    const out = {
+    return {
         mounted( el: HTMLElement, binding: Binding, ) {
             // 创建变量
             const prevent = binding.modifiers.prevent || false
@@ -1295,7 +1296,6 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
             delete (el as any)._vMenuController
         },
     }
-    return out
 }
 /**
  * 创建一个右键菜单指令
