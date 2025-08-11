@@ -58,6 +58,7 @@ export interface RunTimeDataElem {
         lastHeartbeatTime?: number
         backTimes: number
     }
+	inch: number
     messageList: any[]
     mergeMsgStack: MergeStackData[]
     mergeMessageList?: any[] | undefined
@@ -196,4 +197,10 @@ export interface MergeStackData{
     placeCache: number      // 位置缓存
     ready: boolean          // 就绪
     forwardMsg: any         // 原合并转发消息
+}
+
+export interface MenuEventData {
+    x: number
+    y: number
+    target: HTMLElement
 }

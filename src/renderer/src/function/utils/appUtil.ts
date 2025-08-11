@@ -13,14 +13,14 @@ import { KeyboardInfo } from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
-import { BaseChatInfoElem } from '@renderer/function/elements/information'
+import { BaseChatInfoElem, MenuEventData } from '@renderer/function/elements/information'
 import {
     hslToRgb,
     callBackend,
     rgbToHsl,
     addBackendListener
 } from '@renderer/function/utils/systemUtil'
-import { toRaw, nextTick } from 'vue'
+import { toRaw, nextTick, Directive } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
 import { Notify } from '../notify'
@@ -1067,3 +1067,210 @@ export function changeGroupNotice(group_id: number, open: boolean) {
         option.save('notice_group', noticeInfo)
     }
 }
+
+/**
+ * 用来封装一个停留事件的处理, 支持传递额外上下文
+ * 适用于鼠标或触摸事件，停留一段时间后触发
+ * 例如：长按菜单,鼠标悬浮等
+ * @param getPos 从事件里提取坐标的函数
+ * @param continueTime 成功的持续时间
+ * @param hooks 钩子函数 支持成功时,失败时,退出时
+ * @returns {
+ *   acceptStartEvent: (event: T, exArg?: E) => void, // 接受开始事件
+ *   acceptUpdateEvent: (event: T) => void, // 接受更新事件
+ *   acceptEndEvent: (event: T) => void // 接受结束事件
+ * }
+ */
+export function useStayEvent<T extends Event,C>(
+    getPos: (event: T)=>{x: number, y: number} | void,
+    hooks: {
+        onFit?: ((eventData: MenuEventData, ctx: C)=>void)
+              | ((eventData: MenuEventData)=>void)
+              | ((ctx: C)=>void)
+              | (()=>void)
+        onLeave?: ((ctx: C)=>void)
+                | (()=>void)
+        onFail?: ((ctx: C)=>void)
+               | (()=>void)
+    },
+    continueTime: number,
+): {
+    handle: (event: T, ctx?: C | undefined) => void,
+    handleEnd: (event: T) => void,
+} {
+    // 表示结束
+    let end: boolean = true
+    // 表示是否符合条件
+    let fit: boolean = false
+    // 记录开始位置
+    let startPos: {x: number, y: number} | undefined = undefined
+    // settiemout
+    let timeout: number
+    // 开始时事件数据
+    let startEventData: MenuEventData
+    // 额外参数
+    let ctx: C | undefined
+    function handle(event: T, _ctx?: C|undefined) {
+        if (end) _acceptStartEvent(event, _ctx)
+        else _acceptUpdateEvent(event)
+    }
+    function handleEnd(event: T) {
+        if (end) return
+        _acceptEndEvent(event)
+    }
+    function _acceptStartEvent(event: T, _ctx?: C|undefined) {
+        fit = false
+        end = false
+        ctx = _ctx
+        startPos = getPos(event) as {x: number, y: number}
+        startEventData = {
+            x: startPos.x,
+            y: startPos.y,
+            target: event.target as HTMLElement,
+        }
+        timeout = setTimeout(() => {
+            fit = true
+            _callFit()
+        }, continueTime) as unknown as number
+    }
+    function _acceptUpdateEvent(event: T) {
+        if (end) return
+        const pos = getPos(event)
+        if (!pos) return
+        if (!startPos) return
+        // 位置改变
+        if (Math.abs(pos.x - startPos.x) > 10 ||
+            Math.abs(pos.y - startPos.y) > 10) {
+                _setEnd()
+            }
+    }
+    function _acceptEndEvent(event: T) {
+        if (end) return
+        _setEnd()
+        if (getPos(event)) _acceptUpdateEvent(event)
+    }
+    // ==工具函数=====================================
+    function _setEnd() {
+        end = true
+        if (fit) _callLeave()
+        else _callFail()
+        // 清除定时器
+        clearTimeout(timeout)
+    }
+    function _callFit() {
+        if (hooks.onFit?.length === 0) {
+            (hooks.onFit as () => void)()
+        } else if (hooks.onFit?.length === 1) {
+            let arg
+            if (ctx) arg = ctx
+            else arg = startEventData;
+
+            (hooks.onFit as (arg: MenuEventData|C) => void)(arg)
+        } else if (hooks.onFit?.length === 2) {
+            (hooks.onFit as (eventData: MenuEventData, ctx?: C) => void)(startEventData, ctx)
+        }
+    }
+    function _callLeave() {
+        if (hooks.onLeave?.length === 0) {
+            (hooks.onLeave as () => void)()
+        } else if (hooks.onLeave?.length === 1) {
+            (hooks.onLeave as (ctx?: C) => void)(ctx)
+        }
+    }
+    function _callFail() {
+        if (hooks.onFail?.length === 0) {
+            (hooks.onFail as () => void)()
+        } else if (hooks.onFail?.length === 1) {
+            (hooks.onFail as (ctx?: C) => void)(ctx)
+        }
+    }
+    return {
+        handle,
+        handleEnd,
+    }
+}
+
+/**
+ * 创建一个右键菜单指令
+ * 用于闭包公用停留事件控制器
+ * @returns
+ */
+function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
+    // 右键菜单事件数据类型
+    type Binding = DirectiveBinding<(event: MenuEventData)=>void> & { modifiers: {prevent?: boolean, stop?: boolean} }
+
+    // 右键菜单事件数据类型
+    const {
+        handle: menuTouchHandle,
+        handleEnd: menuTouchEnd,
+    } = useStayEvent(
+        (event: TouchEvent) => {
+            if (event.touches.length > 0) {
+                const touch = event.touches[0]
+                return { x: touch.clientX, y: touch.clientY }
+            }
+            return undefined
+        },
+        {
+            onFit: (data: MenuEventData, binding: Binding) => {
+                // 触发右键菜单事件
+                binding.value(data)
+            }
+        },
+        400,
+    )
+
+    // 创建指令
+    const out = {
+        mounted( el: HTMLElement, binding: Binding, ) {
+            // 创建变量
+            const prevent = binding.modifiers.prevent || false
+            const stop = binding.modifiers.stop || false
+            const controller = new AbortController()
+            const options = {signal: controller.signal}
+
+            // 添加监听
+            el.addEventListener('contextmenu', (event) => {
+                if (prevent) event.preventDefault()
+                if (stop) event.stopPropagation()
+                const data: MenuEventData = {
+                    x: event.clientX,
+                    y: event.clientY,
+                    target: event.target as HTMLElement,
+                }
+                binding.value(data)
+            }, options)
+            el.addEventListener('touchstart', (event) => {
+                if (prevent) event.preventDefault()
+                if (stop) event.stopPropagation()
+                menuTouchHandle(event, binding)
+            }, options)
+            el.addEventListener('touchmove', (event) => {
+                if (prevent) event.preventDefault()
+                if (stop) event.stopPropagation()
+                menuTouchHandle(event, binding)
+            }, options)
+            el.addEventListener('touchend', (event) => {
+                if (prevent) event.preventDefault()
+                if (stop) event.stopPropagation()
+                menuTouchEnd(event)
+            }, options)
+
+            // 绑定控制器
+            ;(el as any)._vMenuController = controller
+        },
+        unmounted(el: HTMLElement) {
+            const controller = (el as any)._vMenuController
+            if (!controller) return
+
+            controller.abort()
+            delete (el as any)._vMenuController
+        },
+    }
+    return out
+}
+/**
+ * 创建一个右键菜单指令
+ * @example v-menu="(data: MenuEventData) =>  打开菜单函数(data, 其他参数)"
+ */
+export const vMenu: Directive<HTMLElement, (event: MenuEventData)=>void, 'prevent' | 'stop'> = createVMenu()

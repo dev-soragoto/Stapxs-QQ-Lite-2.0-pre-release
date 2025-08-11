@@ -393,6 +393,7 @@ input {
 }
 
 .msg-menu {
+	pointer-events: none;
     position: absolute;
     overflow: hidden;
     height: calc(100% - var(--safe-area-bottom)) !important;
