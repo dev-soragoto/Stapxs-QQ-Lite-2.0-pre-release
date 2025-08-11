@@ -738,6 +738,7 @@ const msgFunctions = {
         // runtimeData.chatInfo.info.user_info =
         //     msg.data.data.result.buddy.info_list[0]
         const data = getMsgData('friend_info', msg, msgPath.friend_info)[0]
+		data.regTime = new Date(data.reg_time).getTime()
         if(data) {
             runtimeData.chatInfo.info.user_info = data
         }
@@ -1008,12 +1009,15 @@ const msgFunctions = {
     /**
      * 获取群成员更多信息
      */
-    getGroupMemberInfo: (_: string, msg: { [key: string]: any }) => {
+    getGroupMemberInfo: (
+		_: string,
+		msg: { [key: string]: any },
+        echoList: string[],
+	) => {
         if (msg.data != undefined) {
             const data = msg.data
-            const pointInfo = msg.echo.split('_')
-            data.x = pointInfo[1]
-            data.y = pointInfo[2]
+            data.x = echoList[1]
+            data.y = echoList[2]
             runtimeData.chatInfo.info.now_member_info = data
         }
     },

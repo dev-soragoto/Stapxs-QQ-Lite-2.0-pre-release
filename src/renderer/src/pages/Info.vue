@@ -74,7 +74,7 @@
                                 )) }}
                             </span>
                         </span>
-                        <span>{{ $t('地区') }}:
+                        <span v-if="chat.info.user_info.country">{{ $t('地区') }}:
                             <span>
                                 {{
                                     `${chat.info.user_info.country}-${

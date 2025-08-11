@@ -462,6 +462,9 @@
     border-radius: 100%;
     margin-right: 10px;
 }
+.bot-status.loading {
+    opacity: 1 !important;
+}
 .bot-status.normal > div {
     background: var(--color-green);
 }

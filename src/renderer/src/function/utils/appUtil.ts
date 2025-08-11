@@ -355,6 +355,8 @@ export function createMenu() {
         menuTitles.unhide = $t('全部显示')
         menuTitles.quit = $t('退出') + ' ' + $t('Stapxs QQ Lite')
 
+        menuTitles.close = $t('关闭窗口')
+
         menuTitles.edit = $t('编辑')
         menuTitles.undo = $t('撤销')
         menuTitles.redo = $t('重做')
@@ -1069,6 +1071,30 @@ export function changeGroupNotice(group_id: number, open: boolean) {
 }
 
 /**
+ * 是否应该自动聚焦输入框
+ * @returns
+ */
+export function shouldAutoFocus(): boolean {
+    // 桌面端
+    if (runtimeData.tags.clientType !== 'web') {
+        // 除了苹果的不知道啥东西,都可以
+        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+            return true
+        }
+        return false
+    }
+    // web端
+    else {
+        // 移动端浏览器不自动聚焦
+        if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            return false
+        }
+        return true
+    }
+}
+
+//#region == use封装 ========================================
+/**
  * 用来封装一个停留事件的处理, 支持传递额外上下文
  * 适用于鼠标或触摸事件，停留一段时间后触发
  * 例如：长按菜单,鼠标悬浮等
@@ -1189,7 +1215,9 @@ export function useStayEvent<T extends Event,C>(
         handleEnd,
     }
 }
+//#endregion
 
+//#region == v命令封装 ======================================
 /**
  * 创建一个右键菜单指令
  * 用于闭包公用停留事件控制器
@@ -1274,3 +1302,25 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
  * @example v-menu="(data: MenuEventData) =>  打开菜单函数(data, 其他参数)"
  */
 export const vMenu: Directive<HTMLElement, (event: MenuEventData)=>void, 'prevent' | 'stop'> = createVMenu()
+/**
+ * 挂在时如果设备支持,自动聚焦输入框
+ */
+export const vAutoFocus: Directive<HTMLInputElement|HTMLTextAreaElement, undefined> = {
+    mounted(el: HTMLInputElement|HTMLTextAreaElement) {
+        // 判断是否支持聚焦
+        if (!shouldAutoFocus()) return
+
+        // 检查元素是否可见
+        const isVisible = () => {
+            const style = window.getComputedStyle(el)
+            return style.display !== 'none' &&
+                   style.visibility !== 'hidden' &&
+                   style.opacity !== '0'
+        }
+
+        if (!isVisible()) return
+
+        el.focus()
+    }
+}
+//#endregion

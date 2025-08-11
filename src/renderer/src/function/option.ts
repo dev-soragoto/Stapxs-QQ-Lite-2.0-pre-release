@@ -457,6 +457,7 @@ function loadOptData(data: { [key: string]: any }) {
 		new PopInfo().add(
 			PopType.INFO,
 			'发现' + needless.length + '条未使用的配置属性',
+			false,
 		)
 	}
     

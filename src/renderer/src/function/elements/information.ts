@@ -1,10 +1,12 @@
+import { optDefault } from '../option'
+
 export enum BotMsgType {
     CQCode,
     Array
 }
 
 export interface RunTimeDataElem {
-    sysConfig: { [key: string]: any }
+    sysConfig: Record<keyof typeof optDefault, any|null>
     jsonMap?: any
     botInfo: { [key: string]: any }
     loginInfo: { [key: string]: any }

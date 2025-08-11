@@ -63,7 +63,11 @@
                 @touchmove.stop="msgKeepMove($event)"
                 @wheel.stop="msgMoveWheel($event)">
                 <!-- 消息体 -->
-                <template v-if="!hasCard()">
+                <!-- 消息体 -->
+                <template v-if="data.message.length === 0">
+                    <span class="msg-text" style="opacity: 0.5">{{ $t('空消息') }}</span>
+                </template>
+                <template v-else-if="!hasCard()">
                     <div v-for="(item, index) in data.message"
                         :key="data.message_id + '-m-' + index"
                         :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">

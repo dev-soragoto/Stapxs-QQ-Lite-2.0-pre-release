@@ -1217,3 +1217,36 @@ msgstr ""
 
 msgid "这条消息迷失在虚空里了"
 msgstr ""
+
+msgid "等级"
+msgstr ""
+
+msgid "这个人很懒什么都没有写～"
+msgstr ""
+
+msgid "注册时间"
+msgstr ""
+
+msgid "确认修改昵称？"
+msgstr ""
+
+msgid "确认"
+msgstr ""
+
+msgid "正在确认操作……"
+msgstr ""
+
+msgid "确认禁言？"
+msgstr ""
+
+msgid "确认修改头衔？"
+msgstr ""
+
+msgid "空消息"
+msgstr ""
+
+msgid "移除未使用的配置"
+msgstr ""
+
+msgid "sudo rm -rf /etc"
+msgstr ""

@@ -54,6 +54,7 @@
     import { runtimeData } from '@renderer/function/msg'
     import { openLink } from '@renderer/function/utils/appUtil'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
+import app from '@renderer/main'
 
     export default defineComponent({
         name: 'BulletinBody',
@@ -103,6 +104,13 @@
                     const link = target.dataset.link
                     openLink(link)
                 }
+            },
+            getSenderName(): string {
+                const { $t } = app.config.globalProperties
+                const result = runtimeData.chatInfo.info.group_members.filter((item) => {
+                    return Number(item.user_id) === Number(this.data.sender)
+                }).at(0)?.nickname
+                return result ?? $t('已退群( {userId} )', { userId: Number(this.data.sender) })
             },
         },
     })
