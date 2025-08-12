@@ -210,7 +210,7 @@
     margin: -10px;
 }
 .msg-img.face {
-    max-width: calc(50% + 20px);
+	max-width: calc(var(--width) / 2 + 20px);
 }
 
 .msg-face {
