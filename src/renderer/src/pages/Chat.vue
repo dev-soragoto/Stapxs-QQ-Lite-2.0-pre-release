@@ -70,6 +70,10 @@
                 <hr>
                 <a>{{ $t('没有更多消息了') }}</a>
             </div>
+            <div v-if="runtimeData.tags.loadHistoryFail" class="note note-nomsg">
+                <hr>
+                <a>{{ $t('获取历史记录失败') }}</a>
+            </div>
             <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
             <NoticeBody v-if="tags.nowGetHistroy && list.length > 0"
                 :data="{ sub_type: 'time', time: list[0].time }" />
@@ -798,6 +802,8 @@
                     const firstMsgId = this.list[0].message_id
                     // 锁定加载防止反复触发
                     this.tags.nowGetHistroy = true
+					// 移除加载失败标志
+					runtimeData.tags.loadHistoryFailed = false
                     // 发起获取历史消息请求
                     const fullPage =
                         runtimeData.jsonMap.message_list?.pagerType == 'full'
