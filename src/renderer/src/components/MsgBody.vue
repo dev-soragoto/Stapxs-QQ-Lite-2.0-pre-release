@@ -76,14 +76,14 @@
                             :id="getMdHTML(item.content, 'msg-md-' + data.message_id)"
                             class="msg-md" />
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
-                            :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
+                            :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
                             :src="item.url"
                             @load="imageLoaded"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
                             :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                             :alt="$t('图片')"
-                            :class=" imgStyle(data.message.length, index, item.asface)"
+                            :class=" imgStyle(data.message.length, index, isFace(item))"
                             :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
                             @load="imageLoaded"
                             @error="imgLoadFail"
@@ -540,6 +540,13 @@
              */
             imageLoaded(event: Event) {
                 const img = event.target as HTMLImageElement
+				// 计算图片宽度
+				const vh = document.documentElement.clientHeight || document.body.clientHeight
+				const imgHeight = img.naturalHeight || img.height
+				let imgWidth = img.naturalWidth || img.width
+				if (imgHeight > vh * 0.35)
+					imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
+				img.style.setProperty('--width', `${imgWidth}px`)  
                 this.$emit('imageLoaded', img.offsetHeight)
             },
 
@@ -1096,7 +1103,14 @@
                     data.imageList = imgList
                 }
                 runtimeData.mergeMsgStack.push(data)
-            }
+            },
+			isFace(item: any) {
+				if (item.asface) return true
+				// 这是神马鬼玩意？一个驼峰，一个下划线，真是一个协议段一个协议啊
+				else if (item.subType == 7) return true
+				else if (item.sub_type == 7) return true
+				return false
+			}
         },
     })
 </script>
