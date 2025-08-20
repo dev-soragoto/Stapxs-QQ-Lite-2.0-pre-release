@@ -13,7 +13,7 @@
         class="tiny-session-body"
         :class="{
             'selected': selected,
-        }" >
+        }">
         <div />
         <img loading="lazy"
             :title="getShowName(session.group_name || session.nickname, session.remark)"
