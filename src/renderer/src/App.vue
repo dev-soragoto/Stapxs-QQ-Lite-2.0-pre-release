@@ -194,6 +194,8 @@
                 <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose != false && runtimeData.popBoxList[0].allowClose != false)" />
             </div>
         </Transition>
+        <!-- 全局搜索栏 -->
+        <GlobalSessionSearchBar />
         <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
             :options="viewerOpt"
             :images="runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list"
@@ -229,6 +231,7 @@ import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
+import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 
 export default defineComponent({
     name: 'App',
@@ -236,7 +239,8 @@ export default defineComponent({
         Options,
         Friends,
         Messages,
-        Chat
+        Chat,
+        GlobalSessionSearchBar,
     },
     data() {
         return {
