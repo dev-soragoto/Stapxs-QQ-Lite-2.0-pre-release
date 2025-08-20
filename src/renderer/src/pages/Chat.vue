@@ -134,8 +134,7 @@
                         @scroll-to-msg="scrollToMsg"
                         @show-menu="showMsgMeun"
                         @image-loaded="imgLoadedScroll"
-                        @left-move="replyMsg"
-                        />
+                        @left-move="replyMsg" />
                 </template>
             </TransitionGroup>
         </div>
@@ -805,7 +804,7 @@ import { wheelMask } from '@renderer/function/input'
                     // 锁定加载防止反复触发
                     this.tags.nowGetHistroy = true
 					// 移除加载失败标志
-					runtimeData.tags.loadHistoryFailed = false
+					runtimeData.tags.loadHistoryFail = false
                     // 发起获取历史消息请求
                     const fullPage =
                         runtimeData.jsonMap.message_list?.pagerType == 'full'
@@ -932,7 +931,8 @@ import { wheelMask } from '@renderer/function/input'
              * 通过表单提交方式发送消息
              * PS：主要用来解决一些奇奇怪怪的回车判定导致的问题
              */
-            mainSubmit() {
+            mainSubmit(event) {
+                event.preventDefault()
                 if (this.msg != '') {
                     this.sendMsg()
                 }

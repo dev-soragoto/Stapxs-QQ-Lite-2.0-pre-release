@@ -192,7 +192,7 @@ app.on('ready', async () => {
 
         // 确认文件存在并返回内容
         try {
-            const fileContent = await fs.promises.readFile(filePath);
+            const fileContent = await fs.promises.readFile(filePath) as any;
             return new Response(fileContent, {
                 headers: { 'Content-Type': getMimeType(filePath) },
             });

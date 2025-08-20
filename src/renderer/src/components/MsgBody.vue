@@ -22,8 +22,8 @@
         :data-time="data.time"
         @mouseleave="hiddenUserInfo">
         <img v-show="!isMe || type == 'merge'"
-            name="avatar"
             v-menu.prevent="event => $emit('showMenu', event, data)"
+            name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
             @dblclick="sendPoke">
         <div v-if="isMe && type != 'merge'"
@@ -391,6 +391,7 @@ defineEmits<{
     export default defineComponent({
         name: 'MsgBody',
         props: ['data', 'type', 'selected'],
+        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke', 'showMenu', 'rightMove', 'leftMove'],
         data() {
             return {
                 md: markdownit({ breaks: true }),
@@ -568,7 +569,7 @@ defineEmits<{
                 let imgWidth = img.naturalWidth || img.width
                 if (imgHeight > vh * 0.35)
                     imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
-                img.style.setProperty('--width', `${imgWidth}px`)  
+                img.style.setProperty('--width', `${imgWidth}px`)
                 this.$emit('imageLoaded', img.offsetHeight)
             },
 
