@@ -390,6 +390,19 @@ export function getTimeConfig(date: Date) {
 }
 
 /**
+ * 获得一英尺的像素点数
+ */
+export function getInch(): number {
+    const div = document.createElement('div')
+    div.style.width = '1in'
+    div.style.visibility = 'hidden'
+    document.body.appendChild(div)
+    const dpi = div.offsetWidth
+    document.body.removeChild(div)
+    return dpi
+}
+
+/**
  * 调用后端方法
  *
  * #### 方法名称

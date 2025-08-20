@@ -15,8 +15,10 @@
             (runtimeData.tags.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
-        @touchmove="ChatOnMove"
-        @touchend="chatMoveEnd">
+        @touchstart="chatMoveStartEvent"
+        @touchmove="chatMoveEvent"
+        @touchend="chatMoveEndEvent"
+        @wheel="chatWheelEvent">
         <!-- 聊天基本信息 -->
         <div class="info">
             <font-awesome-icon :icon="['fas', 'bars-staggered']" @click="openLeftBar" />
@@ -94,15 +96,13 @@
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
-                        :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
+                        :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
                         @click="msgClick($event, msgIndex)"
+                        @show-menu="showMsgMeun"
                         @scroll-to-msg="scrollToMsg"
                         @image-loaded="imgLoadedScroll"
-                        @contextmenu.prevent="showMsgMeun($event, msgIndex)"
-                        @touchstart="msgStartMove($event, msgIndex)"
-                        @touchmove="msgOnMove"
-                        @touchend="msgMoveEnd($event, msgIndex)"
+                        @left-move="replyMsg"
                         @send-poke="sendPoke" />
                     <!-- 其他通知消息 -->
                     <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
@@ -129,14 +129,13 @@
                                  msgIndex.post_type === 'message_sent') &&
                                  msgIndex.message.length > 0"
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
-                        :selected="multipleSelectList.includes(msgIndex.message_id) || tags.openedMenuMsg?.id == 'chat-' + msgIndex.message_id"
+                        :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
                         @scroll-to-msg="scrollToMsg"
+                        @show-menu="showMsgMeun"
                         @image-loaded="imgLoadedScroll"
-                        @contextmenu.prevent="showMsgMeun($event, msgIndex)"
-                        @touchstart="msgStartMove($event, msgIndex)"
-                        @touchmove="msgOnMove"
-                        @touchend="msgMoveEnd($event, msgIndex)" />
+                        @left-move="replyMsg"
+                        />
                 </template>
             </TransitionGroup>
         </div>
@@ -324,7 +323,7 @@
                     <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'face'" :icon="['fas', 'face-laugh']" />
                 </div>
                 <div>
-                    <form @submit.prevent="mainSubmit">
+                    <form @submit="mainSubmit">
                         <input v-if="!Option.get('use_breakline')"
                             id="main-input"
                             v-model="msg"
@@ -398,79 +397,81 @@
             </div>
         </div>
         <!-- 消息右击菜单 -->
-        <div :class="'msg-menu' + (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
-            <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
-            <div id="msgMenu" :class="tags.showMsgMenu ?
-                'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
-                <div v-if="runtimeData.chatInfo.show.type == 'group'"
-                    v-show="tags.menuDisplay.showRespond"
-                    :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
-                    <template v-for="(num, index) in respondIds" :key="'respond-' + num">
-                        <img v-if="getFace(num) != ''" loading="lazy"
-                            :src="getFace(num) as any" @click="sendRespond(num)">
-                        <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']" @click="tags.menuDisplay.respond = true" />
-                    </template>
-                </div>
-                <div v-show="tags.menuDisplay.add" @click="forwardSelf()">
-                    <div><font-awesome-icon :icon="['fas', 'plus']" /></div>
-                    <a>{{ $t('+ 1') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.relpy" @click="replyMsg(true)">
-                    <div><font-awesome-icon :icon="['fas', 'message']" /></div>
-                    <a>{{ $t('回复') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.forward" @click="showForWard()">
-                    <div><font-awesome-icon :icon="['fas', 'share']" /></div>
-                    <a>{{ $t('转发') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.select" @click="intoMultipleSelect()">
-                    <div><font-awesome-icon :icon="['fas', 'circle-check']" /></div>
-                    <a>{{ $t('多选') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.copy" @click="copyMsg">
-                    <div><font-awesome-icon :icon="['fas', 'clipboard']" /></div>
-                    <a>{{ $t('复制') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.copySelect" @click="copySelectMsg">
-                    <div><font-awesome-icon :icon="['fas', 'code']" /></div>
-                    <a>{{ $t('复制选中文本') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.downloadImg != false" @click="downloadImg">
-                    <div><font-awesome-icon :icon="['fas', 'floppy-disk']" /></div>
-                    <a>{{ $t('下载图片') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.revoke" @click="revokeMsg">
-                    <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
-                    <a>{{ $t('撤回') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.at"
-                    @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: selectedMsg.sender.user_id }, addText: true, }): '';
-                            toMainInput();
-                            closeMsgMenu()">
-                    <div><font-awesome-icon :icon="['fas', 'at']" /></div>
-                    <a>{{ $t('提及') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.poke" @click="sendPoke(selectedMsg ? selectedMsg.sender.user_id : undefined)">
-                    <div><font-awesome-icon :icon="['fas', 'fa-hand-point-up']" /></div>
-                    <a>{{ $t('戳一戳') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.remove" @click="removeUser">
-                    <div><font-awesome-icon :icon="['fas', 'trash-can']" /></div>
-                    <a>{{ $t('移出群聊') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.config"
-                    @click="openChatInfoPan();
-                            ($refs.infoRef as any).openMoreConfig(selectedMsg?.sender.user_id);
-                            closeMsgMenu();">
-                    <div><font-awesome-icon :icon="['fas', 'cog']" /></div>
-                    <a>{{ $t('成员设置') }}</a>
-                </div>
-                <div v-show="tags.menuDisplay.jumpToMsg" @click="jumpSearchMsg">
-                    <div><font-awesome-icon :icon="['fas', 'arrow-up-right-from-square']" /></div>
-                    <a>{{ $t('跳转到消息') }}</a>
+        <Teleport to="body">
+            <div :class="'msg-menu' + (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
+                <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
+                <div id="msgMenu" :class="tags.showMsgMenu ?
+                    'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
+                    <div v-if="runtimeData.chatInfo.show.type == 'group'"
+                        v-show="tags.menuDisplay.showRespond"
+                        :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
+                        <template v-for="(num, index) in respondIds" :key="'respond-' + num">
+                            <img v-if="getFace(num) != ''" loading="lazy"
+                                :src="getFace(num) as any" @click="sendRespond(num)">
+                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']" @click="tags.menuDisplay.respond = true" />
+                        </template>
+                    </div>
+                    <div v-show="tags.menuDisplay.add" @click="forwardSelf()">
+                        <div><font-awesome-icon :icon="['fas', 'plus']" /></div>
+                        <a>{{ $t('+ 1') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.relpy" @click="menuReplyMsg(true)">
+                        <div><font-awesome-icon :icon="['fas', 'message']" /></div>
+                        <a>{{ $t('回复') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.forward" @click="showForWard()">
+                        <div><font-awesome-icon :icon="['fas', 'share']" /></div>
+                        <a>{{ $t('转发') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.select" @click="intoMultipleSelect()">
+                        <div><font-awesome-icon :icon="['fas', 'circle-check']" /></div>
+                        <a>{{ $t('多选') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.copy" @click="copyMsg">
+                        <div><font-awesome-icon :icon="['fas', 'clipboard']" /></div>
+                        <a>{{ $t('复制') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.copySelect" @click="copySelectMsg">
+                        <div><font-awesome-icon :icon="['fas', 'code']" /></div>
+                        <a>{{ $t('复制选中文本') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.downloadImg != false" @click="downloadImg">
+                        <div><font-awesome-icon :icon="['fas', 'floppy-disk']" /></div>
+                        <a>{{ $t('下载图片') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.revoke" @click="revokeMsg">
+                        <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
+                        <a>{{ $t('撤回') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.at"
+                        @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: selectedMsg.sender.user_id }, addText: true, }): '';
+                                toMainInput();
+                                closeMsgMenu()">
+                        <div><font-awesome-icon :icon="['fas', 'at']" /></div>
+                        <a>{{ $t('提及') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.poke" @click="sendPoke(selectedMsg ? selectedMsg.sender.user_id : undefined)">
+                        <div><font-awesome-icon :icon="['fas', 'fa-hand-point-up']" /></div>
+                        <a>{{ $t('戳一戳') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.remove" @click="removeUser">
+                        <div><font-awesome-icon :icon="['fas', 'trash-can']" /></div>
+                        <a>{{ $t('移出群聊') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.config"
+                        @click="openChatInfoPan();
+                                ($refs.infoRef as any).openMoreConfig(selectedMsg?.sender.user_id);
+                                closeMsgMenu();">
+                        <div><font-awesome-icon :icon="['fas', 'cog']" /></div>
+                        <a>{{ $t('成员设置') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.jumpToMsg" @click="jumpSearchMsg">
+                        <div><font-awesome-icon :icon="['fas', 'arrow-up-right-from-square']" /></div>
+                        <a>{{ $t('跳转到消息') }}</a>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Teleport>
         <!-- 群 / 好友信息弹窗 -->
         <Transition>
             <Info ref="infoRef" :chat="chat" :tags="tags"
@@ -588,7 +589,9 @@
         GroupMemberInfoElem,
         UserFriendElem,
         UserGroupElem,
+        MenuEventData,
     } from '@renderer/function/elements/information'
+import { wheelMask } from '@renderer/function/input'
 
 
     export default defineComponent({
@@ -616,12 +619,12 @@
                     showMoreDetail: false,
                     showMsgMenu: false,
                     showForwardPan: false,
-                    openedMenuMsg: {} as any | null,
                     openChatInfo: false,
                     isReply: false,
                     isJinLoading: false,
                     onAtFind: false,
                     menuDisplay: {
+                        menuSelectedMsgId: null as string | null,
                         jumpToMsg: false,
                         add: true,
                         relpy: true,
@@ -648,12 +651,13 @@
                         msgOnTouchDown: false,
                         onMove: 'no',
                     },
-                    chatTouch: {
-                        startX: -1,
-                        startY: -1,
-                        openSuccess: false,
-                        onScroll: false
-                    }
+                    chatMove: {
+                        move: 0,
+                        onScroll: 'none' as 'none' | 'touch' | 'wheel',
+                        lastTime: null as null | number,
+                        speedList: [] as number[],
+                        touchLast: null as null | TouchEvent,
+                    },
                 },
                 details: [
                     { open: false },
@@ -728,23 +732,21 @@
             if(runtimeData.tags.clientType == 'capacitor' &&
                 runtimeData.tags.platform === 'android') {
                 addBackendListener('App', 'backButton', () => {
-                    // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
-                    this.tags.chatTouch.openSuccess = true
-                    this.chatMoveEnd()
+                    this.exitWin()
                 })
             }
             // Web：系统返回操作
             this.$watch(() => runtimeData.watch.backTimes, () => {
-                // PS：这儿复用了触屏操作的逻辑……所以看起来怪怪的
-                this.tags.chatTouch.openSuccess = true
-                    this.chatMoveEnd()
+                this.exitWin()
+
             })
         },
         methods: {
             jumpSearchMsg() {
                 this.closeSearch()
                 setTimeout(() => {
-                    this.scrollToMsg(this.tags.openedMenuMsg?.id)
+                    if (!this.selectedMsg) return
+                    this.scrollToMsg('chat-' + this.selectedMsg?.message_id)
                     this.closeMsgMenu()
                 }, 100)
             },
@@ -998,8 +1000,9 @@
              * @param event 右击事件
              * @param data 消息信息
              */
-            showMsgMeun(event: Event, data: any) {
+            showMsgMeun(event: MenuEventData, data: any) {
                 this.selectedMsg = data
+                this.tags.menuDisplay.menuSelectedMsgId = data.message_id
 
                 if (Option.get('log_level') === 'debug') {
                     new Logger().debug('右击消息：' + data)
@@ -1010,7 +1013,6 @@
                 }
 
                 const menu = document.getElementById('msgMenu')
-                let msg = event.currentTarget as HTMLDivElement
                 const select = event.target as HTMLElement
                 let selectUserType = 'member'
                 if (
@@ -1025,12 +1027,8 @@
                         },
                     )
                 }
-                // FIX：Safari 的 contextmenu 事件并没有返回 currentTarget
-                // 如果没有获取到 currentTarget，使用屏幕点击事件得到的值
-                if (msg == null && this.tags.openedMenuMsg) {
-                    msg = this.tags.openedMenuMsg.msg
-                }
-                if (menu !== null && msg !== null) {
+
+                if (menu !== null && data !== null) {
                     // 关闭回应功能
                     if (get('close_respond') == true) {
                         this.tags.menuDisplay.showRespond = false
@@ -1121,7 +1119,7 @@
                             textBody.className.indexOf('msg-text') > -1 &&
                             selection.focusNode == selection.anchorNode &&
                             textMsg &&
-                            textMsg.id == msg.id
+                            textMsg.id == data.message_id
                         ) {
                             // 用于判定是否选中了 msg-text 且开始和结束是同一个 Node（防止跨消息复制）
                             this.selectCache = selection.toString()
@@ -1145,23 +1143,8 @@
                         }
                     }
                     // 鼠标位置
-                    const pointEvent =
-                        (event as PointerEvent) ||
-                        (window.event as PointerEvent)
-                    let pointX =
-                        pointEvent.clientX -
-                        msg.getBoundingClientRect().left +
-                        20
-                    let pointY = pointEvent.clientY
-                    // FIX：Safari 的 contextmenu 事件的 Event 不完整
-                    // 如果无法获取坐标则从触屏事件获取
-                    if (pointY == undefined) {
-                        pointX =
-                            this.tags.openedMenuMsg.x -
-                            msg.getBoundingClientRect().left +
-                            20
-                        pointY = this.tags.openedMenuMsg.y
-                    }
+                    const pointX = event.x
+                    const pointY = event.y
                     // 移动菜单位置
                     menu.style.marginLeft = pointX + 'px'
                     menu.style.marginTop = pointY + 'px'
@@ -1172,9 +1155,9 @@
                         const item = menu.children[0] as HTMLDivElement
                         menuWidth = item.clientWidth
                     }
-                    const msgWidth = msg.offsetWidth
-                    if (pointX + menuWidth > msgWidth + 27) {
-                        menu.style.marginLeft = msgWidth + 7 - menuWidth + 'px'
+                    const maxWidth = window.innerWidth
+                    if (pointX + menuWidth > maxWidth + 27) {
+                        menu.style.marginLeft = maxWidth + 7 - menuWidth + 'px'
                     }
                     // 显示菜单
                     this.tags.showMsgMenu = true
@@ -1189,7 +1172,6 @@
                                 bodyHeight - menuHeight - 10 + 'px'
                         }
                     }, 100)
-                    this.tags.openedMenuMsg = msg
                 }
             },
 
@@ -1198,6 +1180,7 @@
              */
             initMenuDisplay() {
                 this.tags.menuDisplay = {
+                    menuSelectedMsgId : null,
                     jumpToMsg: false,
                     add: true,
                     relpy: true,
@@ -1219,26 +1202,30 @@
             /**
              * 回复消息
              */
-            replyMsg(closeMenu = true) {
+            menuReplyMsg(closeMenu = true) {
                 const msg = this.selectedMsg
-                if (msg !== null) {
-                    const msgId = msg.message_id
-                    // 添加回复内容
-                    // PS：这儿还是用旧的方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
-                    this.addSpecialMsg({
-                        msgObj: { type: 'reply', id: String(msgId) },
-                        addText: false,
-                        addTop: true,
-                    })
-                    // 显示回复指示器
-                    this.tags.isReply = true
-                    // 聚焦输入框
-                    this.toMainInput()
-                    // 关闭消息菜单
-                    if (closeMenu) {
-                        this.closeMsgMenu()
-                    }
+                if (!msg) return
+
+                this.replyMsg(msg)
+                // 关闭消息菜单
+                if (closeMenu) {
+                    this.closeMsgMenu()
                 }
+            },
+            replyMsg(msg: any) {
+                const msgId = msg.message_id
+                this.selectedMsg = msg
+                // 添加回复内容
+                // PS：这儿还是用旧的方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
+                this.addSpecialMsg({
+                    msgObj: { type: 'reply', id: String(msgId) },
+                    addText: false,
+                    addTop: true,
+                })
+                // 显示回复指示器
+                this.tags.isReply = true
+                // 聚焦输入框
+                this.toMainInput()
             },
 
             /**
@@ -1596,7 +1583,7 @@
             closeMsgMenu() {
                 // 关闭菜单
                 this.tags.showMsgMenu = false
-                if (this.tags.openedMenuMsg) this.tags.openedMenuMsg = null
+                this.tags.menuDisplay.menuSelectedMsgId = null
                 setTimeout(() => {
                     // 重置菜单显示状态
                     this.initMenuDisplay()
@@ -2160,109 +2147,6 @@
             },
 
             /**
-             * 消息触屏开始
-             * @param event 触摸事件
-             */
-            msgStartMove(event: TouchEvent, msg: any) {
-                const logger = new Logger()
-                logger.add(LogType.UI, '消息触屏点击事件开始 ……')
-                this.tags.msgTouch.msgOnTouchDown = true
-                this.tags.msgTouch.x = event.targetTouches[0].pageX
-                this.tags.msgTouch.y = event.targetTouches[0].pageY
-
-                // PS：保存这个只是在 Safari 下菜单事件无法获取到
-                this.tags.openedMenuMsg = {
-                    msg: event.currentTarget as HTMLDivElement,
-                    x: event.targetTouches[0].pageX,
-                    y: event.targetTouches[0].pageY,
-                }
-
-                // 消息长按事件，计时判定长按
-                setTimeout(() => {
-                    logger.add(
-                        LogType.UI,
-                        '消息触屏长按判定：' +
-                            this.tags.msgTouch.msgOnTouchDown,
-                    )
-                    if (this.tags.msgTouch.msgOnTouchDown === true) {
-                        this.showMsgMeun(event, msg)
-                    }
-                }, 400)
-            },
-
-            /**
-             * 消息触屏移动
-             * @param event 触摸事件
-             */
-            msgOnMove(event: TouchEvent) {
-                const logger = new Logger()
-                const sender = event.currentTarget as HTMLDivElement
-                const msgPan = document.getElementById('msgPan')
-                // 开始点击的位置
-                const startX = this.tags.msgTouch.x
-                const startY = this.tags.msgTouch.y
-                // TODO: 懒得写了，移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
-                // const maxTop = sender.
-                if (startX > -1 && startY > -1 && msgPan) {
-                    // 计算移动差值
-                    const dx = Math.abs(startX - event.targetTouches[0].pageX)
-                    const dy = Math.abs(startY - event.targetTouches[0].pageY)
-                    const x = startX - event.targetTouches[0].pageX
-                    // 如果 dy 大于 10px 则判定为用户在滚动页面，打断长按消息判定
-                    if (dy > 10) {
-                        this.tags.chatTouch.onScroll = true
-                    }
-                    if (dy > 10 || dx > 5) {
-                        if (this.tags.msgTouch.msgOnTouchDown) {
-                            logger.add(LogType.UI, '用户正在滑动，打断长按判定。')
-                            this.tags.msgTouch.msgOnTouchDown = false
-                        }
-                    }
-                    if (dy < sender.offsetHeight / 3 && dy < 40) {
-                        this.tags.msgTouch.onMove = 'on'
-                        if (x > 10) {
-                            // 右滑
-                            if (dx >= sender.offsetWidth / 3) {
-                                this.tags.msgTouch.onMove = 'left'
-                                logger.add(
-                                    LogType.UI,
-                                    '触发左滑判定 ……（回复）',
-                                )
-                            } else {
-                                sender.style.transform =
-                                    'translate(-' + (Math.sqrt(dx) + 5) + 'px)'
-                                sender.style.transition = 'transform 0s'
-                            }
-                        }
-                    } else {
-                        this.tags.msgTouch.onMove = 'no'
-                        sender.style.transform = 'translate(0px)'
-                    }
-                }
-            },
-
-            /**
-             * 消息触屏结束
-             * @param event 触摸事件
-             * @param msg 消息对象
-             */
-            msgMoveEnd(event: Event, msg: any) {
-                const sender = event.currentTarget as HTMLDivElement
-                sender.style.transform = 'translate(0px)'
-                // 判断操作
-                if (this.tags.msgTouch.onMove == 'left') {
-                    // 左滑回复
-                    this.selectedMsg = msg
-                    this.replyMsg(false)
-                } else if (this.tags.msgTouch.onMove == 'right') {
-                    // 右滑转发
-                }
-                // 重置数据
-                const data = (this as any).$options.data(this)
-                this.tags.msgTouch = data.tags.msgTouch
-            },
-
-            /**
              * 获取显示群精华消息
              */
             showJin() {
@@ -2391,119 +2275,206 @@
                 runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
             },
 
-            // 聊天面板右滑操作
-            ChatOnMove(event: TouchEvent) {
-                const chatPan = document.getElementById('chat-pan')
-                if(chatPan) {
-                    // 暂时去除 transition 过渡防止不跟手
-                    chatPan.style.transition = 'all 0s'
-                    // 获取 x 轴的位置
-                    const x = event.targetTouches[0].pageX
-                    const y = event.targetTouches[0].pageY
-                    // 记录开始位置
-                    if(this.tags.chatTouch.startX == -1) {
-                        this.tags.chatTouch.startX = x
-                    }
-                    if(this.tags.chatTouch.startY == -1) {
-                        this.tags.chatTouch.startY  = y
-                    }
-                    const moveX = Math.abs(x - this.tags.chatTouch.startX)
-                    const moveY = Math.abs(y - this.tags.chatTouch.startY)
-                    const width = document.body.clientWidth
-                    const heightAllow = document.body.clientHeight * 0.05
-
-                    const allowMove = moveX > moveY
-                        && moveY < heightAllow
-                        && x - this.tags.chatTouch.startX > 0
-                    if(allowMove) {
-                        const isMergeShow = (this.$refs.mergePan as InstanceType<typeof MergePan>).isMergeOpen()
-                        if(this.tags.openChatInfo) {
-                            // 聊天信息面板返回
-                            const infoPan = chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
-                            if(infoPan) {
-                                infoPan.style.transition = 'all 0s'
-                                infoPan.style.transform =
-                                    'translateX(' + (x - this.tags.chatTouch.startX) + 'px)'
-                                this.tags.chatTouch.openSuccess =
-                                    moveX > width / 3
-                            }
-                        } else if(isMergeShow) {
-                            // 合并转发面板返回
-                            const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
-                            if(mergePan) {
-                                mergePan.style.transition = 'all 0s'
-                                mergePan.style.transform =
-                                    'translateX(' + (x - this.tags.chatTouch.startX) + 'px)'
-                                this.tags.chatTouch.openSuccess =
-                                    moveX > width / 3
-                            }
-                        } else {
-                            // 聊天面板底层返回
-                            chatPan.style.transform = 'translateX(' + (x - this.tags.chatTouch.startX) + 'px)'
-                            this.tags.chatTouch.openSuccess = moveX > width / 3
-                            // 禁用滚动
-                            const chat = chatPan.getElementsByClassName('chat')[0] as HTMLDivElement
-                            if(chat) {
-                                chat.style.overflowY = 'hidden'
-                            }
-                        }
-                    }
+            //#region == 窗口移动相关 ==================================================
+            // 滚轮滑动
+            chatWheelEvent(event: WheelEvent) {
+                const process = (event: WheelEvent) => {
+                    // 正在触屏,不处理
+                    if (this.tags.chatMove.onScroll === 'touch') return false
+                    const x = event.deltaX
+                    const y = event.deltaY
+                    const absX = Math.abs(x)
+                    const absY = Math.abs(y)
+                    // 斜度过大
+                    if (absY !== 0 && absX / absY < 2) return false
+                    this.dispenseMove('wheel', -x / 3)
+                    return true
                 }
+                if (!process(event)) return
+                event.preventDefault()
+                // 创建遮罩
+                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
+                // 所以要创建一个不会动的全局遮罩来处理
+                wheelMask(process,()=>{
+                    this.dispenseMove('wheel', 0, true)
+                })
             },
 
-            // 聊天面板右滑结束
-            chatMoveEnd() {
-                this.tags.chatTouch.startX = -1
-                this.tags.chatTouch.startY = -1
-                const chatPan = document.getElementById('chat-pan')
-                if(chatPan) {
-                    const isMergeShow = (this.$refs.mergePan as InstanceType<typeof MergePan>).isMergeOpen()
-                    if(!this.tags.chatTouch.openSuccess) {
-                        if(this.tags.openChatInfo) {
-                            const infoPan = chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
-                            if(infoPan) {
-                                infoPan.style.transition = 'transform 0.3s'
-                                infoPan.style.transform = ''
-                            }
-                        } else if(isMergeShow) {
-                            const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
-                            if(mergePan) {
-                                mergePan.style.transform = ''
-                            }
-                        } else {
-                            runtimeData.tags.openSideBar = false
-                        }
-                    } else {
-                        if(this.tags.openChatInfo) {
-                            this.openChatInfoPan()
-                        } else if(isMergeShow) {
-                            (this.$refs.mergePan as InstanceType<typeof MergePan>).closeMergeMsg()
-                            setTimeout(() => {
-                                const mergePan = chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
-                                if(mergePan) {
-                                    mergePan.style.transform = ''
-                                }
-                            }, 500)
-                        } else {
-                            runtimeData.chatInfo.show.id = 0
-                            runtimeData.tags.openSideBar = true
-                            new Logger().add(LogType.UI, '右滑打开侧边栏触发完成')
-                        }
-                    }
-                    // 恢复过渡效果，完成撒手之后的剩余动画
-                    chatPan.style.transition = ''
-                    setTimeout(() => {
-                        chatPan.style.transform = ''
-                    }, 100)
-                    // 恢复滚动
-                    const chat = chatPan.getElementsByClassName('chat')[0] as HTMLDivElement
-                    if(chat) {
-                        chat.style.overflowY = 'scroll'
+            // 触屏开始
+            chatMoveStartEvent(event: TouchEvent) {
+                if (this.tags.chatMove.onScroll === 'wheel') return
+                // 触屏开始时，记录触摸点
+                this.tags.chatMove.touchLast = event
+            },
+
+            // 触屏滑动
+            chatMoveEvent(event: TouchEvent) {
+                if (this.tags.chatMove.onScroll === 'wheel') return
+                if (!this.tags.chatMove.touchLast) return
+                const touch = event.changedTouches[0]
+                const lastTouch = this.tags.chatMove.touchLast.changedTouches[0]
+                const deltaX = touch.clientX - lastTouch.clientX
+                const deltaY = touch.clientY - lastTouch.clientY
+                const absX = Math.abs(deltaX)
+                const absY = Math.abs(deltaY)
+                // 斜度过大
+                if (absY !== 0 && absX / absY < 2) return
+                // 触屏移动
+                this.tags.chatMove.touchLast = event
+                this.dispenseMove('touch', deltaX)
+            },
+
+            // 触屏滑动结束
+            chatMoveEndEvent(event: TouchEvent) {
+                if (this.tags.chatMove.onScroll === 'wheel') return
+                const touch = event.changedTouches[0]
+                const lastTouch = this.tags.chatMove.touchLast?.changedTouches[0]
+                if (lastTouch) {
+                    const deltaX = touch.clientX - lastTouch.clientX
+                    const deltaY = touch.clientY - lastTouch.clientY
+                    const absX = Math.abs(deltaX)
+                    const absY = Math.abs(deltaY)
+                    // 斜度过大
+                    if (absY === 0 || absX / absY > 2) {
+                        this.dispenseMove('touch', deltaX)
                     }
                 }
-                this.tags.chatTouch.openSuccess = false
-                this.tags.chatTouch.onScroll = false
-            }
+                this.dispenseMove('touch', 0, true)
+                this.tags.chatMove.touchLast = null
+            },
+            /**
+             * 分发触屏/滚轮情况
+             */
+            dispenseMove(type: 'touch' | 'wheel', value: number, end: boolean = false) {
+                if (!end && this.tags.chatMove.onScroll === 'none') this.startMove(type, value)
+                if (this.tags.chatMove.onScroll === 'none') return
+                if (end) this.endMove()
+                else this.keepMove(value)
+            },
+            /**
+             * 开始窗口移动
+             */
+            startMove(type: 'touch' | 'wheel', value: number) {
+                // 移除不需要的css
+                const target = this.getTargetWin()
+                if (!target) return
+                target.style.transition = 'all 0s'
+                // 禁用滚动
+                const chatPan = document.getElementById('chat-pan')
+                if (!chatPan) return
+                const chat = chatPan.getElementsByClassName('chat')[0] as HTMLDivElement
+                if(chat) {
+                    chat.style.overflowY = 'hidden'
+                }
+                this.tags.chatMove.onScroll = type
+                this.tags.chatMove.move = value
+                this.tags.chatMove.lastTime = Date.now()
+            },
+            /**
+             * 保持窗口移动
+             */
+            keepMove(value: number){
+                this.tags.chatMove.move += value
+                const nowDate = Date.now()
+                if (!this.tags.chatMove.lastTime) return
+                const deltaTime = nowDate - this.tags.chatMove.lastTime
+                this.tags.chatMove.lastTime = nowDate
+                this.tags.chatMove.speedList.push(
+                    value / deltaTime
+                )
+                if (this.tags.chatMove.move < 0) this.tags.chatMove.move = 0
+                const move = this.tags.chatMove.move
+                const target = this.getTargetWin()
+                if (!target) return
+                target.style.transform = 'translateX(' + move + 'px)'
+            },
+            /**
+             * 结束窗口移动
+             */
+            endMove() {
+                // 保留自己要的数据
+                const move = this.tags.chatMove.move
+                const speedList = this.tags.chatMove.speedList
+                // 重置数据
+                this.tags.chatMove.onScroll = 'none'
+                this.tags.chatMove.lastTime = 0
+                this.tags.chatMove.speedList = []
+                this.tags.chatMove.move = 0
+                // 复原css
+                const chatPan = document.getElementById('chat-pan')
+                const chat = chatPan?.getElementsByClassName('chat')[0] as HTMLDivElement
+                if(chat) {
+                    chat.style.overflowY = 'scroll'
+                }
+                const target = this.getTargetWin()
+                if (!target) return
+                target.style.transition = 'transform 0.3s'
+                target.style.transform = ''
+                // 移动距离大小判定
+                const width = target.offsetWidth
+                // 如果移动距离大于屏幕宽度的三分之一，视为关闭
+                if (move > width / 3) {
+                    return this.exitWin()
+                }
+                // 末端速度法
+                // 防止误触
+                if (move < runtimeData.inch * 0.5) return
+                const endSpeedList = speedList.reverse().slice(0, 10)
+                let endSpeed = 0
+                for (const speed of endSpeedList) {
+                    endSpeed += speed
+                }
+                endSpeed /= endSpeedList.length
+                endSpeed /= runtimeData.inch
+                // 如果末端速度大于 5，则视为关闭
+                if (endSpeed > 5) {
+                    return this.exitWin()
+                }
+            },
+            //#endregion
+            /**
+             * 得到焦点窗口
+             */
+            getTargetWin(): HTMLDivElement | undefined {
+                const chatPan = document.getElementById('chat-pan')
+                if (!chatPan) return
+                const mergePan = this.$refs.mergePan as InstanceType<typeof MergePan>
+                if(this.tags.openChatInfo) {
+                    // 聊天信息面板返回
+                    return chatPan.getElementsByClassName('chat-info-pan')[0] as HTMLDivElement
+                } else if(mergePan?.isMergeOpen()) {
+                    // 合并转发面板返回
+                    return chatPan.getElementsByClassName('merge-pan')[0] as HTMLDivElement
+                } else {
+                    // 聊天面板底层返回
+                    return chatPan as HTMLDivElement
+                }
+            },
+            /**
+             * 退出一层窗口
+             */
+            exitWin() {
+                const mergePan = this.$refs.mergePan as InstanceType<typeof MergePan>
+                if(this.tags.openChatInfo) {
+                    // 会话信息栏
+                    this.openChatInfoPan()
+                } else if(mergePan?.isMergeOpen()) {
+                    // 合并转发栏
+                    mergePan?.closeMergeMsg()
+                    setTimeout(() => {
+                        const chatPan = document.getElementById('chat-pan')
+                        const mergePan = chatPan!.getElementsByClassName('merge-pan')[0] as HTMLDivElement
+                        if(mergePan) {
+                            mergePan.style.transform = ''
+                        }
+                    }, 500)
+                } else {
+                    // 自身
+                    runtimeData.chatInfo.show.id = 0
+                    runtimeData.tags.openSideBar = true
+                    new Logger().add(LogType.UI, '右滑打开侧边栏触发完成')
+                }
+            },
         },
     })
 </script>

@@ -11,6 +11,7 @@
 
 <template>
     <div :id="'chat-' + data.message_id"
+        ref="msgMain"
         :class="'message' +
             (type ? ' ' + type : '') +
             (data.revoke ? ' revoke' : '') +
@@ -22,6 +23,7 @@
         @mouseleave="hiddenUserInfo">
         <img v-show="!isMe || type == 'merge'"
             name="avatar"
+            v-menu.prevent="event => $emit('showMenu', event, data)"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
             @dblclick="sendPoke">
         <div v-if="isMe && type != 'merge'"
@@ -54,7 +56,12 @@
                     second: 'numeric',
                 }).format(getViewTime(getViewTime(data.time))) }}
             </a>
-            <div>
+            <div
+                v-menu.prevent="event => $emit('showMenu', event, data)"
+                @touchstart.stop="msgMoveStart($event)"
+                @touchend.stop="msgMoveEnd($event)"
+                @touchmove.stop="msgKeepMove($event)"
+                @wheel.stop="msgMoveWheel($event)">
                 <!-- 消息体 -->
                 <!-- 消息体 -->
                 <template v-if="data.message.length === 0">
@@ -342,42 +349,51 @@
     </div>
 </template>
 
+<script setup lang="ts">
+import Option from '@renderer/function/option'
+import CardMessage from './msg-component/CardMessage.vue'
+import app from '@renderer/main'
+import markdownit from 'markdown-it'
+
+import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
+import { defineComponent } from 'vue'
+import { Connector } from '@renderer/function/connect'
+import { getMessageList, runtimeData } from '@renderer/function/msg'
+import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
+import { StringifyOptions } from 'querystring'
+import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
+import {
+    openLink,
+    sendStatEvent,
+} from '@renderer/function/utils/appUtil'
+import {
+    callBackend,
+    getSizeFromBytes,
+    getTrueLang,
+    getViewTime } from '@renderer/function/utils/systemUtil'
+import { linkView } from '@renderer/function/utils/linkViewUtil'
+import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
+import { vMenu } from '@renderer/function/utils/appUtil'
+import { wheelMask } from '@renderer/function/input'
+
+type Msg = any
+
+defineEmits<{
+    scrollToMsg: [...args: any[]]
+    imageLoaded: [...args: any[]]
+    sendPoke: [...args: any[]]
+    leftMove: [msg: Msg]
+    rightMove: [msg: Msg]
+    showMenu: [event: MenuEventData, msg: Msg]
+}>()
+</script>
 <script lang="ts">
-    import Option from '@renderer/function/option'
-    import CardMessage from './msg-component/CardMessage.vue'
-    import app from '@renderer/main'
-    import markdownit from 'markdown-it'
-
-    import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-    import { defineComponent } from 'vue'
-    import { Connector } from '@renderer/function/connect'
-    import { getMessageList, runtimeData } from '@renderer/function/msg'
-    import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
-    import { StringifyOptions } from 'querystring'
-    import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
-    import {
-        openLink,
-        sendStatEvent,
-    } from '@renderer/function/utils/appUtil'
-    import {
-        callBackend,
-        getSizeFromBytes,
-        getTrueLang,
-        getViewTime } from '@renderer/function/utils/systemUtil'
-    import { linkView } from '@renderer/function/utils/linkViewUtil'
-    import { MergeStackData } from '@renderer/function/elements/information'
-
     export default defineComponent({
         name: 'MsgBody',
-        components: { CardMessage },
         props: ['data', 'type', 'selected'],
-        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
                 md: markdownit({ breaks: true }),
-                getFace: getFace,
-                getSizeFromBytes: getSizeFromBytes,
-                getViewTime: getViewTime,
                 isMe: false,
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
@@ -389,6 +405,12 @@
                 senderInfo: null as any,
                 trueLang: getTrueLang(),
                 textIndex: {} as { [key: string]: number },
+                // 互动相关
+                msgMove: {
+                    move: 0,
+                    onScroll: 'none' as 'none' | 'touch' | 'wheel',
+                    touchLast: null as null | TouchEvent,
+                },
             }
         },
         mounted() {
@@ -540,13 +562,13 @@
              */
             imageLoaded(event: Event) {
                 const img = event.target as HTMLImageElement
-				// 计算图片宽度
-				const vh = document.documentElement.clientHeight || document.body.clientHeight
-				const imgHeight = img.naturalHeight || img.height
-				let imgWidth = img.naturalWidth || img.width
-				if (imgHeight > vh * 0.35)
-					imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
-				img.style.setProperty('--width', `${imgWidth}px`)  
+                // 计算图片宽度
+                const vh = document.documentElement.clientHeight || document.body.clientHeight
+                const imgHeight = img.naturalHeight || img.height
+                let imgWidth = img.naturalWidth || img.width
+                if (imgHeight > vh * 0.35)
+                    imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
+                img.style.setProperty('--width', `${imgWidth}px`)  
                 this.$emit('imageLoaded', img.offsetHeight)
             },
 
@@ -1104,13 +1126,144 @@
                 }
                 runtimeData.mergeMsgStack.push(data)
             },
-			isFace(item: any) {
-				if (item.asface) return true
-				// 这是神马鬼玩意？一个驼峰，一个下划线，真是一个协议段一个协议啊
-				else if (item.subType == 7) return true
-				else if (item.sub_type == 7) return true
-				return false
-			}
+            isFace(item: any) {
+                if (item.asface) return true
+                // 这是神马鬼玩意？一个驼峰，一个下划线，真是一个协议段一个协议啊
+                else if (item.subType == 7) return true
+                else if (item.sub_type == 7) return true
+                return false
+            },
+
+            //#region ==互动相关================================
+            // 滚轮滑动
+            msgMoveWheel(event: WheelEvent) {
+                const process = (event: WheelEvent) => {
+                    // 正在触屏,不处理
+                    if (this.msgMove.onScroll === 'touch') return false
+                    const x = event.deltaX
+                    const y = event.deltaY
+                    const absX = Math.abs(x)
+                    const absY = Math.abs(y)
+                    // 斜度过大
+                    if (absY !== 0 && absX / absY < 2) return false
+                    this.dispenseMove('wheel', -x / 3)
+                    return true
+                }
+                if (!process(event)) return
+                event.preventDefault()
+                // 创建遮罩
+                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
+                // 所以要创建一个不会动的全局遮罩来处理
+                wheelMask(process,()=>{
+                    this.dispenseMove('wheel', 0, true)
+                })
+            },
+
+            // 触屏开始
+            msgMoveStart(event: TouchEvent) {
+                if (this.msgMove.onScroll === 'wheel') return
+                // 触屏开始时，记录触摸点
+                this.msgMove.touchLast = event
+            },
+
+            // 触屏滑动
+            msgKeepMove(event: TouchEvent) {
+                if (this.msgMove.onScroll === 'wheel') return
+                if (!this.msgMove.touchLast) return
+                const touch = event.changedTouches[0]
+                const lastTouch = this.msgMove.touchLast.changedTouches[0]
+                const deltaX = touch.clientX - lastTouch.clientX
+                const deltaY = touch.clientY - lastTouch.clientY
+                const absX = Math.abs(deltaX)
+                const absY = Math.abs(deltaY)
+                // 斜度过大
+                if (absY !== 0 && absX / absY < 2) return
+                // 触屏移动
+                this.msgMove.touchLast = event
+                this.dispenseMove('touch', deltaX)
+            },
+
+            // 触屏滑动结束
+            msgMoveEnd(event: TouchEvent) {
+                if (this.msgMove.onScroll === 'wheel') return
+                const touch = event.changedTouches[0]
+                const lastTouch = this.msgMove.touchLast?.changedTouches[0]
+                if (lastTouch) {
+                    const deltaX = touch.clientX - lastTouch.clientX
+                    const deltaY = touch.clientY - lastTouch.clientY
+                    const absX = Math.abs(deltaX)
+                    const absY = Math.abs(deltaY)
+                    // 斜度过大
+                    if (absY === 0 || absX / absY > 2) {
+                        this.dispenseMove('touch', deltaX)
+                    }
+                }
+                this.dispenseMove('touch', 0, true)
+                this.msgMove.touchLast = null
+            },
+            /**
+             * 分发触屏/滚轮情况
+             */
+            dispenseMove(type: 'touch' | 'wheel', value: number, end: boolean = false) {
+                if (
+                    !end &&
+                    this.msgMove.onScroll === 'none'
+                ) this.startMove(type, value)
+                if (this.msgMove.onScroll === 'none') return
+                if (end) this.endMove()
+                else this.keepMove(value)
+            },
+            /**
+             * 开始窗口移动
+             */
+            startMove(type: 'touch' | 'wheel', value: number) {
+                new Logger().add(LogType.UI, '开始窗口移动: ' + type + '')
+                this.msgMove.onScroll = type
+                this.msgMove.move = value
+            },
+            /**
+             * 保持窗口移动
+             */
+            keepMove(value: number){
+                this.msgMove.move += value
+                const limit = runtimeData.inch * 0.75
+                if (this.msgMove.move < -limit) this.msgMove.move = -limit
+                else if (this.msgMove.move > runtimeData.inch * 0.75) this.msgMove.move = limit
+                const move = this.msgMove.move
+                const target = this.$refs.msgMain as HTMLDivElement
+                target.style.transform = 'translateX(' + move + 'px)'
+            },
+            /**
+             * 结束窗口移动
+             */
+            endMove() {
+                new Logger().add(LogType.UI, '结束窗口移动: ' + this.msgMove.onScroll)
+                // 保留自己要的数据
+                const move = this.msgMove.move
+                // 重置数据
+                this.msgMove.onScroll = 'none'
+                this.msgMove.move = 0
+
+                const target = this.$refs.msgMain as HTMLDivElement
+
+                target.style.transform = ''
+                target.style.transition = 'all 0.3'
+
+                // 移动距离大小判定
+                const inch = runtimeData.inch
+                // 如果移动距离大于0.5英尺,触发
+                if (move < -0.5 * inch){
+                    new Logger().add(LogType.UI, '左滑触发')
+                    // eslint-disable-next-line vue/require-explicit-emits
+                    this.$emit('leftMove', this.data)
+                }
+                else if (move > 0.5 * inch){
+                    new Logger().add(LogType.UI, '右滑触发')
+                    // eslint-disable-next-line vue/require-explicit-emits
+                    this.$emit('rightMove', this.data)
+                }
+            },
+            //#endregion
         },
     })
 </script>
