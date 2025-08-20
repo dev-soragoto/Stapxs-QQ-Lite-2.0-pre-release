@@ -1093,6 +1093,20 @@ export function shouldAutoFocus(): boolean {
     }
 }
 
+/**
+ * 判断是不是机器人
+ * @param id 用户id
+ * @returns
+ */
+export function isRobot(id: number | string): boolean {
+    id = Number(id)
+    if (id >= 4010000000 && id <= 4019999999) return true
+    if (id >= 2854196301 && id <= 2854216399) return true
+    if (id >= 3889000000 && id <= 3889999999) return true
+    if (id === 66600000) return true
+    return false
+}
+
 //#region == use封装 ========================================
 /**
  * 用来封装一个停留事件的处理, 支持传递额外上下文
