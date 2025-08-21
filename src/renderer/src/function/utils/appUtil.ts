@@ -1080,9 +1080,9 @@ export function changeGroupNotice(group_id: number, open: boolean) {
  */
 export function shouldAutoFocus(): boolean {
     // 桌面端
-    if (runtimeData.tags.clientType !== 'web') {
+    if (backend.type !== 'web') {
         // 除了苹果的不知道啥东西,都可以
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+        if (['electron', 'tauri'].includes(backend.type)) {
             return true
         }
         return false

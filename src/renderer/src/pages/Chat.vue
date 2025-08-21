@@ -397,7 +397,7 @@
         </div>
         <!-- 消息右击菜单 -->
         <Teleport to="body">
-            <div :class="'msg-menu' + (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
+            <div :class="'msg-menu' + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
                 <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
                 <div id="msgMenu" :class="tags.showMsgMenu ?
                     'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">

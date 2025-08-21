@@ -65,6 +65,7 @@ import { vSearch, useEventListener } from '@renderer/function/utils/appUtil'
 import { runtimeData } from '@renderer/function/msg'
 import { UserFriendElem, UserGroupElem } from '@renderer/function/elements/information'
 import { login } from '@renderer/function/connect'
+import { backend } from '@renderer/runtime/backend'
 
 //#region == 移植相关 ====================================================================
 /**
@@ -250,7 +251,7 @@ function handleEvent(e: Event) {
 //#region == 开启关闭 ====================================================================
 useEventListener(document, 'keydown', (e: KeyboardEvent) => {
     let isOpen = false;
-    if(runtimeData.tags.platform === 'darwin') {
+    if(backend.platform === 'darwin') {
         // macOS 使用 Command + E
         isOpen = e.metaKey && e.key === 'e'
     } else {

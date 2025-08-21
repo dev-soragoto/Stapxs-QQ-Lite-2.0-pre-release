@@ -368,7 +368,6 @@ import {
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
 import {
-    callBackend,
     getSizeFromBytes,
     getTrueLang,
     getViewTime } from '@renderer/function/utils/systemUtil'
