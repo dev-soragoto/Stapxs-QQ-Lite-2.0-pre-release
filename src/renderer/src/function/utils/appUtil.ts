@@ -1387,7 +1387,7 @@ export function createVSearch<T extends object>(): Directive<HTMLInputElement, S
             }, { signal: controller.signal })
 
             const stopWatchEffect = watchEffect(() => {
-                binding.value.forceUpdate
+                void binding.value.forceUpdate
                 if (!queryTxt.value) {
                     binding.value.isSearch = false
                     binding.value.query = []
