@@ -402,7 +402,9 @@ const {
     userInfoPan?: UserInfoPan
 }>()
 
-defineEmits<{
+// 半 setup 半 旧的 api是这样的...旧的emit定义类型太麻烦了...
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
+const emit = defineEmits<{
     scrollToMsg: [...args: any[]]
     imageLoaded: [...args: any[]]
     sendPoke: [...args: any[]]
@@ -434,7 +436,6 @@ const {
 //#region == 工具函数 ================================================================
 function getAtMember(id: number): IUser | number {
     const re = getUserById(id) ?? id
-    console.log(id, re)
     return re
 }
 function getUserById(id: number): IUser | undefined {
@@ -568,7 +569,7 @@ function getUserById(id: number): IUser | undefined {
              * @param id 消息 id
              */
             scrollToMsg(id: string) {
-                this.$emit('scrollToMsg', 'chat-' + id)
+                emit('scrollToMsg', 'chat-' + id)
             },
 
             /**
@@ -634,7 +635,7 @@ function getUserById(id: number): IUser | undefined {
                 if (imgHeight > vh * 0.35)
                     imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
                 img.style.setProperty('--width', `${imgWidth}px`)
-                this.$emit('imageLoaded', img.offsetHeight)
+                emit('imageLoaded', img.offsetHeight)
             },
 
             /**
@@ -959,7 +960,7 @@ function getUserById(id: number): IUser | undefined {
 
             sendPoke() {
                 // 调用上级组件的 poke 方法
-                this.$emit('sendPoke', this.data.sender.user_id)
+                emit('sendPoke', this.data.sender.user_id)
             },
 
             async showPock() {

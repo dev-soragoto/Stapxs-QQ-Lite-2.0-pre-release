@@ -1,4 +1,4 @@
-<!--
+\<!--
  * @FileDescription: 群成员消息悬浮窗
  * @Author: Mr.Lee
  * @Date: 2025/09/01
@@ -8,7 +8,6 @@
     <Teleport to="body">
         <Transition name="member-info">
             <div v-if="data.user" class="member-info" :style="posInfo">
-                {{ console.log(posInfo) }}
                 <!-- 已退群 -->
                 <div v-if="typeof data.user === 'number'"
                     ref="body"
@@ -90,8 +89,6 @@ import {
     Reactive,
     computed,
 } from 'vue';
-
-type IUser = any
 
 const { data } = defineProps<{
     data: {

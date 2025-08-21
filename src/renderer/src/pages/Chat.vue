@@ -540,7 +540,6 @@ import {
     shouldAutoFocus,
 } from '@renderer/function/utils/appUtil'
 import {
-    addBackendListener,
     getTimeConfig,
     getTrueLang,
     getViewTime,
