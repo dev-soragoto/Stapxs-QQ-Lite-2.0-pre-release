@@ -145,7 +145,6 @@ group_member_info:
         age: /age
         join_time: /join_time
         last_sent_time: /last_sent_time
-        is_robot: /is_robot
         shut_up_timestamp: /shut_up_timestamp
         role: /role
 set_group_nickname:
