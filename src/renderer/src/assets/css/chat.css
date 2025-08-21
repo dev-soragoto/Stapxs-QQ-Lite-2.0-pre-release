@@ -487,57 +487,64 @@ input {
     display: flex;
 }
 
-.mumber-info {
+.member-info {
     position: absolute;
+    top: 0px;
+    left: 0px;
     height: calc(100% - var(--safe-area-bottom));
     width: 100%;
+    z-index: 10;
+    pointer-events: none;
 }
-.mumber-info span,
-.mumber-info a {
+.member-info span,
+.member-info a {
     color: var(--color-font);
 }
-.mumber-info > div {
-    pointer-events: all;
+.member-info > div {
+    pointer-events: none;
 }
-.mumber-info > div:first-child {
+.member-info > div:first-child {
     transform: translate(-20px, calc(-100% - 0.8rem));
     box-shadow: 0 0 5px var(--color-shader);
-    background: rgba(var(--color-card-2-rgb), 0.5);
+    background: rgba(var(--color-card-2-rgb), 0.75);
     border: 1px solid var(--color-card-2);
     backdrop-filter: blur(15px);
     padding: 10px 20px 10px 10px;
     width: fit-content;
     overflow: hidden;
     max-width: 55%;
+
+}
+.member-info > div:first-child > div:nth-child(1) {
     display: flex;
 }
-.mumber-info > div:first-child img {
+.member-info > div:first-child > div:nth-child(1) > img {
     outline: 2px solid var(--color-main);
     border-radius: 7px;
     height: 60px;
     width: 60px;
 }
-.mumber-info > div:first-child > div {
+.member-info > div:first-child > div:nth-child(1) > div {
     margin-left: 20px;
     overflow: hidden;
     flex: 1;
 }
-.mumber-info > div:first-child > div > span {
+.member-info > div:first-child > div:nth-child(1) > div > span {
     color: var(--color-font-1);
     font-size: 0.9rem;
     white-space: nowrap;
 }
-.mumber-info > div:first-child > div > span[name='id'] {
+.member-info > div:first-child > div:nth-child(1) > div > span[name='id'] {
     font-size: 0.8rem;
     display: block;
-    opacity: 0.5;
+    opacity: 0.7
 }
-.mumber-info > div:first-child > div > div {
+.member-info > div:first-child > div:nth-child(1) > div > div {
     margin-bottom: 5px;
     flex-wrap: wrap;
     display: flex;
 }
-.mumber-info > div:first-child > div > div > a {
+.member-info > div:first-child > div:nth-child(1) > div > div > a {
     text-overflow: ellipsis;
     width: 100%;
     overflow: hidden;
@@ -547,19 +554,22 @@ input {
     font-size: 1rem;
     display: block;
 }
-.mumber-info > div:first-child > div > div > div {
+.member-info > div:first-child > div:nth-child(1) > div > div > div {
     margin-top: 4px;
 }
-.mumber-info > div:first-child > div > div > div > span {
-    background: var(--color-main);
-    color: var(--color-font-r);
-    padding: 2px 10px 2px 10px;
-    border-radius: 2rem;
-    margin-left: 5px;
-    font-size: 0.7rem;
+/* 群成员下边区域 */
+.member-info > div:first-child > div:nth-child(2).member {
+    display: flex;
+    margin-top: 10px;
+    align-items: center;
 }
-.mumber-info > div:first-child > div > div > div > span:first-child {
-    margin-left: 0;
+.member-info > div:first-child > div:nth-child(2).member > :nth-child(1) {
+    width: 60px;
+    display: block;
+    font-size: 13px;
+}
+.member-info > div:first-child > div:nth-child(2).member > :nth-child(2) {
+    margin-left: 20px;
 }
 
 .chat-info-pan {

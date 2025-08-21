@@ -25,6 +25,10 @@
             v-menu.prevent="event => $emit('showMenu', event, data)"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
+
+            @mouseenter="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
+            @mousemove="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
+            @mouseleave="userInfoHoverEnd($event)"
             @dblclick="sendPoke">
         <div v-if="isMe && type != 'merge'"
             class="message-space" />
@@ -111,7 +115,11 @@
                             :class="getAtClass(item.qq)">
                             <a :data-id="item.qq"
                                 :data-group="data.group_id"
-                                @mouseenter="showUserInfo">{{ getAtName(item) }}</a>
+                                @mouseenter="userInfoHoverHandle($event, getAtMember(item.qq))"
+                                @mousemove="userInfoHoverHandle($event, getAtMember(item.qq))"
+                                @mouseleave="userInfoHoverEnd($event)">
+                                {{ getAtName(item) }}
+                            </a>
                         </div>
                         <div
                             v-else-if="item.type == 'file'" :class="'msg-file' + (isMe ? ' me' : '')">
@@ -365,6 +373,7 @@ import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUt
 import {
     openLink,
     sendStatEvent,
+    useStayEvent,
 } from '@renderer/function/utils/appUtil'
 import {
     callBackend,
@@ -375,8 +384,22 @@ import { linkView } from '@renderer/function/utils/linkViewUtil'
 import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
 import { vMenu } from '@renderer/function/utils/appUtil'
 import { wheelMask } from '@renderer/function/input'
+import { UserInfoPan } from './UserInfoPan.vue'
 
 type Msg = any
+type IUser = any
+
+const {
+    data,
+    selected,
+    type,
+    userInfoPan,
+} = defineProps<{
+    data: any
+    selected?: boolean
+    type?: string
+    userInfoPan?: UserInfoPan
+}>()
 
 defineEmits<{
     scrollToMsg: [...args: any[]]
@@ -386,12 +409,51 @@ defineEmits<{
     rightMove: [msg: Msg]
     showMenu: [event: MenuEventData, msg: Msg]
 }>()
+
+//#region == 长按/覆盖监视器 =========================================================
+const {
+    handle: userInfoHoverHandle,
+    handleEnd: userInfoHoverEnd,
+} = useStayEvent(
+    (event: MouseEvent) => {
+        return {
+            x: event.clientX,
+            y: event.clientY,
+        }
+    },
+    {onFit: (eventData, ctx: number | IUser) => {
+        userInfoPan?.open(ctx, eventData.x, eventData.y)
+    },
+    onLeave: () => {
+        userInfoPan?.close()
+    }}, 495
+)
+//#endregion
+
+//#region == 工具函数 ================================================================
+function getAtMember(id: number): IUser | number {
+    const re = getUserById(id) ?? id
+    console.log(id, re)
+    return re
+}
+function getUserById(id: number): IUser | undefined {
+    if (runtimeData.chatInfo.show.type === 'group') {
+        if (!runtimeData.chatInfo.info.group_members) return id
+        const user = runtimeData.chatInfo.info.group_members.find((item: IUser) => item.user_id == id)
+        if (user) return user
+        else return id
+    }else {
+        const user = runtimeData.userList.find((item: IUser) => item.user_id === id)
+        if (user) return user
+        else return id
+    }
+}
+//#endregion
 </script>
 <script lang="ts">
     export default defineComponent({
         name: 'MsgBody',
         props: ['data', 'type', 'selected'],
-        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke', 'showMenu', 'rightMove', 'leftMove'],
         data() {
             return {
                 md: markdownit({ breaks: true }),
@@ -753,28 +815,6 @@ defineEmits<{
             linkViewPicErr() {
                 if(this.pageViewInfo)
                     this.pageViewInfo.img = undefined
-            },
-
-            /**
-             * 当鼠标悬停在 at 消息上时显示被 at 人的消息悬浮窗
-             * @param event 消息事件
-             */
-            showUserInfo(event: Event) {
-                const sender = event.currentTarget as HTMLDivElement
-                const id = sender.dataset.id
-                const group = sender.dataset.group
-                // 获取鼠标位置
-                const pointEvent =
-                    (event as MouseEvent) || (window.event as MouseEvent)
-                const pointX = pointEvent.offsetX
-                const pointY = pointEvent.clientY
-                // TODO: 出界判定不做了怪麻烦的
-                // 请求用户信息
-                Connector.send(
-                    'get_group_member_info',
-                    { group_id: group, user_id: id },
-                    'getGroupMemberInfo_' + pointX + '_' + pointY,
-                )
             },
 
             /**
