@@ -98,6 +98,7 @@
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
+                        :user-info-pan="userInfoPanFunc"
                         @click="msgClick($event, msgIndex)"
                         @show-menu="showMsgMeun"
                         @scroll-to-msg="scrollToMsg"
@@ -131,6 +132,7 @@
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
+                        :user-info-pan="userInfoPanFunc"
                         @scroll-to-msg="scrollToMsg"
                         @show-menu="showMsgMeun"
                         @image-loaded="imgLoadedScroll"
@@ -363,38 +365,7 @@
         <!-- 合并转发消息预览器 -->
         <MergePan ref="mergePan" />
         <!-- At 信息悬浮窗 -->
-        <div class="mumber-info">
-            <div v-if="Object.keys(mumberInfo).length > 0 && mumberInfo.error === undefined"
-                class="ss-card"
-                :style="getPopPost()">
-                <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + mumberInfo.user_id">
-                <div>
-                    <span name="id">{{ mumberInfo.user_id }}</span>
-                    <div>
-                        <a>{{ mumberInfo.card == '' ? mumberInfo.nickname : mumberInfo.card }}</a>
-                        <div>
-                            <span v-if="mumberInfo.role !== 'member'">
-                                {{ $t('成员类型_' + mumberInfo.role) }}
-                            </span>
-                            <span>Lv {{ mumberInfo.level }}</span>
-                        </div>
-                    </div>
-                    <span v-if="mumberInfo.join_time">
-                        {{
-                            $t('{time} 加入群聊', {
-                                time: Intl.DateTimeFormat(trueLang, {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                }).format(
-                                    new Date(mumberInfo.join_time * 1000),
-                                ),
-                            })
-                        }}
-                    </span>
-                </div>
-            </div>
-        </div>
+        <UserInfoPanComponent :data="userInfoPanData" />
         <!-- 消息右击菜单 -->
         <Teleport to="body">
             <div :class="'msg-menu' + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
@@ -545,58 +516,86 @@
     </div>
 </template>
 
-<script lang="ts">
-    import app from '@renderer/main'
-    import SendUtil from '@renderer/function/sender'
-    import Option, { get } from '@renderer/function/option'
-    import Info from '@renderer/pages/Info.vue'
-    import MsgBody from '@renderer/components/MsgBody.vue'
-    import NoticeBody from '@renderer/components/NoticeBody.vue'
-    import FacePan from '@renderer/components/FacePan.vue'
-    import MergePan from '@renderer/components/MergePan.vue'
-    import imageCompression from 'browser-image-compression'
+<script setup lang="ts">
+import app from '@renderer/main'
+import SendUtil from '@renderer/function/sender'
+import Option, { get } from '@renderer/function/option'
+import Info from '@renderer/pages/Info.vue'
+import MsgBody from '@renderer/components/MsgBody.vue'
+import NoticeBody from '@renderer/components/NoticeBody.vue'
+import FacePan from '@renderer/components/FacePan.vue'
+import MergePan from '@renderer/components/MergePan.vue'
+import imageCompression from 'browser-image-compression'
 
-    import { defineComponent, markRaw, reactive } from 'vue'
-    import { v4 as uuid } from 'uuid'
-    import {
-        downloadFile,
-        loadHistory as loadHistoryFirst,
-		shouldAutoFocus,
-    } from '@renderer/function/utils/appUtil'
-    import {
-        getTimeConfig,
-        getTrueLang,
-        getViewTime,
-    } from '@renderer/function/utils/systemUtil'
-    import {
-        getMsgRawTxt,
-        sendMsgRaw,
-        getFace,
-        getShowName,
-        isShowTime,
-        isDeleteMsg,
-    } from '@renderer/function/utils/msgUtil'
-    import { scrollToMsg } from '@renderer/function/utils/appUtil'
-    import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
-    import { Connector } from '@renderer/function/connect'
-    import { runtimeData } from '@renderer/function/msg'
-    import {
-        BaseChatInfoElem,
-        MsgItemElem,
-        SQCodeElem,
-        GroupMemberInfoElem,
-        UserFriendElem,
-        UserGroupElem,
-        MenuEventData,
-    } from '@renderer/function/elements/information'
-    import { backend } from '@renderer/runtime/backend'
+import {
+    defineComponent,
+    markRaw,
+    reactive,
+    shallowReactive
+} from 'vue'
+import { v4 as uuid } from 'uuid'
+import {
+    downloadFile,
+    loadHistory as loadHistoryFirst,
+    shouldAutoFocus,
+} from '@renderer/function/utils/appUtil'
+import {
+    getTimeConfig,
+    getTrueLang,
+    getViewTime,
+} from '@renderer/function/utils/systemUtil'
+import {
+    getMsgRawTxt,
+    sendMsgRaw,
+    getFace,
+    getShowName,
+    isShowTime,
+    isDeleteMsg,
+} from '@renderer/function/utils/msgUtil'
+import { scrollToMsg } from '@renderer/function/utils/appUtil'
+import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
+import { Connector } from '@renderer/function/connect'
+import { runtimeData } from '@renderer/function/msg'
+import {
+    BaseChatInfoElem,
+    MsgItemElem,
+    SQCodeElem,
+    GroupMemberInfoElem,
+    UserFriendElem,
+    UserGroupElem,
+    MenuEventData,
+} from '@renderer/function/elements/information'
 import { wheelMask } from '@renderer/function/input'
+import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
+import { backend } from '@renderer/runtime/backend'
 
+type IUser = any
 
+const userInfoPanData = shallowReactive<{
+    user: undefined | IUser | number,
+    x: number,
+    y: number,
+}>({
+    user: undefined,
+    x: 0,
+    y: 0,
+})
+const userInfoPanFunc: UserInfoPan = {
+    open: (user: IUser | number, x: number, y: number) => {
+        userInfoPanData.user = user
+        userInfoPanData.x = x
+        userInfoPanData.y = y
+    },
+    close: () => {
+        userInfoPanData.user = undefined
+    },
+}
+</script>
+
+<script lang="ts">
     export default defineComponent({
         name: 'ViewChat',
-        components: { Info, MsgBody, NoticeBody, FacePan, MergePan },
-        props: ['chat', 'list', 'mumberInfo', 'imgView'],
+        props: ['chat', 'list', 'imgView'],
         data() {
             return {
                 backend,
@@ -1564,17 +1563,6 @@ import { wheelMask } from '@renderer/function/input'
                     }
                     runtimeData.popBoxList.push(popInfo)
                 }
-            },
-
-            /**
-             * 获取悬浮窗显示位置
-             */
-            getPopPost() {
-                const x =
-                    this.mumberInfo.x === undefined ? '0' : this.mumberInfo.x
-                const y =
-                    this.mumberInfo.y === undefined ? '0' : this.mumberInfo.y
-                return 'margin-left:' + x + 'px;margin-top:' + y + 'px;'
             },
 
             /**

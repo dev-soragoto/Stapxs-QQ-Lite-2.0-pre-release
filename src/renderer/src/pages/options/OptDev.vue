@@ -249,6 +249,7 @@
                 ws_text: '',
                 parse_text: '',
                 appmsg_text: '',
+                dev: import.meta.env.DEV
             }
         },
         mounted() {

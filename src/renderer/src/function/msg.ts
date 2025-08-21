@@ -1023,22 +1023,6 @@ const msgFunctions = {
     },
 
     /**
-     * 获取群成员更多信息
-     */
-    getGroupMemberInfo: (
-		_: string,
-		msg: { [key: string]: any },
-        echoList: string[],
-	) => {
-        if (msg.data != undefined) {
-            const data = msg.data
-            data.x = echoList[1]
-            data.y = echoList[2]
-            runtimeData.chatInfo.info.now_member_info = data
-        }
-    },
-
-    /**
      * 设置消息已读
      */
     readMemberMessage: (_: string, msg: { [key: string]: any }) => {
