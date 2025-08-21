@@ -338,7 +338,7 @@
     } from '@renderer/function/elements/information'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
-import { backend } from '@renderer/runtime/backend'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ChatDan',
