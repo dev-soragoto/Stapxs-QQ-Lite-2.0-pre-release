@@ -1189,6 +1189,86 @@ textarea:focus {
     border: none;
 }
 
+.mask-background {
+    transition: background 0.3s;
+    background-color: #5F5F5FB4;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    z-index: 20;
+}
+
+.global-session-search-bar {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    width: 60vw;
+    top: 20vh;
+    left: 50%;
+    transform: translateX(-50%);
+    max-height: 50vh;
+    transition: height 0.2s;
+    z-index: 20;
+    box-shadow: 0 0 5px var(--color-shader);
+}
+
+.global-session-search-bar > hr {
+    width: 100%;
+}
+
+.global-session-search-bar > input {
+    max-width: unset;
+    min-height: 35px;
+}
+
+.global-session-search-bar > div {
+    overflow: scroll;
+}
+
+.global-session-search-bar > div > div {
+    display: flex;
+    align-items: center;
+}
+
+.global-session-search-bar > div > div > :nth-child(1) {
+    flex: 1;
+}
+
+.global-session-search-bar > div > div.session-item {
+    border-radius: 7px;
+}
+
+.global-session-search-bar > div > div.session-item:hover {
+    background-color: var(--color-card-2);
+}
+
+.global-session-search-bar > div > div.session-item.selected {
+    background-color: var(--color-card-2);
+}
+
+.global-session-search-bar > div > div.session-item > div {
+    pointer-events: none;
+}
+
+.global-session-search-bar > div > div.session-item > span {
+    color: var(--color-font-1);
+    font-size: 0.8rem;
+    margin-right: 10px;
+}
+
+.global-session-search-bar-enter-active,
+.global-session-search-bar-leave-active {
+    z-index: 20;
+    transition: opacity 0.2s;
+}
+
+.global-session-search-bar-enter-from,
+.global-session-search-bar-leave-to {
+    opacity: 0.0;
+}
+
 @media (max-width: 700px) {
     /* 侧栏及主布局自适应 */
     .main-body {

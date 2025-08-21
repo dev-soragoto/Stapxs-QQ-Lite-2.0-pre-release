@@ -1645,6 +1645,95 @@ input {
     font-size: 0.8rem;
 }
 
+div.tiny-session-body {
+    align-items: center;
+    border-radius: 7px;
+    cursor: pointer;
+    margin: 3px 0;
+    padding: 10px;
+    display: flex;
+    height: 40px;
+    width: 100%;
+}
+div.tiny-session-body > div:nth-child(1) {
+    height: 1.8rem;
+    width: 5px;
+    border-radius: 2px;
+    margin-left: -10px;
+    margin-right: 5px;
+    background: var(--color-main);
+    transition: all 0.3s;
+    transform: scaleY(0);
+}
+div.tiny-session-body.selected {
+    background: linear-gradient(to right, var(--color-card-1), 60%, #00000000);
+}
+div.tiny-session-body.selected > div:nth-child(1) {
+    transform: scaleY(1);
+}
+div.tiny-session-body:hover {
+    background: var(--color-card-2);
+}
+div.tiny-session-body > img {
+    border-radius: 7px;
+    margin-right: 10px;
+    height: 2.5rem;
+    width: 2.5rem;
+}
+div.tiny-session-body > svg {
+    border-radius: 7px;
+    margin-right: 10px;
+    height: 1.25rem;
+    width: 1.25rem;
+    padding: 0.625rem;
+    background-color: var(--color);
+}
+div.tiny-session-body > div {
+    overflow: hidden;
+}
+div.tiny-session-body > div p {
+    color: var(--color-font);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: block;
+    margin: 0;
+}
+div.tiny-session-body > div:nth-child(3) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+div.tiny-session-body > div:nth-child(3) > p {
+    min-height: 1rem;
+    height: 1rem;
+}
+div.tiny-session-body > div:nth-child(3) > div {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+}
+div.tiny-session-body > div:nth-child(3) > div > span {
+    color: var(--color-font-1);
+    font-size: 0.8rem;
+    min-width: 2rem;
+    margin-right: 3px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+div.tiny-session-body > div:nth-child(3) > div {
+    flex: 1;
+    display: flex;
+}
+div.tiny-session-body > div:nth-child(3) > div > svg {
+    margin-right: 5px;
+    height: 1rem;
+}
+
 .respond {
     width: calc(100% + 65px);
     overflow: hidden;

@@ -20,7 +20,18 @@ import {
     rgbToHsl,
     addBackendListener
 } from '@renderer/function/utils/systemUtil'
-import { toRaw, nextTick, Directive } from 'vue'
+import {
+    toRaw,
+    nextTick,
+    Directive,
+    WatchHandle,
+    onMounted,
+    onUnmounted,
+    ref,
+    watchEffect,
+    watch,
+    shallowReactive,
+} from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
 import { Notify } from '../notify'
@@ -1230,6 +1241,22 @@ export function useStayEvent<T extends Event,C>(
         handleEnd,
     }
 }
+
+/**
+ * 使用事件监听器
+ * @param target 目标dom
+ * @param event 事件
+ * @param callback 回调
+ */
+export function useEventListener<T extends keyof DocumentEventMap>(
+    target: Document,
+    event: T,
+    callback: (event: DocumentEventMap[T]) => void) {
+    // 如果你想的话，
+    // 也可以用字符串形式的 CSS 选择器来寻找目标 DOM 元素
+    onMounted(() => target.addEventListener(event, callback))
+    onUnmounted(() => target.removeEventListener(event, callback))
+}
 //#endregion
 
 //#region == v命令封装 ======================================
@@ -1337,4 +1364,70 @@ export const vAutoFocus: Directive<HTMLInputElement|HTMLTextAreaElement, undefin
         el.focus()
     }
 }
+
+export interface SearchBinding<T extends object> {
+    originList: Iterable<T>
+    isSearch: boolean
+    query: T[]
+    forceUpdate?: number // 强制刷新
+    match: (item: T, query: string) => boolean
+}
+
+/**
+ * 生成一个 Search 指令
+ */
+export function createVSearch<T extends object>(): Directive<HTMLInputElement, SearchBinding<T>> {
+    return {
+        mounted(el, binding: DirectiveBinding<SearchBinding<T>>) {
+            const controller = new AbortController()
+            const queryTxt = ref('')
+
+            el.addEventListener('input', () => {
+                queryTxt.value = el.value.trim()
+            }, { signal: controller.signal })
+
+            const stopWatchEffect = watchEffect(() => {
+                binding.value.forceUpdate
+                if (!queryTxt.value) {
+                    binding.value.isSearch = false
+                    binding.value.query = []
+                } else {
+                    binding.value.isSearch = true
+                    binding.value.query = shallowReactive(Array.from(binding.value.originList)
+                        .filter(item => binding.value.match(item, queryTxt.value)))
+                }
+            })
+            const stopWatch = watch(() => binding.value.isSearch, (isSearch) => {
+                if (!isSearch) {
+                    binding.value.query = []
+                }
+            })
+            ;(el as any)._vSearchController = controller
+            ;(el as any)._vStopWatch = { stopWatch, stopWatchEffect }
+        },
+        unmounted(el) {
+            const controller = (el as any)._vSearchController
+            const stopWatch = (el as any)._vStopWatch
+            if (controller) {
+                controller.abort()
+                delete (el as any)._vSearchController
+            }
+            if (stopWatch) {
+                (stopWatch.stopWatch as WatchHandle).stop()
+                ;(stopWatch.stopWatchEffect as WatchHandle).stop()
+                delete (el as any)._vStopWatch
+            }
+        }
+    }
+}
+/**
+ * 输入时在制定列表里搜索匹配的项
+ * @example v-search="{
+ *     originList: 制定的列表,
+ *     isSearch: 当前是否在搜索,
+ *     query: 搜索结果列表，
+ * }"
+ * @see createVSearch
+ */
+export const vSearch = createVSearch<any>()
 //#endregion
