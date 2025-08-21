@@ -13,7 +13,7 @@
     <div id="chat-pan"
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
-            (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')"
+            (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @touchstart="chatMoveStartEvent"
         @touchmove="chatMoveEvent"
@@ -368,7 +368,7 @@
         <UserInfoPanComponent :data="userInfoPanData" />
         <!-- 消息右击菜单 -->
         <Teleport to="body">
-            <div :class="'msg-menu' + (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
+            <div :class="'msg-menu' + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
                 <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
                 <div id="msgMenu" :class="tags.showMsgMenu ?
                     'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
@@ -568,6 +568,7 @@ import {
 } from '@renderer/function/elements/information'
 import { wheelMask } from '@renderer/function/input'
 import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
+import { backend } from '@renderer/runtime/backend'
 
 type IUser = any
 
@@ -598,6 +599,7 @@ const userInfoPanFunc: UserInfoPan = {
         props: ['chat', 'list', 'imgView'],
         data() {
             return {
+                backend,
                 uuid,
                 getShowName,
                 fun: {
@@ -727,9 +729,8 @@ const userInfoPanFunc: UserInfoPan = {
                 },
             )
             // Capacitor：系统返回操作（Android）
-            if(runtimeData.tags.clientType == 'capacitor' &&
-                runtimeData.tags.platform === 'android') {
-                addBackendListener('App', 'backButton', () => {
+            if(backend.type == 'capacitor' && backend.platform === 'android') {
+                backend.addListener('App', 'backButton', () => {
                     this.exitWin()
                 })
             }
@@ -2039,7 +2040,7 @@ const userInfoPanFunc: UserInfoPan = {
                                         const info = {
                                             index: item.message_id,
                                             message_id: item.message_id,
-                                            img_url: runtimeData.tags.proxyPort && msg.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(msg.url)}` : msg.url
+                                            img_url: backend.proxyUrl(msg.url)
                                         }
                                         this.getImgList.push(info)
                                     }

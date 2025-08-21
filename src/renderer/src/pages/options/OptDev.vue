@@ -158,7 +158,7 @@
                     {{ $t('执行') }}
                 </button>
             </div>
-            <template v-if="['electron', 'tauri'].includes(runtimeData.tags.clientType)">
+            <template v-if="backend.isDesktop()">
                 <div class="opt-item">
                     <font-awesome-icon :icon="['fas', 'power-off']" />
                     <div>
@@ -214,7 +214,6 @@
 </template>
 
 <script lang="ts">
-    import VConsole from 'vconsole'
     import app from '@renderer/main'
     import packageInfo from '../../../../../package.json'
 
@@ -233,13 +232,13 @@
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
-    import { callBackend } from '@renderer/function/utils/systemUtil'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ViewOptDev',
         data() {
             return {
-                dev: import.meta.env.DEV,
+                backend: backend,
                 jsonMapName: runtimeData.jsonMap?.name ?? '',
 
                 checkDefault: checkDefault,
@@ -250,6 +249,7 @@
                 ws_text: '',
                 parse_text: '',
                 appmsg_text: '',
+                dev: import.meta.env.DEV
             }
         },
         mounted() {
@@ -290,17 +290,12 @@
                 )
             },
             printRuntime() {
-                if(runtimeData.tags.clientType === 'capacitor') {
-                    if(!runtimeData.plantform.vConsole) {
-                        runtimeData.plantform.vConsole = new VConsole({
-                            theme: runtimeData.tags.darkMode ? 'dark' : 'light',
-                        })
-                    }
+                if(backend.isMobile()) {
                     const switcher = document.getElementById('__vconsole')?.getElementsByClassName('vc-switch')[0]
                     if (switcher) {
                         (switcher as HTMLDivElement).click()
                     // safeArea
-                    callBackend('SafeArea', 'getSafeArea', true).then((safeArea) => {
+                    backend.call('SafeArea', 'getSafeArea', true).then((safeArea) => {
                         if (safeArea) {
                             const vcPanel = document.getElementById('__vconsole')?.getElementsByClassName('vc-panel')[0]
                             if (vcPanel) {
@@ -321,8 +316,8 @@
                 console.log(runtimeData)
                 console.log('=========================')
                 /* eslint-enable no-console */
-                if(runtimeData.tags.clientType !== 'capacitor') {
-                    callBackend(undefined, 'win:openDevTools', false)
+                if(!backend.isMobile()) {
+                    backend.call(undefined, 'win:openDevTools', false)
                 }
             },
             async printVersionInfo() {
@@ -332,9 +327,9 @@
                 )
 
                 // 索要框架信息
-                const addInfo = await callBackend('Onebot', 'opt:getSystemInfo', true)
-                if(runtimeData.tags.clientType === 'capacitor') {
-                    addInfo.vconsole = ['vConsole Version', runtimeData.plantform.vConsole?.version ?? 'Not loaded']
+                const addInfo = await backend.call('Onebot', 'opt:getSystemInfo', true)
+                if(backend.isMobile() && backend.function && 'vConsole' in backend.function && backend.function.vConsole) {
+                    addInfo.vconsole = ['vConsole Version', backend.function.vConsole.version ?? 'Not loaded']
                 }
 
                 const browser = detect() as BrowserInfo
@@ -354,23 +349,21 @@
                     })
                 }
                 // 获取安装信息，这儿主要判断几种已提交的包管理安装方式
-                if (['electron', 'tauri'].includes(runtimeData.tags.clientType) &&
-                    runtimeData.tags.release) {
+                if (backend.isDesktop() && backend.release) {
                     const process = window.electron?.process
                     switch (process && process.platform) {
                         case 'linux': {
                             // archlinux
-                            if (runtimeData.tags.release.toLowerCase().indexOf('arch') > 0) {
+                            if (backend.release.toLowerCase().indexOf('arch') > 0) {
                                 let pacmanInfo =
-                                    await callBackend(undefined, 'sys:runCommand', true,
+                                    await backend.call(undefined, 'sys:runCommand', true,
                                         'pacman -Q stapxs-qq-lite-bin',
                                     )
                                 if (pacmanInfo.success) {
                                     info += '    Install Type      -> aur\n'
-                                } else {
+                                } else if(backend.function && 'invoke' in backend.function) {
                                     // 也有可能是 stapxs-qq-lite，这是我自己打的原生包
-                                    pacmanInfo = await runtimeData.
-                                        plantform.reader.invoke(
+                                    pacmanInfo = await backend.function.invoke(
                                             'sys:runCommand',
                                             'pacman -Q stapxs-qq-lite',
                                         )
@@ -398,8 +391,8 @@
                 info += `    Doc Width         -> ${document.getElementById('app')?.offsetWidth} px\n`
 
                 // capactior：索要 safeArea
-                if (runtimeData.tags.clientType === 'capacitor') {
-                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+                if (backend.isMobile()) {
+                    const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
                     if (safeArea) {
                         // 按照前端习惯，这儿的 safeArea 顺序是 top, right, bottom, left
                         const safeAreaStr = safeArea.top + ', ' + safeArea.right + ', ' + safeArea.bottom + ', ' + safeArea.left
@@ -541,7 +534,7 @@
                                     document.cookie = c.replace(/^ +/, '')
                                         .replace(/=.*/,'=;expires=' + new Date().toUTCString() + ';path=/')
                                 })
-                                callBackend(undefined, 'opt:clearAll', false)
+                                backend.call(undefined, 'opt:clearAll', false)
                                 location.reload()
                             },
                         },
@@ -557,7 +550,7 @@
                 runtimeData.popBoxList.push(popInfo)
             },
             restartapp() {
-                callBackend(undefined, 'win:relaunch', false)
+                backend.call(undefined, 'win:relaunch', false)
             },
             getBotTypeName(index: BotMsgType) {
                 switch (index) {

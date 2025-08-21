@@ -1253,3 +1253,6 @@ msgstr ""
 
 msgid "获取历史记录失败"
 msgstr ""
+
+msgid "当前会话"
+msgstr ""

@@ -5,6 +5,7 @@ import packageInfo from '../../../package.json'
 import App from './App.vue'
 
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -23,7 +24,6 @@ import './assets/css/sys_notice.css'
 import { getPortableFileLang } from './function/utils/systemUtil'
 
 /* eslint-disable no-console */
-
 const zh = getPortableFileLang('zh-CN')
 
 // 载入 l10n
@@ -40,6 +40,7 @@ export const i18n = createI18n({
 // 创建 App
 const app = createApp(App)
 app.use(i18n)
+app.use(createPinia())
 app.use(VueViewer)
 app.use(VueClipboard)
 

@@ -55,9 +55,9 @@
     import {
         getTimeConfig,
         getTrueLang,
-        callBackend,
     } from '@renderer/function/utils/systemUtil'
     import { pokeAnime } from '@renderer/function/utils/msgUtil'
+import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'NoticeBody',
@@ -76,7 +76,7 @@
                 width: number
                 height: number
             } | null
-            windowInfo = await callBackend(undefined, 'win:getWindowInfo', true)
+            windowInfo = await backend.call(undefined, 'win:getWindowInfo', true)
             // 补全撤回者信息
             if (
                 this.info.notice_type &&
@@ -110,7 +110,7 @@
             if (this.info.sub_type === 'poke' && this.info.pokeMe &&
                 this.info == runtimeData.messageList[runtimeData.messageList.length - 1]) {
                     let item = document.getElementById('app')
-                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                    if (backend.isDesktop()) {
                         item = document.getElementById('notice-' + this.id)?.getElementsByClassName('space')[0] as HTMLElement
                     }
                     pokeAnime(item, windowInfo)

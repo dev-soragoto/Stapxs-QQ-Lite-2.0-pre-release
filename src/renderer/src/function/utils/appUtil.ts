@@ -16,11 +16,20 @@ import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem, MenuEventData } from '@renderer/function/elements/information'
 import {
     hslToRgb,
-    callBackend,
     rgbToHsl,
-    addBackendListener
 } from '@renderer/function/utils/systemUtil'
-import { toRaw, nextTick, Directive } from 'vue'
+import {
+    toRaw,
+    nextTick,
+    Directive,
+    WatchHandle,
+    onMounted,
+    onUnmounted,
+    ref,
+    watchEffect,
+    watch,
+    shallowReactive,
+} from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
 import { Notify } from '../notify'
@@ -66,13 +75,10 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
  */
 export function openLink(url: string, external = false) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
-    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+    if (backend.isDesktop()) {
         if (!external && !runtimeData.sysConfig.close_browser) {
             runtimeData.popBoxList = []
-            if(runtimeData.tags.proxyPort) {
-                // 存在本地代理服务器
-                url = 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + encodeURIComponent(url)
-            }
+            url = backend.proxyUrl(url)
             const popInfo = {
                 html: `<iframe src="${url}" class="view-iframe"></iframe>`,
                 full: true,
@@ -90,10 +96,7 @@ export function openLink(url: string, external = false) {
                             if (shell) {
                                 shell.openExternal(url)
                             } else {
-                                if(runtimeData.tags.proxyPort) {
-                                    url = decodeURIComponent(url.replace(`http://localhost:${runtimeData.tags.proxyPort}/proxy?url=`, ''))
-                                }
-                                callBackend('', 'sys:openInBrowser', false, url)
+                                backend.call('', 'sys:openInBrowser', false, backend.proxyUrl(url))
                             }
                             runtimeData.popBoxList.shift()
                         },
@@ -113,10 +116,10 @@ export function openLink(url: string, external = false) {
             if (shell) {
                 shell.openExternal(url)
             } else {
-                if(runtimeData.tags.proxyPort) {
-                    url = decodeURIComponent(url.replace(`http://localhost:${runtimeData.tags.proxyPort}/proxy?url=`, ''))
+                if(backend.proxy) {
+                    url = decodeURIComponent(url.replace(`http://localhost:${backend.proxy}/proxy?url=`, ''))
                 }
-                callBackend('', 'sys:openInBrowser', false, url)
+                backend.call('', 'sys:openInBrowser', false, url)
             }
         }
     } else {
@@ -258,7 +261,7 @@ export function downloadFile(
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    if (runtimeData.tags.clientType == 'web') {
+    if (backend.isWeb()) {
         try {
             new FileDownloader({
                 url: url,
@@ -272,13 +275,13 @@ export function downloadFile(
             logger.error(e as Error, '下载文件失败')
         }
     } else {
-        addBackendListener(undefined, 'sys:downloadBack', (event, data) => {
+        backend.addListener(undefined, 'sys:downloadBack', (event, data) => {
             onprocess(data || event.payload)
         })
-        addBackendListener(undefined, 'sys:downloadCancel', (event, data) => {
+        backend.addListener(undefined, 'sys:downloadCancel', (event, data) => {
             oncancel(data || event.payload)
         })
-        callBackend(undefined, 'sys:download', false, {
+        backend.call(undefined, 'sys:download', false, {
             downloadPath: url,
             fileName: name,
         })
@@ -328,7 +331,7 @@ export function updateWinColor(color: string) {
 }
 export async function loadWinColor() {
     // 获取系统主题色
-    updateWinColor(await callBackend(undefined, 'sys:getWinColor', true))
+    updateWinColor(await backend.call(undefined, 'sys:getWinColor', true))
 }
 
 /**
@@ -337,7 +340,7 @@ export async function loadWinColor() {
 export function createMenu() {
     const { $t } = app.config.globalProperties
     // MacOS：初始化菜单
-    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+    if (backend.isDesktop()) {
         // 初始化菜单
         const menuTitles = {} as { [key: string]: string }
         menuTitles.success = $t(
@@ -378,13 +381,13 @@ export function createMenu() {
         menuTitles.feedback = $t('在 Github 上反馈问题')
         menuTitles.license = $t('许可协议')
 
-        callBackend(undefined, 'sys:createMenu', false,
-            runtimeData.tags.clientType == 'tauri' ? { data: menuTitles} : menuTitles)
+        backend.call(undefined, 'sys:createMenu', false,
+            backend.type == 'tauri' ? { data: menuTitles} : menuTitles)
     }
 }
 export function updateMenu(config: { parent: string, id: string; action: string; value: string }) {
     // MacOS：更新菜单
-    callBackend(undefined, 'sys:updateMenu', false, config)
+    backend.call(undefined, 'sys:updateMenu', false, config)
 }
 
 /**
@@ -392,20 +395,20 @@ export function updateMenu(config: { parent: string, id: string; action: string;
 */
 export function createIpc() {
     // 服务发现
-    addBackendListener(undefined, 'sys:serviceFound', (event, data) => {
+    backend.addListener(undefined, 'sys:serviceFound', (event, data) => {
         const info = data ?? event.payload
         setQuickLogin(info.address, info.port)
     })
     // bot 功能
-    addBackendListener(undefined, 'bot:flushUser', () => {
+    backend.addListener(undefined, 'bot:flushUser', () => {
         reloadUsers()
         popInfo.add(PopType.INFO, app.config.globalProperties.$t('刷新用户列表成功'))
     })
-    addBackendListener(undefined, 'bot:logout', () => {
+    backend.addListener(undefined, 'bot:logout', () => {
         option.remove('auto_connect')
         Connector.close()
     })
-    addBackendListener(undefined, 'bot:quickReply', (event, data) => {
+    backend.addListener(undefined, 'bot:quickReply', (event, data) => {
         const info = data ?? event.payload
         sendMsgRaw(info.id, info.type,
             parseMsg(info.content, [{ type: 'reply', id: String(info.msg) }], []), true)
@@ -418,7 +421,7 @@ export function createIpc() {
         }
     })
     // 应用功能
-    addBackendListener(undefined, 'app:about', () => {
+    backend.addListener(undefined, 'app:about', () => {
             const popInfo = {
                 title: app.config.globalProperties.$t('关于') + ' ' +
                         app.config.globalProperties.$t('Stapxs QQ Lite'),
@@ -427,33 +430,33 @@ export function createIpc() {
             }
             runtimeData.popBoxList.push(popInfo)
         })
-    addBackendListener(undefined, 'sys:handleUri', (event, data) => {
+    backend.addListener(undefined, 'sys:handleUri', (event, data) => {
         logger.info(JSON.stringify(data ?? event.payload))
     })
-    addBackendListener(undefined, 'app:changeTab', (event, name) => {
+    backend.addListener(undefined, 'app:changeTab', (event, name) => {
         window.focus()
         document.getElementById('bar-' + (name ?? event.payload).toLowerCase())?.click()
     })
-    addBackendListener(undefined, 'app:openLink', (event, link) => {
+    backend.addListener(undefined, 'app:openLink', (event, link) => {
         openLink(link ?? event.payload)
     })
-    addBackendListener(undefined, 'app:error', (event, text) => {
+    backend.addListener(undefined, 'app:error', (event, text) => {
         new Logger().add(LogType.ERR, text ?? event.payload)
     })
-    addBackendListener(undefined, 'app:jumpChat', (event, data) => {
+    backend.addListener(undefined, 'app:jumpChat', (event, data) => {
         const info = data ?? event.payload
         jumpToChat(info.userId, info.msgId)
         new Notify().closeAll(info.userId)
     })
     // 后端连接模式
-    addBackendListener(undefined, 'onebot:onopen', (event, data) => {
+    backend.addListener(undefined, 'onebot:onopen', (event, data) => {
         const info = data ?? event.payload
         Connector.onopen(info.address, info.token)
     })
-    addBackendListener(undefined, 'onebot:onmessage', (event, message) => {
+    backend.addListener(undefined, 'onebot:onmessage', (event, message) => {
         Connector.onmessage(message ?? event.payload)
     })
-    addBackendListener(undefined, 'onebot:onclose', (event, data) => {
+    backend.addListener(undefined, 'onebot:onclose', (event, data) => {
         const info = data ?? event.payload
         Connector.onclose(info.code, info.reason || info.message, info.address, info.token)
     })
@@ -465,9 +468,9 @@ export function createIpc() {
 export async function loadMobile() {
     const { $t } = app.config.globalProperties
     // Capacitor：相关初始化
-    if(runtimeData.tags.clientType == 'capacitor') {
+    if(backend.isMobile()) {
         // 注册回调监听
-        addBackendListener('Onebot', 'onebot:event', (data) => {
+        backend.addListener('Onebot', 'onebot:event', (data) => {
             const msg = JSON.parse(data.data)
             switch(data.type) {
                 case 'onopen': Connector.onopen(login.address, login.token); break
@@ -489,17 +492,17 @@ export async function loadMobile() {
                 'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
         }
         // 通知
-        const permission = await callBackend('LocalNotifications', 'checkPermissions', true)
+        const permission = await backend.call('LocalNotifications', 'checkPermissions', true)
         const permissionStr = permission || permission.display
         if(permissionStr.indexOf('prompt') != -1) {
-            await callBackend('LocalNotifications', 'requestPermissions', false)
+            await backend.call('LocalNotifications', 'requestPermissions', false)
         } else if(permissionStr.indexOf('denied') != -1) {
             logger.error(null, '通知权限已被拒绝')
             logger.system('开发者阁下为什么要拒绝通知权限的请求呢？')
         } else {
             logger.debug('通知权限已开启')
             // 注册通知类型
-            callBackend('LocalNotifications', 'registerActionTypes', false,{
+            backend.call('LocalNotifications', 'registerActionTypes', false,{
                 types:[{
                     id: 'msgQuickReply',
                     actions: [{
@@ -513,7 +516,7 @@ export async function loadMobile() {
                 }] as ActionType[]
             })
             // 注册相关事件
-            addBackendListener('LocalNotifications', 'localNotificationActionPerformed', (info) => {
+            backend.addListener('LocalNotifications', 'localNotificationActionPerformed', (info) => {
                 const notification =
                     info.notification as LocalNotificationSchema
                 if(info.actionId == 'tap') {
@@ -539,8 +542,8 @@ export async function loadMobile() {
             })
         }
         // 键盘
-        callBackend('Keyboard', 'setAccessoryBarVisible', false, { isVisible: false })
-        addBackendListener('Keyboard', 'keyboardWillShow', async (info: KeyboardInfo) => {
+        backend.call('Keyboard', 'setAccessoryBarVisible', false, { isVisible: false })
+        backend.addListener('Keyboard', 'keyboardWillShow', async (info: KeyboardInfo) => {
             const keyboardHeight = info.keyboardHeight
 
             // 调整输入框高度
@@ -549,14 +552,14 @@ export async function loadMobile() {
                 sendMore.style.paddingBottom = '10px'
             }
 
-            const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+            const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
             const tabBar = document.getElementsByTagName('ul')[0]
             // 如果键盘高度低于高度的 1/3 且是 iOS 设备
             // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
             //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
-            if(runtimeData.tags.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
+            if(backend.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
                 // 修改 ResizeMode
-                callBackend('Keyboard', 'setResizeMode', false, { mode: 'none' })
+                backend.call('Keyboard', 'setResizeMode', false, { mode: 'none' })
                 // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
                 const baseApp = document.getElementById('base-app')
                 if (safeArea && baseApp) {
@@ -574,15 +577,15 @@ export async function loadMobile() {
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
             const html = document.getElementsByTagName('html')[0]
-            if(html && runtimeData.tags.platform == 'android') {
-                const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+            if(html && backend.platform == 'android') {
+                const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
                 html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
             }
         })
-        addBackendListener('Keyboard', 'keyboardWillHide', async () => {
-            callBackend('Keyboard', 'setResizeMode', false, { mode: 'native' })
+        backend.addListener('Keyboard', 'keyboardWillHide', async () => {
+            backend.call('Keyboard', 'setResizeMode', false, { mode: 'native' })
             const baseApp = document.getElementById('base-app')
-            const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+            const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
             if (safeArea && baseApp) {
                 baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
             }
@@ -598,26 +601,27 @@ export async function loadMobile() {
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
             const html = document.getElementsByTagName('html')[0]
-            if(html && runtimeData.tags.platform == 'android') {
+            if(html && backend.platform == 'android') {
                 html.style.height = 'calc(100%)'
             }
         })
         // 状态栏（Android）
-        callBackend('NavigationBar', 'setTransparency', false, { isTransparent: true })
-        callBackend('StatusBar', 'setOverlaysWebView', false, { overlay: true })
-        callBackend('StatusBar', 'setBackgroundColor', false, { color: '#ffffff00' })
+        backend.call('NavigationBar', 'setTransparency', false, { isTransparent: true })
+        backend.call('StatusBar', 'setOverlaysWebView', false, { overlay: true })
+        backend.call('StatusBar', 'setBackgroundColor', false, { color: '#ffffff00' })
     }
 }
 
 import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
 import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
 import { ActionType, LocalNotificationSchema } from '@capacitor/local-notifications'
+import { backend } from '@renderer/runtime/backend'
 // import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
 /**
 * 装载补充样式
 */
 export async function loadAppendStyle() {
-    const platform = runtimeData.tags.platform
+    const platform = backend.platform
     logger.info('正在装载补充样式……')
     if(platform != undefined) {
         import(`@renderer/assets/css/append/append_${platform}.css`)
@@ -643,15 +647,15 @@ export async function loadAppendStyle() {
             }
         }
 
-        if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'win:maximize', false)
+        if(backend.isDesktop()) {
+            backend.call(undefined, 'win:maximize', false)
             const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
             if(topBar) {
                 topBar.style.display = 'none'
             }
         }
     }
-    if(runtimeData.tags.clientType == 'capacitor') {
+    if(backend.isMobile()) {
         const styleTag = document.createElement('style')
         styleTag.id = 'mobile-css'
         document.head.appendChild(styleTag)
@@ -663,22 +667,22 @@ export async function loadAppendStyle() {
     }
 
     // UI 2.0 附加样式
-    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+    if (backend.isDesktop()) {
         import('@renderer/assets/css/append/append_new.css').then(() => {
             logger.info('UI 2.0 附加样式加载完成')
         })
     }
     // 透明 UI 附加样式
-    let subVersion = runtimeData.tags.release?.split('.') as any
+    let subVersion = backend.release?.split('.') as any
     subVersion = subVersion ? Number(subVersion[2]) : 0
-    if (['electron', 'tauri'].includes(runtimeData.tags.clientType) &&
+    if (backend.isDesktop() &&
         (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))) {
         import('@renderer/assets/css/append/append_vibrancy.css').then(() => {
             logger.info('透明 UI 附加样式加载完成')
         })
     }
-    if (['electron', 'tauri'].includes(runtimeData.tags.clientType) && platform == 'linux') {
-        const gnomeExtInfo = await callBackend(undefined, 'sys:getGnomeExt', true)
+    if (backend.isDesktop() && platform == 'linux') {
+        const gnomeExtInfo = await backend.call(undefined, 'sys:getGnomeExt', true)
         if (gnomeExtInfo) {
             gnomeExtInfo.then((info: any) => {
                 if (
@@ -782,7 +786,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         message: msg,
         updated: isUpdated,
     }
-    const buttonGoUpdate = (runtimeData.tags.clientType != 'web') ? [
+    const buttonGoUpdate = (!backend.isWeb()) ? [
               {
                   text: $t('知道了'),
                   fun: () => runtimeData.popBoxList.shift(),
@@ -977,7 +981,7 @@ export function checkNotice() {
 */
 export function BackendRequest(type: 'GET' | 'POST', url: string,
         cookies: string[], data: any = undefined) {
-    callBackend(undefined, 'sys:requestHttp', false, {
+    backend.call(undefined, 'sys:requestHttp', false, {
         type: type,
         url: url,
         cookies: JSON.stringify(cookies),
@@ -1076,9 +1080,9 @@ export function changeGroupNotice(group_id: number, open: boolean) {
  */
 export function shouldAutoFocus(): boolean {
     // 桌面端
-    if (runtimeData.tags.clientType !== 'web') {
+    if (backend.type !== 'web') {
         // 除了苹果的不知道啥东西,都可以
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+        if (['electron', 'tauri'].includes(backend.type)) {
             return true
         }
         return false
@@ -1091,6 +1095,20 @@ export function shouldAutoFocus(): boolean {
         }
         return true
     }
+}
+
+/**
+ * 判断是不是机器人
+ * @param id 用户id
+ * @returns
+ */
+export function isRobot(id: number | string): boolean {
+    id = Number(id)
+    if (id >= 4010000000 && id <= 4019999999) return true
+    if (id >= 2854196301 && id <= 2854216399) return true
+    if (id >= 3889000000 && id <= 3889999999) return true
+    if (id === 66600000) return true
+    return false
 }
 
 //#region == use封装 ========================================
@@ -1216,6 +1234,22 @@ export function useStayEvent<T extends Event,C>(
         handleEnd,
     }
 }
+
+/**
+ * 使用事件监听器
+ * @param target 目标dom
+ * @param event 事件
+ * @param callback 回调
+ */
+export function useEventListener<T extends keyof DocumentEventMap>(
+    target: Document,
+    event: T,
+    callback: (event: DocumentEventMap[T]) => void) {
+    // 如果你想的话，
+    // 也可以用字符串形式的 CSS 选择器来寻找目标 DOM 元素
+    onMounted(() => target.addEventListener(event, callback))
+    onUnmounted(() => target.removeEventListener(event, callback))
+}
 //#endregion
 
 //#region == v命令封装 ======================================
@@ -1323,4 +1357,70 @@ export const vAutoFocus: Directive<HTMLInputElement|HTMLTextAreaElement, undefin
         el.focus()
     }
 }
+
+export interface SearchBinding<T extends object> {
+    originList: Iterable<T>
+    isSearch: boolean
+    query: T[]
+    forceUpdate?: number // 强制刷新
+    match: (item: T, query: string) => boolean
+}
+
+/**
+ * 生成一个 Search 指令
+ */
+export function createVSearch<T extends object>(): Directive<HTMLInputElement, SearchBinding<T>> {
+    return {
+        mounted(el, binding: DirectiveBinding<SearchBinding<T>>) {
+            const controller = new AbortController()
+            const queryTxt = ref('')
+
+            el.addEventListener('input', () => {
+                queryTxt.value = el.value.trim()
+            }, { signal: controller.signal })
+
+            const stopWatchEffect = watchEffect(() => {
+                void binding.value.forceUpdate
+                if (!queryTxt.value) {
+                    binding.value.isSearch = false
+                    binding.value.query = []
+                } else {
+                    binding.value.isSearch = true
+                    binding.value.query = shallowReactive(Array.from(binding.value.originList)
+                        .filter(item => binding.value.match(item, queryTxt.value)))
+                }
+            })
+            const stopWatch = watch(() => binding.value.isSearch, (isSearch) => {
+                if (!isSearch) {
+                    binding.value.query = []
+                }
+            })
+            ;(el as any)._vSearchController = controller
+            ;(el as any)._vStopWatch = { stopWatch, stopWatchEffect }
+        },
+        unmounted(el) {
+            const controller = (el as any)._vSearchController
+            const stopWatch = (el as any)._vStopWatch
+            if (controller) {
+                controller.abort()
+                delete (el as any)._vSearchController
+            }
+            if (stopWatch) {
+                (stopWatch.stopWatch as WatchHandle).stop()
+                ;(stopWatch.stopWatchEffect as WatchHandle).stop()
+                delete (el as any)._vStopWatch
+            }
+        }
+    }
+}
+/**
+ * 输入时在制定列表里搜索匹配的项
+ * @example v-search="{
+ *     originList: 制定的列表,
+ *     isSearch: 当前是否在搜索,
+ *     query: 搜索结果列表，
+ * }"
+ * @see createVSearch
+ */
+export const vSearch = createVSearch<any>()
 //#endregion

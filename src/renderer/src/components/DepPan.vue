@@ -67,7 +67,7 @@
                     </header>
                     <font-awesome-icon :icon="['fas', 'angle-right']" />
                 </div>
-                <div v-if="runtimeData.tags.platform == 'web'"
+                <div v-if="backend.platform == 'web'"
                     class="ss-card jump-card"
                     @click="openLink('https://github.com/Stapxs/Stapxs-Web-API')">
                     <header>
@@ -113,7 +113,7 @@
                     <div>Apache 2.0</div>
                     <font-awesome-icon :icon="['fas', 'angle-right']" />
                 </div>
-                <div v-if="runtimeData.tags.clientType == 'tauri'"
+                <div v-if="appClient.type == 'tauri'"
                     class="ss-card jump-card"
                     @click="openLink('https://github.com/deltachat/deltachat-desktop')">
                     <header>
@@ -152,12 +152,15 @@
     import { defineComponent } from 'vue'
     import { openLink } from '@renderer/function/utils/appUtil'
     import { runtimeData } from '@renderer/function/msg'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'DepPan',
         props: [ 'type' ],
         data() {
             return {
+                backend,
+                appClient: backend,
                 runtimeData: runtimeData,
                 openLink: openLink
             }
