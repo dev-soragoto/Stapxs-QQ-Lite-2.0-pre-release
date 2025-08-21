@@ -2,8 +2,8 @@ import app from '@renderer/main'
 
 import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
-import { runtimeData } from '../msg';
-import { Logger, LogType } from '../base';
+import { Logger } from '../base';
+import { backend } from '@renderer/runtime/backend';
 
 /**
  * 异步延迟
@@ -519,8 +519,8 @@ export async function getApi(url: string) {
         }
     } catch (error) {
         new Logger().error(error as Error, '前端请求 API 失败，尝试后端请求……')
-        if(runtimeData.tags.clientType != 'web') {
-            return await callBackend('Onebot', 'sys:getApi', true, url)
+        if(!backend.isWeb()) {
+            return await backend.call('Onebot', 'sys:getApi', true, url)
         } else {
             return null
         }

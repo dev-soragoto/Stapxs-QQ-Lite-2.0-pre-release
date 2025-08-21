@@ -153,7 +153,7 @@
     import { runtimeData } from '@renderer/function/msg'
     import { reloadUsers } from '@renderer/function/utils/appUtil'
     import { login as loginInfo } from '@renderer/function/connect'
-	import { callBackend } from '@renderer/function/utils/systemUtil'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ViewFriends',
@@ -180,7 +180,7 @@
                     name = 'friend-search-small'
                 }
                 // 将焦点移动到搜索框
-                if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                if(backend.isDesktop()) {
                     const search = document.getElementById(name)
                     if(search) {
                         search.focus()
@@ -250,9 +250,9 @@
                     this.runtimeData.showList = [] as any[]
                 }
                 // macOS: 刷新 TouchBar
-                if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                if(backend.isDesktop()) {
                     // list 只需要 id 和 name
-                    callBackend(undefined, 'sys:flushFriendSearch', false,
+                    backend.call(undefined, 'sys:flushFriendSearch', false,
                         this.runtimeData.showList.map((item) => {
                             return {
                                 id: item.user_id ? item.user_id : item.group_id,

@@ -10,7 +10,7 @@
     <div id="chat-pan"
         :class=" 'chat-pan sys-not-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
-            (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')">
+            (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
         <div>
             <font-awesome-icon :icon="['fas', 'angle-left']" @click="exit" />
             <span>{{ $t('系统消息') }}</span>
@@ -97,12 +97,14 @@
     import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ChatSystemNotice',
         emits: ['userClick'],
         data() {
             return {
+                backend,
                 trueLang: getTrueLang(),
                 runtimeData: runtimeData,
                 dev: import.meta.env.DEV,

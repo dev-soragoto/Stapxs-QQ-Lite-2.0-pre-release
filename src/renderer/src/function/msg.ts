@@ -28,7 +28,6 @@ import {
     sendMsgAppendInfo,
 } from '@renderer/function/utils/msgUtil'
 import {
-    callBackend,
     delay,
     getInch,
     getViewTime,
@@ -57,6 +56,7 @@ import {
 } from './elements/information'
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
+import { backend } from '@renderer/runtime/backend'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -271,7 +271,7 @@ const noticeFunctions = {
             info.forEach((item: any) => {
                 switch (item.type) {
                     case 'img':
-                        str += `<img src="${runtimeData.tags.proxyPort ? 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + encodeURIComponent(item.src) : item.src }"/>`
+                        str += `<img src="${ backend.proxyUrl(item.src) }"/>`
                         break
                     case 'nor':
                         str += item.txt
@@ -415,11 +415,11 @@ const msgFunctions = {
                 value: data.nickname,
             })
             const title = `${data.nickname}（${data.uin}）`
-            if(runtimeData.tags.platform == 'web') {
+            if(backend.platform == 'web') {
                 document.title = title + '- Stapxs QQ Lite'
             } else {
                 document.title = title
-                callBackend(undefined, 'win:setTitle', false, title)
+                backend.call(undefined, 'win:setTitle', false, title)
             }
             // 结束登录页面的水波动画
             clearInterval(runtimeData.tags.loginWaveTimer)
@@ -1867,9 +1867,6 @@ const baseRuntime = {
         msgType: BotMsgType.Array,
         isElectron: false,
         isCapacitor: false,
-        clientType: 'web' as const,
-        platform: undefined,
-        release: undefined,
         connectSsl: false,
         classes: [],
         darkMode: false,
@@ -1926,7 +1923,6 @@ export function resetRimtime(resetAll = false) {
     firstHeartbeatTime = -1
     heartbeatTime = -1
     if (resetAll) {
-        runtimeData.tags = reactive(baseRuntime.tags)
         runtimeData.chatInfo = reactive(baseRuntime.chatInfo)
         runtimeData.userList = reactive([])
         runtimeData.showList = reactive([])

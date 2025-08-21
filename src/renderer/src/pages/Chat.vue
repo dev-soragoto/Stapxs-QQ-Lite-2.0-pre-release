@@ -13,7 +13,7 @@
     <div id="chat-pan"
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
-            (['linux', 'win32'].includes(runtimeData.tags.platform ?? '') ? ' withBar' : '')"
+            (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @touchstart="chatMoveStartEvent"
         @touchmove="chatMoveEvent"
@@ -564,7 +564,6 @@
 		shouldAutoFocus,
     } from '@renderer/function/utils/appUtil'
     import {
-        addBackendListener,
         getTimeConfig,
         getTrueLang,
         getViewTime,
@@ -590,6 +589,7 @@
         UserGroupElem,
         MenuEventData,
     } from '@renderer/function/elements/information'
+    import { backend } from '@renderer/runtime/backend'
 import { wheelMask } from '@renderer/function/input'
 
 
@@ -599,6 +599,7 @@ import { wheelMask } from '@renderer/function/input'
         props: ['chat', 'list', 'mumberInfo', 'imgView'],
         data() {
             return {
+                backend,
                 uuid,
                 getShowName,
                 fun: {
@@ -728,9 +729,8 @@ import { wheelMask } from '@renderer/function/input'
                 },
             )
             // Capacitor：系统返回操作（Android）
-            if(runtimeData.tags.clientType == 'capacitor' &&
-                runtimeData.tags.platform === 'android') {
-                addBackendListener('App', 'backButton', () => {
+            if(backend.type == 'capacitor' && backend.platform === 'android') {
+                backend.addListener('App', 'backButton', () => {
                     this.exitWin()
                 })
             }
@@ -2051,7 +2051,7 @@ import { wheelMask } from '@renderer/function/input'
                                         const info = {
                                             index: item.message_id,
                                             message_id: item.message_id,
-                                            img_url: runtimeData.tags.proxyPort && msg.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(msg.url)}` : msg.url
+                                            img_url: backend.proxyUrl(msg.url)
                                         }
                                         this.getImgList.push(info)
                                     }

@@ -37,6 +37,7 @@
     "electron-window-state": "^5.0.3",
     "jsonpath": "^1.1.1",
     "log4js": "^6.9.1",
+    "pinia": "^3.0.3",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "semver": "^7.7.1",
     "ws": "^8.18.0"

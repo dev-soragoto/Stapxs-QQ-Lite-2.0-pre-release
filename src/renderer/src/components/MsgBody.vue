@@ -90,8 +90,8 @@
                         <img v-else-if="item.type == 'image'"
                             :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                             :alt="$t('图片')"
-                            :class=" imgStyle(data.message.length, index, isFace(item))"
-                            :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
+                            :class=" imgStyle(data.message.length, index, item.asface)"
+                            :src="backend.proxyUrl(item.url)"
                             @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
@@ -277,7 +277,7 @@
                         <!-- 特殊 URL 的预览 -->
                         <div v-if="pageViewInfo.type == 'bilibili'" class="link-view-bilibili">
                             <div class="user">
-                                <img :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(pageViewInfo.data.owner.face)}` : pageViewInfo.data.owner.face">
+                                <img :src="backend.proxyUrl(pageViewInfo.data.owner.face)">
                                 <span>{{ pageViewInfo.data.owner.name }}</span>
                                 <a>{{ Intl.DateTimeFormat(trueLang, {
                                     year: 'numeric',
@@ -287,7 +287,7 @@
                                     minute: 'numeric'
                                 }).format(getViewTime(pageViewInfo.data.public)) }}</a>
                             </div>
-                            <img :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(pageViewInfo.data.pic)}` : pageViewInfo.data.pic">
+                            <img :src="backend.proxyUrl(pageViewInfo.data.pic)">
                             <span>{{ pageViewInfo.data.title }}</span>
                             <a>{{ pageViewInfo.data.desc }}</a>
                             <div class="data">
@@ -309,7 +309,7 @@
                                         <a v-if="pageViewInfo.data.info.free != null">{{ $t('（试听）') }}</a>
                                     </a>
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
-                                    <audio :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/proxy?url=${pageViewInfo.data.play_link}` : pageViewInfo.data.play_link"
+                                    <audio :src="backend.proxyUrl(pageViewInfo.data.play_link)"
                                         @loadedmetadata="audioLoaded()"
                                         @timeupdate="audioUpdate()" />
                                     <div>
@@ -376,6 +376,7 @@ import { linkView } from '@renderer/function/utils/linkViewUtil'
 import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
 import { vMenu } from '@renderer/function/utils/appUtil'
 import { wheelMask } from '@renderer/function/input'
+    import { backend } from '@renderer/runtime/backend'
 
 type Msg = any
 
@@ -395,6 +396,7 @@ defineEmits<{
         emits: ['scrollToMsg', 'imageLoaded', 'sendPoke', 'showMenu', 'rightMove', 'leftMove'],
         data() {
             return {
+                backend,
                 md: markdownit({ breaks: true }),
                 isMe: false,
                 isDebugMsg: Option.get('debug_msg'),
@@ -660,7 +662,7 @@ defineEmits<{
                         let data = null as any
                         let finaLink = fistLink
                         try {
-                            finaLink = await callBackend('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
+                            finaLink = await backend.call('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
                             if(!finaLink) {
                                 finaLink = fistLink
                             }
@@ -676,8 +678,8 @@ defineEmits<{
                         }
                         // 通用 og 解析
                         if(!data) {
-                            if (runtimeData.tags.clientType != 'web') {
-                                let html = await callBackend('Onebot', 'sys:getHtml', true, finaLink)
+                            if (!backend.isWeb()) {
+                                let html = await backend.call('Onebot', 'sys:getHtml', true, finaLink)
                                 if(html) {
                                     const headEnd = html.indexOf('</head>')
                                     html = html.slice(0, headEnd)
@@ -932,12 +934,12 @@ defineEmits<{
                         width: number
                         height: number
                     } | null
-                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-                        windowInfo = await callBackend('Onebot', 'win:getWindowInfo', true)
+                    if (backend.isDesktop()) {
+                        windowInfo = await backend.call('Onebot', 'win:getWindowInfo', true)
                     }
                     const message = document.getElementById('chat-' + this.data.message_id)
                     let item = document.getElementById('app')
-                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                    if (backend.isDesktop()) {
                         item = message?.getElementsByClassName('poke-hand')[0] as HTMLImageElement
                     }
                     this.$nextTick(() => {
