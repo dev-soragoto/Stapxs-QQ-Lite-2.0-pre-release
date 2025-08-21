@@ -1215,6 +1215,7 @@ textarea:focus {
 }
 
 .global-session-search-bar > hr {
+    color: var(--color-card-2);
     width: 100%;
 }
 
@@ -1224,6 +1225,7 @@ textarea:focus {
 }
 
 .global-session-search-bar > div {
+    padding-right: 5px;
     overflow-x: hidden;
     overflow-y: scroll;
 }
@@ -1238,6 +1240,7 @@ textarea:focus {
 }
 
 .global-session-search-bar > div > div.session-item {
+    margin-bottom: 5px;
     border-radius: 7px;
 }
 
@@ -1250,6 +1253,7 @@ textarea:focus {
 }
 
 .global-session-search-bar > div > div.session-item > div {
+    width: -webkit-fill-available;
     pointer-events: none;
 }
 
