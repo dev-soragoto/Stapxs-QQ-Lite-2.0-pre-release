@@ -249,7 +249,14 @@ function handleEvent(e: Event) {
 
 //#region == 开启关闭 ====================================================================
 useEventListener(document, 'keydown', (e: KeyboardEvent) => {
-    if (e.ctrlKey && e.key === 'e') {
+    let isOpen = false;
+    if(runtimeData.tags.platform === 'darwin') {
+        // macOS 使用 Command + E
+        isOpen = e.metaKey && e.key === 'e'
+    } else {
+        isOpen = e.ctrlKey && e.key === 'e'
+    }
+    if (isOpen) {
         //开启
         if (show.value) return
         if (!login.status) return

@@ -1190,8 +1190,8 @@ textarea:focus {
 }
 
 .mask-background {
+    background-color: rgba(var(--color-card-2-rgb), 0.7);
     transition: background 0.3s;
-    background-color: #5F5F5FB4;
     position: absolute;
     height: 100%;
     width: 100%;
@@ -1224,7 +1224,8 @@ textarea:focus {
 }
 
 .global-session-search-bar > div {
-    overflow: scroll;
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
 
 .global-session-search-bar > div > div {
