@@ -565,6 +565,7 @@ textarea:focus {
     border-radius: 7px;
     height: 50px;
     width: 50px;
+    object-fit: cover;
 }
 .friend-body > svg {
     transition:
