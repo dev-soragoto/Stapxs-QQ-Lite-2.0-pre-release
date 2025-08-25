@@ -317,11 +317,13 @@
             </div>
             <!-- 消息发送框 -->
             <div>
-                <div @click="moreFunClick(runtimeData.sysConfig.quick_send)" @contextmenu="moreFunClick()">
-                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'default'" :icon="['fas', 'plus']" />
-                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'img'" :icon="['fas', 'image']" />
-                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'file'" :icon="['fas', 'folder']" />
-                    <font-awesome-icon v-if="runtimeData.sysConfig.quick_send == 'face'" :icon="['fas', 'face-laugh']" />
+                <div @click="moreFunClick(runtimeData.sysConfig.quick_send)"
+                v-menu.prevent="_=>moreFunClick()">
+                    <font-awesome-icon v-if="tags.showMoreDetail || details.find(item => item.open)" :icon="['fas', 'minus']" />
+                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'default'" :icon="['fas', 'plus']" />
+                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'img'" :icon="['fas', 'image']" />
+                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'file'" :icon="['fas', 'folder']" />
+                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'face'" :icon="['fas', 'face-laugh']" />
                 </div>
                 <div>
                     <form @submit="mainSubmit">
@@ -568,6 +570,7 @@ import {
 import { wheelMask } from '@renderer/function/input'
 import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
+import { vMenu } from '@renderer/function/utils/appUtil'
 
 type IUser = any
 
@@ -2244,18 +2247,20 @@ const userInfoPanFunc: UserInfoPan = {
                     item.open = false
                 })
                 // 如果有关闭操作，就不打开更多功能菜单
-                if(!hasOpen) {
-                    if (type == 'default') {
-                        this.tags.showMoreDetail = !this.tags.showMoreDetail
-                    } else {
-                        this.tags.showMoreDetail = false
-                        // 打开指定的更多功能菜单
-                        switch(type) {
-                            case 'img': this.runSelectImg(); break
-                            case 'file': this.runSelectFile(); break
-                            case 'face': this.details[1].open = !this.details[1].open; break
-                        }
-                    }
+                if (hasOpen) return
+
+                // 如果更多功能菜单已经打开，则关闭
+                if (this.tags.showMoreDetail) {
+                    this.tags.showMoreDetail = false
+                    return
+                }
+
+                // 打开指定的更多功能菜单
+                switch(type) {
+                    case 'default': this.tags.showMoreDetail = true; break
+                    case 'img': this.runSelectImg(); break
+                    case 'file': this.runSelectFile(); break
+                    case 'face': this.details[1].open = !this.details[1].open; break
                 }
             },
 

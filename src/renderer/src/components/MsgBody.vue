@@ -569,7 +569,7 @@ function getUserById(id: number): IUser | undefined {
              * @param id 消息 id
              */
             scrollToMsg(id: string) {
-                emit('scrollToMsg', 'chat-' + id)
+                this.$emit('scrollToMsg', 'chat-' + id)
             },
 
             /**
@@ -635,7 +635,7 @@ function getUserById(id: number): IUser | undefined {
                 if (imgHeight > vh * 0.35)
                     imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
                 img.style.setProperty('--width', `${imgWidth}px`)
-                emit('imageLoaded', img.offsetHeight)
+                this.$emit('imageLoaded', img.offsetHeight)
             },
 
             /**
@@ -960,7 +960,7 @@ function getUserById(id: number): IUser | undefined {
 
             sendPoke() {
                 // 调用上级组件的 poke 方法
-                emit('sendPoke', this.data.sender.user_id)
+                this.$emit('sendPoke', this.data.sender.user_id)
             },
 
             async showPock() {
