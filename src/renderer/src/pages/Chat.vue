@@ -585,9 +585,11 @@ const userInfoPanData = shallowReactive<{
 })
 const userInfoPanFunc: UserInfoPan = {
     open: (user: IUser | number, x: number, y: number) => {
-        userInfoPanData.user = user
-        userInfoPanData.x = x
-        userInfoPanData.y = y
+        if(user.level != undefined) {
+            userInfoPanData.user = user
+            userInfoPanData.x = x
+            userInfoPanData.y = y
+        }
     },
     close: () => {
         userInfoPanData.user = undefined

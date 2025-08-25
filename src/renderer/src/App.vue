@@ -1,7 +1,7 @@
 <template>
     <div v-if="dev" :class="'dev-bar' + (backend.platform == 'win32' ? ' win' : '')">
         Stapxs QQ Lite Development Mode
-        {{ ' / platform: ' + backend.platform }}
+        {{ backend.platform ? ' / platform: ' + backend.platform : '' }}
         {{ ' / client: ' + appClient.type }}
         {{ ' / fps: ' + fps.value }}
     </div>
