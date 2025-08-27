@@ -243,13 +243,12 @@ export class MsgBodyFuns {
                 type = 'tencent.map'
             }
             if (json.app == 'com.tencent.miniapp_01' && info.name == '哔哩哔哩') {
-                try {
-                    backend.call('Onebot', 'sys:getFinalRedirectUrl', true, info.url).then((fistLink) => {
-                        linkView.bilibili(fistLink).then((result) => {
-                            card.$emit('page-view', fistLink, result)
-                        })
+                backend.call('Onebot', 'sys:getFinalRedirectUrl', true, info.url)
+                .then((fistLink) => {
+                    linkView.bilibili(fistLink).then((result) => {
+                        card.$emit('page-view', fistLink, result)
                     })
-                } catch (_) { /**/ }
+                })
                 if (!backend.isWeb()) {
                     return null
                 }
