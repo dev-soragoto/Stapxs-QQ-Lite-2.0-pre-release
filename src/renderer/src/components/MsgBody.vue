@@ -11,6 +11,7 @@
 
 <template>
     <div :id="'chat-' + data.message_id"
+        ref="msgMain"
         :class="'message' +
             (type ? ' ' + type : '') +
             (data.revoke ? ' revoke' : '') +
@@ -21,8 +22,13 @@
         :data-time="data.time"
         @mouseleave="hiddenUserInfo">
         <img v-show="!isMe || type == 'merge'"
+            v-menu.prevent="event => $emit('showMenu', event, data)"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
+
+            @mouseenter="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
+            @mousemove="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
+            @mouseleave="userInfoHoverEnd($event)"
             @dblclick="sendPoke">
         <div v-if="isMe && type != 'merge'"
             class="message-space" />
@@ -32,7 +38,7 @@
         </div>
         <div :class="isMe ? type == 'merge' ? 'message-body' : 'message-body me' : 'message-body'">
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
-                <span v-if="senderInfo?.is_robot" class="robot">{{ $t('机器人') }}</span>
+                <span v-if="senderInfo && isRobot(senderInfo.user_id)" class="robot">{{ $t('机器人') }}</span>
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                 <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
                 <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title.replace(/[\u202A-\u202E\u2066-\u2069]/g, '') }}</span>
@@ -54,9 +60,18 @@
                     second: 'numeric',
                 }).format(getViewTime(getViewTime(data.time))) }}
             </a>
-            <div>
+            <div
+                v-menu.prevent="event => $emit('showMenu', event, data)"
+                @touchstart.stop="msgMoveStart($event)"
+                @touchend.stop="msgMoveEnd($event)"
+                @touchmove.stop="msgKeepMove($event)"
+                @wheel.stop="msgMoveWheel($event)">
                 <!-- 消息体 -->
-                <template v-if="!hasCard()">
+                <!-- 消息体 -->
+                <template v-if="data.message.length === 0">
+                    <span class="msg-text" style="opacity: 0.5">{{ $t('空消息') }}</span>
+                </template>
+                <template v-else-if="!hasCard()">
                     <div v-for="(item, index) in data.message"
                         :key="data.message_id + '-m-' + index"
                         :class="View.isMsgInline(item.type) ? 'msg-inline' : ''">
@@ -72,7 +87,7 @@
                             :id="getMdHTML(item.content, 'msg-md-' + data.message_id)"
                             class="msg-md" />
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
-                            :class=" imgStyle(data.message.length, index, item.asface) + ' msg-mface'"
+                            :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
                             :src="item.url"
                             @load="imageLoaded"
                             @error="imgLoadFail">
@@ -80,7 +95,7 @@
                             :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, index, item.asface)"
-                            :src="runtimeData.tags.proxyPort && item.url.startsWith('http') ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(item.url)}` : item.url"
+                            :src="backend.proxyUrl(item.url)"
                             @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
@@ -100,7 +115,11 @@
                             :class="getAtClass(item.qq)">
                             <a :data-id="item.qq"
                                 :data-group="data.group_id"
-                                @mouseenter="showUserInfo">{{ getAtName(item) }}</a>
+                                @mouseenter="userInfoHoverHandle($event, getAtMember(item.qq))"
+                                @mousemove="userInfoHoverHandle($event, getAtMember(item.qq))"
+                                @mouseleave="userInfoHoverEnd($event)">
+                                {{ getAtName(item) }}
+                            </a>
                         </div>
                         <div
                             v-else-if="item.type == 'file'" :class="'msg-file' + (isMe ? ' me' : '')">
@@ -234,7 +253,8 @@
                         :key="data.message_id + '-m-' + index">
                         <CardMessage v-if="item.type == 'xml' || item.type == 'json'"
                             :id="data.message_id"
-                            :item="item" />
+                            :item="item"
+                            @page-view="loadLinkPreview" />
                     </template>
                 </template>
                 <!-- 链接预览框 -->
@@ -265,7 +285,7 @@
                         <!-- 特殊 URL 的预览 -->
                         <div v-if="pageViewInfo.type == 'bilibili'" class="link-view-bilibili">
                             <div class="user">
-                                <img :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(pageViewInfo.data.owner.face)}` : pageViewInfo.data.owner.face">
+                                <img :src="backend.proxyUrl(pageViewInfo.data.owner.face)">
                                 <span>{{ pageViewInfo.data.owner.name }}</span>
                                 <a>{{ Intl.DateTimeFormat(trueLang, {
                                     year: 'numeric',
@@ -275,7 +295,7 @@
                                     minute: 'numeric'
                                 }).format(getViewTime(pageViewInfo.data.public)) }}</a>
                             </div>
-                            <img :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/assets?url=${encodeURIComponent(pageViewInfo.data.pic)}` : pageViewInfo.data.pic">
+                            <img :src="backend.proxyUrl(pageViewInfo.data.pic)">
                             <span>{{ pageViewInfo.data.title }}</span>
                             <a>{{ pageViewInfo.data.desc }}</a>
                             <div class="data">
@@ -297,7 +317,7 @@
                                         <a v-if="pageViewInfo.data.info.free != null">{{ $t('（试听）') }}</a>
                                     </a>
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
-                                    <audio :src="runtimeData.tags.proxyPort ? `http://localhost:${runtimeData.tags.proxyPort}/proxy?url=${pageViewInfo.data.play_link}` : pageViewInfo.data.play_link"
+                                    <audio :src="backend.proxyUrl(pageViewInfo.data.play_link)"
                                         @loadedmetadata="audioLoaded()"
                                         @timeupdate="audioUpdate()" />
                                     <div>
@@ -337,42 +357,109 @@
     </div>
 </template>
 
+<script setup lang="ts">
+import Option from '@renderer/function/option'
+import CardMessage from './msg-component/CardMessage.vue'
+import app from '@renderer/main'
+import markdownit from 'markdown-it'
+
+import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
+import { defineComponent } from 'vue'
+import { Connector } from '@renderer/function/connect'
+import { getMessageList, runtimeData } from '@renderer/function/msg'
+import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
+import { StringifyOptions } from 'querystring'
+import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
+import {
+    isRobot,
+    openLink,
+    sendStatEvent,
+    useStayEvent,
+} from '@renderer/function/utils/appUtil'
+import {
+    getSizeFromBytes,
+    getTrueLang,
+    getViewTime } from '@renderer/function/utils/systemUtil'
+import { linkView } from '@renderer/function/utils/linkViewUtil'
+import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
+import { vMenu } from '@renderer/function/utils/appUtil'
+import { wheelMask } from '@renderer/function/input'
+import { backend } from '@renderer/runtime/backend'
+import { UserInfoPan } from './UserInfoPan.vue'
+
+type Msg = any
+type IUser = any
+
+const {
+    data,
+    selected,
+    type,
+    userInfoPan,
+} = defineProps<{
+    data: any
+    selected?: boolean
+    type?: string
+    userInfoPan?: UserInfoPan
+}>()
+
+// 半 setup 半 旧的 api是这样的...旧的emit定义类型太麻烦了...
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
+const emit = defineEmits<{
+    scrollToMsg: [...args: any[]]
+    imageLoaded: [...args: any[]]
+    sendPoke: [...args: any[]]
+    leftMove: [msg: Msg]
+    rightMove: [msg: Msg]
+    showMenu: [event: MenuEventData, msg: Msg]
+}>()
+
+//#region == 长按/覆盖监视器 =========================================================
+const {
+    handle: userInfoHoverHandle,
+    handleEnd: userInfoHoverEnd,
+} = useStayEvent(
+    (event: MouseEvent) => {
+        return {
+            x: event.clientX,
+            y: event.clientY,
+        }
+    },
+    {onFit: (eventData, ctx: number | IUser) => {
+        userInfoPan?.open(ctx, eventData.x, eventData.y)
+    },
+    onLeave: () => {
+        userInfoPan?.close()
+    }}, 495
+)
+//#endregion
+
+//#region == 工具函数 ================================================================
+function getAtMember(id: number): IUser | number {
+    const re = getUserById(id) ?? id
+    return re
+}
+function getUserById(id: number): IUser | undefined {
+    if (runtimeData.chatInfo.show.type === 'group') {
+        if (!runtimeData.chatInfo.info.group_members) return id
+        const user = runtimeData.chatInfo.info.group_members.find((item: IUser) => item.user_id == id)
+        if (user) return user
+        else return id
+    }else {
+        const user = runtimeData.userList.find((item: IUser) => item.user_id === id)
+        if (user) return user
+        else return id
+    }
+}
+//#endregion
+</script>
 <script lang="ts">
-    import Option from '@renderer/function/option'
-    import CardMessage from './msg-component/CardMessage.vue'
-    import app from '@renderer/main'
-    import markdownit from 'markdown-it'
-
-    import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-    import { defineComponent } from 'vue'
-    import { Connector } from '@renderer/function/connect'
-    import { getMessageList, runtimeData } from '@renderer/function/msg'
-    import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
-    import { StringifyOptions } from 'querystring'
-    import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
-    import {
-        openLink,
-        sendStatEvent,
-    } from '@renderer/function/utils/appUtil'
-    import {
-        callBackend,
-        getSizeFromBytes,
-        getTrueLang,
-        getViewTime } from '@renderer/function/utils/systemUtil'
-    import { linkView } from '@renderer/function/utils/linkViewUtil'
-    import { MergeStackData } from '@renderer/function/elements/information'
-
     export default defineComponent({
         name: 'MsgBody',
-        components: { CardMessage },
         props: ['data', 'type', 'selected'],
-        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
+                backend,
                 md: markdownit({ breaks: true }),
-                getFace: getFace,
-                getSizeFromBytes: getSizeFromBytes,
-                getViewTime: getViewTime,
                 isMe: false,
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
@@ -384,6 +471,12 @@
                 senderInfo: null as any,
                 trueLang: getTrueLang(),
                 textIndex: {} as { [key: string]: number },
+                // 互动相关
+                msgMove: {
+                    move: 0,
+                    onScroll: 'none' as 'none' | 'touch' | 'wheel',
+                    touchLast: null as null | TouchEvent,
+                },
             }
         },
         mounted() {
@@ -535,6 +628,13 @@
              */
             imageLoaded(event: Event) {
                 const img = event.target as HTMLImageElement
+                // 计算图片宽度
+                const vh = document.documentElement.clientHeight || document.body.clientHeight
+                const imgHeight = img.naturalHeight || img.height
+                let imgWidth = img.naturalWidth || img.width
+                if (imgHeight > vh * 0.35)
+                    imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
+                img.style.setProperty('--width', `${imgWidth}px`)
                 this.$emit('imageLoaded', img.offsetHeight)
             },
 
@@ -624,7 +724,7 @@
                         let data = null as any
                         let finaLink = fistLink
                         try {
-                            finaLink = await callBackend('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
+                            finaLink = await backend.call('Onebot', 'sys:getFinalRedirectUrl', true, fistLink)
                             if(!finaLink) {
                                 finaLink = fistLink
                             }
@@ -640,8 +740,8 @@
                         }
                         // 通用 og 解析
                         if(!data) {
-                            if (runtimeData.tags.clientType != 'web') {
-                                let html = await callBackend('Onebot', 'sys:getHtml', true, finaLink)
+                            if (!backend.isWeb()) {
+                                let html = await backend.call('Onebot', 'sys:getHtml', true, finaLink)
                                 if(html) {
                                     const headEnd = html.indexOf('</head>')
                                     html = html.slice(0, headEnd)
@@ -718,28 +818,6 @@
             linkViewPicErr() {
                 if(this.pageViewInfo)
                     this.pageViewInfo.img = undefined
-            },
-
-            /**
-             * 当鼠标悬停在 at 消息上时显示被 at 人的消息悬浮窗
-             * @param event 消息事件
-             */
-            showUserInfo(event: Event) {
-                const sender = event.currentTarget as HTMLDivElement
-                const id = sender.dataset.id
-                const group = sender.dataset.group
-                // 获取鼠标位置
-                const pointEvent =
-                    (event as MouseEvent) || (window.event as MouseEvent)
-                const pointX = pointEvent.offsetX
-                const pointY = pointEvent.clientY
-                // TODO: 出界判定不做了怪麻烦的
-                // 请求用户信息
-                Connector.send(
-                    'get_group_member_info',
-                    { group_id: group, user_id: id },
-                    'getGroupMemberInfo_' + pointX + '_' + pointY,
-                )
             },
 
             /**
@@ -896,12 +974,12 @@
                         width: number
                         height: number
                     } | null
-                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-                        windowInfo = await callBackend('Onebot', 'win:getWindowInfo', true)
+                    if (backend.isDesktop()) {
+                        windowInfo = await backend.call('Onebot', 'win:getWindowInfo', true)
                     }
                     const message = document.getElementById('chat-' + this.data.message_id)
                     let item = document.getElementById('app')
-                    if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                    if (backend.isDesktop()) {
                         item = message?.getElementsByClassName('poke-hand')[0] as HTMLImageElement
                     }
                     this.$nextTick(() => {
@@ -1091,7 +1169,145 @@
                     data.imageList = imgList
                 }
                 runtimeData.mergeMsgStack.push(data)
-            }
+            },
+            isFace(item: any) {
+                if (item.asface) return true
+                // 这是神马鬼玩意？一个驼峰，一个下划线，真是一个协议段一个协议啊
+                else if (item.subType == 7) return true
+                else if (item.sub_type == 7) return true
+                return false
+            },
+
+            //#region ==互动相关================================
+            // 滚轮滑动
+            msgMoveWheel(event: WheelEvent) {
+                const process = (event: WheelEvent) => {
+                    // 正在触屏,不处理
+                    if (this.msgMove.onScroll === 'touch') return false
+                    const x = event.deltaX
+                    const y = event.deltaY
+                    const absX = Math.abs(x)
+                    const absY = Math.abs(y)
+                    // 斜度过大
+                    if (absY !== 0 && absX / absY < 2) return false
+                    this.dispenseMove('wheel', -x / 3)
+                    return true
+                }
+                if (!process(event)) return
+                event.preventDefault()
+                // 创建遮罩
+                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
+                // 所以要创建一个不会动的全局遮罩来处理
+                wheelMask(process,()=>{
+                    this.dispenseMove('wheel', 0, true)
+                })
+            },
+
+            // 触屏开始
+            msgMoveStart(event: TouchEvent) {
+                if (this.msgMove.onScroll === 'wheel') return
+                // 触屏开始时，记录触摸点
+                this.msgMove.touchLast = event
+            },
+
+            // 触屏滑动
+            msgKeepMove(event: TouchEvent) {
+                if (this.msgMove.onScroll === 'wheel') return
+                if (!this.msgMove.touchLast) return
+                const touch = event.changedTouches[0]
+                const lastTouch = this.msgMove.touchLast.changedTouches[0]
+                const deltaX = touch.clientX - lastTouch.clientX
+                const deltaY = touch.clientY - lastTouch.clientY
+                const absX = Math.abs(deltaX)
+                const absY = Math.abs(deltaY)
+                // 斜度过大
+                if (absY !== 0 && absX / absY < 2) return
+                // 触屏移动
+                this.msgMove.touchLast = event
+                this.dispenseMove('touch', deltaX)
+            },
+
+            // 触屏滑动结束
+            msgMoveEnd(event: TouchEvent) {
+                if (this.msgMove.onScroll === 'wheel') return
+                const touch = event.changedTouches[0]
+                const lastTouch = this.msgMove.touchLast?.changedTouches[0]
+                if (lastTouch) {
+                    const deltaX = touch.clientX - lastTouch.clientX
+                    const deltaY = touch.clientY - lastTouch.clientY
+                    const absX = Math.abs(deltaX)
+                    const absY = Math.abs(deltaY)
+                    // 斜度过大
+                    if (absY === 0 || absX / absY > 2) {
+                        this.dispenseMove('touch', deltaX)
+                    }
+                }
+                this.dispenseMove('touch', 0, true)
+                this.msgMove.touchLast = null
+            },
+            /**
+             * 分发触屏/滚轮情况
+             */
+            dispenseMove(type: 'touch' | 'wheel', value: number, end: boolean = false) {
+                if (
+                    !end &&
+                    this.msgMove.onScroll === 'none'
+                ) this.startMove(type, value)
+                if (this.msgMove.onScroll === 'none') return
+                if (end) this.endMove()
+                else this.keepMove(value)
+            },
+            /**
+             * 开始窗口移动
+             */
+            startMove(type: 'touch' | 'wheel', value: number) {
+                new Logger().add(LogType.UI, '开始窗口移动: ' + type + '')
+                this.msgMove.onScroll = type
+                this.msgMove.move = value
+            },
+            /**
+             * 保持窗口移动
+             */
+            keepMove(value: number){
+                this.msgMove.move += value
+                const limit = runtimeData.inch * 0.75
+                if (this.msgMove.move < -limit) this.msgMove.move = -limit
+                else if (this.msgMove.move > runtimeData.inch * 0.75) this.msgMove.move = limit
+                const move = this.msgMove.move
+                const target = this.$refs.msgMain as HTMLDivElement
+                target.style.transform = 'translateX(' + move + 'px)'
+            },
+            /**
+             * 结束窗口移动
+             */
+            endMove() {
+                new Logger().add(LogType.UI, '结束窗口移动: ' + this.msgMove.onScroll)
+                // 保留自己要的数据
+                const move = this.msgMove.move
+                // 重置数据
+                this.msgMove.onScroll = 'none'
+                this.msgMove.move = 0
+
+                const target = this.$refs.msgMain as HTMLDivElement
+
+                target.style.transform = ''
+                target.style.transition = 'all 0.3'
+
+                // 移动距离大小判定
+                const inch = runtimeData.inch
+                // 如果移动距离大于0.5英尺,触发
+                if (move < -0.5 * inch){
+                    new Logger().add(LogType.UI, '左滑触发')
+                    // eslint-disable-next-line vue/require-explicit-emits
+                    this.$emit('leftMove', this.data)
+                }
+                else if (move > 0.5 * inch){
+                    new Logger().add(LogType.UI, '右滑触发')
+                    // eslint-disable-next-line vue/require-explicit-emits
+                    this.$emit('rightMove', this.data)
+                }
+            },
+            //#endregion
         },
     })
 </script>

@@ -22,8 +22,10 @@
                     id="friend-small-search"
                     class="small">
                     <label>
-                        <input id="friend-search-small"
-                            v-model="searchInfo" type="text"
+                        <input
+                            id="friend-search-small"
+                            v-model="searchInfo"
+                            v-auto-focus type="text"
                             :placeholder="$t('搜索 ……')" @input="search">
                         <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                     </label>
@@ -35,7 +37,11 @@
                     </div>
                 </div>
                 <label>
-                    <input id="friend-search" v-model="searchInfo" type="text"
+                    <input
+                        id="friend-search"
+                        v-model="searchInfo"
+                        v-auto-focus
+                        type="text"
                         :placeholder="$t('搜索 ……')" @input="search">
                     <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                 </label>
@@ -131,6 +137,9 @@
     </div>
 </template>
 
+<script setup lang="ts">
+	import { vAutoFocus } from '@renderer/function/utils/appUtil'
+</script>
 <script lang="ts">
     import FriendBody from '@renderer/components/FriendBody.vue'
 
@@ -144,7 +153,7 @@
     import { runtimeData } from '@renderer/function/msg'
     import { reloadUsers } from '@renderer/function/utils/appUtil'
     import { login as loginInfo } from '@renderer/function/connect'
-import { callBackend } from '@renderer/function/utils/systemUtil'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ViewFriends',
@@ -171,7 +180,7 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     name = 'friend-search-small'
                 }
                 // 将焦点移动到搜索框
-                if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                if(backend.isDesktop()) {
                     const search = document.getElementById(name)
                     if(search) {
                         search.focus()
@@ -241,9 +250,9 @@ import { callBackend } from '@renderer/function/utils/systemUtil'
                     this.runtimeData.showList = [] as any[]
                 }
                 // macOS: 刷新 TouchBar
-                if(['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
+                if(backend.isDesktop()) {
                     // list 只需要 id 和 name
-                    callBackend(undefined, 'sys:flushFriendSearch', false,
+                    backend.call(undefined, 'sys:flushFriendSearch', false,
                         this.runtimeData.showList.map((item) => {
                             return {
                                 id: item.user_id ? item.user_id : item.group_id,

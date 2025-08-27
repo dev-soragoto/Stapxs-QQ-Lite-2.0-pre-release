@@ -1,10 +1,12 @@
+import { optDefault } from '../option'
+
 export enum BotMsgType {
     CQCode,
     Array
 }
 
 export interface RunTimeDataElem {
-    sysConfig: { [key: string]: any }
+    sysConfig: Record<keyof typeof optDefault, any|null>
     jsonMap?: any
     botInfo: { [key: string]: any }
     loginInfo: { [key: string]: any }
@@ -19,33 +21,17 @@ export interface RunTimeDataElem {
         chatView: any
         msgView: any
     }
-    plantform: {[key: string]: any},
     tags: {
         firstLoad: boolean
         msgType: BotMsgType
         canLoadHistory: boolean
+		loadHistoryFail: boolean
         openSideBar: boolean
         viewer: {
             show?: boolean
             index: number
         }
         loginWaveTimer?: any
-        /**
-         * 客户端类型
-         */
-        clientType: 'electron' | 'tauri' | 'capacitor' | 'web'
-        /**
-         * 平台类型
-         */
-        platform: 'win32' | 'darwin' | 'linux' | 'android' | 'ios' | 'web' | undefined
-        /**
-         * 系统发行版本
-         */
-        release: string | undefined
-        /**
-         * 代理服务器端口
-         */
-        proxyPort?: number
         connectSsl: boolean
         classes: any[]
         sw?: boolean
@@ -58,6 +44,7 @@ export interface RunTimeDataElem {
         lastHeartbeatTime?: number
         backTimes: number
     }
+	inch: number
     messageList: any[]
     mergeMsgStack: MergeStackData[]
     mergeMessageList?: any[] | undefined
@@ -196,4 +183,10 @@ export interface MergeStackData{
     placeCache: number      // 位置缓存
     ready: boolean          // 就绪
     forwardMsg: any         // 原合并转发消息
+}
+
+export interface MenuEventData {
+    x: number
+    y: number
+    target: HTMLElement
 }

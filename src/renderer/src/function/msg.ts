@@ -28,8 +28,8 @@ import {
     sendMsgAppendInfo,
 } from '@renderer/function/utils/msgUtil'
 import {
-    callBackend,
     delay,
+    getInch,
     getViewTime,
     randomNum,
 } from '@renderer/function/utils/systemUtil'
@@ -56,6 +56,7 @@ import {
 } from './elements/information'
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
+import { backend } from '@renderer/runtime/backend'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -270,7 +271,7 @@ const noticeFunctions = {
             info.forEach((item: any) => {
                 switch (item.type) {
                     case 'img':
-                        str += `<img src="${runtimeData.tags.proxyPort ? 'http://localhost:' + runtimeData.tags.proxyPort + '/proxy?url=' + encodeURIComponent(item.src) : item.src }"/>`
+                        str += `<img src="${ backend.proxyUrl(item.src) }"/>`
                         break
                     case 'nor':
                         str += item.txt
@@ -414,11 +415,11 @@ const msgFunctions = {
                 value: data.nickname,
             })
             const title = `${data.nickname}（${data.uin}）`
-            if(runtimeData.tags.platform == 'web') {
+            if(backend.platform == 'web') {
                 document.title = title + '- Stapxs QQ Lite'
             } else {
                 document.title = title
-                callBackend(undefined, 'win:setTitle', false, title)
+                backend.call(undefined, 'win:setTitle', false, title)
             }
             // 结束登录页面的水波动画
             clearInterval(runtimeData.tags.loginWaveTimer)
@@ -552,9 +553,25 @@ const msgFunctions = {
      * 保存聊天记录
      */
     getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
+        if (msg.data === null) {
+            new PopInfo().add(
+                PopType.ERR,
+                app.config.globalProperties.$t('获取历史记录失败'),
+            )
+            runtimeData.tags.loadHistoryFail = true
+            return
+        }
         saveMsg(msg, 'top')
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
+        if (msg.data === null) {
+            new PopInfo().add(
+                PopType.ERR,
+                app.config.globalProperties.$t('获取历史记录失败'),
+            )
+            runtimeData.tags.loadHistoryFail = true
+            return
+        }
         const pan = document.getElementById('msgPan')
         if(pan) {
             const oldScrollHeight = pan.scrollHeight
@@ -737,6 +754,7 @@ const msgFunctions = {
         // runtimeData.chatInfo.info.user_info =
         //     msg.data.data.result.buddy.info_list[0]
         const data = getMsgData('friend_info', msg, msgPath.friend_info)[0]
+		data.regTime = new Date(data.reg_time).getTime()
         if(data) {
             runtimeData.chatInfo.info.user_info = data
         }
@@ -1001,19 +1019,6 @@ const msgFunctions = {
                     return
                 }
             }
-        }
-    },
-
-    /**
-     * 获取群成员更多信息
-     */
-    getGroupMemberInfo: (_: string, msg: { [key: string]: any }) => {
-        if (msg.data != undefined) {
-            const data = msg.data
-            const pointInfo = msg.echo.split('_')
-            data.x = pointInfo[1]
-            data.y = pointInfo[2]
-            runtimeData.chatInfo.info.now_member_info = data
         }
     },
 
@@ -1840,14 +1845,12 @@ const baseRuntime = {
     tags: {
         firstLoad: false,
         canLoadHistory: true,
+        loadHistoryFail: false,
         openSideBar: true,
         viewer: { index: 0 },
         msgType: BotMsgType.Array,
         isElectron: false,
         isCapacitor: false,
-        clientType: 'web' as const,
-        platform: undefined,
-        release: undefined,
         connectSsl: false,
         classes: [],
         darkMode: false,
@@ -1892,6 +1895,7 @@ const baseRuntime = {
     messageList: [],
     popBoxList: [],
     mergeMsgStack: [],
+	inch: getInch(),
 }
 
 export const runtimeData: RunTimeDataElem = reactive(baseRuntime)
@@ -1903,7 +1907,6 @@ export function resetRimtime(resetAll = false) {
     firstHeartbeatTime = -1
     heartbeatTime = -1
     if (resetAll) {
-        runtimeData.tags = reactive(baseRuntime.tags)
         runtimeData.chatInfo = reactive(baseRuntime.chatInfo)
         runtimeData.userList = reactive([])
         runtimeData.showList = reactive([])

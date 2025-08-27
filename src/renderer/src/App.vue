@@ -1,12 +1,12 @@
 <template>
-    <div v-if="dev" :class="'dev-bar' + (runtimeData.tags.platform == 'win32' ? ' win' : '')">
+    <div v-if="dev" :class="'dev-bar' + (backend.platform == 'win32' ? ' win' : '')">
         Stapxs QQ Lite Development Mode
-        {{ ' / platform: ' + runtimeData.tags.platform }}
-        {{ ' / client: ' + runtimeData.tags.clientType }}
+        {{ backend.platform ? ' / platform: ' + backend.platform : '' }}
+        {{ ' / client: ' + appClient.type }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="['linux', 'win32'].includes(runtimeData.tags.platform ?? '')"
-        :class="'top-bar' + ((runtimeData.tags.platform == 'win32' && dev) ? ' win' : '')"
+    <div v-if="['linux', 'win32'].includes(backend.platform ?? '')"
+        :class="'top-bar' + ((backend.platform == 'win32' && dev) ? ' win' : '')"
         name="appbar"
         data-tauri-drag-region="true">
         <div class="bar-button" @click="barMainClick()" />
@@ -20,7 +20,7 @@
             </div>
         </div>
     </div>
-    <div v-if="runtimeData.tags.platform == 'darwin'" class="controller mac-controller"
+    <div v-if="backend.platform == 'darwin'" class="controller mac-controller"
         data-tauri-drag-region="true" />
     <div id="base-app">
         <div class="main-body">
@@ -194,6 +194,8 @@
                 <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose != false && runtimeData.popBoxList[0].allowClose != false)" />
             </div>
         </Transition>
+        <!-- 全局搜索栏 -->
+        <GlobalSessionSearchBar />
         <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
             :options="viewerOpt"
             :images="runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list"
@@ -214,21 +216,24 @@ import app from '@renderer/main'
 import Option from '@renderer/function/option'
 import Umami from '@stapxs/umami-logger-typescript'
 import * as App from './function/utils/appUtil'
+import packageInfo from '../../../package.json'
 
 import { defineComponent, defineAsyncComponent } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
-import { Logger, popList, PopInfo, LogType, PopType } from '@renderer/function/base'
+import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
-import { getDeviceType, callBackend } from './function/utils/systemUtil'
+import { getDeviceType } from './function/utils/systemUtil'
 import { uptime } from '@renderer/main'
 
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
+import { backend } from './runtime/backend'
+import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 
 export default defineComponent({
     name: 'App',
@@ -236,10 +241,13 @@ export default defineComponent({
         Options,
         Friends,
         Messages,
-        Chat
+        Chat,
+        GlobalSessionSearchBar,
     },
     data() {
         return {
+            backend,
+            appClient: backend,
             dev: import.meta.env.DEV,
             sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
             Connector: Connector,
@@ -284,6 +292,8 @@ export default defineComponent({
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
         // 页面加载完成后
         window.onload = async () => {
+            await backend.init() // Desktop：初始化客户端功能
+
             if(import.meta.env.DEV) {
                 // eslint-disable-next-line
                 console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to sar-dos on stapxs-qq-lite.su ]')
@@ -292,25 +302,6 @@ export default defineComponent({
                 console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
             }
             // 初始化全局参数
-            runtimeData.tags.clientType = 'web'
-            if(window.electron != undefined) {
-                runtimeData.tags.clientType = 'electron'
-                runtimeData.plantform = window.electron?.ipcRenderer
-            } else if(window.__TAURI_INTERNALS__ != undefined) {
-                runtimeData.tags.clientType = 'tauri'
-                runtimeData.plantform = {
-                    invoke: (await import('@tauri-apps/api/core')).invoke,
-                    listen: (await import('@tauri-apps/api/event')).listen
-                }
-            } else if(window.Capacitor != undefined && window.Capacitor.isNativePlatform()) {
-                runtimeData.tags.clientType = 'capacitor'
-                runtimeData.plantform.capacitor = window.Capacitor;
-                runtimeData.plantform.pulgins = window.Capacitor.Plugins
-            }
-
-            runtimeData.tags.platform = await callBackend(undefined, 'sys:getPlatform', true)
-            runtimeData.tags.release = await callBackend(undefined, 'sys:getRelease', true)
-
             app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(
@@ -322,13 +313,6 @@ export default defineComponent({
             // 初始化功能
             App.createMenu() // Electron：创建菜单
             App.createIpc() // Electron：创建 IPC 通信
-            try {
-                runtimeData.tags.proxyPort = await callBackend(undefined, 'sys:runProxy', true)
-                if(runtimeData.tags.clientType == 'tauri' && !runtimeData.tags.proxyPort) {
-                    logger.error(null, 'Tauri 代理服务似乎没有正常启动，此服务异常将会影响应用内的大部分外部资源的加载。')
-                    this.popInfo.add(PopType.ERR, this.$t('Tauri 代理服务似乎没有正常启动'), false)
-                }
-            } catch (e) { /**/ }
             // 加载开发者相关功能
             if (this.dev) {
                 document.title = 'Stapxs QQ Lite (Dev)'
@@ -354,7 +338,7 @@ export default defineComponent({
                 'merge_forward_width_type',
                 Option.get('merge_forward_width_type'),
             )
-            if (['linux', 'win32'].includes(runtimeData.tags.platform ?? '')) {
+            if (['linux', 'win32'].includes(backend.platform ?? '')) {
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')
             }
@@ -372,8 +356,8 @@ export default defineComponent({
                 baseApp.style.setProperty('--safe-area-left', '0')
                 baseApp.style.setProperty('--safe-area-right', '0')
                 // Capacitor：移动端初始化安全区域
-                if (runtimeData.tags.clientType == 'capacitor') {
-                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+                if (backend.isMobile()) {
+                    const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
                     if (safeArea) {
                         logger.add(LogType.DEBUG, '安全区域：', safeArea)
                         baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
@@ -398,12 +382,12 @@ export default defineComponent({
                 this.connect()
             }
             // 服务发现
-            callBackend('Onebot', 'sys:findService', false)
-            callBackend('OneBot', 'sys:frontLoaded', false)
+            backend.call('Onebot', 'sys:findService', false)
+            backend.call('OneBot', 'sys:frontLoaded', false)
             // =============================================================
             // 初始化完成
             // 创建 popstate
-            if(runtimeData.tags.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
+            if(backend.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
                 window.addEventListener('popstate', () => {
                     if(!loginInfo.status || runtimeData.tags.openSideBar) {
                         // 离开提醒
@@ -446,13 +430,15 @@ export default defineComponent({
                     websiteId: import.meta.env.VITE_APP_MU_ID
                 } as any
                 // 给页面添加一个来源域名方便在 electron 中获取
-                if(runtimeData.tags.clientType !== 'web') {
-                    config.hostName = runtimeData.tags.clientType + '.stapxs.cn'
+                if(!backend.isWeb()) {
+                    config.hostName = backend.type + '.stapxs.cn'
                 }
                 Umami.initialize(config)
             } else if (this.dev) {
                 logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
+            App.sendStatEvent('version',
+                import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version)
             App.checkUpdate() // 检查更新
             App.checkOpenTimes() // 检查打开次数
             App.checkNotice() // 检查公告
@@ -463,7 +449,7 @@ export default defineComponent({
             // 其他状态监听
             this.$watch(() => runtimeData.baseOnMsgList, () => {
                 // macOS：刷新 Touch Bar 列表
-                if (runtimeData.tags.clientType == 'electron') {
+                if (backend.isDesktop()) {
                     const list = [] as
                         { id: number, name: string, image?: string }[]
                     runtimeData.baseOnMsgList.forEach((item) => {
@@ -473,7 +459,7 @@ export default defineComponent({
                             image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
                         })
                     })
-                    callBackend(undefined, 'sys:flushOnMessage', false, list)
+                    backend.call(undefined, 'sys:flushOnMessage', false, list)
                 }
 
                 // 刷新列表
@@ -488,11 +474,11 @@ export default defineComponent({
                 '这只是个普通的彩蛋！'
             ]
             const title = titleList[Math.floor(Math.random() * titleList.length)]
-            if(runtimeData.tags.platform == 'web') {
+            if(backend.platform == 'web') {
                 document.title = title + '- Stapxs QQ Lite'
             } else {
                 document.title = title
-                callBackend(undefined, 'win:setTitle', false, title)
+                backend.call(undefined, 'win:setTitle', false, title)
             }
         }
         // 页面关闭前
@@ -509,7 +495,7 @@ export default defineComponent({
          * electron 窗口操作
          */
         controllWin(name: string) {
-            callBackend(undefined, 'win:' + name, false)
+            backend.call(undefined, 'win:' + name, false)
         },
 
         /**
@@ -642,6 +628,7 @@ export default defineComponent({
             }
             runtimeData.mergeMessageList = undefined // 清空合并转发缓存
             runtimeData.tags.canLoadHistory = true // 重置终止加载标志
+            runtimeData.tags.loadHistoryFail = false // 重置加载失败标志
             if (data.type == 'group') {
                 // 获取自己在群内的资料
                 Connector.send(
@@ -662,7 +649,7 @@ export default defineComponent({
             }
 
             // 清理通知
-            callBackend(undefined, 'sys:closeAllNotice', false, data.id)
+            backend.call(undefined, 'sys:closeAllNotice', false, String(data.id))
         },
 
         /**

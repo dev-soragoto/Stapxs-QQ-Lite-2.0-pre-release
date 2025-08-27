@@ -1,12 +1,11 @@
 import app from '@renderer/main'
 import { NotifyInfo, NotificationElem } from './elements/system'
 import { jumpToChat } from './utils/appUtil'
-import { runtimeData } from './msg'
 import {
     LocalNotificationSchema,
     DeliveredNotifications
 } from '@capacitor/local-notifications'
-import { callBackend } from './utils/systemUtil'
+import { backend } from '@renderer/runtime/backend'
 
 export class Notify {
     // 针对 MSG 类型的通知，记录用户的通知数量
@@ -35,9 +34,9 @@ export class Notify {
             this.closeAll(userId)
         }
         // 发送消息
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'sys:sendNotice', false, runtimeData.tags.clientType == 'tauri' ? { data: info } : info)
-        } else if(runtimeData.tags.clientType === 'capacitor') {
+        if (backend.isDesktop()) {
+            backend.call(undefined, 'sys:sendNotice', false, backend.type == 'tauri' ? { data: info } : info)
+        } else if(backend.isMobile()) {
                 const data = {
                     title: info.title,
                     body: info.body,
@@ -46,7 +45,7 @@ export class Notify {
                     schedule: {
                         at: new Date(Date.now() + 100)
                     },
-                    sound: runtimeData.tags.platform === 'ios' ? 'beep.wav' : 'beep.mp3',
+                    sound: backend.platform === 'ios' ? 'beep.wav' : 'beep.mp3',
                     actionTypeId: 'msgQuickReply',
                     extra: {
                         userId: info.tag.split('/')[0],
@@ -54,7 +53,7 @@ export class Notify {
                         chatType: info.type
                     }
                 } as LocalNotificationSchema
-                callBackend('LocalNotifications', 'schedule', false, { notifications: [data] })
+                backend.call('LocalNotifications', 'schedule', false, { notifications: [data] })
         } else {
             // Safari：在 iOS 下，如果页面没有被创建为主屏幕，通知无法被调用
             // 最见鬼的是它不是方法返回失败，而且整个 Notification 对象都没有
@@ -80,9 +79,9 @@ export class Notify {
      * @param info 通知信息
      */
     public notifySingle(info: NotifyInfo) {
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'sys:sendNotice', false, info)
-        } else if (runtimeData.tags.clientType === 'capacitor') {
+        if (backend.isDesktop()) {
+            backend.call(undefined, 'sys:sendNotice', false, info)
+        } else if (backend.isMobile()) {
                 const data = {
                     title: info.title,
                     body: info.body,
@@ -91,9 +90,9 @@ export class Notify {
                     schedule: {
                         at: new Date(Date.now() + 100)
                     },
-                    sound: runtimeData.tags.platform === 'ios' ? 'beep.wav' : 'beep.mp3'
+                    sound: backend.platform === 'ios' ? 'beep.wav' : 'beep.mp3'
                 } as LocalNotificationSchema
-                callBackend('LocalNotifications', 'schedule', false, { notifications: [data] })
+                backend.call('LocalNotifications', 'schedule', false, { notifications: [data] })
         } else {
             // Safari：在 iOS 下，如果页面没有被创建为主屏幕，通知无法被调用
             // 最见鬼的是它不是方法返回失败，而且整个 Notification 对象都没有
@@ -119,15 +118,15 @@ export class Notify {
      * @param userId 用户 ID
      */
     public async closeAll(userId: string) {
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'sys:closeAllNotice', false, userId)
-        } else if(runtimeData.tags.clientType === 'capacitor') {
-            const list = (await callBackend('LocalNotifications', 'getDeliveredNotifications', true)) as
+        if (backend.isDesktop()) {
+            backend.call(undefined, 'sys:closeAllNotice', false, String(userId))
+        } else if(backend.isMobile()) {
+            const list = (await backend.call('LocalNotifications', 'getDeliveredNotifications', true)) as
                 unknown as DeliveredNotifications
             if(list.notifications) {
                 list.notifications.forEach((item) => {
                     if (item.extra.userId === userId) {
-                        callBackend('LocalNotifications', 'cancel', false, { notifications: [{ id: item.id }] })
+                        backend.call('LocalNotifications', 'cancel', false, { notifications: [{ id: item.id }] })
                     }
                 })
             }
@@ -146,10 +145,10 @@ export class Notify {
      * 关闭所有通知
      */
     public clear() {
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'sys:clearNotice', false)
-        } else if(runtimeData.tags.clientType === 'capacitor') {
-            callBackend('LocalNotifications', 'removeAllDeliveredNotifications', false)
+        if (backend.isDesktop()) {
+            backend.call(undefined, 'sys:clearNotice', false)
+        } else if(backend.isMobile()) {
+            backend.call('LocalNotifications', 'removeAllDeliveredNotifications', false)
         } else {
             const keys = Object.keys(Notify.notifyList)
             keys.forEach((key) => {
@@ -166,8 +165,8 @@ export class Notify {
      * @param tag 通知标签
      */
     private close(tag: string) {
-        if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-            callBackend(undefined, 'sys:closeNotice', false, tag)
+        if (backend.isDesktop()) {
+            backend.call(undefined, 'sys:closeNotice', false, tag)
         } else {
             Notify.notifyList[tag]?.close()
         }
@@ -191,8 +190,8 @@ export class Notify {
             }
             this.close(tag)
             // MacOS：刷新 touchbar
-            if (['electron', 'tauri'].includes(runtimeData.tags.clientType)) {
-                callBackend(undefined, 'sys:newMessage', false)
+            if (backend.isDesktop()) {
+                backend.call(undefined, 'sys:newMessage', false)
             }
         }
     }

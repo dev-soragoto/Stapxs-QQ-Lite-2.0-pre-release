@@ -8,12 +8,16 @@ directories:
 files:
     - '!**/.vscode/*'
     - '!src/*'
-    - '!ssqq-web/*'
     - '!electron.vite.config.{js,ts,mjs,cjs}'
     - '!vite.config.{js,ts,mjs,cjs}'
-    - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+    - '!capacitor.config.{js,ts,mjs,cjs}'
+    - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md,README/*}'
     - '!{.env,.env.*,.envrc,.gitmodules,.tool-versions,stats.html}'
     - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+    - '!{dist*/*,build/*,scripts/*}'
+    - '!{scripts/*,dockerfile}'
+    - '!{ssqq.capacitor-onebot-connector,ssqq.npx-web-quick-start}/**/*'
+
 asarUnpack:
     - resources/**
 

@@ -15,10 +15,10 @@ import { dispatch, runtimeData } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
-import { callBackend } from './utils/systemUtil'
 
 import { v4 as uuid } from 'uuid'
 import { getMsgData } from './utils/msgUtil'
+import { backend } from '@renderer/runtime/backend'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -52,10 +52,10 @@ export class Connector {
         logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
 
         // Electron 默认使用后端连接模式
-        if (runtimeData.tags.clientType != 'web') {
+        if (!backend.isWeb()) {
             logger.add(LogType.WS, '使用后端连接模式')
-            callBackend('Onebot', 'onebot:connect', false,
-                ['electron', 'tauri'].includes(runtimeData.tags.clientType) ?  { address: address, token: token, } : { url: `${address}?access_token=${token}` })
+            backend.call('Onebot', 'onebot:connect', false,
+                backend.isDesktop() ?  { address: address, token: token, } : { url: `${address}?access_token=${token}` })
             return
         }
 
@@ -262,8 +262,8 @@ export class Connector {
      * 正常断开 Websocket 连接
      */
     static close() {
-        if(runtimeData.tags.clientType != 'web') {
-            callBackend('Onebot', 'onebot:close', false)
+        if(!backend.isWeb()) {
+            backend.call('Onebot', 'onebot:close', false)
         } else {
             popInfo.add(
                 PopType.INFO,
@@ -380,8 +380,8 @@ export class Connector {
             echo: echo,
         } as BotActionElem)
         // 发送
-        if(runtimeData.tags.clientType != 'web') {
-            callBackend('Onebot', 'onebot:send', false, json)
+        if(!backend.isWeb()) {
+            backend.call('Onebot', 'onebot:send', false, json)
         } else if (websocket) {
             websocket.send(json)
         }

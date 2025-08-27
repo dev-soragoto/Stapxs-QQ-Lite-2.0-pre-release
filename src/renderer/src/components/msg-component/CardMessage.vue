@@ -47,10 +47,11 @@
         name: 'CardMessage',
         components: {},
         props: ['item', 'id'],
+        emits: ['page-view'],
         data() {
             return {
                 View: ViewFuns,
-                info: ViewFuns.getJSONType(this.item),
+                info: ViewFuns.getJSONType(this),
             }
         },
         methods: {
