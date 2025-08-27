@@ -153,7 +153,7 @@ export const backend = {
                     }
                 }
             } catch (ex) {
-                logger.add(LogType.ERR, `调用后端方法 ${(type ?? '') + ' - '}${name} 失败`, ex)
+                logger.add(LogType.DEBUG, `调用后端方法 ${(type ?? '') + ' - '}${name} 失败`, ex)
                 return undefined
             }
         }

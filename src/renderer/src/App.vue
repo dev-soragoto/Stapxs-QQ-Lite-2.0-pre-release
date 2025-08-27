@@ -646,7 +646,7 @@ export default defineComponent({
             }
 
             // 清理通知
-            backend.call(undefined, 'sys:closeAllNotice', false, data.id)
+            backend.call(undefined, 'sys:closeAllNotice', false, String(data.id))
         },
 
         /**

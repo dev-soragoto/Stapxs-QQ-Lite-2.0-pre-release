@@ -220,12 +220,10 @@ pub async fn sys_send_notice(
         notification = notification.set_user_info(user_info);
         // 获取图片，优先 image，没有为 icon；都是 url
         let image = data.get("image").and_then(|v| v.as_str()).unwrap_or("");
-        let icon = data.get("icon").and_then(|v| v.as_str()).unwrap_or("");
+        // 头像在通知里显示得都太占地方了，干脆不显示了
+        // let icon = data.get("icon").and_then(|v| v.as_str()).unwrap_or("");
         let final_image = if !image.is_empty() {
             image
-            // windows 不显示头像
-        } else if !icon.is_empty() && cfg!(not(target_os = "windows")) {
-            icon
         } else {
             ""
         };
@@ -239,6 +237,7 @@ pub async fn sys_send_notice(
                     let temp_file_path = app.path().app_cache_dir().unwrap().join("notification_image.png");
                     let mut file = File::create(&temp_file_path).map_err(|e| format!("创建临时文件失败: {}", e))?;
                     file.write_all(&bytes).map_err(|e| format!("写入临时文件失败: {}", e))?;
+                    info!("下载图片成功: {:?}", temp_file_path);
                     notification = notification.set_image(temp_file_path);
                 } else {
                     return Err(format!("下载图片失败: {}", response.status()));

@@ -119,7 +119,7 @@ export class Notify {
      */
     public async closeAll(userId: string) {
         if (backend.isDesktop()) {
-            backend.call(undefined, 'sys:closeAllNotice', false, userId)
+            backend.call(undefined, 'sys:closeAllNotice', false, String(userId))
         } else if(backend.isMobile()) {
             const list = (await backend.call('LocalNotifications', 'getDeliveredNotifications', true)) as
                 unknown as DeliveredNotifications

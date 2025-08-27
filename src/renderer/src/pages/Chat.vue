@@ -317,8 +317,8 @@
             </div>
             <!-- 消息发送框 -->
             <div>
-                <div @click="moreFunClick(runtimeData.sysConfig.quick_send)"
-                v-menu.prevent="_=>moreFunClick()">
+                <div v-menu.prevent="_=>moreFunClick()"
+                    @click="moreFunClick(runtimeData.sysConfig.quick_send)">
                     <font-awesome-icon v-if="tags.showMoreDetail || details.find(item => item.open)" :icon="['fas', 'minus']" />
                     <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'default'" :icon="['fas', 'plus']" />
                     <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'img'" :icon="['fas', 'image']" />
