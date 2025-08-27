@@ -216,6 +216,7 @@ import app from '@renderer/main'
 import Option from '@renderer/function/option'
 import Umami from '@stapxs/umami-logger-typescript'
 import * as App from './function/utils/appUtil'
+import packageInfo from '../../../package.json'
 
 import { defineComponent, defineAsyncComponent } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
@@ -436,6 +437,8 @@ export default defineComponent({
             } else if (this.dev) {
                 logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
+            App.sendStatEvent('version',
+                import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version)
             App.checkUpdate() // 检查更新
             App.checkOpenTimes() // 检查打开次数
             App.checkNotice() // 检查公告
