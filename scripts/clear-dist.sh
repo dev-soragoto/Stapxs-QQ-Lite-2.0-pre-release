@@ -15,6 +15,7 @@ dirs=(
     "src/mobile/android/app/debug"
     # tauri
     "src/tauri/target"
+    "dist_tauri"
 )
 
 for dir in ${dirs[@]}; do
