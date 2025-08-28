@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2019, ubuntu-latest]
+        os: [windows-2022, ubuntu-latest]
 
     steps:
       - name: 安装构建依赖
@@ -33,7 +33,7 @@ jobs:
         run: yarn
 
       - name: 构建 Electron 应用
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-2022'
         run: yarn build:electron
         env:
             GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
