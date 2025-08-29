@@ -342,6 +342,8 @@ function changeColorMode(mode: string) {
     if(backend.function && 'vConsole' in backend.function && backend.function.vConsole) {
         backend.function.vConsole.setOption('theme', mode)
     }
+    // 刷新图标
+    refreshFavicon()
 }
 
 /**
