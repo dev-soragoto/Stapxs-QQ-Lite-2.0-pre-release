@@ -195,6 +195,7 @@
         faGripLines,
     } from '@fortawesome/free-solid-svg-icons'
     import { Notify } from '@renderer/function/notify'
+    import { refreshFavicon } from '@renderer/function/favicon'
 
     export default defineComponent({
         name: 'VueMessages',
@@ -336,6 +337,8 @@
                         })
                     }
                 }
+                // 刷新 favicon
+                refreshFavicon()
             },
 
             /**
@@ -361,10 +364,13 @@
                         }
                         case 'readed':
                             this.readMsg(item)
+                            // 刷新 favicon
+                            refreshFavicon()
                             break
                         case 'remove': {
                             const id = item.user_id ? item.user_id : item.group_id
                             runtimeData.baseOnMsgList.delete(id)
+                            refreshFavicon()
                             break
                         }
                         case 'top':
