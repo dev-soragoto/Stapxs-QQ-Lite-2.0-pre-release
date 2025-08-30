@@ -121,19 +121,19 @@ export default class Emoji {
 
     static init() {
         const pathList = import.meta.glob(
-            '@renderer/assets/img/qq-face/public/assets/qq_emoji/resfile/emoji/*/apng/*.png',
-            { eager: true }
+            '/public/img/qqface/*/apng/*.png',
+            { eager: true, query: '?url', import: 'default' }
         )
         const superList = import.meta.glob(
-            '@renderer/assets/img/qq-face/public/assets/qq_emoji/resfile/emoji/*/lottie/*.json',
-            { eager: true }
+            '/public/img/qqface/*/lottie/*.json',
+            { eager: true, query: '?url', import: 'default' }
         )
         // 匹配普通表情
         for(const path in pathList) {
             const match = path.match(/\/(\d+)\.(png)$/)
             if (match) {
                 const id = parseInt(match[1])
-                this.apngMap.set(id, { normal: (pathList[path] as any).default, super: '' })
+                this.apngMap.set(id, { normal: `./img/qqface/${id}/apng/${id}.png`, super: '' })
                 this.allList.add(id)
             }
         }
@@ -144,7 +144,7 @@ export default class Emoji {
                 const id = parseInt(match[1])
                 const emojiData = this.apngMap.get(id)
                 if (!emojiData) continue
-                emojiData.super = (superList[path] as any).default
+                emojiData.super = `./img/qqface/${id}/lottie/${id}.json`
                 this.allSuperList.add(id)
             }
         }

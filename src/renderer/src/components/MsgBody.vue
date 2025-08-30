@@ -74,7 +74,7 @@
                 <template v-else-if="isSuperFaceMsg()">
                     <div class="msg-img face alone"
                         style="--width: 35vh">
-                        <Lottie :animationData="Emoji.get(Number(data.message[0].id))!.superValue!" />
+                        <Lottie :animation-link="Emoji.get(Number(data.message[0].id))!.superValue!" />
                     </div>
                 </template>
                 <template v-else-if="!hasCard()">
