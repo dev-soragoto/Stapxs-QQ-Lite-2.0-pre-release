@@ -70,7 +70,7 @@
     import DepPan from './DepPan.vue'
     import packageInfo from '../../../../package.json'
 
-    import { defineComponent } from 'vue'
+    import { defineComponent, markRaw } from 'vue'
     import { openLink, sendStatEvent } from '@renderer/function/utils/appUtil'
     import { ContributorElem } from '@renderer/function/elements/system'
 
@@ -114,7 +114,7 @@
                 runtimeData.popBoxList = []
                 const popInfo = {
                     title: this.$t('更多信息'),
-                    template: DepPan
+                    template: markRaw(DepPan)
                 }
                 runtimeData.popBoxList.push(popInfo)
             },
