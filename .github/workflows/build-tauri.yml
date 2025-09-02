@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2019, ubuntu-22.04, ubuntu-22.04-arm]
+        os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm]
 
     steps:
       - name: 安装构建依赖
@@ -51,7 +51,7 @@ jobs:
         run: yarn tauri info
 
       - name: 构建 Tauri 应用
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-2022'
         run: yarn build:tauri -t x86_64-pc-windows-msvc -b nsis
       - name: 构建 Tauri 应用
         if: matrix.os == 'ubuntu-22.04'
@@ -61,7 +61,7 @@ jobs:
         run: yarn build:tauri -t aarch64-unknown-linux-gnu -b appimage,deb
 
       - name: 准备产物目录
-        if: matrix.os != 'windows-2019'
+        if: matrix.os != 'windows-2022'
         run: |
             mkdir -p upload
             cp src/tauri/target/*/release/bundle/deb/*.deb upload/ || true
@@ -69,7 +69,7 @@ jobs:
             cp src/tauri/target/*/release/bundle/dmg/*.dmg upload/ || true
 
       - name: 准备产物目录
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
             New-Item -ItemType Directory -Path upload -Force
