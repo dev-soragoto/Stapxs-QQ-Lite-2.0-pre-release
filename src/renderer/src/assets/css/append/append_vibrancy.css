@@ -5,8 +5,12 @@ body {
     background: transparent;
 }
 
-.home-body {
+#app {
     background: rgba(var(--color-card-rgb), 0.6);
+}
+
+.home-body {
+    background: transparent;
 }
 .login-pan-card {
     background: transparent;
@@ -28,10 +32,10 @@ body {
 }
 
 .main-body > ul {
-    background: rgba(var(--color-card-rgb), 0.6);
+    background: transparent;
 }
 .friend-list {
-    background: rgba(var(--color-card-rgb), 0.6);
+    background: transparent;
 }
 .friend-list > div:first-child {
     margin: 15px 15px 0 0;
@@ -51,8 +55,8 @@ body {
 }
 
 .opt-main {
-    background: rgba(var(--color-card-rgb), 0.6);
     height: calc(100% - 10px);
+    background: transparent;
     padding-left: 3px;
 }
 .opt-main.active > div:last-child {
