@@ -204,10 +204,13 @@
                                         <template
                                             v-for="(context, indexc) in item.msg_content"
                                             :key="'jinc-' + index + '-' + indexc">
-                                            <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                            <EmojiFace v-if="context.msg_type === 2"
-                                                :emoji="context.face_index" class="msg-face" />
-                                            <img v-if="context.msg_type === 3" :src="context.image_url">
+                                            <span v-if="context.type === 'text'">
+                                                {{ context.data.text }}
+                                            </span>
+                                            <EmojiFace v-if="context.type === 'face'"
+                                                :emoji="Emoji.get(Number(context.data.id))" />
+                                            <img v-if="context.type === 'image'"
+                                                :src="context.data.url">
                                         </template>
                                     </div>
                                 </div>

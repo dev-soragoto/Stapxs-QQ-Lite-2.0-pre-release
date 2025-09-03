@@ -1406,7 +1406,7 @@ input {
     border-radius: 7px;
     max-width: 60%;
 }
-.jin-pan-body > div > div.context > img.face {
+.jin-pan-body > div > div.context > .emoji-face {
     margin: -5px 5px 0 5px;
     height: 1.4rem;
 }
