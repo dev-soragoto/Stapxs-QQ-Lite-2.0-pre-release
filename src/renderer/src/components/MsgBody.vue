@@ -7,7 +7,7 @@
  * @Version:
  *      1.0 - 初始版本
  *      1.5 - 重构为 ts 版本，代码格式优化
- -->
+-->
 
 <template>
     <div :id="'chat-' + data.message_id"
@@ -67,9 +67,15 @@
                 @touchmove.stop="msgKeepMove($event)"
                 @wheel.stop="msgMoveWheel($event)">
                 <!-- 消息体 -->
-                <!-- 消息体 -->
                 <template v-if="data.message.length === 0">
                     <span class="msg-text" style="opacity: 0.5">{{ $t('空消息') }}</span>
+                </template>
+                <!-- 超级表情 -->
+                <template v-else-if="isSuperFaceMsg()">
+                    <div class="msg-img face alone"
+                        style="--width: 35vh">
+                        <Lottie :animationData="Emoji.get(Number(data.message[0].id))!.superValue!" />
+                    </div>
                 </template>
                 <template v-else-if="!hasCard()">
                     <div v-for="(item, index) in data.message"
@@ -100,12 +106,7 @@
                             @error="imgLoadFail"
                             @click="imgClick(data.message_id)">
                         <template v-else-if="item.type == 'face'">
-                            <img v-if="getFace(item.id)"
-                                :alt="item.text"
-                                class="msg-face"
-                                :src="getFace(item.id)"
-                                :title="item.text">
-                            <font-awesome-icon v-else :class="'msg-face-svg' + (isMe ? ' me' : '')" :icon="['fas', 'face-grin-wide']" />
+                            <EmojiFace :emoji="Emoji.get(Number(item.id))" class="msg-face" />
                         </template>
                         <span v-else-if="item.type == 'bface'"
                             style="font-style: italic; opacity: 0.7">
@@ -345,12 +346,18 @@
         <div v-if="data.emoji_like"
             :class="'emoji-like' + (isMe ? ' me' : '')">
             <div class="emoji-like-body">
-                <div v-for="info in data.emoji_like"
-                    v-show="getFace(info.emoji_id) != ''"
-                    :key="'respond-' + data.message_id + '-' + info.emoji_id">
-                    <img loading="lazy" :src="getFace(info.emoji_id) as any">
-                    <span>{{ info.count }}</span>
-                </div>
+                <TransitionGroup name="emoji-like">
+                    <template v-for="info, id in data.emojis">
+                        <div v-if="Emoji.has(Number(id))"
+                            :key="'respond-' + data.uuid + '-' + id"
+                            :class="{
+                                'me-send': info.includes(runtimeData.loginInfo.uin),
+                            }">
+                            <EmojiFace :emoji="Emoji.get(Number(id))!" />
+                            <span>{{ info.length }}</span>
+                        </div>
+                    </template>
+                </TransitionGroup>
             </div>
         </div>
         <code style="display: none">{{ data.raw_message }}</code>
@@ -369,7 +376,7 @@ import { Connector } from '@renderer/function/connect'
 import { getMessageList, runtimeData } from '@renderer/function/msg'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
-import { getFace, getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
+import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
 import {
     isRobot,
     openLink,
@@ -385,6 +392,9 @@ import { MenuEventData, MergeStackData } from '@renderer/function/elements/infor
 import { vMenu } from '@renderer/function/utils/appUtil'
 import { wheelMask } from '@renderer/function/input'
 import { backend } from '@renderer/runtime/backend'
+import Emoji from '@renderer/function/model/emoji'
+import EmojiFace from './EmojiFace.vue'
+import { Vue3Lottie as Lottie } from 'vue3-lottie'
 import { UserInfoPan } from './UserInfoPan.vue'
 
 type Msg = any
@@ -988,6 +998,14 @@ function getUserById(id: number): IUser | undefined {
                 }
             },
 
+            isSuperFaceMsg() {
+                if (runtimeData.sysConfig.use_super_face === false) return false
+                if (this.data.message.length !== 1) return false
+                const seg = this.data.message.at(0)
+                if (seg.type !== 'face') return
+                return Emoji.superList.includes(Number(seg.id))
+            },
+
             getMdHTML(str: string, id: string) {
                 const html = this.md.render(str)
                 const div = document.createElement('div')
@@ -1340,6 +1358,21 @@ function getUserById(id: number): IUser | undefined {
         color: var(--color-font-2);
         margin-left: 10px;
         font-size: 0.8rem;
+    }
+    .emoji-like-body .emoji {
+        width: 20px;
+        height: 20px;
+        font-size: 1rem;
+        margin: 0;
+    }
+    .emoji-like-body div.me-send{
+        background-color: var(--color-main);
+    }
+    .emoji-like-body div.me-send:hover {
+        background: var(--color-font);
+    }
+    .emoji-like-body > div.me-send span {
+        color: var(--color-font-r);
     }
 
     @media (min-width: 992px) {

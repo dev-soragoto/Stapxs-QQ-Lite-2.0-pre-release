@@ -1062,7 +1062,16 @@ msgstr ""
 msgid "咻！点击发送！"
 msgstr ""
 
+msgid "系统表情"
+msgstr ""
+
+msgid "超级表情"
+msgstr ""
+
 msgid "小黄脸表情"
+msgstr ""
+
+msgid "emoji 表情"
 msgstr ""
 
 msgid "收藏的表情"

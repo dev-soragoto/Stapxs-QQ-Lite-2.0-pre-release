@@ -205,8 +205,8 @@
                                             v-for="(context, indexc) in item.msg_content"
                                             :key="'jinc-' + index + '-' + indexc">
                                             <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                            <img v-if="context.msg_type === 2"
-                                                class="face" :src="getFace(context.face_index)">
+                                            <EmojiFace v-if="context.msg_type === 2"
+                                                :emoji="context.face_index" class="msg-face" />
                                             <img v-if="context.msg_type === 3" :src="context.image_url">
                                         </template>
                                     </div>
@@ -377,10 +377,11 @@
                     <div v-if="runtimeData.chatInfo.show.type == 'group'"
                         v-show="tags.menuDisplay.showRespond"
                         :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
-                        <template v-for="(num, index) in respondIds" :key="'respond-' + num">
-                            <img v-if="getFace(num) != ''" loading="lazy"
-                                :src="getFace(num) as any" @click="sendRespond(num)">
-                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']" @click="tags.menuDisplay.respond = true" />
+                        <template v-for="(num, index) in Emoji.responseId" :key="'respond-' + num">
+                            <EmojiFace v-if="Emoji.has(num)" :emoji="Emoji.get(num)!"
+                                @click="sendRespond(num)" />
+                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']"
+                                @click="tags.menuDisplay.respond = true" />
                         </template>
                     </div>
                     <div v-show="tags.menuDisplay.add" @click="forwardSelf()">
@@ -549,7 +550,6 @@ import {
 import {
     getMsgRawTxt,
     sendMsgRaw,
-    getFace,
     getShowName,
     isShowTime,
     isDeleteMsg,
@@ -571,6 +571,8 @@ import { wheelMask } from '@renderer/function/input'
 import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
 import { vMenu } from '@renderer/function/utils/appUtil'
+import Emoji from '@renderer/function/model/emoji'
+import EmojiFace from '@renderer/components/EmojiFace.vue'
 
 type IUser = any
 
@@ -610,7 +612,6 @@ const userInfoPanFunc: UserInfoPan = {
                     getMsgRawTxt: getMsgRawTxt,
                 },
                 Option: Option,
-                getFace: getFace,
                 Connector: Connector,
                 runtimeData: runtimeData,
                 getTimeConfig: getTimeConfig,
@@ -683,17 +684,6 @@ const userInfoPanFunc: UserInfoPan = {
                     message_id: string
                     img_url: string
                 }[],
-                respondIds: [
-                    4, 5, 8, 9, 10, 12, 14, 16, 21, 23, 24, 25, 26, 27, 28, 29,
-                    30, 32, 33, 34, 38, 39, 41, 42, 43, 49, 53, 60, 63, 66, 74,
-                    75, 76, 78, 79, 85, 89, 96, 97, 98, 99, 100, 101, 102, 103,
-                    104, 106, 109, 111, 116, 118, 120, 122, 123, 124, 125, 129,
-                    144, 147, 171, 173, 174, 175, 176, 179, 180, 181, 182, 183,
-                    201, 203, 212, 214, 219, 222, 227, 232, 240, 243, 246, 262,
-                    264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 277, 278,
-                    281, 282, 284, 285, 287, 289, 290, 293, 294, 297, 298, 299,
-                    305, 306, 307, 314, 315, 318, 319, 320, 322, 324, 326,
-                ],
                 isShowTime,
                 isDeleteMsg,
             }
