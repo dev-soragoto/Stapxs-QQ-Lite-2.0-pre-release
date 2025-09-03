@@ -16,7 +16,7 @@
                     <div class="base-face">
                         <template v-for="num in Emoji.superList">
                             <div>
-                                <EmojiFace v-if="Emoji.has(num)"
+                                <EmojiFace
                                     :key="'base-face-' + num"
                                     :emoji="Emoji.get(num)!"
                                     @click="addBaseFace(num)" />
@@ -29,7 +29,7 @@
                     <div class="base-face">
                         <template v-for="num in Emoji.normalList">
                             <div>
-                                <EmojiFace v-if="Emoji.has(num)"
+                                <EmojiFace
                                     :key="'base-face-' + num"
                                     :emoji="Emoji.get(num)!"
                                     @click="addBaseFace(num)" />

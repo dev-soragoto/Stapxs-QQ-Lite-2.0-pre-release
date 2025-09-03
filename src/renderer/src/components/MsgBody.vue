@@ -347,10 +347,8 @@
             :class="'emoji-like' + (isMe ? ' me' : '')">
             <div class="emoji-like-body">
                 <TransitionGroup name="emoji-like">
-                    <template v-for="info, id in data.emojis">
-                        <div v-if="Emoji.has(Number(id))"
-                            :key="'respond-' + data.uuid + '-' + id"
-                            :class="{
+                    <template v-for="info, id in data.emojis" :key="'respond-' + data.message_id + '-' + id">
+                        <div :class="{
                                 'me-send': info.includes(runtimeData.loginInfo.uin),
                             }">
                             <EmojiFace :emoji="Emoji.get(Number(id))!" />

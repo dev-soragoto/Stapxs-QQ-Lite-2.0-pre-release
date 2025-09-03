@@ -381,7 +381,7 @@
                         v-show="tags.menuDisplay.showRespond"
                         :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
                         <template v-for="(num, index) in Emoji.responseId" :key="'respond-' + num">
-                            <EmojiFace v-if="Emoji.has(num)" :emoji="Emoji.get(num)!"
+                            <EmojiFace :emoji="Emoji.get(num)!"
                                 @click="sendRespond(num)" />
                             <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']"
                                 @click="tags.menuDisplay.respond = true" />

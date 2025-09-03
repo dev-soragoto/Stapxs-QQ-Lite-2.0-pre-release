@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import Emoji from '@renderer/function/model/emoji'
 
-const { emoji } = defineProps<{
+const { emoji = undefined } = defineProps<{
     emoji?: Emoji
 }>()
 </script>
