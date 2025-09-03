@@ -1,3 +1,5 @@
+/* 桌面端基本样式 */
+
 html,
 body {
     background: none;
@@ -313,9 +315,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-.bcd-about > div > div {
-    height: 15px;
 }
 .logo-card > div,
 .opt-main > div:first-child > div:not(:first-child) {

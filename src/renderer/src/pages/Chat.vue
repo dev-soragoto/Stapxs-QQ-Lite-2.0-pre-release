@@ -1345,7 +1345,7 @@ const userInfoPanFunc: UserInfoPan = {
                     // 二次确认转发
                     const popInfo = {
                         title: this.$t('合并转发消息'),
-                        template: MsgBody,
+                        template: markRaw(MsgBody),
                         templateValue: markRaw({ data: previewMsg, type: 'forward' }),
                         button: [
                             {
@@ -1384,7 +1384,7 @@ const userInfoPanFunc: UserInfoPan = {
                     // 二次确认转发
                     const popInfo = {
                         title: this.$t('转发消息'),
-                        template: MsgBody,
+                        template: markRaw(MsgBody),
                         templateValue: markRaw({ data: msg, type: 'forward' }),
                         button: [
                             {

@@ -28,6 +28,7 @@ import {
 } from '@renderer/function/utils/systemUtil'
 import { updateBaseOnMsgList } from './utils/msgUtil'
 import { backend } from '@renderer/runtime/backend'
+import { refreshFavicon } from './favicon'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -92,6 +93,11 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_fast_animation: updateFarstAnimation,
     bubble_sort_user: clearGroupAssist,
     merge_forward_width_type: setMergeForwardWidth,
+    use_favicon_notice: setFaviconNotice,
+}
+
+function setFaviconNotice(_: boolean) {
+    refreshFavicon()
 }
 
 function setMergeForwardWidth(value: boolean | null) {
@@ -337,6 +343,8 @@ function changeColorMode(mode: string) {
     if(backend.function && 'vConsole' in backend.function && backend.function.vConsole) {
         backend.function.vConsole.setOption('theme', mode)
     }
+    // 刷新图标
+    refreshFavicon()
 }
 
 /**
@@ -354,6 +362,8 @@ function changeTheme(id: number) {
             document.documentElement,
         ).getPropertyValue('--color-main-' + id)
     }
+    // 避免 css 未加载完
+    setTimeout(refreshFavicon, 10)
 }
 
 /**
