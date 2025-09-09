@@ -611,6 +611,7 @@ import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_hori
 import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
 import { ActionType, LocalNotificationSchema } from '@capacitor/local-notifications'
 import { backend } from '@renderer/runtime/backend'
+import { NoticeBodyV3 } from '../elements/system'
 // import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
 /**
 * 装载补充样式
@@ -888,8 +889,11 @@ export function checkOpenTimes() {
 * 显示全局公告弹窗
 */
 export function checkNotice() {
-    const url =
-        'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
+    let url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
+    if(import.meta.env.DEV) {
+        url = 'notice_local.json'
+    }
+    const version = 3
     const fetchData = {
         time: new Date().getTime().toString(),
     } as Record<string, string>
@@ -904,51 +908,37 @@ export function checkNotice() {
             }
             // 解析公告列表
             data.forEach((notice: any) => {
-                let isShowInDate = false
-                if (!notice.show_date) {
-                    isShowInDate = true
-                } else if (
-                    typeof notice.show_date == 'string' &&
-                    new Date().toDateString() ===
-                        new Date(notice.show_date).toDateString()
-                ) {
-                    isShowInDate = true
-                } else if (typeof notice.show_date == 'object') {
-                    notice.show_date.forEach((date: number) => {
-                        if (
-                            new Date().toDateString() ===
-                            new Date(date).toDateString()
-                        ) {
-                            isShowInDate = true
+                if(notice.version == version && (notice.client == import.meta.env.VITE_APP_CLIENT_TAG || notice.client == 'all')) {
+                    const noticeBody = notice as NoticeBodyV3
+                    // 当前时间戳（毫秒）
+                    const now = new Date().getTime()
+                    noticeBody.show_date.forEach((dateInterval: number[]) => {
+                        if(dateInterval.length == 2) {
+                            // 判断是否在时间区间内
+                            if(now >= dateInterval[0] && now <= dateInterval[1]) {
+                                noticeBody.is_show = true
+                            }
                         }
                     })
-                }
-                if (
-                    notice.version == 2 &&
-                    noticeShow.indexOf(notice.id.toString()) < 0 &&
-                    isShowInDate
-                ) {
-                    // 加载公告弹窗列表
-                    for (let i = 0; i < notice.pops.length; i++) {
-                        // 添加弹窗
-                        const info = notice.pops[i]
-                        const popInfo = {
-                            title: info.title,
-                            html: info.html ? info.html : '',
-                            button: [
+                    if (noticeBody.is_important == true || (noticeBody.is_show && noticeBody.id && noticeShow.indexOf(noticeBody.id) < 0)) {
+                        // 加载公告弹窗列表
+                        for (let i = 0; i < noticeBody.pops.length; i++) {
+                            // 添加弹窗
+                            const info = noticeBody.pops[i]
+                            let popInfo = null as any
+                            const button = [
                                 {
                                     text:
-                                        notice.pops.length > 1 &&
-                                        i != notice.pops.length - 1? app.config.globalProperties.$t(
-                                                  '继续',
-                                              ): app.config.globalProperties.$t(
-                                                  '确定',
-                                              ),
+                                        /* eslint-disable */
+                                        noticeBody.pops.length > 1 && i != noticeBody.pops.length - 1 ?
+                                            app.config.globalProperties.$t('继续') :
+                                            (info.button_text ? info.button_text : app.config.globalProperties.$t('确定')),
+                                        /* eslint-enable */
                                     master: true,
                                     fun: () => {
                                         // 添加已读记录
-                                        if (noticeShow.indexOf(notice.id) < 0) {
-                                            noticeShow.push(notice.id)
+                                        if (noticeShow.indexOf(noticeBody.id) < 0 && !noticeBody.is_important) {
+                                            noticeShow.push(noticeBody.id)
                                         }
                                         localStorage.setItem(
                                             'notice_show',
@@ -958,9 +948,40 @@ export function checkNotice() {
                                         runtimeData.popBoxList.shift()
                                     },
                                 },
-                            ],
+                            ]
+                            if(info.link_url) {
+                                button.unshift({
+                                    text: app.config.globalProperties.$t('打开…'),
+                                    master: false,
+                                    fun: () => {
+                                        if(info.link_url) {
+                                            openLink(info.link_url)
+                                        }
+                                    }
+                                })
+                            }
+                            if (info.html) {
+                                popInfo = {
+                                    title: info.title,
+                                    html: info.html,
+                                    button: button
+                                }
+                            } else if(info.template) {
+                                popInfo = {
+                                    title: info.title,
+                                    template: markRaw(defineAsyncComponent(
+                                        () => import(`@renderer/components/notice-component/${info.template}.vue`),
+                                    )),
+                                    templateValue: markRaw(info.template_data ? info.template_data : {}),
+                                    button: button
+                                }
+                            } else {
+                                logger.error(null, '未知的公告类型')
+                            }
+                            if (popInfo) {
+                                runtimeData.popBoxList.push(popInfo)
+                            }
                         }
-                        runtimeData.popBoxList.push(popInfo)
                     }
                 }
             })
