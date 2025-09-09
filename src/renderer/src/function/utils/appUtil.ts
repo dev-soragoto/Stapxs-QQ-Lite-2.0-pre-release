@@ -1058,7 +1058,7 @@ export function loadJsonMap(name: string) {
 * @param event 事件名
 * @param data 数据
 */
-export function sendStatEvent(event: string, data: any) {
+export function sendStatEvent(event: string, data: { [key: string]: any }) {
     if (!option.get('close_ga') && !import.meta.env.DEV) {
         Umami.trackEvent(event, data)
     }

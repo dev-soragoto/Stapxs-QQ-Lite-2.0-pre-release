@@ -122,6 +122,21 @@
                     </label>
                 </div>
             </template>
+            <div v-if="backend.isDesktop()" class="opt-item">
+                <div :class="checkDefault('chat_more_blur')" />
+                <font-awesome-icon :icon="['fas', 'expand']" />
+                <div>
+                    <span>{{ $t('增强透明') }}</span>
+                    <span>{{ $t('超级加倍！') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.chat_more_blur"
+                        type="checkbox" name="chat_more_blur" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
             <div class="opt-item">
                 <div :class="checkDefault('chat_background')" />
                 <font-awesome-icon :icon="['fas', 'image']" />
