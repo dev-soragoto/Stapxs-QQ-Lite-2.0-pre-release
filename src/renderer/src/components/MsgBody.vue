@@ -62,10 +62,9 @@
             </a>
             <div
                 v-menu.prevent="event => $emit('showMenu', event, data)"
-                @touchstart.stop="msgMoveStart($event)"
-                @touchend.stop="msgMoveEnd($event)"
-                @touchmove.stop="msgKeepMove($event)"
-                @wheel.stop="msgMoveWheel($event)">
+                v-move="moveOptions"
+                @v-move-left.prevent="$emit('leftMove', data)"
+                @v-move-right.prevent="$emit('rightMove', data)">
                 <!-- 消息体 -->
                 <!-- 消息体 -->
                 <template v-if="data.message.length === 0">
@@ -364,7 +363,7 @@ import app from '@renderer/main'
 import markdownit from 'markdown-it'
 
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-import { defineComponent } from 'vue'
+import { defineComponent, useTemplateRef } from 'vue'
 import { Connector } from '@renderer/function/connect'
 import { getMessageList, runtimeData } from '@renderer/function/msg'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -383,9 +382,9 @@ import {
 import { linkView } from '@renderer/function/utils/linkViewUtil'
 import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
 import { vMenu } from '@renderer/function/utils/appUtil'
-import { wheelMask } from '@renderer/function/input'
 import { backend } from '@renderer/runtime/backend'
 import { UserInfoPan } from './UserInfoPan.vue'
+import { vMove, VMoveOptions } from '@renderer/function/utils/appUtil'
 
 type Msg = any
 type IUser = any
@@ -412,6 +411,37 @@ const emit = defineEmits<{
     rightMove: [msg: Msg]
     showMenu: [event: MenuEventData, msg: Msg]
 }>()
+
+const msgMain = useTemplateRef<HTMLDivElement>('msgMain')
+
+const moveOptions: VMoveOptions<HTMLDivElement> = {
+    moveHook: (_, move: number) => {
+        const target = msgMain.value!
+        target.style.transform = 'translateX(' + move + 'px)'
+    },
+    endHook: (_) => {
+        const target = msgMain.value!
+
+        target.style.transform = ''
+        target.style.transition = 'all 0.3'
+    },
+    leftLimit: {
+        value: runtimeData.inch * 0.75,
+        type: 'px'
+    },
+    rightLimit: {
+        value: runtimeData.inch * 0.75,
+        type: 'px'
+    },
+    moveCondition: {
+        minMove: {
+            value: runtimeData.inch * 0.5,
+            type: 'px'
+        }
+    }
+}
+
+//#endregion
 
 //#region == 长按/覆盖监视器 =========================================================
 const {
@@ -1176,136 +1206,6 @@ function getUserById(id: number): IUser | undefined {
                 else if (item.subType == 7) return true
                 else if (item.sub_type == 7) return true
                 return false
-            },
-
-            //#region ==互动相关================================
-            // 滚轮滑动
-            msgMoveWheel(event: WheelEvent) {
-                const process = (event: WheelEvent) => {
-                    // 正在触屏,不处理
-                    if (this.msgMove.onScroll === 'touch') return false
-                    const x = event.deltaX
-                    const y = event.deltaY
-                    const absX = Math.abs(x)
-                    const absY = Math.abs(y)
-                    // 斜度过大
-                    if (absY !== 0 && absX / absY < 2) return false
-                    this.dispenseMove('wheel', -x / 3)
-                    return true
-                }
-                if (!process(event)) return
-                event.preventDefault()
-                // 创建遮罩
-                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
-                // 所以要创建一个不会动的全局遮罩来处理
-                wheelMask(process,()=>{
-                    this.dispenseMove('wheel', 0, true)
-                })
-            },
-
-            // 触屏开始
-            msgMoveStart(event: TouchEvent) {
-                if (this.msgMove.onScroll === 'wheel') return
-                // 触屏开始时，记录触摸点
-                this.msgMove.touchLast = event
-            },
-
-            // 触屏滑动
-            msgKeepMove(event: TouchEvent) {
-                if (this.msgMove.onScroll === 'wheel') return
-                if (!this.msgMove.touchLast) return
-                const touch = event.changedTouches[0]
-                const lastTouch = this.msgMove.touchLast.changedTouches[0]
-                const deltaX = touch.clientX - lastTouch.clientX
-                const deltaY = touch.clientY - lastTouch.clientY
-                const absX = Math.abs(deltaX)
-                const absY = Math.abs(deltaY)
-                // 斜度过大
-                if (absY !== 0 && absX / absY < 2) return
-                // 触屏移动
-                this.msgMove.touchLast = event
-                this.dispenseMove('touch', deltaX)
-            },
-
-            // 触屏滑动结束
-            msgMoveEnd(event: TouchEvent) {
-                if (this.msgMove.onScroll === 'wheel') return
-                const touch = event.changedTouches[0]
-                const lastTouch = this.msgMove.touchLast?.changedTouches[0]
-                if (lastTouch) {
-                    const deltaX = touch.clientX - lastTouch.clientX
-                    const deltaY = touch.clientY - lastTouch.clientY
-                    const absX = Math.abs(deltaX)
-                    const absY = Math.abs(deltaY)
-                    // 斜度过大
-                    if (absY === 0 || absX / absY > 2) {
-                        this.dispenseMove('touch', deltaX)
-                    }
-                }
-                this.dispenseMove('touch', 0, true)
-                this.msgMove.touchLast = null
-            },
-            /**
-             * 分发触屏/滚轮情况
-             */
-            dispenseMove(type: 'touch' | 'wheel', value: number, end: boolean = false) {
-                if (
-                    !end &&
-                    this.msgMove.onScroll === 'none'
-                ) this.startMove(type, value)
-                if (this.msgMove.onScroll === 'none') return
-                if (end) this.endMove()
-                else this.keepMove(value)
-            },
-            /**
-             * 开始窗口移动
-             */
-            startMove(type: 'touch' | 'wheel', value: number) {
-                new Logger().add(LogType.UI, '开始窗口移动: ' + type + '')
-                this.msgMove.onScroll = type
-                this.msgMove.move = value
-            },
-            /**
-             * 保持窗口移动
-             */
-            keepMove(value: number){
-                this.msgMove.move += value
-                const limit = runtimeData.inch * 0.75
-                if (this.msgMove.move < -limit) this.msgMove.move = -limit
-                else if (this.msgMove.move > runtimeData.inch * 0.75) this.msgMove.move = limit
-                const move = this.msgMove.move
-                const target = this.$refs.msgMain as HTMLDivElement
-                target.style.transform = 'translateX(' + move + 'px)'
-            },
-            /**
-             * 结束窗口移动
-             */
-            endMove() {
-                new Logger().add(LogType.UI, '结束窗口移动: ' + this.msgMove.onScroll)
-                // 保留自己要的数据
-                const move = this.msgMove.move
-                // 重置数据
-                this.msgMove.onScroll = 'none'
-                this.msgMove.move = 0
-
-                const target = this.$refs.msgMain as HTMLDivElement
-
-                target.style.transform = ''
-                target.style.transition = 'all 0.3'
-
-                // 移动距离大小判定
-                const inch = runtimeData.inch
-                // 如果移动距离大于0.5英尺,触发
-                if (move < -0.5 * inch){
-                    new Logger().add(LogType.UI, '左滑触发')
-                    // eslint-disable-next-line vue/require-explicit-emits
-                    this.$emit('leftMove', this.data)
-                }
-                else if (move > 0.5 * inch){
-                    new Logger().add(LogType.UI, '右滑触发')
-                    // eslint-disable-next-line vue/require-explicit-emits
-                    this.$emit('rightMove', this.data)
-                }
             },
             //#endregion
         },
