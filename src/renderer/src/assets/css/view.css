@@ -1275,6 +1275,288 @@ textarea:focus {
     opacity: 0.0;
 }
 
+
+.viewer-bar {
+    position: absolute;
+    z-index: 31;
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
+    display: flex;
+    transition: opacity 0.2s;
+}
+
+.viewer-bar::before,
+.viewer-bar::after {
+    content: '';
+    margin: auto;
+}
+
+.viewer-tool-config-bar {
+    bottom: calc(3% + 80px + var(--safe-area-bottom));
+}
+
+.viewer-tool-config-bar > div.color {
+    width: 24px;
+    height: 24px;
+    border: solid 3px var(--color-card);
+    background-color: var(--color);
+    margin: 5px;
+    border-radius: 7px;
+    transition: 0.2s;
+}
+
+.viewer-tool-config-bar > div.line-width {
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    margin: 5px;
+    background-color: var(--color-main);
+    border-radius: 7px;
+    transition: 0.2s;
+    display: flex;
+}
+
+.viewer-tool-config-bar > div.line-width > div {
+    width: var(--line-width);
+    height: var(--line-width);
+    background-color: var(--color-card);
+    margin: auto;
+    border-radius: var(--line-width);
+}
+
+.viewer-tool-config-bar > div.color:hover,
+.viewer-tool-config-bar > div.line-width:hover {
+    transform: rotate(45deg);
+}
+
+.viewer-tool-config-bar > svg.rect-is-fill {
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    margin: 5px;
+    color: var(--color-card);
+    background-color: var(--color-main);
+    border-radius: 7px;
+    transition: 0.2s;
+}
+
+.viewer-tool-config-bar > hr {
+    width: 0px;
+    margin: auto 2px;
+    height: 15px;
+    border: solid 1px var(--color-font);
+}
+
+.viewer-tool-config-bar > svg:hover {
+    background-color: var(--color-font);
+}
+
+.viewer-tool-config-bar > div.active {
+    border-radius: 15px;
+}
+
+.viewer-button-bar {
+    bottom: calc(3% + var(--safe-area-bottom));
+    opacity: 0;
+}
+
+.viewer-button-bar.force-show,
+.viewer-button-bar:hover {
+    opacity: 1;
+}
+
+.viewer-button-bar > svg {
+    width: 30px;
+    height: 30px;
+    margin: 0 5px;
+    padding: 10px;
+    background-color: var(--color-main);
+    color: var(--color-card);
+    border-radius: 10px;
+    transition: background 0.2s;
+    flex-shrink: 1;
+    transition: 0.2s;
+}
+
+.viewer-button-bar > svg:hover {
+    background-color: var(--color-font);
+    color: var(--color-font-r);
+}
+
+.viewer-button-bar > svg.active {
+    border-radius: 30px;
+}
+
+.viewer-button-bar > hr {
+    display: block;
+    height: 30px;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: 10px;
+    margin-right: 10px;
+    border: solid 1px var(--color-font);
+    flex-shrink: 1;
+}
+
+.viewer-button-enter-active,
+.viewer-button-leave-active {
+    transition: all 0.2s;
+}
+
+.viewer-button-enter-from,
+.viewer-button-leave-to {
+    transform: translate(0, 100%);
+    opacity: 1;
+}
+
+.viewer-tool-config-enter-from,
+.viewer-tool-config-leave-to {
+    width: 1px !important;
+    height: 1px !important;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+    opacity: 0;
+}
+
+.viewer-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+}
+
+.viewer-img > canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+}
+
+.viewer-img > img,
+.viewer-img > canvas {
+    margin-top: calc(50vh - var(--height) * var(--scale) / 2 + var(--y));
+    margin-left: calc(50vw - var(--width) * var(--scale) / 2 + var(--x));
+    transition: all 0.2s;
+    width: calc(var(--width) * var(--scale));
+    height: calc(var(--height) * var(--scale));
+    transform-origin: center;
+    transform: rotate(var(--rotate));
+}
+
+.viewer-img.grab > img,
+.viewer-img.grab > canvas {
+    transition: none;
+}
+
+.viewer.loading {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    opacity: 1;
+    color: var(--color-font);
+    font-size: 3rem;
+}
+
+.viewer.loading > svg {
+    color: var(--color-main)
+}
+
+.viewer-img > div.scrollbar {
+    user-select: none;
+    cursor: pointer;
+    position: absolute;
+    background: rgba(var(--color-bg-rgb), 0.7);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.viewer-img > div.x {
+    left: 0;
+    bottom: 8px;
+    width: 100vw;
+    height: 12px;
+}
+
+.viewer-img > div.y {
+    right: 8px;
+    top: 0;
+    width: 12px;
+    height: 100vh;
+}
+
+.viewer-img.grab > div.scrollbar,
+.viewer-img.zooming > div.scrollbar,
+.viewer-img > div.scrollbar:hover {
+    opacity: 1;
+}
+
+.viewer-img > div.scrollbar > div.scrollbar-thumb {
+    position: absolute;
+    background: var(--color-main);
+    opacity: 0.7;
+    border-radius: 4px;
+}
+
+.viewer-img > div.x > div.scrollbar-thumb {
+    left: calc(var(--pos) * 100vw);
+    top: 2px;
+    width: max(calc(var(--thumb) * 100vw), 40px);
+    height: 8px;
+}
+
+.viewer-img > div.y > div.scrollbar-thumb {
+    top: calc(var(--pos) * 100vh);
+    right: 2px;
+    height: max(calc(var(--thumb) * 100vh), 40px);
+    width: 8px;
+}
+
+.viewer-change-img-next-leave-active,
+.viewer-change-img-next-enter-active,
+.viewer-change-img-prev-leave-active,
+.viewer-change-img-prev-enter-active {
+    transition: all 0.15s ease-in-out;
+}
+
+.viewer-change-img-prev-enter-from,
+.viewer-change-img-next-leave-to {
+    transform: translateX(-100%);
+}
+
+.viewer-change-img-prev-leave-to,
+.viewer-change-img-next-enter-from {
+    transform: translateX(100%);
+}
+
+.cursor-grab {
+    cursor: grab;
+}
+
+.cursor-grabbing {
+    cursor: grabbing;
+}
+
+.cursor-exit {
+    cursor: url(@renderer/assets/img/icons/exit.png), auto;
+}
+
+.cursor-not-allowed {
+    cursor: not-allowed
+}
+
+.cursor-pen {
+    cursor: url(@renderer/assets/img/icons/pen.png) 0 24, auto;
+}
+
+.cursor-crosshair {
+    cursor: crosshair;
+}
+
+
 @media (max-width: 700px) {
     /* 侧栏及主布局自适应 */
     .main-body {

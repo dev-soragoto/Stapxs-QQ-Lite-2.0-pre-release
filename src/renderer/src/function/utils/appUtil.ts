@@ -30,6 +30,8 @@ import {
     watchEffect,
     watch,
     shallowReactive,
+    ShallowRef,
+    shallowRef,
 } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
@@ -1267,6 +1269,81 @@ export function useEventListener<T extends keyof DocumentEventMap>(
     onMounted(() => target.addEventListener(event, callback))
     onUnmounted(() => target.removeEventListener(event, callback))
 }
+
+let viewportUnitsCache: { vw: ShallowRef<number>, vh: ShallowRef<number> } | undefined
+export function useViewportUnits(): { vw: ShallowRef<number>, vh: ShallowRef<number> } {
+    if (viewportUnitsCache)
+        return viewportUnitsCache
+
+    const vw = shallowRef(window.innerWidth / 100)
+    const vh = shallowRef(window.innerHeight / 100)
+
+    const updateUnits = () => {
+        vw.value = window.innerWidth / 100
+        vh.value = window.innerHeight / 100
+    }
+
+    onMounted(() => {
+        window.addEventListener('resize', updateUnits)
+    })
+
+    onUnmounted(() => {
+        window.removeEventListener('resize', updateUnits)
+    })
+
+    viewportUnitsCache = { vw, vh }
+
+    return { vw, vh }
+}
+
+/**
+ * 添加一个按键监听，支持组合键，注意，不支持多普通键组合，如`a+b`
+ * @param keys 按键
+ * @param callback 回调，返回true则阻断事件传播
+ */
+export function useKeyboard(...args: [string, ...string[], () => boolean | undefined]) {
+    if (args.length > 2) {
+        const cb = args.at(-1) as () => boolean | undefined
+        for (const key of args.slice(0, -1)) {
+            if (typeof key !== 'string') continue
+            useKeyboard(key, cb)
+        }
+        return
+    }
+    // 支持组合键，如 'ctrl+shift+alt+s' 或 'a+b+c'
+    const keyList = args[0].toLowerCase().split('+').map(k => k.trim())
+    const cb = args[1] as () => boolean | undefined
+    const modifierKeys = ['ctrl', 'shift', 'alt', 'meta']
+
+    useEventListener(document, 'keydown', (event) => {
+        let allMatch = true
+
+        for (const key of keyList) {
+            if (modifierKeys.includes(key)) {
+                if (!event[`${key}Key`]) {
+                    allMatch = false
+                    break
+                }
+            } else {
+                // 普通键
+                if (event.key.toLowerCase() !== key) {
+                    allMatch = false
+                    break
+                }
+            }
+        }
+
+        // 只在所有键都匹配时触发
+        if (allMatch) {
+            const re = cb()
+            if (re) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+        }
+    })
+}
+
 //#endregion
 
 //#region == v命令封装 ======================================
@@ -1448,6 +1525,57 @@ export function createVSearch<T extends object>(): Directive<HTMLInputElement, S
  */
 export const vSearch = createVSearch<any>()
 
+/**
+ * 是否隐藏元素
+ * 如果值为 true，则隐藏元素（通过设置 opacity 为 0）
+ * 如果值为 false，则显示元素（通过清除 opacity）
+ * @example v-hide="true"
+ */
+export const vHide: Directive<HTMLElement, boolean> = {
+    mounted(el: HTMLElement, binding: DirectiveBinding<boolean>) {
+        if (binding.value)
+            el.style.opacity = '0'
+
+        else
+            el.style.opacity = ''
+    },
+    updated(el: HTMLElement, binding: DirectiveBinding<boolean>) {
+        if (binding.value)
+            el.style.opacity = '0'
+
+        else
+            el.style.opacity = ''
+    }
+}
+
+/**
+ * 监听 Esc 键按下事件
+ * 当按下 Esc 键时，执行绑定的函数
+ * @example v-esc="退出函数"
+ */
+export const vEsc: Directive<HTMLElement, () => void> = {
+    mounted(el: HTMLElement, binding: DirectiveBinding<() => void>) {
+        const controller = new AbortController()
+        const options = { signal: controller.signal }
+
+        // 监听键盘事件
+        const keydownHandler = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.stopPropagation()
+                binding.value()
+            }
+        }
+        document.addEventListener('keydown', keydownHandler, options)
+        ;(el as any)._vEscController = controller
+    },
+    unmounted(el: HTMLElement) {
+        const controller = (el as any)._vEscController
+        if (controller) {
+            document.removeEventListener('keydown', controller.signal)
+            delete (el as any)._vEscController
+        }
+    }
+}
 
 /**
  * v-move的选项

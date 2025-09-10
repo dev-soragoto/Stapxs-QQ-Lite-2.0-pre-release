@@ -58,6 +58,7 @@ import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
 import { refreshFavicon } from './favicon'
+import { Img } from './model/img'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -766,9 +767,20 @@ const msgFunctions = {
      */
     getGroupNotices: (_: string, msg: { [key: string]: any }) => {
         const list = getMsgData('group_notices', msg, msgPath.group_notices)
-        if (list != undefined) {
-            runtimeData.chatInfo.info.group_notices = list
+        if (!list) return
+
+        // 组装img信息
+        let lastImg: Img | undefined
+        for (const notice of list) {
+            if (!notice.img_id) continue
+            const img = markRaw(new Img(
+                `https://p.qlogo.cn/gdynamic/${notice.img_id}/0/`
+            ))
+            if(lastImg) img.insertPrev(lastImg)
+            notice.img = img
+            lastImg = img
         }
+        runtimeData.chatInfo.info.group_notices = list
     },
 
     /**

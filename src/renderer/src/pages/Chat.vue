@@ -1666,20 +1666,22 @@ const userInfoPanFunc: UserInfoPan = {
                             Object.keys(this.chat.info.group_notices).length ===
                                 0)
                     ) {
-                        if (noticeName && noticeName != 'http_proxy') {
+                        if (noticeName) {
                             Connector.send(
                                 noticeName,
                                 { group_id: this.chat.show.id },
                                 'getGroupNotices',
                             )
-                        } else {
-                            const url = `https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${runtimeData.loginInfo.bkn}&qid=${this.chat.show.id}&ft=23&s=-1&n=20`
-                            Connector.send(
-                                'http_proxy',
-                                { url: url },
-                                'getGroupNotices',
-                            )
                         }
+                        // 反正运行不了，注释了
+                        // {
+                        //     const url = `https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${runtimeData.loginInfo.bkn}&qid=${this.chat.show.id}&ft=23&s=-1&n=20`
+                        //     Connector.send(
+                        //         'http_proxy',
+                        //         { url: url },
+                        //         'getGroupNotices',
+                        //     )
+                        // }
                     }
                     // 加载群文件列表
                     if (this.chat.show.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {

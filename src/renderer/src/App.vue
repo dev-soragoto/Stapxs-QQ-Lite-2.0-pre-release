@@ -206,11 +206,12 @@
                 <img v-for="info in scope.images" :key="'imgView-' + info.index" :src="info.img_url">
             </template>
         </viewer>
+        <NtViewer ref="nt-viewer" />
         <div id="mobile-css" />
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Spacing from 'spacingjs/src/spacing'
 import app from '@renderer/main'
 import Option from '@renderer/function/option'
@@ -219,7 +220,7 @@ import * as App from './function/utils/appUtil'
 import anime from 'animejs'
 import packageInfo from '../../../package.json'
 
-import { defineComponent, defineAsyncComponent } from 'vue'
+import { defineComponent, defineAsyncComponent, useTemplateRef, provide } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
@@ -232,34 +233,29 @@ import { uptime } from '@renderer/main'
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
-import Chat from '@renderer/pages/Chat.vue'
 import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
+import NtViewer from './components/Viewer.vue'
 
+// 注册组件实例
+const ntViewer = useTemplateRef<InstanceType<typeof Viewer>>('nt-viewer')
+provide('viewer', ntViewer)
+</script>
+
+<script lang="ts">
 export default defineComponent({
     name: 'App',
-    components: {
-        Options,
-        Friends,
-        Messages,
-        Chat,
-        GlobalSessionSearchBar,
-    },
     data() {
         return {
-            backend,
             appClient: backend,
             dev: import.meta.env.DEV,
             sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
-            Connector: Connector,
             defineAsyncComponent: defineAsyncComponent,
             save: Option.runASWEvent,
             get: Option.get,
             popInfo: new PopInfo(),
             appMsgs: popList,
             loadHistory: App.loadHistory,
-            loginInfo: loginInfo,
-            runtimeData: runtimeData,
             tags: {
                 page: 'Home',
                 showChat: false,
@@ -349,25 +345,23 @@ export default defineComponent({
             App.loadMobile()
             // 加载额外样式
             App.loadAppendStyle()
-            const baseApp = document.getElementById('base-app')
-            if (baseApp) {
-                baseApp.style.setProperty('--safe-area-bottom',
-                    (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
-                baseApp.style.setProperty('--safe-area-top', '0')
-                baseApp.style.setProperty('--safe-area-left', '0')
-                baseApp.style.setProperty('--safe-area-right', '0')
-                // Capacitor：移动端初始化安全区域
-                if (backend.isMobile()) {
-                    const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
-                    if (safeArea) {
-                        logger.add(LogType.DEBUG, '安全区域：', safeArea)
-                        baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
-                        baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-                        baseApp.style.setProperty('--safe-area-left', safeArea.left + 'px')
-                        baseApp.style.setProperty('--safe-area-right', safeArea.right + 'px')
-                        // 图片查看器安全区域
-                        document.documentElement.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
-                    }
+            document.body.style.setProperty('--safe-area-bottom',
+                (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
+            document.body.style.setProperty('--safe-area-top', '0')
+            document.body.style.setProperty('--safe-area-left', '0')
+            document.body.style.setProperty('--safe-area-right', '0')
+            // Capacitor：移动端初始化安全区域
+            if (backend.isMobile()) {
+                // 我把 viewer 挂在 body 上，所以css也得改到 body 上
+                const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
+                if (safeArea) {
+                    logger.add(LogType.DEBUG, '安全区域：', safeArea)
+                    document.body.style.setProperty('--safe-area-top', safeArea.top + 'px')
+                    document.body.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+                    document.body.style.setProperty('--safe-area-left', safeArea.left + 'px')
+                    document.body.style.setProperty('--safe-area-right', safeArea.right + 'px')
+                    // 图片查看器安全区域
+                    document.body.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
                 }
             }
             // 加载密码保存和自动连接
@@ -506,9 +500,9 @@ export default defineComponent({
         connect() {
             if(this.tags.quickLoginSelect != '') {
                 // PS：快速连接的地址只会是局域网，所以默认 ws 协议
-                this.loginInfo.address = 'ws://' + this.tags.quickLoginSelect
+                loginInfo.address = 'ws://' + this.tags.quickLoginSelect
             }
-            Connector.create(this.loginInfo.address, this.loginInfo.token)
+            Connector.create(loginInfo.address, loginInfo.token)
         },
         selectQuickLogin(address: string) {
             this.tags.quickLoginSelect = address
@@ -613,7 +607,7 @@ export default defineComponent({
          */
         changeChat(data: BaseChatInfoElem) {
             // 设置聊天信息
-            this.runtimeData.chatInfo = {
+            runtimeData.chatInfo = {
                 show: data,
                 info: {
                     group_info: {},
@@ -637,7 +631,7 @@ export default defineComponent({
                     'get_group_member_info',
                     {
                         group_id: data.id,
-                        user_id: this.runtimeData.loginInfo.uin,
+                        user_id: runtimeData.loginInfo.uin,
                     },
                     'getUserInfoInGroup',
                 )

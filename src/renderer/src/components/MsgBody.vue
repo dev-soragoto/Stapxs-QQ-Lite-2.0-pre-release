@@ -268,7 +268,8 @@
                                 title="查看图片"
                                 :src="pageViewInfo.img"
                                 @load="linkViewPicFin"
-                                @error="linkViewPicErr">
+                                @error="linkViewPicErr"
+                                @click="preImgClick(pageViewInfo.img)">
                             <div class="body">
                                 <p v-show="pageViewInfo.site">
                                     {{ pageViewInfo.site }}
@@ -385,6 +386,7 @@ import { vMenu } from '@renderer/function/utils/appUtil'
 import { backend } from '@renderer/runtime/backend'
 import { UserInfoPan } from './UserInfoPan.vue'
 import { vMove, VMoveOptions } from '@renderer/function/utils/appUtil'
+import { Img } from '@renderer/function/model/img'
 
 type Msg = any
 type IUser = any
@@ -486,6 +488,7 @@ function getUserById(id: number): IUser | undefined {
     export default defineComponent({
         name: 'MsgBody',
         props: ['data', 'type', 'selected'],
+        inject: ['viewer'],
         data() {
             return {
                 backend,
@@ -650,6 +653,15 @@ function getUserById(id: number): IUser | undefined {
                     } else {
                         new PopInfo().add(PopType.INFO, this.$t('定位图片失败'))
                     }
+                }
+            },
+
+            /**
+             * 预览图片点击
+             */
+            preImgClick(img: string) {
+                if (this.viewer) {
+                    ;(this.viewer as any).open(new Img(img))
                 }
             },
 
