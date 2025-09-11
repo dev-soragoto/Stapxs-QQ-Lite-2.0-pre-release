@@ -11,8 +11,8 @@ import { shallowRef } from 'vue'
 
 export class Img {
     _src: string
-    private _prev = shallowRef<Img | undefined>()
-    private _next = shallowRef<Img | undefined>()
+    readonly _prev = shallowRef<Img | undefined>()
+    readonly _next = shallowRef<Img | undefined>()
     constructor(src: string) {
         this._src = src
     }

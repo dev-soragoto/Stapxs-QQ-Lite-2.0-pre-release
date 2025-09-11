@@ -1770,7 +1770,7 @@ function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>>{
                 options?.speedCondition &&
                 Math.abs(move) >= getPxValue(options.speedCondition.minMove)
             ) {
-                const endSpeedList = speedList.reverse().slice(0, 10)
+                const endSpeedList = speedList.toReversed().slice(0, 10)
                 let endSpeed = 0
                 for (const speed of endSpeedList) {
                     endSpeed += speed

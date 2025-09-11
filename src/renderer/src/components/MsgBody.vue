@@ -25,7 +25,7 @@
             v-menu.prevent="event => $emit('showMenu', event, data)"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
-
+			:alt="data.sender.card ? data.sender.card : data.sender.nickname"
             @mouseenter="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
             @mousemove="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
             @mouseleave="userInfoHoverEnd($event)"
@@ -375,6 +375,9 @@ import {
     openLink,
     sendStatEvent,
     useStayEvent,
+	vMenu,
+	vMove,
+	VMoveOptions,
 } from '@renderer/function/utils/appUtil'
 import {
     getSizeFromBytes,
@@ -382,10 +385,8 @@ import {
     getViewTime } from '@renderer/function/utils/systemUtil'
 import { linkView } from '@renderer/function/utils/linkViewUtil'
 import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
-import { vMenu } from '@renderer/function/utils/appUtil'
 import { backend } from '@renderer/runtime/backend'
 import { UserInfoPan } from './UserInfoPan.vue'
-import { vMove, VMoveOptions } from '@renderer/function/utils/appUtil'
 import { Img } from '@renderer/function/model/img'
 
 type Msg = any

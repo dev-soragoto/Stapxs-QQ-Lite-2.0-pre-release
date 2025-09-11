@@ -535,9 +535,13 @@ import {
 } from 'vue'
 import { v4 as uuid } from 'uuid'
 import {
+	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
     shouldAutoFocus,
+	vMenu,
+	vMove,
+	VMoveOptions,
 } from '@renderer/function/utils/appUtil'
 import {
     getTimeConfig,
@@ -552,7 +556,6 @@ import {
     isShowTime,
     isDeleteMsg,
 } from '@renderer/function/utils/msgUtil'
-import { scrollToMsg } from '@renderer/function/utils/appUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
@@ -567,7 +570,6 @@ import {
 } from '@renderer/function/elements/information'
 import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
-import { vMenu, vMove, VMoveOptions } from '@renderer/function/utils/appUtil'
 
 type IUser = any
 

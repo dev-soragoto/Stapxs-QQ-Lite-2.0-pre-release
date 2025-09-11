@@ -149,7 +149,8 @@
                                 @touchstart="onImgTouchStart"
                                 @touchmove="onImgTouchMove"
                                 @touchend="onImgTouchEnd"
-                                @mouseleave="mouseMoveInfo=undefined;">
+                                @mouseleave="mouseMoveInfo=undefined"
+								alt="">
                             <canvas v-show="edit" ref="canvas"
                                 :class="getImgCursorClassByTool()"
                                 :style="{
@@ -182,9 +183,9 @@
 import { PopInfo, PopType } from '@renderer/function/base'
 import { Img } from '@renderer/function/model/img'
 import { runtimeData } from '@renderer/function/msg'
-import { downloadFile } from '@renderer/function/utils/appUtil'
 import { copyToClipboard } from '@renderer/function/utils/systemUtil'
 import {
+	downloadFile,
     vEsc,
     vHide,
     vMove,
@@ -678,19 +679,7 @@ function onClick(event: Event) {
     forceShowButton.value = !forceShowButton.value
 }
 function onMouseout(event: MouseEvent) {
-    handleEvent(event)
-
-    switch (currentTool.value) {
-        case 'hand':
-            handMouseUp(event.clientX, event.clientY)
-            break
-        case 'pen':
-            penMouseUp(event.clientX, event.clientY)
-            break
-        case 'rect':
-            rectMouseUp(event.clientX, event.clientY)
-            break
-    }
+    onMouseUp(event)
 }
 
 let onImgTouchFlag = false
