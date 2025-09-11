@@ -1186,7 +1186,7 @@ export function useStayEvent<T extends Event,C>(
         end = false
         ctx = _ctx
         startPos = getPos(event) as {x: number, y: number}
-		if (!startPos) return
+        if (!startPos) return
         startEventData = {
             x: startPos.x,
             y: startPos.y,
@@ -1324,12 +1324,11 @@ export function useKeyboard(...args: [string, ...string[], () => boolean | undef
                     allMatch = false
                     break
                 }
-            } else {
-                // 普通键
-                if (event.key.toLowerCase() !== key) {
-                    allMatch = false
-                    break
-                }
+            }
+            // 普通键
+            else if (event.key.toLowerCase() !== key) {
+                allMatch = false
+                break
             }
         }
 
@@ -1415,9 +1414,9 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
                 if (prevent) event.preventDefault()
                 if (stop) event.stopPropagation()
                 menuTouchEnd(event)
-				// 快速点击则触发点击事件
+                // 快速点击则触发点击事件
                 if (Date.now() - touchStartTime < 200)
-					event.target?.['click']?.()
+                    event.target?.['click']?.()
             }, options)
 
             // 绑定控制器
@@ -1570,10 +1569,11 @@ export const vEsc: Directive<HTMLElement, () => void> = {
     },
     unmounted(el: HTMLElement) {
         const controller = (el as any)._vEscController
-        if (controller) {
-            document.removeEventListener('keydown', controller.signal)
-            delete (el as any)._vEscController
-        }
+
+        if (!controller) return
+
+        controller.abort()
+        delete (el as any)._vEscController
     }
 }
 

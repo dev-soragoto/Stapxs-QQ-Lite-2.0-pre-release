@@ -1143,7 +1143,12 @@ function getPos(x: number, y: number): {x: number, y: number} {
 function saveEditHistory() {
     const ctx = canvas.value?.getContext('2d')
     if (!ctx) return
-    editHistory.push(ctx.getImageData(0, 0, canvas.value!.width, canvas.value!.height))
+	let data: ImageData | undefined
+	try {
+		data = ctx.getImageData(0, 0, canvas.value!.width, canvas.value!.height)
+	}catch {/**/}
+	if (!data) return
+    editHistory.push(data)
     if (editHistory.length > 20) editHistory.shift() // 限制历史长度
 }
 
