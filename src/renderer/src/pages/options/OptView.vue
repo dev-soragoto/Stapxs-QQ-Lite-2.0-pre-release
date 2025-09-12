@@ -282,6 +282,23 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('use_super_face')" />
+                <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
+                <div>
+                    <span>{{ $t('超级表情') }}</span>
+                    <span>{{
+                        $t('小黄脸长大了，变成了大黄脸！')
+                    }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.use_super_face"
+                        type="checkbox" name="use_super_face" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div class="opt-item">
                 <div :class="checkDefault('use_favicon_notice')" />
                 <font-awesome-icon :icon="['fas', 'bell']" />
                 <div>

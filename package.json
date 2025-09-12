@@ -40,6 +40,7 @@
     "pinia": "^3.0.3",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "semver": "^7.7.1",
+    "vue3-lottie": "^3.3.1",
     "ws": "^8.18.0"
   },
   "devDependencies": {
