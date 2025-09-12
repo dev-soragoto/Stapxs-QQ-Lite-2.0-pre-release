@@ -105,28 +105,6 @@ function replaceJPValue(jpStr: string) {
 }
 
 /**
- * 获取表情图片，优先返回 gif，不存在的返回 png
- * @param id 表情编号
- * @returns 表情图片
- */
-export function getFace(id: number) {
-    const pathList = import.meta.glob('@renderer/assets/img/qq-face/public/*/s*.*',
-        { eager: true }
-    )
-    for(const path in pathList) {
-        if (path.includes(`/s${id}.gif`)) {
-            return (pathList[path] as any).default
-        }
-    }
-    for(const path in pathList) {
-        if (path.includes(`/s${id}.png`)) {
-            return (pathList[path] as any).default
-        }
-    }
-    return ''
-}
-
-/**
  * 将一个消息体列表组装为基础消息列表便于解析（message 消息体可能不正确）
  * @param msgList
  * @param map

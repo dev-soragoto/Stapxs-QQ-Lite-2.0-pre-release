@@ -56,6 +56,7 @@ export const optDefault: { [key: string]: any } = {
     opt_revolve: false,
     merge_forward_width_type: false,
     use_favicon_notice: true,
+    use_super_face: true,
     // Function
     close_notice: false,
     bubble_sort_user: true,

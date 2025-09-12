@@ -202,10 +202,13 @@
                                         <template
                                             v-for="(context, indexc) in item.msg_content"
                                             :key="'jinc-' + index + '-' + indexc">
-                                            <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                            <img v-if="context.msg_type === 2"
-                                                class="face" :src="getFace(context.face_index)">
-                                            <img v-if="context.msg_type === 3" :src="context.image_url">
+                                            <span v-if="context.type === 'text'">
+                                                {{ context.data.text }}
+                                            </span>
+                                            <EmojiFace v-if="context.type === 'face'"
+                                                :emoji="Emoji.get(Number(context.data.id))" />
+                                            <img v-if="context.type === 'image'"
+                                                :src="context.data.url">
                                         </template>
                                     </div>
                                 </div>
@@ -375,10 +378,11 @@
                     <div v-if="runtimeData.chatInfo.show.type == 'group'"
                         v-show="tags.menuDisplay.showRespond"
                         :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
-                        <template v-for="(num, index) in respondIds" :key="'respond-' + num">
-                            <img v-if="getFace(num) != ''" loading="lazy"
-                                :src="getFace(num) as any" @click="sendRespond(num)">
-                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']" @click="tags.menuDisplay.respond = true" />
+                        <template v-for="(num, index) in Emoji.responseId" :key="'respond-' + num">
+                            <EmojiFace :emoji="Emoji.get(num)!"
+                                @click="sendRespond(num)" />
+                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']"
+                                @click="tags.menuDisplay.respond = true" />
                         </template>
                     </div>
                     <div v-show="tags.menuDisplay.add" @click="forwardSelf()">
@@ -551,7 +555,6 @@ import {
 import {
     getMsgRawTxt,
     sendMsgRaw,
-    getFace,
     getShowName,
     isShowTime,
     isDeleteMsg,
@@ -570,6 +573,8 @@ import {
 } from '@renderer/function/elements/information'
 import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
+import Emoji from '@renderer/function/model/emoji'
+import EmojiFace from '@renderer/components/EmojiFace.vue'
 
 type IUser = any
 
@@ -661,7 +666,6 @@ const userInfoPanFunc: UserInfoPan = {
                     getMsgRawTxt: getMsgRawTxt,
                 },
                 Option: Option,
-                getFace: getFace,
                 Connector: Connector,
                 runtimeData: runtimeData,
                 getTimeConfig: getTimeConfig,
@@ -727,18 +731,6 @@ const userInfoPanFunc: UserInfoPan = {
                     message_id: string
                     img_url: string
                 }[],
-                respondIds: [
-                    5, 314, 318, 319, 320, 324, 337, 338, 339, 341, 342, 343, 344,
-                    345, 346, 181, 74, 75, 351, 349, 350, 395, 326, 53, 333, 424,
-                    425, 427, 426, 14, 4, 8, 9, 10, 12, 16, 96, 21, 23, 24, 25, 26,
-                    27, 28, 29, 30, 32, 33, 34, 38, 39, 97, 98, 99, 100, 101, 102,
-                    103, 104, 106, 305, 109, 111, 182, 179, 173, 174, 212, 175, 176,
-                    183, 262, 264, 265, 266, 267, 268, 269, 270, 271, 272, 277, 307,
-                    306, 281, 282, 284, 285, 293, 287, 289, 294, 297, 298, 299, 332,
-                    336, 353, 355, 356, 354, 352, 357, 428, 334, 347, 303, 302, 295,
-                    49, 66, 63, 116, 60, 76, 124, 118, 78, 79, 120, 123, 201, 273,
-                    171, 144, 147, 89, 41, 125, 42, 43, 129, 85
-                ],
                 isShowTime,
                 isDeleteMsg,
                 chatMoveOptions,
