@@ -1144,7 +1144,10 @@ function getUserById(id: number): IUser | undefined {
             },
             openMerge(){
                 const seg = this.data.message[0]
-                if (!seg.content === undefined) {}
+                if (!seg.content) {
+                    new PopInfo().add(PopType.ERR, this.$t('合并转发解析失败'))
+                    return
+                }
 
                 const data: MergeStackData = {
                     messageList: [],
