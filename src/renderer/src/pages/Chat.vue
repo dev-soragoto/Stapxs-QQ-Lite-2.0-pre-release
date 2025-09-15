@@ -445,6 +445,10 @@
                         <div><font-awesome-icon :icon="['fas', 'arrow-up-right-from-square']" /></div>
                         <a>{{ $t('跳转到消息') }}</a>
                     </div>
+                    <div v-show="isDev" @click="consoleLogMsg">
+                        <div><font-awesome-icon :icon="['fas', 'screwdriver-wrench']" /></div>
+                        <a>{{ $t('调试信息') }}</a>
+                    </div>
                 </div>
             </div>
         </Teleport>
@@ -689,6 +693,7 @@ const userInfoPanFunc: UserInfoPan = {
                 }[],
                 isShowTime,
                 isDeleteMsg,
+                isDev: import.meta.env.DEV,
             }
         },
         watch: {
@@ -1234,6 +1239,12 @@ const userInfoPanFunc: UserInfoPan = {
                     return item.type !== 'reply'
                 })
                 this.tags.isReply = false
+            },
+
+            consoleLogMsg() {
+                if (!this.selectedMsg) return
+                // eslint-disable-next-line no-console
+                console.log(this.selectedMsg)
             },
 
             /**
