@@ -1464,6 +1464,17 @@ async function msgPreprocess(msg: any): Promise<any> {
         }
     }
     //#endregion
+
+    //#region == lgr 商场表情 =============================
+    // 过滤掉mface后面尾随的字符串
+    const filter: any[] = []
+    for (let id = 0;id < msg.message.length;id++) {
+        const seg = msg.message[id]
+        filter.push(seg)
+        if (seg.type === 'mface') id++
+    }
+    msg.message = filter
+    //#endregion
     return msg
 }
 

@@ -95,6 +95,13 @@
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
                             :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
                             :src="item.url"
+                            :alt="item.summary"
+                            @load="imageLoaded"
+                            @error="imgLoadFail">
+                        <img v-else-if="item.type == 'mface'"
+                            :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
+                            :src="item.url"
+                            :alt="item.summary"
                             @load="imageLoaded"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
