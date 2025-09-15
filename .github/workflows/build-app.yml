@@ -138,14 +138,6 @@ jobs:
       - name: Install
         run: yarn
 
-      - name: copy qqface source
-        if: matrix.os == 'windows-latest' || matrix.os == 'windows-11-arm'
-        run: |
-          Remove-Item src/renderer/public/img/qqface -Force
-          New-Item -ItemType Directory -Force -Path src/renderer/public/img/qqface
-          Copy-Item -Path src/renderer/src/assets/img/qq-face/public/assets/qq_emoji/resfile/emoji/* -Destination src/renderer/public/img/qqface -Recurse -Force
-        shell: powershell
-
       # windows-x64-build
       - name: Build Electron (Windows)
         if: matrix.os == 'windows-latest'
