@@ -522,7 +522,7 @@ export function get(name: string): any {
  */
 export function getRaw(name: string) {
     if ('electron' == backend.type) {
-        return backend.callSync('opt:get', name)
+        return backend.call('opt:get', name, true)
     } else if('tauri' == backend.type) {
         return backend.call(undefined, 'opt:get', true, name)
     } else {
@@ -535,12 +535,13 @@ export function getRaw(name: string) {
                     const opt: string[] = list[i].split(':')
                     if (opt.length === 2) {
                         if (name == opt[0]) {
-                            return opt[1]
+                            return Promise.resolve(opt[1])
                         }
                     }
                 }
             }
         }
+        return Promise.resolve(null)
     }
 }
 
