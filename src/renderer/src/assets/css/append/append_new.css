@@ -225,6 +225,12 @@ body {
 .face-pan div.tab-main > div {
     margin-bottom: 0 !important;
 }
+.face-pan div.system-face-bar {
+    height: calc(300px - 75px);
+    overflow-y: scroll;
+    margin-top: 15px;
+    width: 100%;
+}
 
 .jin-ppan {
     max-width: 350px;
@@ -610,7 +616,6 @@ body {
     width: 17px;
 }
 .base-face {
-    height: calc(300px - 110px);
     padding: 0;
 }
 .base-face > div {

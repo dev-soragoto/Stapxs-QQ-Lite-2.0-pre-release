@@ -250,15 +250,17 @@
                         this.$emit('loadHistory', back)
                         // 重置消息面板
                         // PS：这儿的作用是在运行时如果切换到了特殊面板，在点击联系人的时候可以切回来
-                        if (
-                            runtimeData.sysConfig.chatview_name != '' &&
-                            runtimeData.sysConfig.chatview_name !=
-                                decodeURIComponent(getOpt('chatview_name') ?? '')
-                        ) {
-                            runtimeData.sysConfig.chatview_name =
-                                decodeURIComponent(getOpt('chatview_name') ?? '')
-                            runOpt('chatview_name', decodeURIComponent(getOpt('chatview_name') ?? ''))
-                        }
+                        getOpt('chatview_name').then((chatViewName) => {
+                            if (
+                                runtimeData.sysConfig.chatview_name != '' &&
+                                runtimeData.sysConfig.chatview_name !=
+                                    decodeURIComponent(chatViewName ?? '')
+                            ) {
+                                runtimeData.sysConfig.chatview_name =
+                                    decodeURIComponent(chatViewName ?? '')
+                                runOpt('chatview_name', decodeURIComponent(chatViewName ?? ''))
+                            }
+                        })
                     }
                     // 清除新消息标记
                     const item = runtimeData.baseOnMsgList.get(id)

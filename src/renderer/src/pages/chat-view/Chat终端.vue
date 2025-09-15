@@ -258,17 +258,14 @@
                         let str =
                             '  total ' + this.searchListCache.length + '\n'
                         let hasMsg = false
-                        runtimeData.baseOnMsgList.forEach((item, index) => {
+                        Array.from(runtimeData.baseOnMsgList).forEach(([_key, item], index) => {
                             if (item.new_msg == true) {
                                 str += '• '
                                 hasMsg = true
                             } else str += '  '
-                            str += index.toString() + '     '
-                            str +=
-                                (item.group_id ? item.group_id : item.user_id) +
-                                '     '
-                            str +=
-                                (item.group_name? item.group_name: item.nickname) + '     '
+                            str += ('#' + index.toString()).padEnd(8, ' ')
+                            str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
+                            str += item.group_name? item.group_name: item.nickname
                             str += '\n'
                         })
                         if (hasMsg)
@@ -465,7 +462,7 @@
                     fun: () => {
                         const infoList = {
                             Application: 'Stapxs QQ Lite 2.0',
-                            Kernel: packageInfo.version + '-web',
+                            Kernel: packageInfo.version + '-' + backend.type,
                             Shell: 'stsh Basic Shell 1.0',
                             Theme: 'ChatSHell',
                             Uptime:
@@ -480,9 +477,6 @@
                                 'x' +
                                 window.screen.height,
                         } as { [key: string]: string }
-                        if (backend.isDesktop()) {
-                            infoList.Kernel = packageInfo.version + '-electron'
-                        }
                         let info = ''
                         Object.keys(infoList).forEach((key) => {
                             info += `<span>${key}<span>: ${infoList[key]}</span></span>`
@@ -656,7 +650,11 @@
                         'var(--color-font)',
                     )
                     this.addCommandOutF(
-                        `Welcome to Stapxs QQ Lite ${packageInfo.version} (Vue ${packageInfo.devDependencies.vue}-${this.runMode})\n\n`,
+                        `=> 当前存在 ${runtimeData.baseOnMsgList.size} 个活跃会话\n\n`,
+                        'var(--color-font)',
+                    )
+                    this.addCommandOutF(
+                        `Welcome to Stapxs QQ Lite ${packageInfo.version} (Vue ${packageInfo.devDependencies.vue}-${this.runMode ? 'development' : 'production'})\n\n`,
                         'var(--color-font)',
                     )
                 }

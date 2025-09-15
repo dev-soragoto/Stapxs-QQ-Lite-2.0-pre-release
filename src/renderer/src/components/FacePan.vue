@@ -14,7 +14,7 @@
                         <span>{{ $t('超级表情') }}</span>
                     </div>
                     <div class="base-face">
-                        <template v-for="num in Emoji.superList">
+                        <template v-for="num in Emoji.superList" :key="'base-face-wrapper-' + num">
                             <div>
                                 <EmojiFace
                                     :key="'base-face-' + num"
@@ -27,7 +27,7 @@
                         <span>{{ $t('小黄脸表情') }}</span>
                     </div>
                     <div class="base-face">
-                        <template v-for="num in Emoji.normalList">
+                        <template v-for="num in Emoji.normalList" :key="'base-face-wrapper-' + num">
                             <div>
                                 <EmojiFace
                                     :key="'base-face-' + num"
@@ -40,7 +40,7 @@
                         <span>{{ $t('emoji 表情') }}</span>
                     </div>
                     <div class="base-face">
-                        <div v-for="num in Emoji.emojiList">
+                        <div v-for="num in Emoji.emojiList" :key="'base-face-wrapper-' + num">
                             <EmojiFace
                                 :key="'base-face-' + num"
                                 :emoji="Emoji.get(num)!"

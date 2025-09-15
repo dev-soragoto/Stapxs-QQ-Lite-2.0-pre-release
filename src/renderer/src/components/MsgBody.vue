@@ -349,8 +349,8 @@
                 <TransitionGroup name="emoji-like">
                     <template v-for="info, id in data.emojis" :key="'respond-' + data.message_id + '-' + id">
                         <div :class="{
-                                'me-send': info.includes(runtimeData.loginInfo.uin),
-                            }">
+                            'me-send': info.includes(runtimeData.loginInfo.uin),
+                        }">
                             <EmojiFace :emoji="Emoji.get(Number(id))!" />
                             <span>{{ info.length }}</span>
                         </div>
