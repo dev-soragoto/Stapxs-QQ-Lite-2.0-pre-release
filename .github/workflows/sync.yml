@@ -25,19 +25,12 @@ jobs:
           retain_days: 0
           keep_minimum_runs: 1
 
-      - name: Delete old releases
-        uses: sgpublic/delete-release-action@v1.1
+      - name: Delete releases
+        uses: ophub/delete-releases-workflows@main
         with:
-          release-drop: true
-          release-keep-count: 10
-          release-drop-tag: true
-          pre-release-drop: true
-          pre-release-keep-count: -1
-          pre-release-drop-tag: true
-          draft-drop: true
-          draft-drop-count: -1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          delete_releases: true
+          releases_keep_latest: 9
+          gh_token: ${{ secrets.TOKEN }}
 
   sync:
     runs-on: ubuntu-latest
