@@ -182,13 +182,7 @@
                                 @click="openMerge()">
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
-                                    <div v-if="item.content === undefined">
-                                        <div class="loading">
-                                            <font-awesome-icon :icon="['fas', 'spinner']" />
-                                            {{ $t('加载中') }}
-                                        </div>
-                                    </div>
-                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)" v-else-if="item.content.length > 0"
+                                    <div v-if="item.content && item.content.length > 0" v-for="(i, indexItem) in item.content.slice(0, 3)"
                                         :key="'raw-forward-' + indexItem">
                                         {{ i.sender.nickname }}:
                                         <span v-for="(msg, msgIndex) in i.message"
@@ -515,16 +509,6 @@ function getUserById(id: number): IUser | undefined {
                 if(item.type == 'text') {
                     this.parseText(i)
                 }
-            }
-            // 初始化解析合并转发消息
-            if (this.data.message[0].type === 'forward'){
-                Connector.callApi('forward_msg', {id: this.data.message[0].id})
-                .then(data => {
-                    data = getMessageList(data)
-                    // PS：这个写法其实不合规，但是影响不大就这样罢
-                    // eslint-disable-next-line vue/no-mutating-props
-                    this.data.message[0].content = data
-                })
             }
         },
         methods: {
@@ -1152,38 +1136,38 @@ function getUserById(id: number): IUser | undefined {
                 }
             },
             openMerge(){
+                const seg = this.data.message[0]
+                if (!seg.content === undefined) {}
+
                 const data: MergeStackData = {
                     messageList: [],
                     imageList: [],
                     placeCache: 0,
-                    ready: false,
                     forwardMsg: this.data
                 }
-                const seg = this.data.message[0]
-                if (seg.content !== undefined){
-                    data.ready = true
-                    data.messageList = seg.content
-                    // 提取合并转发中的消息图片列表
-                    const imgList = [] as {
-                        index: number
-                        message_id: string
-                        img_url: string
-                    }[]
-                    let index = 0
-                    data.messageList.forEach((item) => {
-                        item.message.forEach((msg) => {
-                            if (msg.type == 'image') {
-                                imgList.push({
-                                    index: index,
-                                    message_id: item.message_id,
-                                    img_url: msg.url,
-                                })
-                                index++
-                            }
-                        })
+
+                data.messageList = seg.content
+                // 提取合并转发中的消息图片列表
+                const imgList = [] as {
+                    index: number
+                    message_id: string
+                    img_url: string
+                }[]
+                let index = 0
+                data.messageList.forEach((item) => {
+                    item.message.forEach((msg) => {
+                        if (msg.type == 'image') {
+                            imgList.push({
+                                index: index,
+                                message_id: item.message_id,
+                                img_url: msg.url,
+                            })
+                            index++
+                        }
                     })
-                    data.imageList = imgList
-                }
+                })
+                data.imageList = imgList
+
                 runtimeData.mergeMsgStack.push(data)
             },
             isFace(item: any) {

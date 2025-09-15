@@ -181,7 +181,6 @@ export interface MergeStackData{
     messageList: any[]      // 消息列表
     imageList: any[]        // 图片列表
     placeCache: number      // 位置缓存
-    ready: boolean          // 就绪
     forwardMsg: any         // 原合并转发消息
 }
 

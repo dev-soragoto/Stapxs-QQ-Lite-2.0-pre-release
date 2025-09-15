@@ -553,7 +553,7 @@ const msgFunctions = {
     /**
      * 保存聊天记录
      */
-    getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
+    getChatHistoryFist: async (_: string, msg: { [key: string]: any }) => {
         if (msg.data === null) {
             new PopInfo().add(
                 PopType.ERR,
@@ -562,9 +562,9 @@ const msgFunctions = {
             runtimeData.tags.loadHistoryFail = true
             return
         }
-        saveMsg(msg, 'top')
+        await saveMsg(msg, 'top')
     },
-    getChatHistory: (_: string, msg: { [key: string]: any }) => {
+    getChatHistory: async (_: string, msg: { [key: string]: any }) => {
         if (msg.data === null) {
             new PopInfo().add(
                 PopType.ERR,
@@ -576,7 +576,7 @@ const msgFunctions = {
         const pan = document.getElementById('msgPan')
         if(pan) {
             const oldScrollHeight = pan.scrollHeight
-            saveMsg(msg, 'top')
+            await saveMsg(msg, 'top')
             nextTick(() => {
                 setTimeout(() => {
                     logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
@@ -617,51 +617,6 @@ const msgFunctions = {
                 }
             } catch (e) {
                 // do nothing
-            }
-        }
-    },
-
-    /**
-     * 保存合并转发消息
-     */
-    getForwardMsg: (_: string, msg: { [key: string]: any }) => {
-        if (
-            msg.error !== null &&
-            (msg.error !== undefined || msg.status === 'failed')
-        ) {
-            popInfo.add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取合并转发消息失败'),
-            )
-        } else {
-            let list = getMsgData(
-                'forward_message_list',
-                msg,
-                msgPath.forward_msg,
-            )
-            list = getMessageList(list)
-            if (list != undefined) {
-                runtimeData.mergeMessageList = list
-                // 提取合并转发中的消息图片列表
-                const imgList = [] as {
-                    index: number
-                    message_id: string
-                    img_url: string
-                }[]
-                let index = 0
-                list.forEach((item) => {
-                    item.message.forEach((msg) => {
-                        if (msg.type == 'image') {
-                            imgList.push({
-                                index: index,
-                                message_id: item.message_id,
-                                img_url: msg.url,
-                            })
-                            index++
-                        }
-                    })
-                })
-                runtimeData.mergeMessageImgList = imgList
             }
         }
     },
@@ -972,7 +927,7 @@ const msgFunctions = {
      * 获取发送的消息（消息发送后处理）
      * @deprecated 功能已被遗弃，暂时保留方法
      */
-    getSendMsg: (
+    getSendMsg: async (
         _: string,
         msg: { [key: string]: any },
         echoList: string[],
@@ -1007,7 +962,7 @@ const msgFunctions = {
                         buildMsgList([msg.data]),
                         msgPath.message_list,
                     )
-                    trueMsg = getMessageList(trueMsg)
+                    trueMsg = await getMessageList(trueMsg)
                     if (trueMsg && trueMsg.length == 1) {
                         runtimeData.messageList[fakeIndex].message = trueMsg[0].message
                         runtimeData.messageList[fakeIndex].raw_message =
@@ -1373,9 +1328,9 @@ function saveClassInfo(
     runtimeData.tags.classes = list
 }
 
-function saveMsg(msg: any, append = undefined as undefined | string) {
+async function saveMsg(msg: any, append = undefined as undefined | string) {
     let list = getMsgData('message_list', msg, msgPath.message_list)
-    list = getMessageList(list)
+    list = await getMessageList(list)
     if (list != undefined) {
         // 检查消息是否是当前聊天的消息
         const firstMsg = list[0]
@@ -1455,26 +1410,61 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
     }
 }
 
-export function getMessageList(list: any[] | undefined) {
-    if (list != undefined) {
-        list = parseMsgList(
-            list,
-            msgPath.message_list.type,
-            msgPath.message_value,
-        )
-        // 倒序处理
-        if (msgPath.message_list.order === 'reverse') {
-            list.reverse()
-        }
-        // 检查必要字段
-        list.forEach((item: any) => {
-            if (!item.post_type) {
-                item.post_type = 'message'
-            }
-        })
-        return list
+export async function getMessageList(list: any[] | undefined) {
+    if (!list) return undefined
+
+    list = parseMsgList(
+        list,
+        msgPath.message_list.type,
+        msgPath.message_value,
+    )
+    // 倒序处理
+    if (msgPath.message_list.order === 'reverse') {
+        list.reverse()
     }
-    return undefined
+    // 检查必要字段
+    list.forEach((item: any) => {
+        if (!item.post_type) {
+            item.post_type = 'message'
+        }
+    })
+    return Promise.all(list.map(msgPreprocess))
+}
+
+/**
+ * 消息预处理
+ * @param msg 要处理的消息
+ */
+async function msgPreprocess(msg: any): Promise<any> {
+    //#region == json 合并转发 ============================
+    if (msg.message.at(0)?.type === 'json') {
+        try {
+            const data = JSON.parse(msg.message.at(0).data)
+            if (data['app'] === 'com.tencent.multimsg') {
+                msg.message = [{
+                    type: 'forward',
+                    id: data['meta']['detail']['resid'],
+                }]
+            }
+        } catch (e){/**/}
+    }
+    //#endregion
+
+    //#region == 合并转发解析 ==============================
+    if (msg.message.at(0)?.type === 'forward') {
+        const forwardId = msg.message.at(0).id
+        if (forwardId) {
+            try {
+                const originData = await Connector.callApi('forward_msg', {id: forwardId})
+                const data = await getMessageList(originData)
+                if (data) msg.message.at(0).content = data
+            }catch (e) {/**/}
+        }else {
+            msg.message.at(0).content = []
+        }
+    }
+    //#endregion
+    return msg
 }
 
 function revokeMsg(_: string, msg: any) {
@@ -1515,7 +1505,7 @@ function revokeMsg(_: string, msg: any) {
 }
 
 let qed_try_times = 0
-function newMsg(_: string, data: any) {
+async function newMsg(_: string, data: any) {
     const { $t } = app.config.globalProperties
     // 没有对频道的支持计划
     if (data.detail_type == 'guild') {
@@ -1554,7 +1544,7 @@ function newMsg(_: string, data: any) {
                 buildMsgList([data]),
                 msgPath.message_list,
             )
-            trueMsg = getMessageList(trueMsg)
+            trueMsg = await getMessageList(trueMsg)
             if (trueMsg && trueMsg.length == 1) {
                 runtimeData.messageList[fakeIndex].message = trueMsg[0].message
                 runtimeData.messageList[fakeIndex].raw_message =
@@ -1577,7 +1567,7 @@ function newMsg(_: string, data: any) {
             // 如果有正在输入的提示，清除它
             runtimeData.chatInfo.show.appendInfo = undefined
             // 保存消息
-            saveMsg(buildMsgList([data]), 'bottom')
+            await saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
             const num = randomNum(0, 10000)
             if (num >= 4500 && num <= 5500) {
