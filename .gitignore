@@ -14,3 +14,5 @@ dist_capacitor
 stats.html
 
 notice_local.json
+
+src/renderer/public/img/qqface/*
