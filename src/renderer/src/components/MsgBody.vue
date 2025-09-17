@@ -187,37 +187,39 @@
                                 @click="openMerge()">
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
-                                    <div v-if="item.content && item.content.length > 0" v-for="(i, indexItem) in item.content.slice(0, 3)"
-                                        :key="'raw-forward-' + indexItem">
-                                        {{ i.sender.nickname }}:
-                                        <span v-for="(msg, msgIndex) in i.message"
-                                            :key="'raw-forward-item-' + msgIndex">
-                                            <span v-if="msg.type == 'text'">
-                                                {{ msg.text }}
+                                    <template v-if="item.content && item.content.length > 0">
+                                        <div v-for="(i, indexItem) in item.content.slice(0, 3)"
+                                            :key="'raw-forward-' + indexItem">
+                                            {{ i.sender.nickname }}:
+                                            <span v-for="(msg, msgIndex) in i.message"
+                                                :key="'raw-forward-item-' + msgIndex">
+                                                <span v-if="msg.type == 'text'">
+                                                    {{ msg.text }}
+                                                </span>
+                                                <span v-else-if="msg.type == 'image'">
+                                                    [{{ $t('图片') }}]
+                                                </span>
+                                                <span v-else-if="msg.type == 'face' || msg.type == 'bface'">
+                                                    [{{ $t('表情') }}]
+                                                </span>
+                                                <span v-else-if="msg.type == 'file'">
+                                                    [{{ $t('文件') }}]{{ msg.data.file }}
+                                                </span>
+                                                <span v-else-if="msg.type == 'video'">
+                                                    [{{ $t('视频') }}]
+                                                </span>
+                                                <span v-else-if="msg.type == 'forward'">
+                                                    [{{ $t('聊天记录') }}]
+                                                </span>
+                                                <span v-else-if="msg.type == 'reply'">
+                                                    <!--原版QQ此处不做处理-->
+                                                </span>
+                                                <span v-else>
+                                                    [{{ $t('不支持的消息') }}]
+                                                </span>
                                             </span>
-                                            <span v-else-if="msg.type == 'image'">
-                                                [{{ $t('图片') }}]
-                                            </span>
-                                            <span v-else-if="msg.type == 'face' || msg.type == 'bface'">
-                                                [{{ $t('表情') }}]
-                                            </span>
-                                            <span v-else-if="msg.type == 'file'">
-                                                [{{ $t('文件') }}]{{ msg.data.file }}
-                                            </span>
-                                            <span v-else-if="msg.type == 'video'">
-                                                [{{ $t('视频') }}]
-                                            </span>
-                                            <span v-else-if="msg.type == 'forward'">
-                                                [{{ $t('聊天记录') }}]
-                                            </span>
-                                            <span v-else-if="msg.type == 'reply'">
-                                                <!--原版QQ此处不做处理-->
-                                            </span>
-                                            <span v-else>
-                                                [{{ $t('不支持的消息') }}]
-                                            </span>
-                                        </span>
-                                    </div>
+                                        </div>
+                                    </template>
                                     <div v-else>
                                         {{ $t('加载失败') }}
                                     </div>
@@ -370,8 +372,8 @@ import markdownit from 'markdown-it'
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
 import { defineComponent, useTemplateRef } from 'vue'
 import { Connector } from '@renderer/function/connect'
-import { getMessageList, runtimeData } from '@renderer/function/msg'
-import { Logger, LogType } from '@renderer/function/base'
+import { runtimeData } from '@renderer/function/msg'
+import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
 import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
 import {
@@ -550,16 +552,6 @@ function getUserById(id: number): IUser | undefined {
                 if(item.type == 'text') {
                     this.parseText(i)
                 }
-            }
-            // 初始化解析合并转发消息
-            if (this.data.message[0].type === 'forward'){
-                Connector.callApi('forward_msg', {id: this.data.message[0].id})
-                .then(data => {
-                    data = getMessageList(data)
-                    // PS：这个写法其实不合规，但是影响不大就这样罢
-                    // eslint-disable-next-line vue/no-mutating-props
-                    this.data.message[0].content = data
-                })
             }
             // 初始化消息状态（msgBody class）
             if(this.isMe && this.type != 'merge') {

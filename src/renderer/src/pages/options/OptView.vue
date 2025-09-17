@@ -298,7 +298,7 @@
                     </div>
                 </label>
             </div>
-            <div class="opt-item">
+            <div v-if="backend.type == 'web'" class="opt-item">
                 <div :class="checkDefault('use_favicon_notice')" />
                 <font-awesome-icon :icon="['fas', 'bell']" />
                 <div>

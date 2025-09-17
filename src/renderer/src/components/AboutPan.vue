@@ -50,7 +50,7 @@
                         <img :src="info.url">
                         <div>
                             <span>{{ info.title }}</span>
-                            <span>{{ info.contributions }} {{ $t('次提交') }}</span>
+                            <span>{{ $t('{time} 次提交', { time: info.contributions }) }}</span>
                         </div>
                         #{{ index + 1 }}
                     </div>
