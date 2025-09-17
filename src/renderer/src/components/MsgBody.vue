@@ -93,6 +93,13 @@
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
                             :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
                             :src="item.url"
+                            :alt="item.summary"
+                            @load="imageLoaded"
+                            @error="imgLoadFail">
+                        <img v-else-if="item.type == 'mface'"
+                            :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
+                            :src="item.url"
+                            :alt="item.summary"
                             @load="imageLoaded"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'image'"
@@ -180,13 +187,7 @@
                                 @click="openMerge()">
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
-                                    <div v-if="item.content === undefined">
-                                        <div class="loading">
-                                            <font-awesome-icon :icon="['fas', 'spinner']" />
-                                            {{ $t('加载中') }}
-                                        </div>
-                                    </div>
-                                    <div v-for="(i, indexItem) in item.content.slice(0, 3)" v-else-if="item.content.length > 0"
+                                    <div v-if="item.content && item.content.length > 0" v-for="(i, indexItem) in item.content.slice(0, 3)"
                                         :key="'raw-forward-' + indexItem">
                                         {{ i.sender.nickname }}:
                                         <span v-for="(msg, msgIndex) in i.message"
@@ -1184,38 +1185,41 @@ function getUserById(id: number): IUser | undefined {
                 }
             },
             openMerge(){
+                const seg = this.data.message[0]
+                if (!seg.content) {
+                    new PopInfo().add(PopType.ERR, this.$t('合并转发解析失败'))
+                    return
+                }
+
                 const data: MergeStackData = {
                     messageList: [],
                     imageList: [],
                     placeCache: 0,
-                    ready: false,
                     forwardMsg: this.data
                 }
-                const seg = this.data.message[0]
-                if (seg.content !== undefined){
-                    data.ready = true
-                    data.messageList = seg.content
-                    // 提取合并转发中的消息图片列表
-                    const imgList = [] as {
-                        index: number
-                        message_id: string
-                        img_url: string
-                    }[]
-                    let index = 0
-                    data.messageList.forEach((item) => {
-                        item.message.forEach((msg) => {
-                            if (msg.type == 'image') {
-                                imgList.push({
-                                    index: index,
-                                    message_id: item.message_id,
-                                    img_url: msg.url,
-                                })
-                                index++
-                            }
-                        })
+
+                data.messageList = seg.content
+                // 提取合并转发中的消息图片列表
+                const imgList = [] as {
+                    index: number
+                    message_id: string
+                    img_url: string
+                }[]
+                let index = 0
+                data.messageList.forEach((item) => {
+                    item.message.forEach((msg) => {
+                        if (msg.type == 'image') {
+                            imgList.push({
+                                index: index,
+                                message_id: item.message_id,
+                                img_url: msg.url,
+                            })
+                            index++
+                        }
                     })
-                    data.imageList = imgList
-                }
+                })
+                data.imageList = imgList
+
                 runtimeData.mergeMsgStack.push(data)
             },
             isFace(item: any) {

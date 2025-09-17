@@ -9,15 +9,10 @@
 import xss from 'xss'
 import app from '@renderer/main'
 
-import { PopInfo, PopType } from '@renderer/function/base'
-import { runtimeData } from '@renderer/function/msg'
-import { Connector } from '@renderer/function/connect'
 import { openLink } from '@renderer/function/utils/appUtil'
 import { getDeviceType } from '@renderer/function/utils/systemUtil'
 import { linkView } from '../utils/linkViewUtil'
 import { backend } from '@renderer/runtime/backend'
-
-const popInfo = new PopInfo()
 
 export class MsgBodyFuns {
     /**
@@ -265,48 +260,23 @@ export class MsgBodyFuns {
      */
     static cardClick(bodyId: string) {
         const sender = document.getElementById(bodyId)
-        if (sender !== null) {
-            const type = sender.dataset.type
-            // 如果存在 url 项，优先打开 url
-            if (
-                sender.dataset.url !== undefined &&
-                sender.dataset.url !== 'undefined' &&
-                sender.dataset.url !== ''
-            ) {
-                const openType =
-                    sender.dataset.urlOpenType || sender.dataset.urlopentype
-                if (openType == '_self') {
-                    window.open(sender.dataset.url, '_self')
-                } else {
-                    // 默认都以 _blank 打开
-                    openLink(sender.dataset.url)
-                }
-                return
-            }
-            // 接下来按类型处理
-            switch (type) {
-                case 'forward': {
-                    // 解析合并转发消息
-                    this.getForwardMsg(sender.dataset.id)
-                    break
-                }
-            }
-        }
-    }
 
-    static getForwardMsg(id: any) {
-        if (id !== 'undefined') {
-            runtimeData.mergeMessageList = []
-            Connector.send(
-                runtimeData.jsonMap.forward_msg.name,
-                { id: id },
-                'getForwardMsg',
-            )
-        } else {
-            popInfo.add(
-                PopType.INFO,
-                app.config.globalProperties.$t('合并消息层级过多，解析失败。'),
-            )
+        if (!sender) return
+
+        // 如果存在 url 项，优先打开 url
+        if (
+            sender.dataset.url !== undefined &&
+            sender.dataset.url !== 'undefined' &&
+            sender.dataset.url !== ''
+        ) {
+            const openType =
+                sender.dataset.urlOpenType || sender.dataset.urlopentype
+            if (openType == '_self') {
+                window.open(sender.dataset.url, '_self')
+            } else {
+                // 默认都以 _blank 打开
+                openLink(sender.dataset.url)
+            }
         }
     }
 

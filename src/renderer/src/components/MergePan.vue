@@ -7,12 +7,8 @@
                 <span>{{ $t('合并消息') }}</span>
                 <font-awesome-icon :icon="['fas', 'xmark']" @click="exitMergeMsg" />
             </div>
-            <div v-if="nowData === undefined && runtimeData.mergeMsgStack.length === 0">
+            <div v-if="nowData === undefined">
                 <!-- 无内容 -->
-            </div>
-            <div v-else-if="nowData === undefined || !nowData.ready" :class=" 'loading show'">
-                <font-awesome-icon :icon="['fas', 'spinner']" />
-                <span>{{ $t('加载中') }}</span>
             </div>
             <div v-else>
                 <template v-for="(msgIndex, index) in nowData.messageList" :key="'merge-' + nowData.forwardMsg.message[0].id + '-' + index">
@@ -70,33 +66,6 @@
                         runtimeData.mergeMessageImgList = undefined
                     }
                     else this.nowData = this.stack.at(-1)
-                }
-            )
-            this.$watch(
-                () => this.nowData?.forwardMsg.message[0].content,
-                () => {
-                    if(this.nowData === undefined || this.nowData.forwardMsg.message[0].content === undefined) return
-                    const seg = this.nowData.forwardMsg.message[0]
-                    this.nowData.ready = true
-                    this.nowData.messageList = seg.content
-                    // 提取合并转发中的消息图片列表
-                    const imgList = [] as {
-                        index: number
-                        img_url: string
-                    }[]
-                    let index = 0
-                    this.nowData.messageList.forEach((item) => {
-                        item.message.forEach((msg) => {
-                            if (msg.type == 'image') {
-                                imgList.push({
-                                    index: index,
-                                    img_url: msg.url,
-                                })
-                                index++
-                            }
-                        })
-                    })
-                    this.nowData.imageList = imgList
                 }
             )
             this.$watch(
