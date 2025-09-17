@@ -63,8 +63,8 @@
 
     export default defineComponent({
         name: 'BulletinBody',
-        props: ['data', 'index'],
         inject: ['viewer'],
+        props: ['data', 'index'],
         data() {
             return {
                 trueLang: getTrueLang(),

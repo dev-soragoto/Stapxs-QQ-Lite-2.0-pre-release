@@ -25,7 +25,7 @@
             v-menu.prevent="event => $emit('showMenu', event, data)"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
-			:alt="data.sender.card ? data.sender.card : data.sender.nickname"
+            :alt="data.sender.card ? data.sender.card : data.sender.nickname"
             @mouseenter="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
             @mousemove="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
             @mouseleave="userInfoHoverEnd($event)"
@@ -102,7 +102,7 @@
                             :src="backend.proxyUrl(item.url)"
                             @load="imageLoaded"
                             @error="imgLoadFail"
-                            @click="imgClick(data.message_id)">
+                            @click="imgClick(item.url)">
                         <template v-else-if="item.type == 'face'">
                             <EmojiFace :emoji="Emoji.get(Number(item.id))" class="msg-face" />
                         </template>
@@ -364,14 +364,13 @@
 <script setup lang="ts">
 import Option from '@renderer/function/option'
 import CardMessage from './msg-component/CardMessage.vue'
-import app from '@renderer/main'
 import markdownit from 'markdown-it'
 
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
 import { defineComponent, useTemplateRef } from 'vue'
 import { Connector } from '@renderer/function/connect'
 import { getMessageList, runtimeData } from '@renderer/function/msg'
-import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
+import { Logger, LogType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
 import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
 import {
@@ -409,6 +408,7 @@ const {
     selected?: boolean
     type?: string
     userInfoPan?: UserInfoPan
+    imageListHeader?: Img | undefined
 }>()
 
 // 半 setup 半 旧的 api是这样的...旧的emit定义类型太麻烦了...
@@ -495,8 +495,8 @@ function getUserById(id: number): IUser | undefined {
 <script lang="ts">
     export default defineComponent({
         name: 'MsgBody',
-        props: ['data', 'type', 'selected'],
         inject: ['viewer'],
+        props: ['data', 'type', 'selected'],
         data() {
             return {
                 backend,
@@ -648,27 +648,9 @@ function getUserById(id: number): IUser | undefined {
              * 图片点击
              * @param msgId 消息 ID
              */
-            imgClick(msgId: string) {
-                const images = runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list
-                if (images !== undefined) {
-                    // 寻找实际的序号
-                    let num = -1
-                    for (let i = 0; i < images.length; i++) {
-                        const item = images[i]
-                        if (item.message_id == msgId) {
-                            num = i
-                            break
-                        }
-                    }
-                    // 显示
-                    const viewer = app.config.globalProperties.$viewer
-                    if (num >= 0 && viewer) {
-                        viewer.view(num)
-                        viewer.show()
-                        runtimeData.tags.viewer.index = num
-                    } else {
-                        new PopInfo().add(PopType.INFO, this.$t('定位图片失败'))
-                    }
+            imgClick(url: string) {
+                if (this.viewer && this.imageListHeader) {
+                    (this.viewer as any).openBySrc(this.imageListHeader, url)
                 }
             },
 
@@ -677,7 +659,7 @@ function getUserById(id: number): IUser | undefined {
              */
             preImgClick(img: string) {
                 if (this.viewer) {
-                    ;(this.viewer as any).open(new Img(img))
+                    (this.viewer as any).open(new Img(img))
                 }
             },
 

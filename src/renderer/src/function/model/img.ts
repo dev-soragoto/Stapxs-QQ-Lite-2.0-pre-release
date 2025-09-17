@@ -21,6 +21,20 @@ export class Img {
         return backend.proxyUrl(this._src)
     }
 
+
+    /**
+     * 根据 src 获取图片节点
+     *
+     * ** 此方法在大量图片时，性能较差，请谨慎使用 **
+     * @param src 图片地址
+     * @returns 图片节点
+     */
+    getBySrc(src: string): Img | undefined {
+        if (this._src === src) return this
+        if (this.next) return this.next.getBySrc(src)
+        return undefined
+    }
+
     /**
      * 删除图片
      */
@@ -102,5 +116,35 @@ export class Img {
 
     set next(img: Img | undefined) {
         this._next.value = img
+    }
+
+    /**
+     * 将链表内容转换为数组
+     * @returns 图片地址数组
+     */
+    toArray(): string[] {
+        const result: string[] = []
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let cur: Img | undefined = this
+        while (cur) {
+            result.push(cur._src)
+            cur = cur.next
+        }
+        return result
+    }
+
+    /**
+     * 从 srcList 构建链表
+     */
+    static fromList(srcList: string[]): Img | undefined {
+        if (srcList.length === 0) return undefined
+        const head = new Img(srcList[0])
+        let cur = head
+        for (let i = 1; i < srcList.length; i++) {
+            const node = new Img(srcList[i])
+            cur.insertNext(node)
+            cur = node
+        }
+        return head
     }
 }

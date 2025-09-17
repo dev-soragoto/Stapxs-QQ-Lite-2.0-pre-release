@@ -11,11 +11,11 @@
 
 <template>
     <div id="chat-pan"
+        v-move="chatMoveOptions"
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
-        v-move="chatMoveOptions"
         @v-move-right.prevent="exitWin()">
         <!-- 聊天基本信息 -->
         <div class="info">
@@ -97,6 +97,7 @@
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
                         :user-info-pan="userInfoPanFunc"
+                        :image-list-header="chatImg"
                         @click="msgClick($event, msgIndex)"
                         @show-menu="showMsgMeun"
                         @scroll-to-msg="scrollToMsg"
@@ -575,6 +576,7 @@ import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfo
 import { backend } from '@renderer/runtime/backend'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
+import { Img } from '@renderer/function/model/img'
 
 type IUser = any
 
@@ -726,14 +728,10 @@ const userInfoPanFunc: UserInfoPan = {
                 selectCache: '',
                 replyMsgInfo: null,
                 atFindList: null as GroupMemberInfoElem[] | null,
-                getImgList: [] as {
-                    index: number
-                    message_id: string
-                    img_url: string
-                }[],
                 isShowTime,
                 isDeleteMsg,
                 chatMoveOptions,
+                chatImg: undefined as any,
             }
         },
         watch: {
@@ -758,16 +756,6 @@ const userInfoPanFunc: UserInfoPan = {
                 () => this.chat.info.jin_info.list.length,
                 () => {
                     this.tags.isJinLoading = false
-                },
-            )
-            // 为 viewer 绑定关闭事件
-            const viewer = app.config.globalProperties.$viewer
-            this.$watch(
-                () => viewer.hiding,
-                (newVall) => {
-                    if (newVall) {
-                        runtimeData.chatInfo.info.image_list = this.getImgList
-                    }
                 },
             )
             // Capacitor：系统返回操作（Android）
@@ -2071,9 +2059,7 @@ const userInfoPanFunc: UserInfoPan = {
                         }
                         // 刷新图片列表
                         // TODO: 需要优化性能
-                        let initMainList = false
-                        if (this.getImgList.length == 0) initMainList = true
-                        this.getImgList = []
+                        const getImgList = [] as string[]
                         this.list.forEach((item: any) => {
                             if (item.message !== undefined) {
                                 item.message.forEach((msg: MsgItemElem) => {
@@ -2081,21 +2067,12 @@ const userInfoPanFunc: UserInfoPan = {
                                         msg.type === 'image' &&
                                         msg.file != 'marketface'
                                     ) {
-                                        const info = {
-                                            index: item.message_id,
-                                            message_id: item.message_id,
-                                            img_url: backend.proxyUrl(msg.url)
-                                        }
-                                        this.getImgList.push(info)
+                                        getImgList.push(msg.url)
                                     }
                                 })
                             }
                         })
-                        const viewer = app.config.globalProperties.$viewer
-                        if (!viewer.isShown || initMainList) {
-                            runtimeData.chatInfo.info.image_list =
-                                this.getImgList
-                        }
+                        this.chatImg = Img.fromList(getImgList)
                         // 处理跳入跳转预设
                         // 如果 jump 参数不是 undefined，则意味着这次加载历史记录的同时需要跳转到指定的消息
                         if (

@@ -106,7 +106,6 @@
                     <div :key="currentImg?.src">
                         <div v-if="loading" class="viewer loading cursor-exit">
                             <font-awesome-icon :icon="['fas', 'spinner']" />
-                            {{ $t('加载ing') }}
                         </div>
                         <div v-else
                             :class="{
@@ -141,6 +140,7 @@
                                     '--width': currentImgInfo?.width + 'px',
                                     '--height': currentImgInfo?.height + 'px',
                                 }"
+                                alt=""
                                 @wheel="onWheel"
                                 @click.stop.prevent="onClick"
                                 @mousedown="onMouseDown"
@@ -149,8 +149,7 @@
                                 @touchstart="onImgTouchStart"
                                 @touchmove="onImgTouchMove"
                                 @touchend="onImgTouchEnd"
-                                @mouseleave="mouseMoveInfo=undefined"
-								alt="">
+                                @mouseleave="mouseMoveInfo=undefined">
                             <canvas v-show="edit" ref="canvas"
                                 :class="getImgCursorClassByTool()"
                                 :style="{
@@ -283,6 +282,17 @@ const $t = i18n.global.t
 
 function open(img: Img) {
     currentImg.value = toRaw(img)
+    init()
+}
+
+function openBySrc(img: Img, src: string) {
+    currentImg.value = toRaw(img)
+    const target = currentImg.value.getBySrc(src)
+    if (!target) {
+        new PopInfo().add(PopType.ERR, $t('定位图片失败'))
+        return
+    }
+    currentImg.value = toRaw(target)
     init()
 }
 
@@ -1150,5 +1160,6 @@ function mouseMoveCheck() {
 
 defineExpose({
     open,
+    openBySrc,
 })
 </script>

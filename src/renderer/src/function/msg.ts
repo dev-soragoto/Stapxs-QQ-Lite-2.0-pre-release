@@ -772,7 +772,7 @@ const msgFunctions = {
         // 组装img信息
         let lastImg: Img | undefined
         for (const notice of list) {
-            if (!notice.img_id) continue
+            if (!notice.img_id || notice.img_id.length == 0) continue
             const img = markRaw(new Img(
                 `https://p.qlogo.cn/gdynamic/${notice.img_id}/0/`
             ))

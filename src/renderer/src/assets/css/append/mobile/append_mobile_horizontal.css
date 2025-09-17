@@ -69,9 +69,6 @@ html {
 }
 
 /* 聊天面板 */
-.viewer-footer > div {
-    margin-top: calc(var(--safe-area--viewer-top) + 15px);
-}
 .chat-pan > div.info > svg {
     display: none;
 }

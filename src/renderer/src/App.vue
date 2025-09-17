@@ -196,16 +196,6 @@
         </Transition>
         <!-- 全局搜索栏 -->
         <GlobalSessionSearchBar />
-        <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
-            :options="viewerOpt"
-            :images="runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list"
-            @inited="viewerInited"
-            @hide="viewerHide"
-            @show="viewerShow">
-            <template #default="scope">
-                <img v-for="info in scope.images" :key="'imgView-' + info.index" :src="info.img_url">
-            </template>
-        </viewer>
         <NtViewer ref="nt-viewer" />
         <div id="mobile-css" />
     </div>
@@ -235,10 +225,10 @@ import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
-import NtViewer from './components/Viewer.vue'
+import NtViewer from './components/ViewerCom.vue'
 
 // 注册组件实例
-const ntViewer = useTemplateRef<InstanceType<typeof Viewer>>('nt-viewer')
+const ntViewer = useTemplateRef<InstanceType<typeof NtViewer>>('nt-viewer')
 provide('viewer', ntViewer)
 </script>
 
@@ -263,20 +253,6 @@ export default defineComponent({
                 savePassword: false,
                 quickLoginSelect: ''
             },
-            viewerOpt: {
-                inline: false,
-                button: false,
-                title: false,
-                navbar: false,
-                toolbar: {
-                    prev: true,
-                    rotateLeft: true,
-                    reset: true,
-                    rotateRight: true,
-                    next: true,
-                },
-            },
-            viewerBody: undefined as HTMLDivElement | undefined,
             fps: {
                 last: Date.now(),
                 ticks: 0,
@@ -298,8 +274,6 @@ export default defineComponent({
                 // eslint-disable-next-line
                 console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
             }
-            // 初始化全局参数
-            app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(
                 document.getElementById('login-wave'),
@@ -646,24 +620,6 @@ export default defineComponent({
 
             // 清理通知
             backend.call(undefined, 'sys:closeAllNotice', false, String(data.id))
-        },
-
-        /**
-         * 图片查看器初始化
-         * @param viewer viewer 对象
-         */
-        viewerInited(viewer: HTMLDivElement) {
-            this.viewerBody = viewer
-        },
-
-        /**
-         * 图片查看器事件
-         */
-        viewerHide() {
-            runtimeData.tags.viewer.show = false
-        },
-        viewerShow() {
-            runtimeData.tags.viewer.show = true
         },
 
         /**

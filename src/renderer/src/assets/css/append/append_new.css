@@ -4,9 +4,6 @@ html,
 body {
     background: none;
 }
-.viewer {
-    margin-top: 10px;
-}
 .ss-button {
     height: 35px;
     font-size: 0.8rem;
