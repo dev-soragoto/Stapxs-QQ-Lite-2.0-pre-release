@@ -127,6 +127,14 @@
 .message-body.me > div {
     background: var(--color-main);
 }
+.message-body.super-face > div {
+    background: transparent;
+}
+.message-body.super-face > div > div {
+    padding: 20px 10px;
+    border: 0;
+}
+
 .message-space {
     flex: 1;
 }

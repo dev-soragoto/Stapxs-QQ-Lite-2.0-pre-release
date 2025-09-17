@@ -25,7 +25,7 @@
             v-menu.prevent="event => $emit('showMenu', event, data)"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
-
+            :alt="data.sender.card ? data.sender.card : data.sender.nickname"
             @mouseenter="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
             @mousemove="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
             @mouseleave="userInfoHoverEnd($event)"
@@ -36,7 +36,7 @@
             :class="'sending left' + (isMe ? ' me' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
-        <div :class="isMe ? type == 'merge' ? 'message-body' : 'message-body me' : 'message-body'">
+        <div :class="msgBodyClass">
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
                 <span v-if="senderInfo && isRobot(senderInfo.user_id)" class="robot">{{ $t('机器人') }}</span>
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
@@ -62,10 +62,9 @@
             </a>
             <div
                 v-menu.prevent="event => $emit('showMenu', event, data)"
-                @touchstart.stop="msgMoveStart($event)"
-                @touchend.stop="msgMoveEnd($event)"
-                @touchmove.stop="msgKeepMove($event)"
-                @wheel.stop="msgMoveWheel($event)">
+                v-move="moveOptions"
+                @v-move-left.prevent="$emit('leftMove', data)"
+                @v-move-right.prevent="$emit('rightMove', data)">
                 <!-- 消息体 -->
                 <template v-if="data.message.length === 0">
                     <span class="msg-text" style="opacity: 0.5">{{ $t('空消息') }}</span>
@@ -85,7 +84,6 @@
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                         <template v-else-if="item.type == 'text'">
                             <div v-if="hasMarkdown()" class="msg-md-title" />
-                            <!-- {{ item.text }} -->
                             <span v-else v-show="item.text !== ''"
                                 class="msg-text" @click="textClick" v-html="textIndex[index]" />
                         </template>
@@ -111,7 +109,7 @@
                             :src="backend.proxyUrl(item.url)"
                             @load="imageLoaded"
                             @error="imgLoadFail"
-                            @click="imgClick(data.message_id)">
+                            @click="imgClick(item.url)">
                         <template v-else-if="item.type == 'face'">
                             <EmojiFace :emoji="Emoji.get(Number(item.id))" class="msg-face" />
                         </template>
@@ -271,7 +269,8 @@
                                 title="查看图片"
                                 :src="pageViewInfo.img"
                                 @load="linkViewPicFin"
-                                @error="linkViewPicErr">
+                                @error="linkViewPicErr"
+                                @click="preImgClick(pageViewInfo.img)">
                             <div class="body">
                                 <p v-show="pageViewInfo.site">
                                     {{ pageViewInfo.site }}
@@ -366,14 +365,13 @@
 <script setup lang="ts">
 import Option from '@renderer/function/option'
 import CardMessage from './msg-component/CardMessage.vue'
-import app from '@renderer/main'
 import markdownit from 'markdown-it'
 
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-import { defineComponent } from 'vue'
+import { defineComponent, useTemplateRef } from 'vue'
 import { Connector } from '@renderer/function/connect'
 import { getMessageList, runtimeData } from '@renderer/function/msg'
-import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
+import { Logger, LogType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
 import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
 import {
@@ -381,6 +379,9 @@ import {
     openLink,
     sendStatEvent,
     useStayEvent,
+	vMenu,
+	vMove,
+	VMoveOptions,
 } from '@renderer/function/utils/appUtil'
 import {
     getSizeFromBytes,
@@ -388,13 +389,12 @@ import {
     getViewTime } from '@renderer/function/utils/systemUtil'
 import { linkView } from '@renderer/function/utils/linkViewUtil'
 import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
-import { vMenu } from '@renderer/function/utils/appUtil'
-import { wheelMask } from '@renderer/function/input'
 import { backend } from '@renderer/runtime/backend'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import { Vue3Lottie as Lottie } from 'vue3-lottie'
 import { UserInfoPan } from './UserInfoPan.vue'
+import { Img } from '@renderer/function/model/img'
 
 type Msg = any
 type IUser = any
@@ -409,6 +409,7 @@ const {
     selected?: boolean
     type?: string
     userInfoPan?: UserInfoPan
+    imageListHeader?: Img | undefined
 }>()
 
 // 半 setup 半 旧的 api是这样的...旧的emit定义类型太麻烦了...
@@ -421,6 +422,37 @@ const emit = defineEmits<{
     rightMove: [msg: Msg]
     showMenu: [event: MenuEventData, msg: Msg]
 }>()
+
+const msgMain = useTemplateRef<HTMLDivElement>('msgMain')
+
+const moveOptions: VMoveOptions<HTMLDivElement> = {
+    moveHook: (_, move: number) => {
+        const target = msgMain.value!
+        target.style.transform = 'translateX(' + move + 'px)'
+    },
+    endHook: (_) => {
+        const target = msgMain.value!
+
+        target.style.transform = ''
+        target.style.transition = 'all 0.3'
+    },
+    leftLimit: {
+        value: runtimeData.inch * 0.75,
+        type: 'px'
+    },
+    rightLimit: {
+        value: runtimeData.inch * 0.75,
+        type: 'px'
+    },
+    moveCondition: {
+        minMove: {
+            value: runtimeData.inch * 0.5,
+            type: 'px'
+        }
+    }
+}
+
+//#endregion
 
 //#region == 长按/覆盖监视器 =========================================================
 const {
@@ -464,12 +496,14 @@ function getUserById(id: number): IUser | undefined {
 <script lang="ts">
     export default defineComponent({
         name: 'MsgBody',
+        inject: ['viewer'],
         props: ['data', 'type', 'selected'],
         data() {
             return {
                 backend,
                 md: markdownit({ breaks: true }),
                 isMe: false,
+                msgBodyClass: 'message-body',
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
                 View: ViewFuns,
@@ -516,6 +550,23 @@ function getUserById(id: number): IUser | undefined {
                 if(item.type == 'text') {
                     this.parseText(i)
                 }
+            }
+            // 初始化解析合并转发消息
+            if (this.data.message[0].type === 'forward'){
+                Connector.callApi('forward_msg', {id: this.data.message[0].id})
+                .then(data => {
+                    data = getMessageList(data)
+                    // PS：这个写法其实不合规，但是影响不大就这样罢
+                    // eslint-disable-next-line vue/no-mutating-props
+                    this.data.message[0].content = data
+                })
+            }
+            // 初始化消息状态（msgBody class）
+            if(this.isMe && this.type != 'merge') {
+                this.msgBodyClass += ' me'
+            }
+            if(this.isSuperFaceMsg()) {
+                this.msgBodyClass += ' super-face'
             }
         },
         methods: {
@@ -598,27 +649,18 @@ function getUserById(id: number): IUser | undefined {
              * 图片点击
              * @param msgId 消息 ID
              */
-            imgClick(msgId: string) {
-                const images = runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list
-                if (images !== undefined) {
-                    // 寻找实际的序号
-                    let num = -1
-                    for (let i = 0; i < images.length; i++) {
-                        const item = images[i]
-                        if (item.message_id == msgId) {
-                            num = i
-                            break
-                        }
-                    }
-                    // 显示
-                    const viewer = app.config.globalProperties.$viewer
-                    if (num >= 0 && viewer) {
-                        viewer.view(num)
-                        viewer.show()
-                        runtimeData.tags.viewer.index = num
-                    } else {
-                        new PopInfo().add(PopType.INFO, this.$t('定位图片失败'))
-                    }
+            imgClick(url: string) {
+                if (this.viewer && this.imageListHeader) {
+                    (this.viewer as any).openBySrc(this.imageListHeader, url)
+                }
+            },
+
+            /**
+             * 预览图片点击
+             */
+            preImgClick(img: string) {
+                if (this.viewer) {
+                    (this.viewer as any).open(new Img(img))
                 }
             },
 
@@ -1186,136 +1228,6 @@ function getUserById(id: number): IUser | undefined {
                 else if (item.subType == 7) return true
                 else if (item.sub_type == 7) return true
                 return false
-            },
-
-            //#region ==互动相关================================
-            // 滚轮滑动
-            msgMoveWheel(event: WheelEvent) {
-                const process = (event: WheelEvent) => {
-                    // 正在触屏,不处理
-                    if (this.msgMove.onScroll === 'touch') return false
-                    const x = event.deltaX
-                    const y = event.deltaY
-                    const absX = Math.abs(x)
-                    const absY = Math.abs(y)
-                    // 斜度过大
-                    if (absY !== 0 && absX / absY < 2) return false
-                    this.dispenseMove('wheel', -x / 3)
-                    return true
-                }
-                if (!process(event)) return
-                event.preventDefault()
-                // 创建遮罩
-                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
-                // 所以要创建一个不会动的全局遮罩来处理
-                wheelMask(process,()=>{
-                    this.dispenseMove('wheel', 0, true)
-                })
-            },
-
-            // 触屏开始
-            msgMoveStart(event: TouchEvent) {
-                if (this.msgMove.onScroll === 'wheel') return
-                // 触屏开始时，记录触摸点
-                this.msgMove.touchLast = event
-            },
-
-            // 触屏滑动
-            msgKeepMove(event: TouchEvent) {
-                if (this.msgMove.onScroll === 'wheel') return
-                if (!this.msgMove.touchLast) return
-                const touch = event.changedTouches[0]
-                const lastTouch = this.msgMove.touchLast.changedTouches[0]
-                const deltaX = touch.clientX - lastTouch.clientX
-                const deltaY = touch.clientY - lastTouch.clientY
-                const absX = Math.abs(deltaX)
-                const absY = Math.abs(deltaY)
-                // 斜度过大
-                if (absY !== 0 && absX / absY < 2) return
-                // 触屏移动
-                this.msgMove.touchLast = event
-                this.dispenseMove('touch', deltaX)
-            },
-
-            // 触屏滑动结束
-            msgMoveEnd(event: TouchEvent) {
-                if (this.msgMove.onScroll === 'wheel') return
-                const touch = event.changedTouches[0]
-                const lastTouch = this.msgMove.touchLast?.changedTouches[0]
-                if (lastTouch) {
-                    const deltaX = touch.clientX - lastTouch.clientX
-                    const deltaY = touch.clientY - lastTouch.clientY
-                    const absX = Math.abs(deltaX)
-                    const absY = Math.abs(deltaY)
-                    // 斜度过大
-                    if (absY === 0 || absX / absY > 2) {
-                        this.dispenseMove('touch', deltaX)
-                    }
-                }
-                this.dispenseMove('touch', 0, true)
-                this.msgMove.touchLast = null
-            },
-            /**
-             * 分发触屏/滚轮情况
-             */
-            dispenseMove(type: 'touch' | 'wheel', value: number, end: boolean = false) {
-                if (
-                    !end &&
-                    this.msgMove.onScroll === 'none'
-                ) this.startMove(type, value)
-                if (this.msgMove.onScroll === 'none') return
-                if (end) this.endMove()
-                else this.keepMove(value)
-            },
-            /**
-             * 开始窗口移动
-             */
-            startMove(type: 'touch' | 'wheel', value: number) {
-                new Logger().add(LogType.UI, '开始窗口移动: ' + type + '')
-                this.msgMove.onScroll = type
-                this.msgMove.move = value
-            },
-            /**
-             * 保持窗口移动
-             */
-            keepMove(value: number){
-                this.msgMove.move += value
-                const limit = runtimeData.inch * 0.75
-                if (this.msgMove.move < -limit) this.msgMove.move = -limit
-                else if (this.msgMove.move > runtimeData.inch * 0.75) this.msgMove.move = limit
-                const move = this.msgMove.move
-                const target = this.$refs.msgMain as HTMLDivElement
-                target.style.transform = 'translateX(' + move + 'px)'
-            },
-            /**
-             * 结束窗口移动
-             */
-            endMove() {
-                new Logger().add(LogType.UI, '结束窗口移动: ' + this.msgMove.onScroll)
-                // 保留自己要的数据
-                const move = this.msgMove.move
-                // 重置数据
-                this.msgMove.onScroll = 'none'
-                this.msgMove.move = 0
-
-                const target = this.$refs.msgMain as HTMLDivElement
-
-                target.style.transform = ''
-                target.style.transition = 'all 0.3'
-
-                // 移动距离大小判定
-                const inch = runtimeData.inch
-                // 如果移动距离大于0.5英尺,触发
-                if (move < -0.5 * inch){
-                    new Logger().add(LogType.UI, '左滑触发')
-                    // eslint-disable-next-line vue/require-explicit-emits
-                    this.$emit('leftMove', this.data)
-                }
-                else if (move > 0.5 * inch){
-                    new Logger().add(LogType.UI, '右滑触发')
-                    // eslint-disable-next-line vue/require-explicit-emits
-                    this.$emit('rightMove', this.data)
-                }
             },
             //#endregion
         },
