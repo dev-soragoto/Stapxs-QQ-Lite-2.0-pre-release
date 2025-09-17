@@ -5,22 +5,25 @@
  * @Version: 1.0
  */
 
+import index from '@renderer/assets/img/qq-face/public/assets/qq_emoji/_index.json'
+import app from '@renderer/main'
 import { Logger } from '../base'
 
 export default class Emoji {
-    static apngMap = new Map<number, {normal: string, super: string}>()
+    static readonly apngMap = new Map<number, {normal: string, super: string}>()
+    static readonly descMap = new Map<string, string>()
     /**
      * 全部表情id列表
      */
-    static allList: Set<number> = new Set<number>()
+    static readonly allList: Set<number> = new Set<number>()
     /**
      * 全部超级表情id列表
      */
-    static allSuperList: Set<number> = new Set<number>()
+    static readonly allSuperList: Set<number> = new Set<number>()
     /**
      * 超级表情列表
      */
-    static superList: readonly number[] = [
+    static readonly superList: readonly number[] = [
         5, 311, 312, 314, 317, 318, 319, 320, 324, 325, 337,
         338, 339, 341, 342, 343, 344, 345, 346, 181, 74, 75,
         351, 349, 350, 395, 114, 326, 53, 137, 333, 424, 415,
@@ -29,7 +32,7 @@ export default class Emoji {
     /**
      * 小黄脸表情列表
      */
-    static normalList: readonly number[] = [
+    static readonly normalList: readonly number[] = [
         14, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 0, 15, 16,
         96, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
         31, 32, 33, 34, 35, 36, 37, 38, 39, 97, 98, 99, 100,
@@ -47,7 +50,7 @@ export default class Emoji {
     /**
      * emoji表情列表
      */
-    static emojiList: readonly number[] = [
+    static readonly emojiList: readonly number[] = [
         128522, 128524, 128538, 128531, 128560, 128541, 128513,
         128540, 9786, 128525,128532, 128516, 128527, 128530,
         128563, 128536, 128557, 128561, 128514, 128170,128074,
@@ -62,7 +65,7 @@ export default class Emoji {
     /**
      * 回复表情 apng 列表
      */
-    static responseApngId: readonly number[] = [
+    static readonly responseApngId: readonly number[] = [
         5, 314, 318, 319, 320, 324, 337, 338, 339, 341, 342, 343, 344,
         345, 346, 181, 74, 75, 351, 349, 350, 395, 326, 53, 333, 424,
         425, 427, 426, 14, 4, 8, 9, 10, 12, 16, 96, 21, 23, 24, 25, 26,
@@ -77,7 +80,7 @@ export default class Emoji {
     /**
      * 回复表情 emoji 列表
      */
-    static responseEmojiId: readonly number[] = [
+    static readonly responseEmojiId: readonly number[] = [
         128522, 128524, 128538, 128531, 128560, 128541, 128513, 128540,
         9786, 128532, 128516, 128527, 128530, 128563, 128536, 128557,
         128514, 128170, 128074, 128077, 128079, 128076, 127836, 127847,
@@ -87,6 +90,7 @@ export default class Emoji {
         128147
     ]
     private constructor(
+        public id: number,
         public value: string,
         public type: 'apng' | 'emoji',
         public superValue?: string
@@ -100,10 +104,10 @@ export default class Emoji {
     static get(id: number): Emoji | undefined {
         if (id < 5000) {
             const value = this.apngMap.get(id)
-            if (value) return new Emoji(value.normal, 'apng', value.super)
+            if (value) return new Emoji(id, value.normal, 'apng', value.super)
             else return undefined
         }else {
-            return new Emoji(String.fromCodePoint(id), 'emoji')
+            return new Emoji(id, String.fromCodePoint(id), 'emoji')
         }
     }
 
@@ -120,33 +124,31 @@ export default class Emoji {
     }
 
     static init() {
-        const pathList = import.meta.glob(
-            '/public/img/qqface/*/apng/*.png',
-            { eager: true, query: '?url', import: 'default' }
-        )
-        const superList = import.meta.glob(
-            '/public/img/qqface/*/lottie/*.json',
-            { eager: true, query: '?url', import: 'default' }
-        )
-        // 匹配普通表情
-        for(const path in pathList) {
-            const match = path.match(/\/(\d+)\.(png)$/)
-            if (match) {
-                const id = parseInt(match[1])
-                this.apngMap.set(id, { normal: `./img/qqface/${id}/apng/${id}.png`, super: '' })
-                this.allList.add(id)
+        // 数据收集
+        for (const item of index) {
+            // 描述注册
+            this.descMap.set(
+                item.emojiId,
+                item.describe.replace('/', '')
+            )
+
+            // 检查表情
+            let hasApng = false
+            let hasSuper = false
+            for (const asset of item.assets) {
+                if (asset.type === 2) hasApng = true
+                else if (asset.type === 3) hasSuper = true
             }
-        }
-        // 匹配超级表情
-        for(const path in superList) {
-            const match = path.match(/\/(\d+)\.(json)$/)
-            if (match) {
-                const id = parseInt(match[1])
-                const emojiData = this.apngMap.get(id)
-                if (!emojiData) continue
-                emojiData.super = `./img/qqface/${id}/lottie/${id}.json`
-                this.allSuperList.add(id)
-            }
+            if (!hasApng) continue
+
+            const id = Number(item.emojiId)
+
+
+            this.apngMap.set(id, {
+                normal: `./img/qqface/${id}/apng/${id}.png`,
+                super: hasSuper ? `./img/qqface/${id}/lottie/${id}.json` : ''
+            })
+            this.allList.add(id)
         }
 
         // 验证表情全面性
@@ -170,6 +172,14 @@ export default class Emoji {
      */
     static get responseId(): readonly number[] {
         return [...this.responseApngId, ...this.responseEmojiId]
+    }
+
+    /**
+     * 表情描述
+     */
+    get description(): string {
+        const key = this.type === 'apng' ? this.id.toString() : this.value
+        return Emoji.descMap.get(key) || app.config.globalProperties.$t('表情')
     }
 }
 
