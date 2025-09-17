@@ -25,9 +25,13 @@
                 style="margin-right: auto;margin-bottom: auto;"
                 @click="textClick"
                 v-html="parseText(data.content[0])" />
-            <img v-if="data.img_id != ''"
-                :src="`https://p.qlogo.cn/gdynamic/${data.img_id}/0/`"
-                :class="'img' + (!showAll ? '' : ' all')">
+            <img v-if="data.img"
+                :src="data.img.src"
+                :class="{
+                    img: true,
+                    all: showAll,
+                }"
+                @click.stop="imgClick(data.img)">
         </div>
         <span v-show="needShow && !showAll">{{ $t('点击展开') }}</span>
         <div class="info">
@@ -54,11 +58,13 @@
     import { runtimeData } from '@renderer/function/msg'
     import { openLink } from '@renderer/function/utils/appUtil'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
-import app from '@renderer/main'
+    import app from '@renderer/main'
+    import { Img } from '@renderer/function/model/img'
 
     export default defineComponent({
         name: 'BulletinBody',
         props: ['data', 'index'],
+        inject: ['viewer'],
         data() {
             return {
                 trueLang: getTrueLang(),
@@ -111,6 +117,15 @@ import app from '@renderer/main'
                     return Number(item.user_id) === Number(this.data.sender)
                 }).at(0)?.nickname
                 return result ?? $t('已退群( {userId} )', { userId: Number(this.data.sender) })
+            },
+            /**
+             * 图片点击
+             * @param img
+             */
+            imgClick(img: Img) {
+                if (this.viewer) {
+                    (this.viewer as any).open(img)
+                }
             },
         },
     })

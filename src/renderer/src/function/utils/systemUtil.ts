@@ -1,8 +1,8 @@
-import app from '@renderer/main'
+import app, { i18n } from '@renderer/main'
 
 import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
-import { Logger } from '../base';
+import { Logger, PopInfo, PopType } from '../base';
 import { backend } from '@renderer/runtime/backend';
 
 /**
@@ -422,4 +422,25 @@ export async function getApi(url: string) {
             return null
         }
     }
+}
+
+/**
+ * 复制内容到剪贴板
+ * @param text
+ */
+export async function copyToClipboard(text: string)
+/**
+ * 复制内容到剪贴板
+ * @param content
+ */
+export async function copyToClipboard(content: ClipboardItem[])
+export async function copyToClipboard(content: ClipboardItem[] | string) {
+    if (window.navigator.clipboard === undefined) {
+        new PopInfo().add(PopType.ERR, i18n.global.t('当前环境不支持剪贴板操作'))
+        throw new Error('当前环境不支持剪贴板操作')
+    }
+    if (typeof content === 'string')
+        await window.navigator.clipboard.writeText(content)
+    else
+        await window.navigator.clipboard.write(content)
 }

@@ -60,7 +60,8 @@ async function createWindow() {
         icon: path.join(__dirname,'/public/img/icons/icon.png'),
         webPreferences: {
             preload: join(__dirname, '../preload/index.mjs'),
-            sandbox: false
+            sandbox: false,
+            webSecurity: false,
         },
         maximizable: false,
         fullscreen: false
