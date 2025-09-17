@@ -251,12 +251,11 @@
                         // 重置消息面板
                         // PS：这儿的作用是在运行时如果切换到了特殊面板，在点击联系人的时候可以切回来
                         getOpt('chatview_name').then((chatViewName) => {
-                            if(chatViewName) {
-                                if (runtimeData.sysConfig.chatview_name != '' &&
-                                        runtimeData.sysConfig.chatview_name != decodeURIComponent(chatViewName ?? '')) {
-                                    runtimeData.sysConfig.chatview_name = decodeURIComponent(chatViewName ?? '')
-                                    runOpt('chatview_name', decodeURIComponent(chatViewName ?? ''))
-                                }
+                            const getChatViewName = decodeURIComponent(chatViewName ?? '')
+                            if (runtimeData.sysConfig.chatview_name != '' &&
+                                    runtimeData.sysConfig.chatview_name != getChatViewName) {
+                                runtimeData.sysConfig.chatview_name = getChatViewName
+                                runOpt('chatview_name', getChatViewName)
                             }
                         })
                     }

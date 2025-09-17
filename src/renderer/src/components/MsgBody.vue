@@ -36,7 +36,7 @@
             :class="'sending left' + (isMe ? ' me' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
-        <div :class="isMe ? type == 'merge' ? 'message-body' : 'message-body me' : 'message-body'">
+        <div :class="msgBodyClass">
             <template v-if="runtimeData.chatInfo.show.type == 'group' && !isMe">
                 <span v-if="senderInfo && isRobot(senderInfo.user_id)" class="robot">{{ $t('机器人') }}</span>
                 <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
@@ -84,7 +84,6 @@
                         <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                         <template v-else-if="item.type == 'text'">
                             <div v-if="hasMarkdown()" class="msg-md-title" />
-                            <!-- {{ item.text }} -->
                             <span v-else v-show="item.text !== ''"
                                 class="msg-text" @click="textClick" v-html="textIndex[index]" />
                         </template>
@@ -503,6 +502,7 @@ function getUserById(id: number): IUser | undefined {
                 backend,
                 md: markdownit({ breaks: true }),
                 isMe: false,
+                msgBodyClass: 'message-body',
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
                 View: ViewFuns,
@@ -559,6 +559,13 @@ function getUserById(id: number): IUser | undefined {
                     // eslint-disable-next-line vue/no-mutating-props
                     this.data.message[0].content = data
                 })
+            }
+            // 初始化消息状态（msgBody class）
+            if(this.isMe && this.type != 'merge') {
+                this.msgBodyClass += ' me'
+            }
+            if(this.isSuperFaceMsg()) {
+                this.msgBodyClass += ' super-face'
             }
         },
         methods: {

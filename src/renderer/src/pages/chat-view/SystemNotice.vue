@@ -48,7 +48,26 @@
                     </div>
                 </div>
                 <div v-else-if="notice.request_type == 'group'">
-                    <div>
+                    <div v-if="notice.sub_type == 'add'">
+                        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + notice.user_id">
+                        <div>
+                            <span>{{ getName(notice.user_id) }}
+                                {{ $t('申请加入群聊') }}
+                                {{ getName(notice.group_id) }}</span>
+                            <a>{{
+                                Intl.DateTimeFormat(trueLang, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                }).format(new Date(notice.time * 1000))
+                            }}</a>
+                            <a>{{ $t('留言：') + notice.comment }}</a>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <!-- TODO：这情况会出现在 notice 里？记不太清了，先放着吧 😭 -->
                         <img :src="'https://p.qlogo.cn/gh/' + notice.group_id + '/' + notice.group_id + '/0'">
                         <div>
                             <span>{{ getName(notice.user_id) }}
@@ -155,9 +174,14 @@
             },
 
             getName(id: number) {
-                return runtimeData.userList.filter(
-                    (user) => user.user_id == id,
-                )[0].nickname
+                const knowUser = runtimeData.userList.filter(
+                    (item) => item.user_id == id || item.group_id == id,
+                )
+                if (knowUser.length > 0) {
+                    return knowUser[0].nickname || knowUser[0].group_name
+                } else {
+                    return null
+                }
             },
         },
     })
