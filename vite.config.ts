@@ -33,7 +33,7 @@ export default defineConfig({
         viteStaticCopy({
             targets: [
                 {
-                src: 'src/assets/img/qq-face/public/assets/qq_emoji/resfile/emoji/**/*',
+                src: 'src/assets/img/qq-face/public/assets/qq_emoji/**/*',
                 dest: 'img/qqface',
                 },
             ],
