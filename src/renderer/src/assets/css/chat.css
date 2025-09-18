@@ -71,6 +71,7 @@ input {
     border: 2px solid var(--color-card-2);
     border-radius: 7px;
     margin-right: 10px;
+    object-fit: cover;
     height: 50px;
     width: 50px;
 }
@@ -1695,6 +1696,7 @@ div.tiny-session-body > img {
     margin-right: 10px;
     height: 2.5rem;
     width: 2.5rem;
+    object-fit: cover;
 }
 div.tiny-session-body > svg {
     border-radius: 7px;
