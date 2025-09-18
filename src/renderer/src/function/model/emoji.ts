@@ -8,9 +8,10 @@
 import index from '@renderer/assets/img/qq-face/public/assets/qq_emoji/_index.json'
 import app from '@renderer/main'
 import { Logger } from '../base'
+import { randomChoice } from '../utils/systemUtil'
 
 export default class Emoji {
-    static readonly apngMap = new Map<number, {normal: string, super: string}>()
+    static readonly apngMap = new Map<number, {super: boolean, suffix: number[]}>()
     static readonly descMap = new Map<string, string>()
     /**
      * 全部表情id列表
@@ -89,12 +90,16 @@ export default class Emoji {
         128103, 128102, 128053, 128046, 128027, 128051, 9728, 10068,
         128147
     ]
+    private readonly suffixId?: number
     private constructor(
         public id: number,
-        public value: string,
         public type: 'apng' | 'emoji',
-        public superValue?: string
-    ) {}
+        public hasSuper: boolean,
+        public superSuffix: number[],
+    ) {
+        if (superSuffix.length > 0)
+            this.suffixId = randomChoice(...superSuffix)
+    }
 
     /**
      * 根据 id 获取一个表情
@@ -104,10 +109,10 @@ export default class Emoji {
     static get(id: number): Emoji | undefined {
         if (id < 5000) {
             const value = this.apngMap.get(id)
-            if (value) return new Emoji(id, value.normal, 'apng', value.super)
+            if (value) return new Emoji(id, 'apng', value.super, value.suffix)
             else return undefined
         }else {
-            return new Emoji(id, String.fromCodePoint(id), 'emoji')
+            return new Emoji(id, 'emoji', false, [])
         }
     }
 
@@ -135,19 +140,24 @@ export default class Emoji {
             // 检查表情
             let hasApng = false
             let hasSuper = false
+            const suffixes: number[] = []
             for (const asset of item.assets) {
                 if (asset.type === 2) hasApng = true
-                else if (asset.type === 3) hasSuper = true
+                else if (asset.type === 3) {
+                    hasSuper = true
+                    if (asset.name.startsWith(`${item.emojiId}_`)) {
+                        const suffix = Number(asset.name.split('_')[1].split('.')[0])
+                        if (!isNaN(suffix)) suffixes.push(suffix)
+                    }
+                }
             }
             if (!hasApng) continue
 
             const id = Number(item.emojiId)
 
 
-            this.apngMap.set(id, {
-                normal: `./img/qqface/${id}/apng/${id}.png`,
-                super: hasSuper ? `./img/qqface/${id}/lottie/${id}.json` : ''
-            })
+            this.apngMap.set(id, {super: hasSuper, suffix: suffixes})
+            if (hasSuper) this.allSuperList.add(id)
             this.allList.add(id)
         }
 
@@ -180,6 +190,19 @@ export default class Emoji {
     get description(): string {
         const key = this.type === 'apng' ? this.id.toString() : this.value
         return Emoji.descMap.get(key) || app.config.globalProperties.$t('表情')
+    }
+
+    get value(): string {
+        if (this.type === 'apng')
+            return `./img/qqface/${this.id}/apng/${this.id}.png`
+        else
+            return String.fromCodePoint(this.id)
+    }
+
+    get superValue(): string | undefined {
+        if (!this.hasSuper) return undefined
+        if (this.superSuffix.length === 0) return `./img/qqface/${this.id}/lottie/${this.id}.json`
+        return `./img/qqface/${this.id}/lottie/${this.id}_${this.suffixId}.json`
     }
 }
 
