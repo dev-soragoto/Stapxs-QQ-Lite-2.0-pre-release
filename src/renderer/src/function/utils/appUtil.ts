@@ -721,7 +721,7 @@ function setQuickLogin(address: string, port: number) {
 export function checkUpdate() {
     // 获取最新的 release 信息
     const packageUrl =
-        'https://api.github.com/repos/stapxs/Stapxs-QQ-Lite-2.0/releases/latest'
+        'https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest'
     fetch(packageUrl).then((response) => {
         if (response.ok) {
             response.json().then((data) => {
