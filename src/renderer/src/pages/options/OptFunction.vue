@@ -240,6 +240,17 @@
                     $t('我们使用 Umami 对应用的使用情况进行分析，它将不会上传精确到用户的信息；你也可以在这儿控制分析功能的开关和额外分析项。')
                 }}
             </div>
+            <div v-if="runtimeData.sysConfig.close_ga !== true" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'file-invoice']" />
+                <div>
+                    <span>{{ $t('分析统计信息') }}</span>
+                    <span>{{ $t('都有些什么数据呢') }}</span>
+                </div>
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click=" showUmamiInfo">
+                    {{ $t('查看') }}
+                </button>
+            </div>
             <div v-if="runtimeData.sysConfig.close_ga !== true"
                 class="opt-item">
                 <div :class="checkDefault('open_ga_bot')" />
@@ -261,9 +272,11 @@
 </template>
 
 <script lang="ts">
-    import { defineComponent } from 'vue'
+    import { defineComponent, markRaw } from 'vue'
     import { runASWEvent as save, checkDefault } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
+
+    import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
 
     export default defineComponent({
         name: 'ViewOptFunction',
@@ -277,6 +290,15 @@
             }
         },
         methods: {
+            showUmamiInfo() {
+                const popInfo = {
+                    title: '',
+                    template: markRaw(UmamiInfoPan),
+                    full: true
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+
             msgND: function () {
                 this.ndt++
                 setTimeout(() => {
