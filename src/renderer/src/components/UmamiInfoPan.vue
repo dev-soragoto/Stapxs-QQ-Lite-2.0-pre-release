@@ -23,7 +23,7 @@
                     :key="index"
                     :class="{'select': mainListSelected === item.value}"
                     @click="getData(item.value)">
-                    <span>{{ item.label }}</span>
+                    <span>{{ item.label }}<span v-if="item.subLabel">{{ item.subLabel }}</span></span>
                     <a>{{ item.count ? formatNumber(Number(item.count)) : '' }}</a>
                 </div>
             </div>
@@ -138,7 +138,7 @@
                     'connect': '连接',
                     'use_theme_color': '切换主题色',
                     'use_language': '切换语言',
-                    'click_statistics': '跳转到仓库',
+                    'click_statistics': '触发按钮',
                     'use_chatview': '切换聊天面板样式',
                     'cilent': '上报客户端',
                     'show_qed': '触发彩蛋'
@@ -174,6 +174,7 @@
                 this.showName = view
                 this.mainListSelected = ''
                 this.visitData.metrics = null
+                this.eventData = null
                 this.updateData()
             },
 
@@ -602,11 +603,18 @@
 
 .detail-list > .list > div {
     justify-content: space-between;
+    cursor: pointer;
     margin: 0 1rem 5px 1rem;
     flex-direction: row;
     border-radius: 7px;
     padding: 7px 10px;
+    align-items: center;
     display: flex;
+}
+.detail-list > .list > div > span > span {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-font-2);
 }
 .detail-list > .list > div:hover {
     background: var(--color-card-2);
@@ -614,6 +622,9 @@
 .detail-list > .list > div.select {
     background: var(--color-main);
     color: var(--color-font-r);
+}
+.detail-list > .list > div.select > span > span {
+    color: var(--color-font-2-r);
 }
 
 .view-pan {
