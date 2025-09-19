@@ -84,3 +84,8 @@
 .opt-tab .tab-body > div {
     padding: 0;
 }
+
+.pop-box-body.full.window {
+    height: calc(100vh - calc(var(--safe-area-top) + 80px + var(--safe-area-bottom)));
+    margin-bottom: var(--safe-area-bottom);
+}

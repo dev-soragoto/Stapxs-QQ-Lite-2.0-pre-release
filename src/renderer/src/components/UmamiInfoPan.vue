@@ -261,7 +261,7 @@
                         // 转换为饼图需要的格式
                         let pieData = eventData.map((item: any) => ({
                             value: item.total,
-                            name: item.value
+                            name: (item.value != '' && item.value != null) ? item.value : this.$t('（未知）')
                         }))
                         // 只取前 9 项，其他归为“其他”，如果恰巧有 10 项也不处理防止第 10 项变成“其他”
                         if (pieData.length > 10) {
@@ -743,5 +743,31 @@
 .website-metric > div > div > div span {
     font-size: 0.8rem;
     color: var(--color-font-2);
+}
+
+@media (max-width: 500px) {
+    .umami-info-pan {
+        flex-direction: column !important;
+        margin: -46px -20px -20px !important;
+    }
+    .type-list {
+        flex-direction: row !important;
+        padding-top: 40px !important;
+        justify-content: space-evenly;
+    }
+    .type-list > svg:first-child {
+        display: none !important;
+    }
+    .detail-list {
+        max-height: 30%;
+        width: 100% !important;
+    }
+    .view-pan {
+        height: calc(70% - 140px);
+    }
+    .overview-time-select {
+        right: 20px !important;
+        width: 100px !important;
+    }
 }
 </style>

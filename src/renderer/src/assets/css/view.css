@@ -1649,6 +1649,10 @@ textarea:focus {
         margin: 20px;
         bottom: 0;
     }
+    .pop-box-body.full {
+        width: calc(100% - 70px) !important;
+        margin-bottom: 20px !important;
+    }
     .pop-box-more {
         display: none;
     }

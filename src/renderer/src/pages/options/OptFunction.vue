@@ -294,7 +294,8 @@
                 const popInfo = {
                     title: '',
                     template: markRaw(UmamiInfoPan),
-                    full: true
+                    full: true,
+                    allowQuickClose: false
                 }
                 runtimeData.popBoxList.push(popInfo)
             },
