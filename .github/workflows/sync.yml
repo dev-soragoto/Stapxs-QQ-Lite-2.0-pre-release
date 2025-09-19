@@ -30,6 +30,7 @@ jobs:
         with:
           delete_releases: true
           releases_keep_latest: 10
+          delete_tags: true
           gh_token: ${{ secrets.TOKEN }}
 
   sync:
