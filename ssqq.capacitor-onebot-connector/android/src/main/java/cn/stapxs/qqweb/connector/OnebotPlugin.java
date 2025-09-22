@@ -96,6 +96,22 @@ public class OnebotPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void getRelease(PluginCall call) {
+        // 获取安卓系统版本信息
+        String versionString = android.os.Build.VERSION.RELEASE;
+        String deviceModel = android.os.Build.MODEL;
+        String manufacturer = android.os.Build.MANUFACTURER;
+        String systemInfo = "Android " + versionString + " (" + manufacturer + " " + deviceModel + ") ";
+        // 获取系统架构
+        String arch = System.getProperty("os.arch");
+
+        JSObject ret = new JSObject();
+        ret.put("data", systemInfo);
+        ret.put("arch", arch);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void getFinalRedirectUrl(PluginCall call) {
         String url = call.getString("data");
 

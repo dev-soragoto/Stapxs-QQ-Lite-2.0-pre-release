@@ -382,7 +382,7 @@ const msgFunctions = {
                 const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
 
                 sendStatEvent('connect', { method: appInfo })
-                sendIdentifyData({ bot: appInfo })
+                sendIdentifyData({ bot_version: appInfo })
             }
             if (!login.status) {
                 // 尝试动态载入对应的 pathMap

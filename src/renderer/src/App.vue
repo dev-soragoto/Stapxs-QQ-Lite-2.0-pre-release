@@ -398,11 +398,17 @@ export default defineComponent({
                     baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
                     websiteId: import.meta.env.VITE_APP_MU_ID
                 } as any
-                // 给页面添加一个来源域名方便在 electron 中获取
+                // 给页面添加一个来源域名方便在非 web 端
                 if(!backend.isWeb()) {
                     config.hostName = backend.type + '.stapxs.cn'
                 }
                 Umami.initialize(config)
+                // 上报一些应用基础信息
+                App.sendIdentifyData({
+                    'app_version': import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version,
+                    'os_version': backend.release,
+                    'os_arch': backend.arch,
+                })
             } else if (this.dev) {
                 logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
@@ -495,9 +501,6 @@ export default defineComponent({
                 !this.dev
             ) {
                 Umami.trackPageView('/' + view)
-                App.sendIdentifyData({
-                    'appversion': import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version,
-                })
             }
             this.tags.showChat = show
             this.tags.page = view

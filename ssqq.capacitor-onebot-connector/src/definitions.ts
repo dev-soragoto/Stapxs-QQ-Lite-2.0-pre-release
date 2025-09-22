@@ -8,6 +8,7 @@ export interface OnebotPlugin {
     changeIcon(options: { name: string }): Promise<{ success: boolean }>;
     getUsedIcon(): Promise<{ success: boolean }>;
 
+    getRelease(): Promise<{ release: string, arch: string }>;
     getSystemInfo(): Promise<{ success: string }>;
 
     getFinalRedirectUrl(options: { url: string }): Promise<{ url: string }>;

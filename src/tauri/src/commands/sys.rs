@@ -40,15 +40,40 @@ pub fn sys_get_platform() -> String {
     }
 }
 
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct SystemInfo {
+    release: String,
+    arch: String,
+}
+
 #[command]
-pub fn sys_get_release() -> String {
+pub fn sys_get_release() -> Option<SystemInfo> {
+    let arch = std::env::consts::ARCH.to_string();
     #[cfg(target_os = "windows")] {
         use winver::WindowsVersion;
         let version = WindowsVersion::detect().unwrap();
-        return format!("{}.{}.{}", version.major, version.minor, version.build)
+        Some(SystemInfo {
+            release: format!("{} {}.{}.{}", "Windows", version.major, version.minor, version.build),
+            arch,
+        })
     }
-    #[cfg(not(target_os = "windows"))] {
-        return "".to_string();
+    #[cfg(target_os = "macos")] {
+        let output = Command::new("sw_vers")
+            .arg("-productVersion")
+            .output().ok()?;
+        if !output.status.success() {
+            return Some(SystemInfo { release: "".to_string(), arch });
+        }
+        let version_string = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        Some(SystemInfo {
+            release: format!("macOS {}", version_string),
+            arch,
+        })
+    }
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))] {
+        Some(SystemInfo { release: "".to_string(), arch })
     }
 }
 

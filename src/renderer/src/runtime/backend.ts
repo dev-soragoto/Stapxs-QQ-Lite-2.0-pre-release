@@ -14,6 +14,7 @@ export const backend = {
     type: 'web' as 'electron' | 'tauri' | 'capacitor' | 'web',
     platform: undefined as 'win32' | 'darwin' | 'linux' | 'android' | 'ios' | 'web' | undefined,
     release: '',
+    arch: '' as string | undefined,
     proxy: undefined as number | undefined,
 
     function: undefined as IpcRenderer |
@@ -82,7 +83,46 @@ export const backend = {
 
 
         this.platform = await this.call(undefined, 'sys:getPlatform', true)
-        this.release = await this.call(undefined, 'sys:getRelease', true)
+        const releaseData = await this.call('Onebot', 'sys:getRelease', true)
+        this.release = releaseData?.release || ''
+        this.arch = releaseData?.arch || undefined
+
+        if (!this.release) {
+            let os = ''
+            let version = ''
+
+            // 优先使用 navigator.userAgentData（Chrome / Edge / Android）
+            if ((navigator as any).userAgentData) {
+                os = (navigator as any).userAgentData.platform || os
+                try {
+                    const highEntropy = await (navigator as any).userAgentData.getHighEntropyValues(['platformVersion'])
+                    version = highEntropy.platformVersion || version
+                } catch (e) {
+                    // 如果获取失败，保持 Unknown
+                }
+            } else {
+                // fallback: 使用 navigator.userAgent
+                const ua = navigator.userAgent
+
+                if (/Windows NT (\d+\.\d+)/.test(ua)) {
+                    os = 'Windows'
+                    version = ua.match(/Windows NT (\d+\.\d+)/)?.[1] ?? 'Unknown'
+                } else if (/Mac OS X (\d+[_.]\d+[_.]?\d*)/.test(ua)) {
+                    os = 'macOS'
+                    version = ua.match(/Mac OS X (\d+[_.]\d+[_.]?\d*)/)?.[1]?.replace(/_/g, '.') ?? 'Unknown'
+                } else if (/Android (\d+(\.\d+)?)/.test(ua)) {
+                    os = 'Android'
+                    version = ua.match(/Android (\d+(\.\d+)?)/)?.[1] ?? 'Unknown'
+                } else if (/iPhone OS (\d+[_.]\d+[_.]?\d*)/.test(ua)) {
+                    os = 'iOS'
+                    version = ua.match(/iPhone OS (\d+[_.]\d+[_.]?\d*)/)?.[1]?.replace(/_/g, '.') ?? 'Unknown'
+                } else if (/Linux/.test(ua)) {
+                    os = 'Linux'
+                    version = 'Unknown'
+                }
+            }
+            this.release = `${os} ${version} (Web)`
+        }
         this.proxy  = await this.call(undefined, 'sys:runProxy', true)
         if(this.type == 'tauri' && !this.proxy) {
             logger.error(null, 'Tauri 代理服务似乎没有正常启动，此服务异常将会影响应用内的大部分外部资源的加载。')
@@ -156,6 +196,9 @@ export const backend = {
                 logger.add(LogType.DEBUG, `调用后端方法 ${(type ?? '') + ' - '}${name} 失败`, ex)
                 return undefined
             }
+        } else {
+            logger.add(LogType.ERR, '调用后端方法失败', new Error('当前运行环境不支持调用后端方法'))
+            return undefined
         }
     },
 

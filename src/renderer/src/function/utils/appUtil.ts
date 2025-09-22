@@ -672,7 +672,7 @@ export async function loadAppendStyle() {
         })
     }
     // 透明 UI 附加样式
-    let subVersion = backend.release?.split('.') as any
+    let subVersion = backend.release?.split(' ')?.[1]?.split('.') as any
     subVersion = subVersion ? Number(subVersion[2]) : 0
     if (backend.isDesktop() &&
         (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))) {
