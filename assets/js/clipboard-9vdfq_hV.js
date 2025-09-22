@@ -1,4 +1,4 @@
-import{c as P}from"./@stapxs-Av0aUqI6.js";var _={exports:{}};/*!
+import{c as P}from"./@stapxs-CkoNcTI-.js";var _={exports:{}};/*!
  * clipboard.js v2.0.11
  * https://clipboardjs.com/
  *
