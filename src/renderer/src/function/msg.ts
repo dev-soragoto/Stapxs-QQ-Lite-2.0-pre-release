@@ -417,7 +417,7 @@ const msgFunctions = {
                 action: 'label',
                 value: data.nickname,
             })
-            const title = `${data.nickname}（${data.uin}）`
+            const title = `${data.nickname} `
             if(backend.platform == 'web') {
                 document.title = title + '- Stapxs QQ Lite'
             } else {

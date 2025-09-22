@@ -2,14 +2,22 @@
     <div class="umami-info-pan">
         <div class="type-list">
             <font-awesome-icon :icon="['fas', 'book']" />
+            <!-- 概览 -->
             <font-awesome-icon
                 :class="{'select': showName === 'overview'}"
-                :icon="['fas', 'chart-bar']"
+                :icon="['fas', 'chart-column']"
                 @click="changeView('overview')" />
+            <!-- 访客数据 -->
             <font-awesome-icon
                 :class="{'select': showName === 'website'}"
-                :icon="['fas', 'user']"
+                :icon="['fas', 'globe']"
                 @click="changeView('website')" />
+            <!-- 访客详情 -->
+            <font-awesome-icon
+                :class="{'select': showName === 'session'}"
+                :icon="['fas', 'box-archive']"
+                @click="changeView('session')" />
+            <!-- 事件详情 -->
             <font-awesome-icon
                 :class="{'select': showName === 'event'}"
                 :icon="['fas', 'calendar-days']"
@@ -17,8 +25,9 @@
         </div>
         <div v-if="showName != 'overview'" class="detail-list">
             <span v-if="showName === 'website'">{{ $t('访客数据') }}</span>
+            <span v-if="showName === 'session'">{{ $t('访客详情') }}</span>
             <span v-if="showName === 'event'">{{ $t('事件详情') }}</span>
-            <div class='list'>
+            <div class="list">
                 <div v-for="(item, index) in mainList"
                     :key="index"
                     :class="{'select': mainListSelected === item.value}"
@@ -29,30 +38,52 @@
             </div>
             <div class="time-select">
                 <select v-model="timeType" @change="updateData">
-                    <option value="1">{{ $t('最近 24 小时') }}</option>
-                    <option value="2">{{ $t('本周') }}</option>
-                    <option value="3">{{ $t('本月') }}</option>
-                    <option value="4">{{ $t('本年') }}</option>
-                    <option value="5">{{ $t('所有时间段') }}</option>
+                    <option value="1">
+                        {{ $t('最近 24 小时') }}
+                    </option>
+                    <option value="2">
+                        {{ $t('本周') }}
+                    </option>
+                    <option value="3">
+                        {{ $t('本月') }}
+                    </option>
+                    <option value="4">
+                        {{ $t('本年') }}
+                    </option>
+                    <option value="5">
+                        {{ $t('所有时间段') }}
+                    </option>
                 </select>
             </div>
         </div>
         <div class="view-pan">
+            <!-- 概览 -->
             <template v-if="showName === 'overview'">
                 <a v-if="visitData.pageviewChart != null">{{ $t('概览') }}</a>
                 <div v-if="visitData.pageviewChart != null" style="width: 100%;height: 100%;display: flex;align-items: center;flex-direction: column;">
                     <v-chart :option="visitData.pageviewChart" style="width: 100%;height: 100%;" autoresize />
                     <div class="time-select overview-time-select">
                         <select v-model="timeType" @change="updateData">
-                            <option value="1">{{ $t('最近 24 小时') }}</option>
-                            <option value="2">{{ $t('本周') }}</option>
-                            <option value="3">{{ $t('本月') }}</option>
-                            <option value="4">{{ $t('本年') }}</option>
-                            <option value="5">{{ $t('所有时间段') }}</option>
+                            <option value="1">
+                                {{ $t('最近 24 小时') }}
+                            </option>
+                            <option value="2">
+                                {{ $t('本周') }}
+                            </option>
+                            <option value="3">
+                                {{ $t('本月') }}
+                            </option>
+                            <option value="4">
+                                {{ $t('本年') }}
+                            </option>
+                            <option value="5">
+                                {{ $t('所有时间段') }}
+                            </option>
                         </select>
                     </div>
                 </div>
             </template>
+            <!-- 访客数据 -->
             <template v-else-if="showName === 'website'">
                 <div class="status">
                     <div v-for="name in Object.keys(visitData.status)"
@@ -65,7 +96,7 @@
                 <span>{{ $t('当前在线人数') }}: {{ visitData.online }}</span>
                 <div v-if="visitData.metrics != null" class="ss-card website-metric">
                     <div>
-                        <span v-if="mainListSelected !== ''">{{ $t(metricTypes[1][metricTypes[0].indexOf(mainListSelected)]) }}</span>
+                        <span v-if="mainListSelected !== ''">{{ $t(metricTypes[mainListSelected]) }}</span>
                         <a style="width: calc(5rem + 20px);">{{ $t('数值（占比）') }}</a>
                     </div>
                     <div v-for="(metric, index) in visitData.metrics" :key="index">
@@ -83,9 +114,10 @@
                     </div>
                 </div>
             </template>
-            <template v-if="showName === 'event'">
+            <!-- 访客详情 & 事件详情 -->
+            <template v-if="showName === 'event' || showName === 'session'">
                 <div v-if="eventData != null" style="width: 100%;height: 100%;display: flex;align-items: center;flex-direction: column;">
-                    <v-chart :option="eventData" style="width: 80%;margin-top: -10%;" autoresize />
+                    <v-chart :option="eventData" style="width: 80%;margin-top: -10%;color: var(--color-font)" autoresize />
                 </div>
             </template>
         </div>
@@ -130,10 +162,17 @@
         },
         data() {
             return {
-                metricTypes: [['url', 'browser', 'os', 'device', 'language', 'screen', 'event'],
-                              ['页面', '浏览器', '操作系统', '设备', '语言', '屏幕', '事件']],
+                metricTypes: {
+                    'url': '页面',
+                    'browser': '浏览器',
+                    'os': '操作系统',
+                    'device': '设备',
+                    'language': '语言',
+                    'screen': '屏幕',
+                    'event': '事件'
+                },
                 eventTypes: {
-                    'sendMsg': '发送消息',
+                    'send_msg': '发送消息',
                     'link_view': '预览链接',
                     'connect': '连接',
                     'use_theme_color': '切换主题色',
@@ -141,7 +180,12 @@
                     'click_statistics': '触发按钮',
                     'use_chatview': '切换聊天面板样式',
                     'cilent': '上报客户端',
-                    'show_qed': '触发彩蛋'
+                    'show_qed': '触发彩蛋',
+
+                    'app_version': '应用版本',
+                    'os_version': '系统版本',
+                    'bot_version': '机器人版本',
+                    'os_arch': '系统架构',
                 },
                 showName: 'website',
                 timeType: 1,
@@ -188,8 +232,10 @@
             },
 
             getData(value: string) {
-             // 获取 css 中的 var(--color-main)
-             const colorMainRaw = getComputedStyle(document.documentElement).getPropertyValue('--color-main')
+                // 获取 css 中的 var(--color-main)
+                const colorMainRaw = getComputedStyle(document.documentElement).getPropertyValue('--color-main')
+                const colorFont = getComputedStyle(document.documentElement).getPropertyValue('--color-font-1')
+                const colorCard = getComputedStyle(document.documentElement).getPropertyValue('--color-card-1')
 
                 this.mainListSelected = value
                 if (this.showName === 'overview') {
@@ -212,19 +258,32 @@
                         // 给 colorMain 加透明的
                         const colorMainWithAlpha = colorMain.replace(')', ', 0.5)').replace('rgb', 'rgba')
                         this.visitData.pageviewChart = {
+                            textStyle: {
+                                color: colorFont
+                            },
                             legend: {
                                 data: [this.$t('浏览量'), this.$t('访客')],
-                                left: '10%'
+                                left: '10%',
+                                textStyle: {
+                                    color: colorFont
+                                }
                             },
                             tooltip: {},
                             xAxis: {
                                 data: xAxisData,
                                 name: this.getRealTimeRange().formatName,
                                 axisLine: { onZero: true },
+                                axisLabel: {
+                                    color: colorFont
+                                },
                                 splitLine: { show: false },
-                                splitArea: { show: false }
+                                splitArea: { show: false },
                             },
-                            yAxis: {},
+                            yAxis: {
+                                axisLabel: {
+                                    color: colorFont
+                                }
+                            },
                             grid: {
                                 bottom: 100,
                                 left: 50,
@@ -254,7 +313,7 @@
                     })
                 } else if (this.showName === 'website') {
                     this.getMetric(value)
-                } else if (this.showName === 'event') {
+                } else if (this.showName === 'event' || this.showName === 'session') {
                     const eventData = this.mainList.find(item => item.value === value)?.data
                     if (eventData) {
                         // eventData 格式：[{value: 'xxx', total: 123}, ...]
@@ -279,15 +338,22 @@
                         //     colors.push(colorMainRaw + alpha)
                         // }
                         this.eventData = {
-                            // color: colors,
+                            // colors: colors,
                             color: ['#d87c7c', '#919e8b', '#d7ab82', '#6e7074', '#61a0a8', '#efa18d', '#787464', '#cc7e63', '#724e58', '#4b565b'],
                             tooltip: {
-                                trigger: 'item'
+                                trigger: 'item',
+                                backgroundColor: colorCard,
+                                textStyle: {
+                                    color: colorFont
+                                },
                             },
                             legend: {
                                 top: 'bottom',
                                 left: 'center',
-                                type: 'scroll'
+                                type: 'scroll',
+                                textStyle: {
+                                    color: colorFont
+                                }
                             },
                             series: [
                                 {
@@ -354,16 +420,19 @@
                         count?: number,
                         data?: any
                     }[]
-                    for(const type of this.metricTypes[0]) {
+                    for(const type of Object.keys(this.metricTypes)) {
                         list.push({
-                            label: this.$t(this.metricTypes[1][this.metricTypes[0].indexOf(type)]),
+                            label: this.$t(this.metricTypes[type]),
                             value: type,
                         })
                     }
                     if(this.showName == 'website')
                         this.mainList = list
-                } else if(this.showName == 'event') {
-                    const url = API_URL + '/events/' + this.getRealTimeRange().time
+                } else if(this.showName == 'event' || this.showName == 'session') {
+                    let url = API_URL + '/events/' + this.getRealTimeRange().time
+                    if(this.showName == 'session') {
+                        url = API_URL + '/sessions/' + this.getRealTimeRange().time
+                    }
                     const res = await fetch(url)
                     const data = await res.json()
                     if(!data.error) {
@@ -375,6 +444,10 @@
                             data?: any
                         }[]
                         for(const item of data) {
+                            if(!item.eventName) {
+                                item.eventName = item.propertyName
+                                delete item.propertyName
+                            }
                             list.push({
                                 label: this.eventTypes[item.eventName] ? this.$t(this.eventTypes[item.eventName]) : item.eventName,
                                 subLabel: item.propertyName,
@@ -385,7 +458,7 @@
                         }
                         // 根据 count 降序排列
                         list.sort((a, b) => (b.count || 0) - (a.count || 0))
-                        if(this.showName == 'event')
+                        if(this.showName == 'event' || this.showName == 'session')
                             this.mainList = list
                     }
                 }
