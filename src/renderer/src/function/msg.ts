@@ -381,7 +381,7 @@ const msgFunctions = {
                 const appVersion = data.app_version ? ',' + data.app_version : ''
                 const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
 
-                sendStatEvent('connect', { method: appInfo })
+                sendStatEvent('connect', { method: data.app_version })
                 sendIdentifyData({ bot_version: appInfo })
             }
             if (!login.status) {
@@ -1594,7 +1594,7 @@ async function newMsg(_: string, data: any) {
             await saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
             const num = randomNum(0, 10000)
-            if (num >= 4500 && num <= 5500) {
+            if (num >= 400 && num <= 500) {
                 logger.add(
                     LogType.INFO,
                     num.toString() + '，这只是个神秘的数字...',
