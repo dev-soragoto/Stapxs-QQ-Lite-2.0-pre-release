@@ -406,9 +406,6 @@ export default defineComponent({
             } else if (this.dev) {
                 logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
-            App.sendStatEvent('cilent', {
-                tag: import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version
-            })
             App.checkUpdate() // 检查更新
             App.checkOpenTimes() // 检查打开次数
             App.checkNotice() // 检查公告
@@ -498,6 +495,9 @@ export default defineComponent({
                 !this.dev
             ) {
                 Umami.trackPageView('/' + view)
+                Umami.trackIdentify({
+                    'appversion': import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version,
+                })
             }
             this.tags.showChat = show
             this.tags.page = view
