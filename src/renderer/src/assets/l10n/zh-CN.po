@@ -1289,3 +1289,6 @@ msgstr "访问次数"
 
 msgid "访客数据_visits"
 msgstr "访客"
+
+msgid "占比小于 {per}% 的数据将不会展示在饼图中"
+msgstr ""

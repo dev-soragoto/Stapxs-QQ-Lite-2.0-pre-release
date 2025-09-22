@@ -24,9 +24,17 @@
                 @click="changeView('event')" />
         </div>
         <div v-if="showName != 'overview'" class="detail-list">
-            <span v-if="showName === 'website'">{{ $t('访客数据') }}</span>
-            <span v-if="showName === 'session'">{{ $t('访客详情') }}</span>
-            <span v-if="showName === 'event'">{{ $t('事件详情') }}</span>
+            <template v-if="showName === 'website'">
+                <span>{{ $t('访客数据') }}</span>
+            </template>
+            <template v-if="showName === 'session'">
+                <span>{{ $t('访客详情') }}</span>
+                <a> {{ $t('访客数据表示访问网站的独立会话，同一个访客只会统计一次。并且在下次访问时覆盖上次的数据。') }} </a>
+            </template>
+            <template v-if="showName === 'event'">
+                <span>{{ $t('事件详情') }}</span>
+                <a> {{ $t('事件数据表示用户在访问期间的具体操作或上报行为，每次触发都会单独记录，因此同一个访客可能产生多个事件。') }} </a>
+            </template>
             <div class="list">
                 <div v-for="(item, index) in mainList"
                     :key="index"
@@ -116,8 +124,9 @@
             </template>
             <!-- 访客详情 & 事件详情 -->
             <template v-if="showName === 'event' || showName === 'session'">
-                <div v-if="eventData != null" style="width: 100%;height: 100%;display: flex;align-items: center;flex-direction: column;">
-                    <v-chart :option="eventData" style="width: 80%;margin-top: -10%;color: var(--color-font)" autoresize />
+                <div v-if="eventData != null" class="pie-pan">
+                    <v-chart :option="eventData" autoresize />
+                    <a>{{ $t('占比小于 {per}% 的数据将不会展示在饼图中', { per: minPiePercentage * 100 }) }}</a>
                 </div>
             </template>
         </div>
@@ -187,6 +196,7 @@
                     'bot_version': '机器人版本',
                     'os_arch': '系统架构',
                 },
+                minPiePercentage: 0.0084, // 饼图中最小显示百分比，低于该值的归为“其他”
                 showName: 'website',
                 timeType: 1,
                 mainListSelected: '',
@@ -323,12 +333,12 @@
                             name: (item.value != '' && item.value != null) ? item.value : this.$t('（未知）')
                         }))
                         // 只取前 9 项，其他归为“其他”，如果恰巧有 10 项也不处理防止第 10 项变成“其他”
-                        if (pieData.length > 10) {
-                            const topData = pieData.slice(0, 9)
-                            const otherTotal = pieData.slice(9).reduce((sum: number, item: any) => sum + item.value, 0)
-                            topData.push({ value: otherTotal, name: this.$t('其他') })
-                            pieData = topData
-                        }
+                        // if (pieData.length > 10) {
+                        //     const topData = pieData.slice(0, 9)
+                        //     const otherTotal = pieData.slice(9).reduce((sum: number, item: any) => sum + item.value, 0)
+                        //     topData.push({ value: otherTotal, name: this.$t('其他') })
+                        //     pieData = topData
+                        // }
                         // 按 value 降序排列
                         pieData.sort((a: any, b: any) => b.value - a.value)
                         // 这边的颜色用 colorMainRaw 创建 10 级不同透明度的颜色，不需要转为 rgba，使用十六进制颜色
@@ -337,10 +347,15 @@
                         //     const alpha = Math.floor((i / 10) * 255).toString(16).padStart(2, '0')
                         //     colors.push(colorMainRaw + alpha)
                         // }
+                        // 去除占比小于等于 0.84% 的
+                        pieData = pieData.filter((item: any) => (item.value / pieData.reduce((sum: number, it: any) => sum + it.value, 0)) > this.minPiePercentage)
                         this.eventData = {
                             // colors: colors,
                             color: ['#d87c7c', '#919e8b', '#d7ab82', '#6e7074', '#61a0a8', '#efa18d', '#787464', '#cc7e63', '#724e58', '#4b565b'],
                             tooltip: {
+                                formatter: (params: any) => {
+                                    return `${params.marker} ${params.name}: ${params.value} (${params.percent}%)`
+                                },
                                 trigger: 'item',
                                 backgroundColor: colorCard,
                                 textStyle: {
@@ -361,7 +376,7 @@
                                     radius: ['40%', '70%'],
                                     center: ['50%', '55%'],
                                     avoidLabelOverlap: false,
-                                    padAngle: 2,
+                                    padAngle: 3,
                                     itemStyle: {
                                         borderRadius: 7
                                     },
@@ -651,6 +666,14 @@
     display: block;
     margin: 1rem;
 }
+.detail-list > a {
+    border-radius: 7px;
+    padding: 10px;
+    background: var(--color-card-2);
+    margin: 0 1rem 1rem 1rem;
+    font-size: 0.8rem;
+    color: var(--color-font-1);
+}
 .time-select {
     margin: 1rem;
 }
@@ -735,6 +758,28 @@
     font-weight: bold;
     display: block;
     margin: 0 1rem 1rem 1rem;
+}
+
+.pie-pan {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column-reverse;
+}
+.pie-pan > x-vue-echarts {
+    width: 80%;
+    margin-top: -15%;
+}
+.pie-pan > a {
+    display: block;
+    width: 80%;
+    text-align: center;
+    background: var(--color-card-1);
+    padding: 10px;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    color: var(--color-font-2);
 }
 
 .status {
