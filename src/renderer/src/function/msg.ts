@@ -39,6 +39,7 @@ import {
     downloadFile,
     updateMenu,
     loadJsonMap,
+    sendIdentifyData,
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
 import { reactive, markRaw, defineAsyncComponent, nextTick } from 'vue'
@@ -377,11 +378,11 @@ const msgFunctions = {
 
             runtimeData.botInfo = data
             if (Option.get('open_ga_bot') !== false) {
-                if (data.app_name !== undefined) {
-                    sendStatEvent('connect', { method: data.app_name })
-                } else {
-                    sendStatEvent('connect', { method: '（未知）' })
-                }
+                const appVersion = data.app_version ? ',' + data.app_version : ''
+                const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
+
+                sendStatEvent('connect', { method: appInfo })
+                sendIdentifyData({ bot: appInfo })
             }
             if (!login.status) {
                 // 尝试动态载入对应的 pathMap

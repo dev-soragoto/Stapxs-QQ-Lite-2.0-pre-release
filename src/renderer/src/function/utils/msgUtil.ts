@@ -472,7 +472,7 @@ export function sendMsgRaw(
     if (msg !== undefined && msg.length > 0) {
         if (runtimeData.jsonMap.name === 'Lagrange.OneBot'){
             lgrSendMsg(id, msg, type, echo + '_uuid_' + msgUUID)
-            sendStatEvent('sendMsg', { type: type })
+            sendStatEvent('send_msg', { type: type })
             return
         }
         switch (type) {
@@ -507,7 +507,7 @@ export function sendMsgRaw(
                 break
             }
         }
-        sendStatEvent('sendMsg', { type: type })
+        sendStatEvent('send_msg', { type: type })
     }
 }
 

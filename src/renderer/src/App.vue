@@ -495,7 +495,7 @@ export default defineComponent({
                 !this.dev
             ) {
                 Umami.trackPageView('/' + view)
-                Umami.trackIdentify({
+                App.sendIdentifyData({
                     'appversion': import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version,
                 })
             }

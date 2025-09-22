@@ -1057,13 +1057,23 @@ export function loadJsonMap(name: string) {
 }
 
 /**
-* UM：统计事件统一上传方法
+* UM：上报事件
 * @param event 事件名
 * @param data 数据
 */
 export function sendStatEvent(event: string, data: { [key: string]: any }) {
     if (!option.get('close_ga') && !import.meta.env.DEV) {
         Umami.trackEvent(event, data)
+    }
+}
+
+/**
+ * UM：上报会话数据
+ * @param data 数据
+ */
+export function sendIdentifyData(data: { [key: string]: any }) {
+    if (!option.get('close_ga') && !import.meta.env.DEV) {
+        Umami.trackIdentify(data)
     }
 }
 
