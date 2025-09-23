@@ -47,18 +47,20 @@
                     <span>{{ $t('群消息通知方式') }}</span>
                     <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.group_notice_type"
-                    name="group_notice_type" title="group_notice_type" @change="save">
-                    <option value="none">
-                        {{ $t('不通知（默认）') }}
-                    </option>
-                    <option value="inner">
-                        {{ $t('仅应用内通知') }}
-                    </option>
-                    <option value="all">
-                        {{ $t('应用内通知和系统通知') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.group_notice_type"
+                        name="group_notice_type" title="group_notice_type" @change="save">
+                        <option value="none">
+                            {{ $t('不通知（默认）') }}
+                        </option>
+                        <option value="inner">
+                            {{ $t('仅应用内通知') }}
+                        </option>
+                        <option value="all">
+                            {{ $t('应用内通知和系统通知') }}
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="ss-card">
@@ -131,21 +133,23 @@
                     <span>{{ $t('默认功能按钮') }}</span>
                     <span>{{ $t('可以右击试试哦') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
-                    title="quick_send" @change="save">
-                    <option value="default">
-                        {{ $t('默认') }}
-                    </option>
-                    <option value="img">
-                        {{ $t('图片') }}
-                    </option>
-                    <option value="file">
-                        {{ $t('文件') }}
-                    </option>
-                    <option value="face">
-                        {{ $t('表情') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
+                        title="quick_send" @change="save">
+                        <option value="default">
+                            {{ $t('默认') }}
+                        </option>
+                        <option value="img">
+                            {{ $t('图片') }}
+                        </option>
+                        <option value="file">
+                            {{ $t('文件') }}
+                        </option>
+                        <option value="face">
+                            {{ $t('表情') }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('send_face')" />

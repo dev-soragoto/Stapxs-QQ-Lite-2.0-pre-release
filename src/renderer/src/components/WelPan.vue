@@ -26,16 +26,18 @@
         <div class="l10n-info" style="width: calc(100% - 40px)">
             <font-awesome-icon style="margin-right: 30px" :icon="['fas', 'language']" />
             <div style="overflow: hidden">
-                <select v-model="runtimeData.sysConfig.language"
-                    name="language"
-                    title="language"
-                    @change="save($event);gaLanguage($event)">
-                    <option v-for="item in languages"
-                        :key="item.value"
-                        :value="item.value">
-                        {{ item.name }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.language"
+                        name="language"
+                        title="language"
+                        @change="save($event);gaLanguage($event)">
+                        <option v-for="item in languages"
+                            :key="item.value"
+                            :value="item.value">
+                            {{ item.name }}
+                        </option>
+                    </select>
+                </div>
                 <span class="author">{{ $t('作者：') }}{{ $t('Stapx Steve') }}</span>
             </div>
         </div>
@@ -160,18 +162,20 @@
                         <span>{{ $t('群消息通知方式') }}</span>
                         <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
                     </div>
-                    <select v-model="runtimeData.sysConfig.group_notice_type" style="width: 100%;"
-                        name="group_notice_type" title="group_notice_type" @change="save">
-                        <option value="none">
-                            {{ $t('不通知（默认）') }}
-                        </option>
-                        <option value="inner">
-                            {{ $t('仅应用内通知') }}
-                        </option>
-                        <option value="all">
-                            {{ $t('应用内通知和系统通知') }}
-                        </option>
-                    </select>
+                    <div class="select-wrapper">
+                        <select v-model="runtimeData.sysConfig.group_notice_type" style="width: 100%;"
+                            name="group_notice_type" title="group_notice_type" @change="save">
+                            <option value="none">
+                                {{ $t('不通知（默认）') }}
+                            </option>
+                            <option value="inner">
+                                {{ $t('仅应用内通知') }}
+                            </option>
+                            <option value="all">
+                                {{ $t('应用内通知和系统通知') }}
+                            </option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

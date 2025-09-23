@@ -26,13 +26,15 @@
                     <span>{{ $t('语言（Language）') }}</span>
                     <span>{{ $t('喵喵喵喵？') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.language"
-                    name="language" title="language"
-                    @change="save($event);gaLanguage($event)">
-                    <option v-for="item in languages" :key="item.value" :value="item.value">
-                        {{ item.name }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.language"
+                        name="language" title="language"
+                        @change="save($event);gaLanguage($event)">
+                        <option v-for="item in languages" :key="item.value" :value="item.value">
+                            {{ item.name }}
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
         <div v-if="backend.isMobile()" class="ss-card">
@@ -174,17 +176,19 @@
                     <span>{{ $t('消息页面主题') }}</span>
                     <span>{{ $t('一些好玩的主题！') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.chatview_name"
-                    name="chatview_name" title="chatview_name"
-                    @change="save($event);gaChatView($event)">
-                    <option value="">
-                        {{ $t('默认') }}
-                    </option>
-                    <option v-for="item in getAppendChatView()"
-                        :key="item" :value="item">
-                        {{ item.replace('Chat', '') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.chatview_name"
+                        name="chatview_name" title="chatview_name"
+                        @change="save($event);gaChatView($event)">
+                        <option value="">
+                            {{ $t('默认') }}
+                        </option>
+                        <option v-for="item in getAppendChatView()"
+                            :key="item" :value="item">
+                            {{ item.replace('Chat', '') }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('opt_fast_animation')" />

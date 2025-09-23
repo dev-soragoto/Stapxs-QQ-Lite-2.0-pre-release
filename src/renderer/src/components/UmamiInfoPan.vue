@@ -45,23 +45,25 @@
                 </div>
             </div>
             <div class="time-select">
-                <select v-model="timeType" @change="updateData">
-                    <option value="1">
-                        {{ $t('最近 24 小时') }}
-                    </option>
-                    <option value="2">
-                        {{ $t('本周') }}
-                    </option>
-                    <option value="3">
-                        {{ $t('本月') }}
-                    </option>
-                    <option value="4">
-                        {{ $t('本年') }}
-                    </option>
-                    <option value="5">
-                        {{ $t('所有时间段') }}
-                    </option>
-                </select>
+                <div>
+                    <select v-model="timeType" @change="updateData">
+                        <option value="1">
+                            {{ $t('最近 24 小时') }}
+                        </option>
+                        <option value="2">
+                            {{ $t('本周') }}
+                        </option>
+                        <option value="3">
+                            {{ $t('本月') }}
+                        </option>
+                        <option value="4">
+                            {{ $t('本年') }}
+                        </option>
+                        <option value="5">
+                            {{ $t('所有时间段') }}
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="view-pan">
@@ -71,23 +73,25 @@
                 <div v-if="visitData.pageviewChart != null" style="width: 100%;height: 100%;display: flex;align-items: center;flex-direction: column;">
                     <v-chart :option="visitData.pageviewChart" style="width: 100%;height: 100%;" autoresize />
                     <div class="time-select overview-time-select">
-                        <select v-model="timeType" @change="updateData">
-                            <option value="1">
-                                {{ $t('最近 24 小时') }}
-                            </option>
-                            <option value="2">
-                                {{ $t('本周') }}
-                            </option>
-                            <option value="3">
-                                {{ $t('本月') }}
-                            </option>
-                            <option value="4">
-                                {{ $t('本年') }}
-                            </option>
-                            <option value="5">
-                                {{ $t('所有时间段') }}
-                            </option>
-                        </select>
+                        <div>
+                            <select v-model="timeType" @change="updateData">
+                                <option value="1">
+                                    {{ $t('最近 24 小时') }}
+                                </option>
+                                <option value="2">
+                                    {{ $t('本周') }}
+                                </option>
+                                <option value="3">
+                                    {{ $t('本月') }}
+                                </option>
+                                <option value="4">
+                                    {{ $t('本年') }}
+                                </option>
+                                <option value="5">
+                                    {{ $t('所有时间段') }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -196,7 +200,7 @@
                     'bot_version': '机器人版本',
                     'os_arch': '系统架构',
                 },
-                minPiePercentage: 0.0084, // 饼图中最小显示百分比，低于该值的归为“其他”
+                minPiePercentage: 0.0084, // 饼图中最小显示百分比
                 showName: 'website',
                 timeType: 1,
                 mainListSelected: '',
@@ -677,10 +681,32 @@
 .time-select {
     margin: 1rem;
 }
-.time-select > select {
-    background: var(--color-card-1);
+.time-select > div {
+    position: relative
+}
+.time-select > div::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--color-font-2);
+}
+.time-select select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: var(--color-card-2);
+    border: none;
+    border-bottom: 1px solid var(--color-font-2);
     color: var(--color-font);
-    border: navajowhite;
+    font-size: 0.8rem;
+    padding: 0 10px;
     border-radius: 7px;
     width: 100%;
     height: 30px;
@@ -688,8 +714,12 @@
 .overview-time-select {
     position: absolute;
     bottom: 17px;
-    width: 150px;
+    width: 25%;
+    max-width: 200px;
     right: 80px;
+}
+.overview-time-select select {
+    background: var(--color-card-1);
 }
 .detail-list > .list {
     overflow-y: scroll;
