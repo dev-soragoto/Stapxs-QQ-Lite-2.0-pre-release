@@ -555,7 +555,7 @@ const msgFunctions = {
     /**
      * 保存聊天记录
      */
-    getChatHistoryFist: async (_: string, msg: { [key: string]: any }) => {
+    getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
         if (msg.data === null) {
             new PopInfo().add(
                 PopType.ERR,
@@ -564,9 +564,9 @@ const msgFunctions = {
             runtimeData.tags.loadHistoryFail = true
             return
         }
-        await saveMsg(msg, 'top')
+        saveMsg(msg, 'top')
     },
-    getChatHistory: async (_: string, msg: { [key: string]: any }) => {
+    getChatHistory: (_: string, msg: { [key: string]: any }) => {
         if (msg.data === null) {
             new PopInfo().add(
                 PopType.ERR,
@@ -578,15 +578,16 @@ const msgFunctions = {
         const pan = document.getElementById('msgPan')
         if(pan) {
             const oldScrollHeight = pan.scrollHeight
-            await saveMsg(msg, 'top')
-            nextTick(() => {
-                setTimeout(() => {
-                    logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
-                    pan.style.scrollBehavior = 'unset'
-                    // 纠正滚动位置
-                    pan.scrollTop = pan.scrollHeight - oldScrollHeight
-                    pan.style.scrollBehavior = 'smooth'
-                }, 200);
+            saveMsg(msg, 'top').then(() => {
+                nextTick(() => {
+                    setTimeout(() => {
+                        logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                        pan.style.scrollBehavior = 'unset'
+                        // 纠正滚动位置
+                        pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                        pan.style.scrollBehavior = 'smooth'
+                    }, 200);
+                })
             })
         }
     },
@@ -940,7 +941,7 @@ const msgFunctions = {
      * 获取发送的消息（消息发送后处理）
      * @deprecated 功能已被遗弃，暂时保留方法
      */
-    getSendMsg: async (
+    getSendMsg: (
         _: string,
         msg: { [key: string]: any },
         echoList: string[],
@@ -970,22 +971,22 @@ const msgFunctions = {
                 // 预发送消息刷新
                 if (fakeIndex != -1) {
                     // 将这条消息直接替换掉
-                    let trueMsg = getMsgData(
+                    const trueMsg = getMsgData(
                         'message_list',
                         buildMsgList([msg.data]),
                         msgPath.message_list,
                     )
-                    trueMsg = await getMessageList(trueMsg)
-                    if (trueMsg && trueMsg.length == 1) {
-                        runtimeData.messageList[fakeIndex].message = trueMsg[0].message
-                        runtimeData.messageList[fakeIndex].raw_message =
-                            trueMsg[0].raw_message
-                        runtimeData.messageList[fakeIndex].time = trueMsg[0].time
+                    getMessageList(trueMsg).then((trueMsg) => {
+                        if (trueMsg && trueMsg.length == 1) {
+                            runtimeData.messageList[fakeIndex].message = trueMsg[0].message
+                            runtimeData.messageList[fakeIndex].raw_message =
+                                trueMsg[0].raw_message
+                            runtimeData.messageList[fakeIndex].time = trueMsg[0].time
 
-                        runtimeData.messageList[fakeIndex].fake_msg = undefined
-                        runtimeData.messageList[fakeIndex].revoke = false
-                    }
-                    return
+                            runtimeData.messageList[fakeIndex].fake_msg = undefined
+                            runtimeData.messageList[fakeIndex].revoke = false
+                        }
+                    })
                 }
             }
         }
@@ -1529,7 +1530,7 @@ function revokeMsg(_: string, msg: any) {
 }
 
 let qed_try_times = 0
-async function newMsg(_: string, data: any) {
+function newMsg(_: string, data: any) {
     const { $t } = app.config.globalProperties
     // 没有对频道的支持计划
     if (data.detail_type == 'guild') {
@@ -1563,21 +1564,22 @@ async function newMsg(_: string, data: any) {
         // 预发送消息刷新
         if (fakeIndex != -1) {
             // 将这条消息直接替换掉
-            let trueMsg = getMsgData(
+            const trueMsg = getMsgData(
                 'message_list',
                 buildMsgList([data]),
                 msgPath.message_list,
             )
-            trueMsg = await getMessageList(trueMsg)
-            if (trueMsg && trueMsg.length == 1) {
-                runtimeData.messageList[fakeIndex].message = trueMsg[0].message
-                runtimeData.messageList[fakeIndex].raw_message =
-                    trueMsg[0].raw_message
-                runtimeData.messageList[fakeIndex].time = trueMsg[0].time
+            getMessageList(trueMsg).then((trueMsg) => {
+                if (trueMsg && trueMsg.length == 1) {
+                    runtimeData.messageList[fakeIndex].message = trueMsg[0].message
+                    runtimeData.messageList[fakeIndex].raw_message =
+                        trueMsg[0].raw_message
+                    runtimeData.messageList[fakeIndex].time = trueMsg[0].time
 
-                runtimeData.messageList[fakeIndex].fake_msg = undefined
-                runtimeData.messageList[fakeIndex].revoke = false
-            }
+                    runtimeData.messageList[fakeIndex].fake_msg = undefined
+                    runtimeData.messageList[fakeIndex].revoke = false
+                }
+            })
             // 移除最顶端的一条消息以被动刷新整个列表
             runtimeData.messageList.shift()
             return
@@ -1591,7 +1593,7 @@ async function newMsg(_: string, data: any) {
             // 如果有正在输入的提示，清除它
             runtimeData.chatInfo.show.appendInfo = undefined
             // 保存消息
-            await saveMsg(buildMsgList([data]), 'bottom')
+            saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
             const num = randomNum(0, 10000)
             if (num >= 400 && num <= 500) {

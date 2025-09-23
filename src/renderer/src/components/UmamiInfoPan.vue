@@ -786,7 +786,6 @@
     color: var(--color-font);
     font-size: 1rem;
     font-weight: bold;
-    display: block;
     margin: 0 1rem 1rem 1rem;
 }
 
@@ -815,7 +814,6 @@
 .status {
     margin-top: 1rem;
     padding-bottom: 1rem;
-    flex-direction: column;
     width: calc(100% - 30px);
     display: flex;
     flex-direction: row;

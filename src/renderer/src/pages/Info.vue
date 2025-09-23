@@ -47,7 +47,7 @@
                     <header>
                         <span>{{ $t('等级') }}</span>
                     </header>
-                    <span>{{ chat.info.user_info.qqLevel }}</span>
+                    <span>{{ qqLevelToEmoji(chat.info.user_info.qqLevel) }}</span>
                     <header v-if="chat.info.user_info.regTime">
                         <span>{{ $t('注册时间') }}</span>
                     </header>
@@ -232,6 +232,7 @@
         UserFriendElem,
         UserGroupElem,
     } from '@renderer/function/elements/information'
+    import { qqLevelToEmoji } from '@renderer/function/utils/msgUtil'
 
     export default defineComponent({
         name: 'ViewInfo',
@@ -240,6 +241,7 @@
         emits: ['close'],
         data() {
             return {
+                qqLevelToEmoji,
                 runtimeData: runtimeData,
                 trueLang: getTrueLang(),
                 isTop: false,
