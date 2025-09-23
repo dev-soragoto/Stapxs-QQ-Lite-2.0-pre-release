@@ -490,12 +490,13 @@
                 const iconList = import.meta.glob('@renderer/assets/img/icons/*.png', { eager: true })
                 const iconListInfo = [] as { name: string, icon: any }[]
                 Object.keys(iconList).forEach((key: string) => {
-                    const name = key.split('/').pop()?.split('.')[0].replace('AppIcon', '')
-                    if(name || name === '') {
-                        if(!runtimeData.tags.darkMode && !name.endsWith('Dark')) {
-                            iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
-                        } else if(runtimeData.tags.darkMode && name.endsWith('Dark')) {
-                            iconListInfo.push({ name: name.replace('Dark', ''), icon: (iconList[key] as any).default })
+                    const name = key.split('/').pop()?.split('.')[0]
+                    const iconName = name?.replace('AppIcon', '')
+                    if( name && name.indexOf('AppIcon') >= 0 && iconName != undefined) {
+                        if(!runtimeData.tags.darkMode && !iconName.endsWith('Dark')) {
+                            iconListInfo.push({ name: iconName, icon: (iconList[key] as any).default })
+                        } else if(runtimeData.tags.darkMode && iconName.endsWith('Dark')) {
+                            iconListInfo.push({ name: iconName.replace('Dark', ''), icon: (iconList[key] as any).default })
                         }
                     }
                 })

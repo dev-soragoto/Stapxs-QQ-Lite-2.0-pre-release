@@ -7,8 +7,13 @@
 }
 
 .opt-main-tab,
-.main-body > div > div[name="主页"] {
+.main-body > div > div#homeTab {
     margin-top: calc(1px - var(--safe-area-top)) !important;
+    height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom) - 20px) !important;
+}
+
+.main-body > div > div#messageTab,
+.main-body > div > div#friendTab {
     height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom) - 20px) !important;
 }
 

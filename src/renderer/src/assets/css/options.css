@@ -367,6 +367,7 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+    height: 100%;
     background: var(--color-card-1);
     color: var(--color-font);
     border: none;
@@ -685,7 +686,14 @@
         display: block !important;
     }
 
-    .opt-item select,
+    .opt-item > div.select-wrapper {
+        margin-left: calc(1.1rem + 20px);
+        max-width: unset !important;
+        width: 100% !important;
+        height: 35px;
+        margin-top: 10px;
+        flex:unset;
+    }
     .opt-item div.ss-range,
     .opt-item input[type='text'],
     .opt-item input[type='number'] {

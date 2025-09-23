@@ -48,7 +48,7 @@
                 </li>
             </ul>
             <div :style="get('fs_adaptation') > 0 ? `height: calc(100% - ${75 + Number(get('fs_adaptation'))}px);` : ''">
-                <div v-if="tags.page == 'Home'" :name="$t('主页')">
+                <div v-if="tags.page == 'Home'" id="homeTab" name="主页">
                     <div class="home-body">
                         <div class="login-pan-card ss-card">
                             <font-awesome-icon :icon="['fas', 'circle-nodes']" />
@@ -129,7 +129,7 @@
                 <div v-if="tags.page == 'Messages'" id="messageTab">
                     <Messages :chat="runtimeData.chatInfo" @user-click="changeChat" @load-history="loadHistory" />
                 </div>
-                <div v-if="tags.page == 'Friends'">
+                <div v-if="tags.page == 'Friends'" id="friendTab">
                     <Friends :list="runtimeData.userList" @load-history="loadHistory" @user-click="changeChat" />
                 </div>
                 <div class="opt-main-tab" style="opacity: 0">

@@ -333,7 +333,6 @@ function init() {
     const img = new Image()
     const loadFinish = () => {
         if (!currentImg.value) return
-        if (currentImg.value.src !== img.src) return
         loading.value = false
         currentImgInfo.value = {
             width: img.width,
@@ -345,7 +344,21 @@ function init() {
     }
     if (canCors)
         img.crossOrigin = 'anonymous'
-    img.src = currentImg.value.src
+
+    if(backend.type === 'capacitor' && backend.function && 'plugins' in backend.function && 'CapacitorHttp' in backend.function.plugins) {
+        const capacitorHttp = backend.function.plugins.CapacitorHttp
+        capacitorHttp.get({
+            url: currentImg.value.src,
+            responseType: 'blob',
+        }).then((r: any) => {
+            img.src = 'data:image/png;base64,' + r.data
+        }).catch(() => {
+            img.src = currentImg.value?.src || ''
+        })
+    } else {
+        img.src = currentImg.value.src
+    }
+
     img.onload = loadFinish
     loading.value = true
     mouseMoveInfo.value = undefined
