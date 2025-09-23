@@ -1,6 +1,6 @@
 <template>
     <div class="umami-info-pan">
-        <div class="type-list">
+        <div :class="'type-list' + (loading ? ' load' : '')">
             <font-awesome-icon :icon="['fas', 'book']" />
             <!-- 概览 -->
             <font-awesome-icon
@@ -47,7 +47,7 @@
                 </div>
                 <div class="time-select">
                     <div>
-                        <select v-model="timeType" @change="updateData">
+                        <select v-model="timeType" :disabled="loading" @change="changeTime">
                             <option value="1">
                                 {{ $t('最近 24 小时') }}
                             </option>
@@ -79,7 +79,7 @@
                         <v-chart :option="visitData.pageviewChart" style="width: 100%;height: 100%;" autoresize />
                         <div class="time-select overview-time-select">
                             <div>
-                                <select v-model="timeType" @change="updateData">
+                                <select v-model="timeType" :disabled="loading" @change="changeTime">
                                     <option value="1">
                                         {{ $t('最近 24 小时') }}
                                     </option>
@@ -111,7 +111,7 @@
                         </div>
                     </div>
                     <span>{{ $t('当前在线人数') }}: {{ visitData.online }}</span>
-                    <div v-if="visitData.metrics != null" class="ss-card website-metric">
+                    <div v-show="mainListSelected != ''" v-if="visitData.metrics != null" class="ss-card website-metric">
                         <div>
                             <span v-if="mainListSelected !== ''">{{ $t(metricTypes[mainListSelected]) }}</span>
                             <a style="width: calc(5rem + 20px);">{{ $t('数值（占比）') }}</a>
@@ -133,7 +133,7 @@
                 </template>
                 <!-- 访客详情 & 事件详情 -->
                 <template v-if="showName === 'event' || showName === 'session'">
-                    <div v-if="eventData != null" class="pie-pan">
+                    <div v-show="mainListSelected != ''" v-if="eventData != null" class="pie-pan">
                         <v-chart :option="eventData" autoresize />
                         <a>{{ $t('占比小于 {per}% 的数据将不会展示在饼图中', { per: minPiePercentage * 100 }) }}</a>
                     </div>
@@ -209,6 +209,7 @@
                 minPiePercentage: 0.0084, // 饼图中最小显示百分比
                 showName: 'website',
                 timeType: 1,
+                loading: false,
                 mainListSelected: '',
                 mainList: [] as {
                     label: string,
@@ -228,6 +229,14 @@
             }
         },
         mounted() {
+            this.$watch(() => this.mainList, (newValue) => {
+                if(newValue.length > 0)
+                    this.loading = false
+            })
+            this.$watch(() => this.visitData.pageviewChart, (newValue) => {
+                if(newValue != null)
+                    this.loading = false
+            })
             this.updateData()
             this.$watch(this.showName, () => {
                 this.updateData()
@@ -235,6 +244,8 @@
         },
         methods: {
             changeView(view: string) {
+                if(this.loading) return
+
                 this.showName = view
                 this.mainListSelected = ''
                 this.visitData.metrics = null
@@ -242,7 +253,15 @@
                 this.updateData()
             },
 
+            changeTime() {
+                if(this.loading) return
+
+                this.mainListSelected = '';
+                this.updateData();
+            },
+
             updateData() {
+                this.loading = true
                 this.getStatus()
                 this.getOnlineCount()
                 this.getList()
@@ -649,6 +668,7 @@
     z-index: 10;
 }
 .type-list > svg {
+    transition: all 0.3s;
     cursor: pointer;
     color: var(--color-font);
     width: 15px;
@@ -665,6 +685,9 @@
 .type-list > svg.select {
     background: var(--color-main);
     color: var(--color-font-r);
+}
+.type-list.load > svg.select {
+    opacity: 0.5;
 }
 
 .detail-list {
@@ -688,6 +711,7 @@
     font-size: 0.8rem;
     color: var(--color-font-1);
 }
+
 .time-select {
     margin: 1rem;
 }
@@ -721,6 +745,11 @@
     width: 100%;
     height: 30px;
 }
+.time-select select:disabled {
+    background: var(--color-card-1);
+    color: var(--color-font-2);
+    cursor: not-allowed;
+}
 .overview-time-select {
     position: absolute;
     bottom: 17px;
@@ -731,6 +760,11 @@
 .overview-time-select select {
     background: var(--color-card-1);
 }
+.overview-time-select select:disabled {
+    background: var(--color-bg);
+    color: var(--color-font-2);
+    cursor: not-allowed;
+}
 .detail-list > .list {
     overflow-y: scroll;
     margin-right: 7px;
@@ -738,6 +772,7 @@
 }
 
 .detail-list > .list > div {
+    transition: all 0.3s;
     justify-content: space-between;
     cursor: pointer;
     margin: 0 1rem 5px 1rem;
