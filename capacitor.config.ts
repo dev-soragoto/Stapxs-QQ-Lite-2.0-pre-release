@@ -6,6 +6,9 @@ const config: CapacitorConfig = {
     appName: 'Stapxs QQ Lite',
     webDir: 'dist',
     loggingBehavior: 'none',
+    // server: {
+    //     url: 'http://192.168.0.99:8081'
+    // },
     ios: {
         path: 'src/mobile/ios'
     },

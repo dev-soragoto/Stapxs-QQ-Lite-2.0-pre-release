@@ -61,6 +61,13 @@ html {
     width: 45px;
 }
 
+.group-assist-message-list {
+    margin-right: -365px;
+}
+.group-assist-message-list.show {
+    margin-left: -365px;
+}
+
 .home-body {
     background: var(--color-card);
     width: calc(100% - 365px);

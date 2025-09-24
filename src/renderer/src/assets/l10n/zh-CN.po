@@ -1065,6 +1065,9 @@ msgstr ""
 msgid "超级表情"
 msgstr ""
 
+msgid "小黄脸长大了，变成了大黄脸！"
+msgstr ""
+
 msgid "小黄脸表情"
 msgstr ""
 
@@ -1281,14 +1284,122 @@ msgstr ""
 msgid "合并转发解析失败"
 msgstr ""
 
+msgid "分析统计信息"
+msgstr ""
+
+msgid "都有些什么数据呢"
+msgstr ""
+
+msgid "查看"
+msgstr ""
+
+msgid "最近 24 小时"
+msgstr ""
+
+msgid "本周"
+msgstr ""
+
+msgid "本月"
+msgstr ""
+
+msgid "本年"
+msgstr ""
+
+msgid "所有时间段"
+msgstr ""
+
+msgid "概览"
+msgstr ""
+
+msgid "月"
+msgstr ""
+
+msgid "访客数据"
+msgstr ""
+
+msgid "数值（占比）"
+msgstr ""
+
+msgid "浏览器"
+msgstr ""
+
+msgid "操作系统"
+msgstr ""
+
+msgid "设备"
+msgstr ""
+
+msgid "语言"
+msgstr ""
+
+msgid "屏幕"
+msgstr ""
+
+msgid "事件"
+msgstr ""
+
+msgid "浏览量"
+msgstr ""
+
 msgid "访客数据_pageviews"
 msgstr "浏览量"
 
 msgid "访客数据_visitors"
 msgstr "访问次数"
 
+msgid "访客"
+msgstr ""
+
 msgid "访客数据_visits"
 msgstr "访客"
 
+msgid "当前在线人数"
+msgstr ""
+
+msgid "访客详情"
+msgstr ""
+
+msgid "访客数据表示访问网站的独立会话，同一个访客只会统计一次。并且在下次访问时覆盖上次的数据。"
+msgstr ""
+
+msgid "应用版本"
+msgstr ""
+
+msgid "系统版本"
+msgstr ""
+
+msgid "系统架构"
+msgstr ""
+
+msgid "机器人版本"
+msgstr ""
+
 msgid "占比小于 {per}% 的数据将不会展示在饼图中"
+msgstr ""
+
+msgid "事件详情"
+msgstr ""
+
+msgid "事件数据表示用户在访问期间的具体操作或上报行为，每次触发都会单独记录，因此同一个访客可能产生多个事件。"
+msgstr ""
+
+msgid "上报客户端"
+msgstr ""
+
+msgid "发送消息"
+msgstr ""
+
+msgid "切换聊天面板样式"
+msgstr ""
+
+msgid "切换主题色"
+msgstr ""
+
+msgid "触发按钮"
+msgstr ""
+
+msgid "触发彩蛋"
+msgstr ""
+
+msgid "切换语言"
 msgstr ""

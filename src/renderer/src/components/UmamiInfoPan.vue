@@ -107,7 +107,9 @@
                             v-show="name !== 'bounces' && name !== 'totaltime'"
                             :key="name">
                             <a>{{ formatNumber(visitData.status[name].value) }}</a>
-                            <span>{{ $t('访客数据_' + name) }}</span>
+                            <span v-if="name !== 'bounces' && name !== 'totaltime'">
+                                {{ $t('访客数据_' + name) }}
+                            </span>
                         </div>
                     </div>
                     <span>{{ $t('当前在线人数') }}: {{ visitData.online }}</span>
@@ -192,7 +194,6 @@
                 },
                 eventTypes: {
                     'send_msg': '发送消息',
-                    'link_view': '预览链接',
                     'connect': '连接',
                     'use_theme_color': '切换主题色',
                     'use_language': '切换语言',
