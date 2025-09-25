@@ -18,11 +18,11 @@
                     font-size: 0.8rem;
                     text-wrap: nowrap;
                     color: var(--color-font-1);
-                    font-family: meow;
+                    font-family: meow, sans-serif;
                     ">戳下面戳下面，打开去看看嘛—— (｡•́︿•̀｡)</a>
             </div>
             <div>
-                <div class="qidai" />
+                <div class="meme" />
             </div>
         </div>
     </div>
@@ -73,7 +73,7 @@
     width: 40vw;
 }
 .hun-text > span {
-    font-family: meow;
+    font-family: meow, sans-serif;
     font-weight: bold;
     font-size: 1.9rem;
     display: block;
@@ -84,7 +84,7 @@
     display: block;
 }
 
-.qidai {
+.meme {
     background-image: url('../../assets/img/期待.png');
     background-size: cover;
     width: 160px;

@@ -304,7 +304,7 @@ body {
     width: calc(100% - 20px);
     min-height: 0;
 }
-.contributors-card > divcontributors > div {
+.contributors-card > div.contributors > div {
     min-width: calc(20% - 10px);
     aspect-ratio: 1;
     margin: 5px;
