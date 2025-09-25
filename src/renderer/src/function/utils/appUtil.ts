@@ -8,6 +8,7 @@ import Umami from '@stapxs/umami-logger-typescript'
 import AboutPan from '@renderer/components/AboutPan.vue'
 import UpdatePan from '@renderer/components/UpdatePan.vue'
 import WelPan from '@renderer/components/WelPan.vue'
+import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.vue'
 
 import { KeyboardInfo } from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
@@ -20,6 +21,7 @@ import {
 } from '@renderer/function/utils/systemUtil'
 import {
     markRaw,
+    defineAsyncComponent,
     toRaw,
     nextTick,
     Directive,
@@ -352,6 +354,7 @@ export function createMenu() {
                 name: $t('Stapxs QQ Lite'),
             },
         )
+
         menuTitles.repo = import.meta.env.VITE_APP_REPO_NAME
 
         menuTitles.title = $t('Stapxs QQ Lite')
@@ -834,11 +837,12 @@ function showReleaseLog(data: any, isUpdated: boolean) {
 export function checkOpenTimes() {
     if (import.meta.env.DEV) return     // 开发环境不显示
     const { $t } = app.config.globalProperties
+    const repoName = import.meta.env.VITE_APP_REPO_NAME
     const times = localStorage.getItem('times')
     if (times != null) {
         const getTimes = Number(times) + 1
         localStorage.setItem('times', getTimes.toString())
-        if (getTimes % 50 == 0) {
+        if (getTimes % 20 == 0) {
             // 构建 HTML
             let html =
                 '<div style="display:flex;flex-direction:column;padding:10px 5%;align-items:center;">'
@@ -863,8 +867,32 @@ export function checkOpenTimes() {
                         master: true,
                         fun: () => {
                             openLink(
-                                'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0',
+                                `https://github.com/${repoName}`,
                             )
+                            runtimeData.popBoxList.shift()
+                        },
+                    },
+                ],
+            }
+            runtimeData.popBoxList.push(popInfo)
+        }
+        if (getTimes % 50 == 0 && import.meta.env.VITE_APP_SPONSORS_URL) {
+            const popInfo = {
+                title: '',
+                template: markRaw(MealHungryPan),
+                templateValue: { times: getTimes },
+                button: [
+                    {
+                        text: $t('打开…'),
+                        fun: () => {
+                            openLink(import.meta.env.VITE_APP_SPONSORS_URL)
+                            runtimeData.popBoxList.shift()
+                        },
+                    },
+                    {
+                        text: $t('好耶'),
+                        master: true,
+                        fun: () => {
                             runtimeData.popBoxList.shift()
                         },
                     },

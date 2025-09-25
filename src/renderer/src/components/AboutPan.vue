@@ -35,8 +35,8 @@
             <a>v{{ packageInfo.version }}</a>
             <div class="buttons">
                 <a class="ss-button" @click="goGithub()">{{ $t('访问 GitHub 仓库') }}</a>
-                <a class="ss-button" style="width: 30px" @click="goBlog()">
-                    <font-awesome-icon :icon="['fas', 'circle-info']" />
+                <a class="ss-button" style="width: 30px" @click="goFish()">
+                    <font-awesome-icon :icon="['fas', 'fish']" style="transform: rotate(-45deg);" />
                 </a>
             </div>
             <a class="ss-button" style="border-radius: 7px;" @click="dependencies()">{{ $t('更多信息') }}</a>
@@ -94,6 +94,8 @@
 
     import { runtimeData } from '@renderer/function/msg'
 
+    import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.vue'
+
     export default defineComponent({
         name: 'AboutPan',
         props: {
@@ -121,25 +123,30 @@
         mounted() {
             const superThanks = ['doodlehuang']
             // 加载贡献者信息
-            fetch('https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/contributors')
-                .then((response) => response.json())
-                .then((data: { [key: string]: string }[]) => {
-                    for (let i = 0; i < data.length; i++) {
-                        this.constList.push({
-                            url: data[i].avatar_url,
-                            link: data[i].html_url,
-                            title: data[i].login,
-                            contributions: Number(data[i].contributions),
-                            isMe: data[i].login == 'Stapxs',
-                            isSuperThakns: superThanks.includes(data[i].login),
-                        })
-                    }
-                })
-            fetch('https://api.stapxs.cn/ssqq/sponsor')
-                .then((response) => response.json())
-                .then((data: { [key: string]: string }) => {
-                    this.sponsorList = data.list as any
-                })
+            if(import.meta.env.VITE_APP_REPO_NAME) {
+                fetch(`https://api.github.com/repos/${import.meta.env.VITE_APP_REPO_NAME}/contributors`)
+                    .then((response) => response.json())
+                    .then((data: { [key: string]: string }[]) => {
+                        for (let i = 0; i < data.length; i++) {
+                            this.constList.push({
+                                url: data[i].avatar_url,
+                                link: data[i].html_url,
+                                title: data[i].login,
+                                contributions: Number(data[i].contributions),
+                                isMe: data[i].login == 'Stapxs',
+                                isSuperThakns: superThanks.includes(data[i].login),
+                            })
+                        }
+                    })
+            }
+            // 加载赞助者信息
+            if(import.meta.env.VITE_APP_SPONSORS_DATA_API) {
+                fetch(import.meta.env.VITE_APP_SPONSORS_DATA_API)
+                    .then((response) => response.json())
+                    .then((data: { [key: string]: string }) => {
+                        this.sponsorList = data.list as any
+                    })
+            }
         },
         methods: {
             dependencies() {
@@ -152,13 +159,30 @@
             },
 
             goGithub() {
-                openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0')
+                const repoName = import.meta.env.VITE_APP_REPO_NAME
+                openLink(`https://github.com/${repoName}`)
                 sendStatEvent('click_statistics', { name: 'visit_github' })
             },
 
-            goBlog() {
-                openLink('https://blog.stapxs.cn/About.html')
-                sendStatEvent('click_statistics', { name: 'visit_blog' })
+            goFish() {
+                sendStatEvent('click_statistics', { name: 'visit_fish' })
+                if(!import.meta.env.VITE_APP_SPONSORS_URL) return
+                const popInfo = {
+                    title: '',
+                    template: markRaw(MealHungryPan),
+                    allowQuickClose: false,
+                    button: [
+                        {
+                            text: this.$t('打开…'),
+                            master: true,
+                            fun: () => {
+                                openLink(import.meta.env.VITE_APP_SPONSORS_URL)
+                                runtimeData.popBoxList.shift()
+                            },
+                        }
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
             },
         },
     })
