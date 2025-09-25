@@ -174,7 +174,7 @@
         GridComponent
     ])
 
-    const API_URL = 'https://api.stapxs.cn/ssqq/umami'
+    const API_URL = import.meta.env.VITE_APP_MU_DATA_API
 
     export default defineComponent({
         name: 'UmamiInfoPan',

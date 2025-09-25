@@ -392,6 +392,7 @@ export function regIpcListener() {
     // MacOS：初始化菜单
     // PS：由于本地化的存在，需要让 vue 获取到本地化信息之后再由 electron 构建
     ipcMain.on('sys:createMenu', (_, args) => {
+        const repoName = import.meta.env.VITE_APP_REPO_NAME
         if (process.platform === 'darwin') {
             template = [
                 {
@@ -463,7 +464,7 @@ export function regIpcListener() {
                             click: () => {
                                 sendMenuClick(
                                     'app:openLink',
-                                    'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/wiki',
+                                    `https://github.com/${repoName}/wiki`,
                                 )
                             },
                         },
@@ -472,7 +473,7 @@ export function regIpcListener() {
                             click: () => {
                                 sendMenuClick(
                                     'app:openLink',
-                                    'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues',
+                                    `https://github.com/${repoName}/issues`,
                                 )
                             },
                         },
@@ -482,7 +483,7 @@ export function regIpcListener() {
                             click: () => {
                                 sendMenuClick(
                                     'app:openLink',
-                                    'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/master/LICENSE',
+                                    `https://github.com/${repoName}/blob/master/LICENSE`,
                                 )
                             },
                         },

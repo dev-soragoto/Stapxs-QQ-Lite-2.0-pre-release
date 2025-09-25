@@ -352,6 +352,7 @@ export function createMenu() {
                 name: $t('Stapxs QQ Lite'),
             },
         )
+        menuTitles.repo = import.meta.env.VITE_APP_REPO_NAME
 
         menuTitles.title = $t('Stapxs QQ Lite')
         menuTitles.about = $t('关于') + ' ' + $t('Stapxs QQ Lite')
@@ -719,9 +720,10 @@ function setQuickLogin(address: string, port: number) {
 * 检查更新
 */
 export function checkUpdate() {
+    const repoName = import.meta.env.VITE_APP_REPO_NAME
     // 获取最新的 release 信息
     const packageUrl =
-        'https://api.github.com/repos/stapxs/Stapxs-QQ-Lite-2.0/releases/latest'
+        `https://api.github.com/repos/${repoName}/releases/latest`
     fetch(packageUrl).then((response) => {
         if (response.ok) {
             response.json().then((data) => {

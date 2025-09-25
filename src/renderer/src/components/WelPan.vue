@@ -51,8 +51,8 @@
             <div />
             <div>
                 <span>{{ $t('在开始之前，请阅读以下条款：') }}</span>
-                <a @click="openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/next/DISCLAIMER.md', true)">Stapxs QQ Lite 免责条款（简体中文）</a>
-                <a @click="openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/next/LICENSE', true)">Stapxs QQ Lite 开源许可（英文）</a>
+                <a @click="openLink(`https://github.com/${repoName}/blob/next/DISCLAIMER.md`, true)">Stapxs QQ Lite 免责条款（简体中文）</a>
+                <a @click="openLink(`https://github.com/${repoName}/blob/next/LICENSE`, true)">Stapxs QQ Lite 开源许可（英文）</a>
                 <br>
                 <span>{{ $t('并酌情阅读以下文档：') }}</span>
                 <a @click="openLink('https://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html', true)">《如何有效地报告 BUG》</a>
@@ -401,6 +401,7 @@
         props: ['data'],
         data() {
             return {
+                repoName: import.meta.env.VITE_APP_REPO_NAME,
                 languages: languages,
                 openLink: openLink,
                 runtimeData: runtimeData,

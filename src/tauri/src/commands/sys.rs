@@ -469,7 +469,8 @@ pub fn sys_create_menu(app: tauri::AppHandle, data: HashMap<String, String>) -> 
             .build().map_err(|e| e.to_string())?;
 
         app.set_menu(menu).map_err(|e| e.to_string())?;
-        app.on_menu_event(|app, menu| {
+        app.on_menu_event(move |app, menu| {
+            let repo_name = data.get("repo").unwrap();
             match menu.id().0.as_str() {
                 "about" => {
                     app.emit("app:about", "").unwrap();
@@ -484,13 +485,13 @@ pub fn sys_create_menu(app: tauri::AppHandle, data: HashMap<String, String>) -> 
                     app.emit("bot:flushUser", "").unwrap();
                 }
                 "doc" => {
-                    app.emit("app:openLink", "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/wiki").unwrap();
+                    app.emit("app:openLink", &format!("https://github.com/{}/wiki", repo_name)).unwrap();
                 }
                 "feedback" => {
-                    app.emit("app:openLink", "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues").unwrap();
+                    app.emit("app:openLink", &format!("https://github.com/{}/issues", repo_name)).unwrap();
                 }
                 "license" => {
-                    app.emit("app:openLink", "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/master/LICENSE").unwrap();
+                    app.emit("app:openLink", &format!("https://github.com/{}/blob/master/LICENSE", repo_name)).unwrap();
                 }
                 _ => {}
             }
