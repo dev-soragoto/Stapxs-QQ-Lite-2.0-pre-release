@@ -40,10 +40,28 @@
                 </a>
             </div>
             <a class="ss-button" style="border-radius: 7px;" @click="dependencies()">{{ $t('更多信息') }}</a>
+            <div v-if="sponsorList.length > 0 && showUI" class="contributors-card">
+                <div />
+                <span>{{ $t('赞助者') }}</span>
+                <div class="contributors">
+                    <div v-for="info in sponsorList.slice(0, 3)" :key="info.user.name">
+                        <img :src="info.user.avatar">
+                        <div>
+                            <span>{{ info.user.name }}</span>
+                            <span>{{ info.last_pay_time }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <img v-for="info in sponsorList.slice(3)"
+                        :key="info.user.name"
+                        :src="info.user.avatar">
+                </div>
+            </div>
             <div v-if="constList.length > 0 && showUI" class="contributors-card">
                 <div />
                 <span>{{ $t('社区贡献者') }}</span>
-                <div>
+                <div class="contributors">
                     <div v-for="(info, index) in constList.slice(1, 4)" :key="info.title"
                         :class="(info.isMe ? 'me' : '') + (info.isSuperThakns ? ' super-thanks' : '')"
                         @click="openLink(info.link)">
@@ -89,6 +107,15 @@
                 packageInfo: packageInfo,
                 openLink: openLink,
                 constList: [] as ContributorElem[],
+                sponsorList: [] as {
+                    current_plan: string,
+                    last_pay_time: string,
+                    user: {
+                        name: string,
+                        avatar: string
+                    }
+                }[],
+                sponsorsName: '',
             }
         },
         mounted() {
@@ -107,6 +134,11 @@
                             isSuperThakns: superThanks.includes(data[i].login),
                         })
                     }
+                })
+            fetch('https://api.stapxs.cn/ssqq/sponsor')
+                .then((response) => response.json())
+                .then((data: { [key: string]: string }) => {
+                    this.sponsorList = data.list as any
                 })
         },
         methods: {

@@ -977,7 +977,8 @@ const msgFunctions = {
                         msgPath.message_list,
                     )
                     getMessageList(trueMsg).then((trueMsg) => {
-                        if (trueMsg && trueMsg.length == 1) {
+                        if (trueMsg && trueMsg.length == 1 &&
+                            runtimeData.messageList[fakeIndex]) {
                             runtimeData.messageList[fakeIndex].message = trueMsg[0].message
                             runtimeData.messageList[fakeIndex].raw_message =
                                 trueMsg[0].raw_message
@@ -1570,7 +1571,8 @@ function newMsg(_: string, data: any) {
                 msgPath.message_list,
             )
             getMessageList(trueMsg).then((trueMsg) => {
-                if (trueMsg && trueMsg.length == 1) {
+                if (trueMsg && trueMsg.length == 1 &&
+                    runtimeData.messageList[fakeIndex]) {
                     runtimeData.messageList[fakeIndex].message = trueMsg[0].message
                     runtimeData.messageList[fakeIndex].raw_message =
                         trueMsg[0].raw_message

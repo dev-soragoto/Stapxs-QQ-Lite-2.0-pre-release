@@ -43,7 +43,7 @@ export const backend = {
      * @returns 转换后的 URL
      */
     proxyUrl(url: string) {
-        if (this.proxy && url.startsWith('http')) {
+        if (this.proxy && url && url.startsWith('http')) {
             return `http://localhost:${this.proxy}/proxy?url=${encodeURIComponent(url)}`
         } else {
             return url

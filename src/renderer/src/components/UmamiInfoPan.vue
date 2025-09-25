@@ -800,6 +800,9 @@
 }
 
 .view-pan {
+    background-image: url('../assets/img/stars.svg');
+    background-size: 100%;
+
     justify-content: center;
     display: flex;
     flex-direction: column;
