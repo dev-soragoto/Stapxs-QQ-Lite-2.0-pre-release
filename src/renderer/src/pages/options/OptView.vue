@@ -146,9 +146,27 @@
                     <span>{{ $t('背景图片') }}</span>
                     <span>{{ $t('嘿嘿嘿（痴呆') }}</span>
                 </div>
-                <input v-model="runtimeData.sysConfig.chat_background"
-                    class="ss-input" style="width: 150px"
-                    type="text" name="chat_background" @keyup="save">
+                <div class="file-choice">
+                    <div class="choice-btn"
+                        @click="($refs.choiceImg as any)?.click()">
+                        {{
+                            runtimeData.sysConfig.chat_background
+                                ? $t('更换背景')
+                                : $t('上传背景')
+                        }}
+                        <input ref="choiceImg"
+                            type="file"
+                            style="display: none"
+                            name="chat_background"
+                            accept="image/*"
+                            @change="setBackground($event)">
+                    </div>
+                    <div v-if="runtimeData.sysConfig.chat_background !== ''"
+                        class="rm-btn"
+                        @click="removeBackground">
+                        <font-awesome-icon :icon="['fas', 'xmark']" />
+                    </div>
+                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('chat_background_blur')" />
@@ -338,7 +356,7 @@
 <script lang="ts">
     import { defineComponent, toRaw } from 'vue'
     import { runtimeData } from '../../function/msg'
-    import { runASWEvent as save, get, checkDefault } from '../../function/option'
+    import Option, { runASWEvent as save, get, checkDefault } from '../../function/option'
     import { BrowserInfo, detect } from 'detect-browser'
     import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
@@ -506,6 +524,32 @@
             changeIcon(name: string) {
                 backend.call('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
                 this.usedIcon = name
+            },
+
+
+            /**
+             * 设置背景图片
+             */
+            setBackground(event: Event) {
+                const sender = event.target as HTMLInputElement
+                const img = sender.files?.[0]
+                if (!img) return
+                img.arrayBuffer().then((buffer) => {
+                    const base64String = btoa(
+                        new Uint8Array(buffer)
+                            .reduce((data, byte) => data + String.fromCharCode(byte), ''),
+                    )
+                    const imgSrc = `data:${img.type};base64,${base64String}`
+                    runtimeData.sysConfig.chat_background = imgSrc
+                    Option.runAS('chat_background', imgSrc)
+                })
+            },
+            /**
+             * 移除背景图片
+             */
+            removeBackground() {
+                runtimeData.sysConfig.chat_background = ''
+                Option.runAS('chat_background', '')
             },
         },
     })

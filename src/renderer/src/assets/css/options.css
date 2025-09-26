@@ -416,6 +416,36 @@
     opacity: 0;
 }
 
+
+.opt-item > div.file-choice {
+    display: flex;
+    max-width: 170px;
+    flex-direction: row;
+    margin-right: 0;
+}
+
+.opt-item > div.file-choice > div {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    font-size: 0.8rem;
+    height: 30px;
+    min-width: 30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.opt-item > div.file-choice > div.choice-btn {
+    flex: 1;
+    padding: 0 10px;
+}
+
+.opt-item > div.file-choice > div.rm-btn {
+    margin-left: 10px;
+    width: 30px;
+    cursor: pointer;
+    color: var(--color-red);
+}
+
 .l10n-info {
     border-left: 7px solid var(--color-main);
     background: var(--color-card-1);
