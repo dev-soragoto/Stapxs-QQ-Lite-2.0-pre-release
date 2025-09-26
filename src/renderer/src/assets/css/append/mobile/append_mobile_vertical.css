@@ -1,3 +1,5 @@
+/* 移动端附加样式（纵向） */
+
 .main-body > div {
     height: calc(100% - 75px - var(--safe-area-top) - var(--safe-area-bottom));
     padding-bottom: calc(75px + var(--safe-area-bottom));
@@ -5,8 +7,13 @@
 }
 
 .opt-main-tab,
-.main-body > div > div[name="主页"] {
+.main-body > div > div#homeTab {
     margin-top: calc(1px - var(--safe-area-top)) !important;
+    height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom) - 20px) !important;
+}
+
+.main-body > div > div#messageTab,
+.main-body > div > div#friendTab {
     height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom) - 20px) !important;
 }
 
@@ -81,4 +88,9 @@
 
 .opt-tab .tab-body > div {
     padding: 0;
+}
+
+.pop-box-body.full.window {
+    height: calc(100vh - calc(var(--safe-area-top) + 80px + var(--safe-area-bottom)));
+    margin-bottom: var(--safe-area-bottom);
 }

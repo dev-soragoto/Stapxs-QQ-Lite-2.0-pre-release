@@ -1,3 +1,5 @@
+/* 移动端附加样式（横向） */
+
 html {
     -webkit-tap-highlight-color: transparent;
 }
@@ -59,6 +61,13 @@ html {
     width: 45px;
 }
 
+.group-assist-message-list {
+    margin-right: -365px;
+}
+.group-assist-message-list.show {
+    margin-left: -365px;
+}
+
 .home-body {
     background: var(--color-card);
     width: calc(100% - 365px);
@@ -67,9 +76,6 @@ html {
 }
 
 /* 聊天面板 */
-.viewer-footer > div {
-    margin-top: calc(var(--safe-area--viewer-top) + 15px);
-}
 .chat-pan > div.info > svg {
     display: none;
 }
@@ -126,14 +132,17 @@ html {
     margin-bottom: -60px;
     padding-bottom: 60px;
 }
-.chat-pan > div.chat > div:first-child > div:last-child {
-    padding-bottom: 70px;
+.chat-pan > div.chat {
+    margin-bottom: -30px;
 }
 .chat-pan > div.more {
     padding-bottom: var(--safe-area-bottom);
 }
 .chat-pan > div.more > div:first-child {
-    background: var(--color-card-1);
+    padding-bottom: 20px;
+}
+.chat-pan > div.more > div:first-child > div {
+    border-radius: 999px;
 }
 .chat-pan > div.more > div:nth-child(2) {
     background: rgba(var(--color-card-rgb), 0.7);
@@ -166,24 +175,18 @@ html {
 .chat-pan > div.new-msg {
     margin: -50px 20px 20px auto;
 }
-.more-detail {
-    background: var(--color-card-1);
-}
-.more-detail > div {
-    background: var(--color-card-2);
-}
 .face-pan {
-    position: relative;
-    transform: unset;
-    width: 100%;
-    border-radius: 0;
-    margin: 0;
+    padding-bottom: 80px;
 }
-.face-pan div.tab-main > div {
-    padding-top: 10px !important;
+.face-pan div.title {
+    margin-bottom: 10px;
+}
+.face-pan div.title > span{
+    font-size: 1rem;
 }
 .base-face, .face-stickers {
     height: 290px;
+    padding: 0;
 }
 .img-sender {
     height: calc(100% - var(--safe-area-top) - calc(var(--safe-area-bottom) + 15px));

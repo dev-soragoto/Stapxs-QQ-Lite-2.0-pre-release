@@ -18,6 +18,7 @@ import { win, touchBarInstance } from '../index.ts'
 import { Connector } from './connector.ts'
 import { logLevel } from '../index.ts'
 import ScanNetwork from './scannetwork.ts'
+import { execSync } from 'child_process'
 
 let connector = undefined as Connector | undefined
 const store = new Store()
@@ -40,7 +41,21 @@ export function regIpcListener() {
         return process.platform
     })
     ipcMain.handle('sys:getRelease', () => {
-        return os.release()
+        const osName = os.type() // 'Linux', 'Darwin', 'Windows_NT'
+        let osVersion = os.release()
+        if(osName === 'Darwin') {
+            osVersion = execSync('sw_vers -productVersion').toString().trim()
+            if (osVersion.split('.').length === 2) {
+                osVersion += '.0';
+            }
+        }
+        let releaseInfo = ''
+        if (osName === 'Linux') releaseInfo = 'Linux ' + osVersion
+        if (osName === 'Darwin') releaseInfo = 'macOS ' + osVersion
+        if (osName === 'Windows_NT') releaseInfo = 'Windows ' + osVersion
+        // 获取架构
+        const arch = os.arch()
+        return { release: releaseInfo, arch: arch }
     })
     // 获取最终 URL
     ipcMain.handle('sys:getFinalRedirectUrl', async (_, str: string) => {
@@ -377,6 +392,7 @@ export function regIpcListener() {
     // MacOS：初始化菜单
     // PS：由于本地化的存在，需要让 vue 获取到本地化信息之后再由 electron 构建
     ipcMain.on('sys:createMenu', (_, args) => {
+        const repoName = import.meta.env.VITE_APP_REPO_NAME
         if (process.platform === 'darwin') {
             template = [
                 {
@@ -448,7 +464,7 @@ export function regIpcListener() {
                             click: () => {
                                 sendMenuClick(
                                     'app:openLink',
-                                    'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/wiki',
+                                    `https://github.com/${repoName}/wiki`,
                                 )
                             },
                         },
@@ -457,7 +473,7 @@ export function regIpcListener() {
                             click: () => {
                                 sendMenuClick(
                                     'app:openLink',
-                                    'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues',
+                                    `https://github.com/${repoName}/issues`,
                                 )
                             },
                         },
@@ -467,7 +483,7 @@ export function regIpcListener() {
                             click: () => {
                                 sendMenuClick(
                                     'app:openLink',
-                                    'https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/master/LICENSE',
+                                    `https://github.com/${repoName}/blob/master/LICENSE`,
                                 )
                             },
                         },

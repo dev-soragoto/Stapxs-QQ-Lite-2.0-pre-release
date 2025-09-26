@@ -48,7 +48,7 @@
                 </li>
             </ul>
             <div :style="get('fs_adaptation') > 0 ? `height: calc(100% - ${75 + Number(get('fs_adaptation'))}px);` : ''">
-                <div v-if="tags.page == 'Home'" :name="$t('主页')">
+                <div v-if="tags.page == 'Home'" id="homeTab" name="主页">
                     <div class="home-body">
                         <div class="login-pan-card ss-card">
                             <font-awesome-icon :icon="['fas', 'circle-nodes']" />
@@ -106,7 +106,7 @@
                                     </template>
                                 </button>
                             </form>
-                            <a href="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8"
+                            <a :href="`https://github.com/${repoName}#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8`"
                                 target="_blank" style="margin-bottom: -20px">{{ $t('如何连接') }}</a>
                             <div class="wave-pan" style="margin-left: -30px">
                                 <svg id="login-wave" xmlns="http://www.w3.org/2000/svg"
@@ -129,7 +129,7 @@
                 <div v-if="tags.page == 'Messages'" id="messageTab">
                     <Messages :chat="runtimeData.chatInfo" @user-click="changeChat" @load-history="loadHistory" />
                 </div>
-                <div v-if="tags.page == 'Friends'">
+                <div v-if="tags.page == 'Friends'" id="friendTab">
                     <Friends :list="runtimeData.userList" @load-history="loadHistory" @user-click="changeChat" />
                 </div>
                 <div class="opt-main-tab" style="opacity: 0">
@@ -158,7 +158,7 @@
             </div>
         </TransitionGroup>
         <Transition>
-            <div v-if="runtimeData.popBoxList.length > 0" class="pop-box">
+            <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
                          (runtimeData.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
@@ -196,29 +196,21 @@
         </Transition>
         <!-- 全局搜索栏 -->
         <GlobalSessionSearchBar />
-        <viewer v-show="runtimeData.tags.viewer.show" ref="viewer" class="viewer"
-            :options="viewerOpt"
-            :images="runtimeData.mergeMessageImgList ?? runtimeData.chatInfo.info.image_list"
-            @inited="viewerInited"
-            @hide="viewerHide"
-            @show="viewerShow">
-            <template #default="scope">
-                <img v-for="info in scope.images" :key="'imgView-' + info.index" :src="info.img_url">
-            </template>
-        </viewer>
+        <NtViewer ref="nt-viewer" />
         <div id="mobile-css" />
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Spacing from 'spacingjs/src/spacing'
 import app from '@renderer/main'
 import Option from '@renderer/function/option'
 import Umami from '@stapxs/umami-logger-typescript'
 import * as App from './function/utils/appUtil'
+import anime from 'animejs'
 import packageInfo from '../../../package.json'
 
-import { defineComponent, defineAsyncComponent } from 'vue'
+import { defineComponent, defineAsyncComponent, useTemplateRef, provide } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
@@ -231,34 +223,30 @@ import { uptime } from '@renderer/main'
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
-import Chat from '@renderer/pages/Chat.vue'
 import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
+import NtViewer from './components/ViewerCom.vue'
 
+// 注册组件实例
+const ntViewer = useTemplateRef<InstanceType<typeof NtViewer>>('nt-viewer')
+provide('viewer', ntViewer)
+</script>
+
+<script lang="ts">
 export default defineComponent({
     name: 'App',
-    components: {
-        Options,
-        Friends,
-        Messages,
-        Chat,
-        GlobalSessionSearchBar,
-    },
     data() {
         return {
-            backend,
+            repoName: import.meta.env.VITE_APP_REPO_NAME,
             appClient: backend,
             dev: import.meta.env.DEV,
             sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
-            Connector: Connector,
             defineAsyncComponent: defineAsyncComponent,
             save: Option.runASWEvent,
             get: Option.get,
             popInfo: new PopInfo(),
             appMsgs: popList,
             loadHistory: App.loadHistory,
-            loginInfo: loginInfo,
-            runtimeData: runtimeData,
             tags: {
                 page: 'Home',
                 showChat: false,
@@ -266,20 +254,6 @@ export default defineComponent({
                 savePassword: false,
                 quickLoginSelect: ''
             },
-            viewerOpt: {
-                inline: false,
-                button: false,
-                title: false,
-                navbar: false,
-                toolbar: {
-                    prev: true,
-                    rotateLeft: true,
-                    reset: true,
-                    rotateRight: true,
-                    next: true,
-                },
-            },
-            viewerBody: undefined as HTMLDivElement | undefined,
             fps: {
                 last: Date.now(),
                 ticks: 0,
@@ -301,8 +275,6 @@ export default defineComponent({
                 // eslint-disable-next-line
                 console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
             }
-            // 初始化全局参数
-            app.config.globalProperties.$viewer = this.viewerBody
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(
                 document.getElementById('login-wave'),
@@ -348,25 +320,23 @@ export default defineComponent({
             App.loadMobile()
             // 加载额外样式
             App.loadAppendStyle()
-            const baseApp = document.getElementById('base-app')
-            if (baseApp) {
-                baseApp.style.setProperty('--safe-area-bottom',
-                    (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
-                baseApp.style.setProperty('--safe-area-top', '0')
-                baseApp.style.setProperty('--safe-area-left', '0')
-                baseApp.style.setProperty('--safe-area-right', '0')
-                // Capacitor：移动端初始化安全区域
-                if (backend.isMobile()) {
-                    const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
-                    if (safeArea) {
-                        logger.add(LogType.DEBUG, '安全区域：', safeArea)
-                        baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
-                        baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-                        baseApp.style.setProperty('--safe-area-left', safeArea.left + 'px')
-                        baseApp.style.setProperty('--safe-area-right', safeArea.right + 'px')
-                        // 图片查看器安全区域
-                        document.documentElement.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
-                    }
+            document.body.style.setProperty('--safe-area-bottom',
+                (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
+            document.body.style.setProperty('--safe-area-top', '0')
+            document.body.style.setProperty('--safe-area-left', '0')
+            document.body.style.setProperty('--safe-area-right', '0')
+            // Capacitor：移动端初始化安全区域
+            if (backend.isMobile()) {
+                // 我把 viewer 挂在 body 上，所以css也得改到 body 上
+                const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
+                if (safeArea) {
+                    logger.add(LogType.DEBUG, '安全区域：', safeArea)
+                    document.body.style.setProperty('--safe-area-top', safeArea.top + 'px')
+                    document.body.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+                    document.body.style.setProperty('--safe-area-left', safeArea.left + 'px')
+                    document.body.style.setProperty('--safe-area-right', safeArea.right + 'px')
+                    // 图片查看器安全区域
+                    document.body.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
                 }
             }
             // 加载密码保存和自动连接
@@ -429,16 +399,20 @@ export default defineComponent({
                     baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
                     websiteId: import.meta.env.VITE_APP_MU_ID
                 } as any
-                // 给页面添加一个来源域名方便在 electron 中获取
+                // 给页面添加一个来源域名方便在非 web 端
                 if(!backend.isWeb()) {
                     config.hostName = backend.type + '.stapxs.cn'
                 }
                 Umami.initialize(config)
+                // 上报一些应用基础信息
+                App.sendIdentifyData({
+                    'app_version': import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version,
+                    'os_version': backend.release,
+                    'os_arch': backend.arch,
+                })
             } else if (this.dev) {
                 logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
             }
-            App.sendStatEvent('version',
-                import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version)
             App.checkUpdate() // 检查更新
             App.checkOpenTimes() // 检查打开次数
             App.checkNotice() // 检查公告
@@ -504,9 +478,9 @@ export default defineComponent({
         connect() {
             if(this.tags.quickLoginSelect != '') {
                 // PS：快速连接的地址只会是局域网，所以默认 ws 协议
-                this.loginInfo.address = 'ws://' + this.tags.quickLoginSelect
+                loginInfo.address = 'ws://' + this.tags.quickLoginSelect
             }
-            Connector.create(this.loginInfo.address, this.loginInfo.token)
+            Connector.create(loginInfo.address, loginInfo.token)
         },
         selectQuickLogin(address: string) {
             this.tags.quickLoginSelect = address
@@ -611,7 +585,7 @@ export default defineComponent({
          */
         changeChat(data: BaseChatInfoElem) {
             // 设置聊天信息
-            this.runtimeData.chatInfo = {
+            runtimeData.chatInfo = {
                 show: data,
                 info: {
                     group_info: {},
@@ -635,7 +609,7 @@ export default defineComponent({
                     'get_group_member_info',
                     {
                         group_id: data.id,
-                        user_id: this.runtimeData.loginInfo.uin,
+                        user_id: runtimeData.loginInfo.uin,
                     },
                     'getUserInfoInGroup',
                 )
@@ -650,24 +624,6 @@ export default defineComponent({
 
             // 清理通知
             backend.call(undefined, 'sys:closeAllNotice', false, String(data.id))
-        },
-
-        /**
-         * 图片查看器初始化
-         * @param viewer viewer 对象
-         */
-        viewerInited(viewer: HTMLDivElement) {
-            this.viewerBody = viewer
-        },
-
-        /**
-         * 图片查看器事件
-         */
-        viewerHide() {
-            runtimeData.tags.viewer.show = false
-        },
-        viewerShow() {
-            runtimeData.tags.viewer.show = true
         },
 
         /**
@@ -725,6 +681,20 @@ export default defineComponent({
         popQuickClose(allow: boolean | undefined) {
             if (allow != false) {
                 runtimeData.popBoxList.shift()
+            } else {
+                const animeBody = document.getElementById('pop-box')
+                const timeLine = anime.timeline({ targets: animeBody })
+                // 使用 animejs 实现一个沿中心左右摇晃的动画，摇晃三次
+                timeLine.add({
+                    rotate: [
+                        { value: -1, duration: 75, easing: 'easeInOutSine' },
+                        { value: 1, duration: 150, easing: 'easeInOutSine' },
+                        { value: 0, duration: 75, easing: 'easeInOutSine' },
+                    ],
+                    duration: 200,
+                    easing: 'easeInOutSine',
+                    loop: 3,
+                })
             }
         },
 

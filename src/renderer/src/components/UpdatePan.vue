@@ -25,7 +25,7 @@
                         class="log-issue">
                         <span> -&gt; </span>
                         <div />
-                        <a @click="openLink(`https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/${item.issue}`, true)">#{{ item.issue }}</a>
+                        <a @click="openLink(`https://github.com/${repoName}/issues/${item.issue}`, true)">#{{ item.issue }}</a>
                     </div>
                 </div>
             </div>
@@ -48,6 +48,7 @@
             return {
                 openLink,
                 getTrueLang,
+                repoName: import.meta.env.VITE_APP_REPO_NAME,
                 info: {
                     title: '' as string,
                     content: [] as { [key: string]: string }[],

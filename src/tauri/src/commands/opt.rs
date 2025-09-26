@@ -45,8 +45,9 @@ pub fn opt_get_all(app: AppHandle) -> Result<HashMap<String, String>, String> {
 pub fn opt_get(app: AppHandle, data: String) -> Result<String, String> {
     let store =
         StoreBuilder::new(&app, ".settings.dat").build().map_err(|e| e.to_string())?;
-    let value = store.get(data).unwrap_or_default();
-    Ok(value.to_string())
+    let store_value = store.get(data).unwrap_or_default();
+    let value = store_value.as_str().unwrap_or("").to_string();
+    Ok(value)
 }
 
 #[command]

@@ -9,17 +9,43 @@
     <div class="ss-card face-pan">
         <BcTab>
             <div icon="fa-solid fa-face-laugh-squint">
-                <div class="title">
-                    <span>{{ $t('小黄脸表情') }}</span>
-                </div>
-                <div class="base-face">
-                    <div v-for="num in baseFaceMax"
-                        v-show="getFace(num) != ''"
-                        :key="'base-face-' + num"
-                        :data-id="num"
-                        @click="addBaseFace(num)">
-                        <img loading="lazy"
-                            :src="getFace(num) as any">
+                <div class="system-face-bar">
+                    <div class="title">
+                        <span>{{ $t('超级表情') }}</span>
+                    </div>
+                    <div class="base-face">
+                        <template v-for="num in Emoji.superList" :key="'base-face-wrapper-' + num">
+                            <div>
+                                <EmojiFace
+                                    :key="'base-face-' + num"
+                                    :emoji="Emoji.get(num)!"
+                                    @click="addBaseFace(num)" />
+                            </div>
+                        </template>
+                    </div>
+                    <div class="title">
+                        <span>{{ $t('小黄脸表情') }}</span>
+                    </div>
+                    <div class="base-face">
+                        <template v-for="num in Emoji.normalList" :key="'base-face-wrapper-' + num">
+                            <div>
+                                <EmojiFace
+                                    :key="'base-face-' + num"
+                                    :emoji="Emoji.get(num)!"
+                                    @click="addBaseFace(num)" />
+                            </div>
+                        </template>
+                    </div>
+                    <div class="title">
+                        <span>{{ $t('emoji 表情') }}</span>
+                    </div>
+                    <div class="base-face">
+                        <div v-for="num in Emoji.emojiList" :key="'base-face-wrapper-' + num">
+                            <EmojiFace
+                                :key="'base-face-' + num"
+                                :emoji="Emoji.get(num)!"
+                                @click="addBaseFace(num)" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -57,26 +83,25 @@
     import { defineComponent } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
-    import { getFace } from '@renderer/function/utils/msgUtil'
-
-    import Option from '@renderer/function/option'
-
     import BcTab from 'vue3-bcui/packages/bc-tab'
+    import Emoji from '@renderer/function/model/emoji'
+    import EmojiFace from './EmojiFace.vue'
 
     export default defineComponent({
         name: 'FacePan',
         components: {
             BcTab,
+            EmojiFace,
         },
         props: ['display'],
         emits: ['addSpecialMsg', 'sendMsg'],
         data() {
             return {
-                getFace: getFace,
                 Option: Option,
                 runtimeData: runtimeData,
                 baseFaceMax: 348,
                 stickerPage: 1,
+                Emoji,
             }
         },
         mounted() {
@@ -115,7 +140,10 @@
                 } as SQCodeElem)
             },
             addBaseFace(id: number) {
-                this.addSpecialMsg({ type: 'face', id: id }, true)
+                if (id < 5000)
+                    this.addSpecialMsg({ type: 'face', id: id }, true)
+                else
+                    this.addSpecialMsg({ type: 'text', text: Emoji.get(id)!.value }, true)
             },
             addImgFace(url: string) {
                 this.addSpecialMsg(

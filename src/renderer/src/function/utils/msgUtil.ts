@@ -105,28 +105,6 @@ function replaceJPValue(jpStr: string) {
 }
 
 /**
- * 获取表情图片，优先返回 gif，不存在的返回 png
- * @param id 表情编号
- * @returns 表情图片
- */
-export function getFace(id: number) {
-    const pathList = import.meta.glob('@renderer/assets/img/qq-face/public/*/s*.*',
-        { eager: true }
-    )
-    for(const path in pathList) {
-        if (path.includes(`/s${id}.gif`)) {
-            return (pathList[path] as any).default
-        }
-    }
-    for(const path in pathList) {
-        if (path.includes(`/s${id}.png`)) {
-            return (pathList[path] as any).default
-        }
-    }
-    return ''
-}
-
-/**
  * 将一个消息体列表组装为基础消息列表便于解析（message 消息体可能不正确）
  * @param msgList
  * @param map
@@ -494,7 +472,7 @@ export function sendMsgRaw(
     if (msg !== undefined && msg.length > 0) {
         if (runtimeData.jsonMap.name === 'Lagrange.OneBot'){
             lgrSendMsg(id, msg, type, echo + '_uuid_' + msgUUID)
-            sendStatEvent('sendMsg', { type: type })
+            sendStatEvent('send_msg', { type: type })
             return
         }
         switch (type) {
@@ -529,7 +507,7 @@ export function sendMsgRaw(
                 break
             }
         }
-        sendStatEvent('sendMsg', { type: type })
+        sendStatEvent('send_msg', { type: type })
     }
 }
 
@@ -704,6 +682,56 @@ export function isShowTime(
     if (timePrv == undefined) return false
     // 五分钟 10 位时间戳相差 300
     return timeNow - timePrv >= 300
+}
+
+/**
+ * 计算 QQ 等级图标
+ * @param level QQ 等级
+ * @returns 图标数量
+ */
+export function qqLevelIcons(level) {
+    const result = {
+        crown: 0,  // 皇冠
+        sun: 0,    // 太阳
+        moon: 0,   // 月亮
+        star: 0    // 星星
+    };
+
+    result.crown = Math.floor(level / 64);
+    level %= 64;
+
+    result.sun = Math.floor(level / 16);
+    level %= 16;
+
+    result.moon = Math.floor(level / 4);
+    level %= 4;
+
+    result.star = level;
+
+    return result;
+}
+
+/**
+ * 计算 QQ 等级表情
+ * @param level QQ 等级
+ * @returns 表情字符串
+ */
+export function qqLevelToEmoji(level) {
+    const rawLevel = level
+    if(level <= 0) return level
+
+    const crown = Math.floor(level / 64);
+    level %= 64;
+
+    const sun = Math.floor(level / 16);
+    level %= 16;
+
+    const moon = Math.floor(level / 4);
+    level %= 4;
+
+    const star = level;
+
+    return '👑'.repeat(crown) + '☀️'.repeat(sun) + '🌙'.repeat(moon) + '⭐️'.repeat(star) + '（' + rawLevel + '）';
 }
 
 /**

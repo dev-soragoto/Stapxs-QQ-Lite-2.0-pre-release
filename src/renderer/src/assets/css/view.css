@@ -50,7 +50,7 @@ textarea:focus {
     transition: opacity 0.3s;
     background: var(--color-bg-yellow);
     display: flex;
-    align-items: center;
+    align-items: end;
     justify-content: center;
     color: var(--color-font-2);
     font-size: 0.7rem;
@@ -59,6 +59,7 @@ textarea:focus {
     width: 100%;
     padding: 10px 0;
     z-index: 100;
+    height: calc(var(--safe-area-top) + 10px);
 }
 .dev-bar.win {
     background: transparent !important;
@@ -565,6 +566,7 @@ textarea:focus {
     border-radius: 7px;
     height: 50px;
     width: 50px;
+    object-fit: cover;
 }
 .friend-body > svg {
     transition:
@@ -826,9 +828,10 @@ textarea:focus {
 }
 .pop-box > div:last-child {
     background: var(--color-card-2);
+    height: calc(100% + 40px);
+    width: calc(100% + 40px);
     opacity: 0.7;
-    height: 100%;
-    width: 100%;
+    margin: -20px;
 }
 .pop-box-body {
     transform: translate(-50%, -50%);
@@ -853,7 +856,7 @@ textarea:focus {
 }
 .pop-box-body.full.window {
     height: calc(100vh - 80px);
-    margin: 20px 20px 0 20px;
+    margin: 30px 20px 0 20px;
 }
 .pop-box-body.full.window iframe {
     height: calc(100vh - 105px);
@@ -988,95 +991,6 @@ textarea:focus {
     color: var(--color-font);
 }
 
-/* 图片预览器覆盖样式 */
-.viewer {
-    overflow: hidden;
-    position: absolute;
-}
-
-.viewer-button {
-    background-color: var(--color-card-2);
-    border-radius: 7px;
-    height: 40px;
-    width: 40px !important;
-    right: 0;
-    top: 0;
-    margin-top: 10px;
-    margin-right: 10px;
-}
-.viewer-button:focus,
-.viewer-button:hover {
-    background-color: var(--color-card-2);
-}
-.viewer-button::before {
-    bottom: 10px;
-    left: 11px;
-    position: absolute;
-}
-
-.viewer-toolbar > ul > li {
-    background-color: var(--color-main);
-    justify-content: center;
-    align-items: center;
-    border-radius: 7px;
-    margin: 0 10px;
-    display: flex;
-    height: 45px;
-    width: 45px;
-    float: left;
-}
-.viewer-toolbar > ul > li:hover {
-    background-color: var(--color-main);
-}
-.viewer-toolbar > ul > li:focus {
-    background-color: var(--color-main);
-    box-shadow: 0 0 3px transparent;
-}
-.viewer-toolbar > ul > li::before {
-    margin: 7px;
-}
-
-.viewer-list > .viewer-active {
-    border-bottom: 2px solid var(--color-main);
-}
-.viewer-list > li {
-    width: 50px;
-    border-radius: 7px 7px 0 0;
-    border-bottom: 2px solid transparent;
-}
-
-.viewer-tooltip {
-    display: none;
-}
-
-.viewer-backdrop {
-    background: rgba(var(--color-card-2-rgb), 0.7);
-    /* backdrop-filter: blur(10px); */
-}
-
-.viewer-navbar {
-    background-color: transparent;
-}
-
-.viewer-footer {
-    height: 100%;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-}
-.viewer-footer > div {
-    margin: 20px;
-}
-/* .viewer-footer > div:last-child {
-    align-items: flex-end;
-    display: flex;
-    flex: 1;
-} */
-.viewer-footer ul {
-    pointer-events: all;
-    height: 55px;
-}
-
 .hiden-home {
     display: none !important;
 }
@@ -1197,7 +1111,7 @@ textarea:focus {
     width: 100%;
     left: 0;
     top: 0;
-    z-index: 20;
+    z-index: 50;
 }
 
 .global-session-search-bar {
@@ -1273,6 +1187,292 @@ textarea:focus {
 .global-session-search-bar-leave-to {
     opacity: 0.0;
 }
+
+
+.viewer-bar {
+    position: absolute;
+    z-index: 31;
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
+    display: flex;
+    transition: opacity 0.2s;
+}
+
+.viewer-bar::before,
+.viewer-bar::after {
+    content: '';
+    margin: auto;
+}
+
+.viewer-tool-config-bar {
+    bottom: calc(3% + 80px + var(--safe-area-bottom));
+}
+
+.viewer-tool-config-bar > div.color {
+    width: 24px;
+    height: 24px;
+    border: solid 3px var(--color-card);
+    background-color: var(--color);
+    margin: 5px;
+    border-radius: 7px;
+    transition: 0.2s;
+}
+
+.viewer-tool-config-bar > div.line-width {
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    margin: 5px;
+    background-color: var(--color-main);
+    border-radius: 7px;
+    transition: 0.2s;
+    display: flex;
+}
+
+.viewer-tool-config-bar > div.line-width > div {
+    width: var(--line-width);
+    height: var(--line-width);
+    background-color: var(--color-card);
+    margin: auto;
+    border-radius: var(--line-width);
+}
+
+.viewer-tool-config-bar > div.color:hover,
+.viewer-tool-config-bar > div.line-width:hover {
+    transform: rotate(45deg);
+}
+
+.viewer-tool-config-bar > svg.rect-is-fill {
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    margin: 5px;
+    color: var(--color-card);
+    background-color: var(--color-main);
+    border-radius: 7px;
+    transition: 0.2s;
+}
+
+.viewer-tool-config-bar > hr {
+    width: 0px;
+    margin: auto 2px;
+    height: 15px;
+    border: solid 1px var(--color-font);
+}
+
+.viewer-tool-config-bar > svg:hover {
+    background-color: var(--color-font);
+}
+
+.viewer-tool-config-bar > div.active {
+    border-radius: 15px;
+}
+
+.viewer-button-bar {
+    bottom: calc(3% + var(--safe-area-bottom));
+    opacity: 0;
+}
+
+.viewer-button-bar.force-show,
+.viewer-button-bar:hover {
+    opacity: 1;
+}
+
+.viewer-button-bar > svg {
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    margin: 0 5px;
+    padding: 15px;
+    background-color: var(--color-main);
+    color: var(--color-card);
+    border-radius: 10px;
+    transition: background 0.2s;
+    flex-shrink: 1;
+}
+
+.viewer-button-bar > svg:hover {
+    background-color: var(--color-font);
+    color: var(--color-font-r);
+}
+
+.viewer-button-bar > svg.active {
+    border-radius: 30px;
+}
+
+.viewer-button-bar > hr {
+    display: block;
+    height: 25px;
+    margin: auto 10px;
+    border: solid 1px var(--color-font-2);
+    border-radius: 2px;
+    opacity: 0.7;
+    flex-shrink: 1;
+}
+
+.viewer-button-enter-active,
+.viewer-button-leave-active {
+    transition: all 0.2s;
+}
+
+.viewer-button-enter-from,
+.viewer-button-leave-to {
+    transform: translate(0, 100%);
+    opacity: 1;
+}
+
+.viewer-tool-config-enter-from,
+.viewer-tool-config-leave-to {
+    width: 1px !important;
+    height: 1px !important;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+    opacity: 0;
+}
+
+.viewer-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+}
+
+.viewer-img > canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+}
+
+.viewer-img > img,
+.viewer-img > canvas {
+    margin-top: calc(50vh - var(--height) * var(--scale) / 2 + var(--y));
+    margin-left: calc(50vw - var(--width) * var(--scale) / 2 + var(--x));
+    transition: all 0.2s;
+    width: calc(var(--width) * var(--scale));
+    height: calc(var(--height) * var(--scale));
+    transform-origin: center;
+    transform: rotate(var(--rotate));
+}
+
+.viewer-img.grab > img,
+.viewer-img.grab > canvas {
+    transition: none;
+}
+
+.viewer.loading {
+    box-shadow: 0 0 5px var(--color-shader);
+    transform: translate(-50%, -50%);
+    background: var(--color-card);
+    flex-direction: column;
+    border-radius: 7px;
+    position: absolute;
+    padding: 10px;
+    display: flex;
+    opacity: 1;
+    left: 50%;
+    top: 50%;
+}
+
+.viewer.loading > svg {
+    color: var(--color-main);
+    font-size: 1.1rem;
+}
+
+.viewer-img > div.scrollbar {
+    user-select: none;
+    cursor: pointer;
+    position: absolute;
+    background: rgba(var(--color-bg-rgb), 0.7);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.viewer-img > div.x {
+    left: 0;
+    bottom: 8px;
+    width: 100vw;
+    height: 12px;
+}
+
+.viewer-img > div.y {
+    right: 8px;
+    top: 0;
+    width: 12px;
+    height: 100vh;
+}
+
+.viewer-img.grab > div.scrollbar,
+.viewer-img.zooming > div.scrollbar,
+.viewer-img > div.scrollbar:hover {
+    opacity: 1;
+}
+
+.viewer-img > div.scrollbar > div.scrollbar-thumb {
+    position: absolute;
+    background: var(--color-main);
+    opacity: 0.7;
+    border-radius: 4px;
+}
+
+.viewer-img > div.x > div.scrollbar-thumb {
+    left: calc(var(--pos) * 100vw);
+    top: 2px;
+    width: max(calc(var(--thumb) * 100vw), 40px);
+    height: 8px;
+}
+
+.viewer-img > div.y > div.scrollbar-thumb {
+    top: calc(var(--pos) * 100vh);
+    right: 2px;
+    height: max(calc(var(--thumb) * 100vh), 40px);
+    width: 8px;
+}
+
+.viewer-change-img-next-leave-active,
+.viewer-change-img-next-enter-active,
+.viewer-change-img-prev-leave-active,
+.viewer-change-img-prev-enter-active {
+    transition: all 0.15s ease-in-out;
+}
+
+.viewer-change-img-prev-enter-from,
+.viewer-change-img-next-leave-to {
+    transform: translateX(-100%);
+}
+
+.viewer-change-img-prev-leave-to,
+.viewer-change-img-next-enter-from {
+    transform: translateX(100%);
+}
+
+.cursor-grab {
+    cursor: grab;
+}
+
+.cursor-grabbing {
+    cursor: grabbing;
+}
+
+.cursor-exit {
+    cursor: url(@renderer/assets/img/icons/exit.png), auto;
+}
+
+.cursor-not-allowed {
+    cursor: not-allowed
+}
+
+.cursor-pen {
+    cursor: url(@renderer/assets/img/icons/pen.png) 0 24, auto;
+}
+
+.cursor-crosshair {
+    cursor: crosshair;
+}
+
 
 @media (max-width: 700px) {
     /* 侧栏及主布局自适应 */
@@ -1447,6 +1647,10 @@ textarea:focus {
         margin: 20px;
         bottom: 0;
     }
+    .pop-box-body.full {
+        width: calc(100% - 70px) !important;
+        margin-bottom: 20px !important;
+    }
     .pop-box-more {
         display: none;
     }
@@ -1490,6 +1694,47 @@ textarea:focus {
     .group-assist-message-list.show {
         margin-left: -100% !important;
         margin-right: 0;
+    }
+
+    .viewer-bar {
+        width: 25px;
+        margin: 20px;
+    }
+    .viewer-button-bar {
+        top: var(--safe-area--viewer-top);
+        left: 0;
+        flex-direction: column;
+    }
+    .viewer-button-bar > svg {
+        margin: 5px 0;
+    }
+    .viewer-button-bar > hr {
+        margin:  10px 0;
+        transform: translate(calc(-25px / 4), 0);
+        width: 25px;
+        height: 0;
+    }
+
+    .viewer-button-enter-from,
+    .viewer-button-leave-to {
+        transform: translate(75px, 0);
+        opacity: 1;
+    }
+
+    .viewer-tool-config-bar {
+        bottom: var(--safe-area-bottom);
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 90%;
+    }
+    .viewer-tool-config-bar::before,
+    .viewer-tool-config-bar::after {
+        display: none;
+    }
+    .viewer-tool-config-bar > hr:not(:nth-last-child(2)) {
+        width: 100%;
+        height: 5px;
+        opacity: 0;
     }
 }
 

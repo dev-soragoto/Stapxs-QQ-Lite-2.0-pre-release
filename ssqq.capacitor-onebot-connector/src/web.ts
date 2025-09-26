@@ -3,6 +3,18 @@ import { WebPlugin } from '@capacitor/core';
 import type { OnebotPlugin } from './definitions';
 
 export class OnebotWeb extends WebPlugin implements OnebotPlugin {
+    getFinalRedirectUrl(options: { url: string; }): Promise<{ url: string; }> {
+        console.warn('本插件不提供 Web 端实现。');
+        return Promise.resolve({ url: options.url });
+    }
+    getHtml(options: { url: string; }): Promise<{ data: string; }> {
+        console.warn('本插件不提供 Web 端实现。');
+        return Promise.resolve({ data: '' });
+    }
+    getApi(options: { url: string; }): Promise<{ data: string; }> {
+        console.warn('本插件不提供 Web 端实现。');
+        return Promise.resolve({ data: '' });
+    }
     async connect(_: { url: string; }): Promise<{ success: boolean; }> {
         console.warn('本插件不提供 Web 端实现。');
         return Promise.resolve({ success: true });
@@ -33,8 +45,13 @@ export class OnebotWeb extends WebPlugin implements OnebotPlugin {
         return Promise.resolve({ success: true });
     }
 
-    async getSystemInfo(): Promise<{ success: boolean; }> {
+    async getRelease(): Promise<{ release: string, arch: string; }> {
         console.warn('本插件不提供 Web 端实现。');
-        return Promise.resolve({ success: true });
+        return Promise.resolve({ release: '', arch: '' });
+    }
+
+    async getSystemInfo(): Promise<{ success: string; }> {
+        console.warn('本插件不提供 Web 端实现。');
+        return Promise.resolve({ success: '' });
     }
 }

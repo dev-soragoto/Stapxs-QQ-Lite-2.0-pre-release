@@ -28,6 +28,7 @@ import {
 } from '@renderer/function/utils/systemUtil'
 import { updateBaseOnMsgList } from './utils/msgUtil'
 import { backend } from '@renderer/runtime/backend'
+import { refreshFavicon } from './favicon'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -54,6 +55,8 @@ export const optDefault: { [key: string]: any } = {
     opt_always_top: false,
     opt_revolve: false,
     merge_forward_width_type: false,
+    use_favicon_notice: true,
+    use_super_face: true,
     // Function
     close_notice: false,
     bubble_sort_user: true,
@@ -90,6 +93,11 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_fast_animation: updateFarstAnimation,
     bubble_sort_user: clearGroupAssist,
     merge_forward_width_type: setMergeForwardWidth,
+    use_favicon_notice: setFaviconNotice,
+}
+
+function setFaviconNotice(_: boolean) {
+    refreshFavicon()
 }
 
 function setMergeForwardWidth(value: boolean | null) {
@@ -335,6 +343,8 @@ function changeColorMode(mode: string) {
     if(backend.function && 'vConsole' in backend.function && backend.function.vConsole) {
         backend.function.vConsole.setOption('theme', mode)
     }
+    // 刷新图标
+    refreshFavicon()
 }
 
 /**
@@ -352,6 +362,8 @@ function changeTheme(id: number) {
             document.documentElement,
         ).getPropertyValue('--color-main-' + id)
     }
+    // 避免 css 未加载完
+    setTimeout(refreshFavicon, 10)
 }
 
 /**
@@ -459,7 +471,7 @@ function loadOptData(data: { [key: string]: any }) {
 			false,
 		)
 	}
-    
+
     // 保存
     if (optChanged) {
         saveAll(options)
@@ -510,7 +522,7 @@ export function get(name: string): any {
  */
 export function getRaw(name: string) {
     if ('electron' == backend.type) {
-        return backend.callSync('opt:get', name)
+        return backend.call('opt:get', name, true)
     } else if('tauri' == backend.type) {
         return backend.call(undefined, 'opt:get', true, name)
     } else {
@@ -523,12 +535,13 @@ export function getRaw(name: string) {
                     const opt: string[] = list[i].split(':')
                     if (opt.length === 2) {
                         if (name == opt[0]) {
-                            return opt[1]
+                            return Promise.resolve(opt[1])
                         }
                     }
                 }
             }
         }
+        return Promise.resolve(null)
     }
 }
 

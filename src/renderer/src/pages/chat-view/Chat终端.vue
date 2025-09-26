@@ -15,14 +15,9 @@
 <template>
     <div
         id="chat-pan"
-        :class="
-            'chat-pan' +
-                (runtimeData.tags.openSideBar ? ' open' : '') +
-                (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')
-        ">
-        <div
-            id="shell-pan"
-            class="shell-pan">
+        :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open' : '') + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '') ">
+        <span v-if="tags.fullscreen" class="shell-pan-title">admin@{{ new URL(runtimeData.sysConfig.address).hostname }}:/Volumes/Contacts/{{ runtimeData.chatInfo.show.id }}</span>
+        <div id="shell-pan" class="shell-pan">
             <div>
                 <template
                     v-for="(msgItem, index) in runtimeData.messageList"
@@ -187,7 +182,7 @@
         popList,
         PopType,
     } from '@renderer/function/base'
-    import { sendMsgRaw, getMsgRawTxt } from '@renderer/function/utils/msgUtil'
+    import { sendMsgRaw, getMsgRawTxt, getShowName } from '@renderer/function/utils/msgUtil'
     import { uptime } from '@renderer/main'
     import { backend } from '@renderer/runtime/backend'
 
@@ -196,6 +191,7 @@
         props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
+                URL: URL,
                 backend,
                 tags: {
                     fullscreen: false,
@@ -254,21 +250,18 @@
                 ls: {
                     info: 'List all contacts in the current message queue.',
                     fun: () => {
-                        this.searchListCache = [...runtimeData.baseOnMsgList.values()]
+                        this.searchListCache = [...runtimeData.onMsgList.values()]
                         let str =
                             '  total ' + this.searchListCache.length + '\n'
                         let hasMsg = false
-                        runtimeData.baseOnMsgList.forEach((item, index) => {
+                        Array.from(runtimeData.onMsgList).forEach((item, index) => {
                             if (item.new_msg == true) {
                                 str += '• '
                                 hasMsg = true
                             } else str += '  '
-                            str += index.toString() + '     '
-                            str +=
-                                (item.group_id ? item.group_id : item.user_id) +
-                                '     '
-                            str +=
-                                (item.group_name? item.group_name: item.nickname) + '     '
+                            str += ('#' + index.toString()).padEnd(8, ' ')
+                            str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
+                            str += getShowName(item.group_name || item.nickname, item.remark)
                             str += '\n'
                         })
                         if (hasMsg)
@@ -276,8 +269,8 @@
                         this.addCommandOut(str)
                     },
                 },
-                sql: {
-                    info: 'Stapxs QQ Lite 2.0 Base Command.',
+                ssqq: {
+                    info: 'Stapxs QQ Lite Base Command.',
                     fun: (raw: string, item: string[]) => {
                         switch (item[1]) {
                             // 发送消息
@@ -340,11 +333,9 @@
                                     this.searchListCache.length +
                                     '\n'
                                 this.searchListCache.forEach((item, index) => {
-                                    str += index.toString() + '     '
-                                    str +=
-                                        (item.group_id? item.group_id: item.user_id) + '     '
-                                    str +=
-                                        (item.group_name? item.group_name: item.nickname) + '     '
+                                    str += ('#' + index.toString()).padEnd(8, ' ')
+                                    str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
+                                    str += getShowName(item.group_name || item.nickname, item.remark)
                                     str += '\n'
                                 })
                                 this.addCommandOut(str)
@@ -384,9 +375,9 @@
                                     this.tags.replyId = null
                                 }
                                 if (item[3]) {
-                                    this.supportCmd['sql'].fun(
-                                        'sql send ' + item[3],
-                                        ['sql', 'send', item[3]],
+                                    this.supportCmd['ssqq'].fun(
+                                        'ssqq send ' + item[3],
+                                        ['ssqq', 'send', item[3]],
                                     )
                                     this.msg = ''
                                 }
@@ -439,7 +430,7 @@
                             }
                             default: {
                                 this.addCommandOut(
-                                    'usage: sql send [msg]: Send a message, you can directly use "/<Message>" to replace it, \n           list [search]: Fuzzy search in the list of friends/groups, \n           reply [msgId] <message>: Use the message id to reply to the message, Click the message to copy the id, \n           history: Load more history.',
+                                    'usage: ssqq send [msg]: Send a message, you can directly use "/<Message>" to replace it, \n           list [search]: Fuzzy search in the list of friends/groups, \n           reply [msgId] <message>: Use the message id to reply to the message, Click the message to copy the id, \n           history: Load more history.',
                                 )
                             }
                         }
@@ -460,12 +451,12 @@
                         }
                     },
                 },
-                neofetch: {
+                fastfetch: {
                     info: 'print system info.',
                     fun: () => {
                         const infoList = {
-                            Application: 'Stapxs QQ Lite 2.0',
-                            Kernel: packageInfo.version + '-web',
+                            Application: 'Stapxs QQ Lite',
+                            Kernel: packageInfo.version + '-' + backend.type,
                             Shell: 'stsh Basic Shell 1.0',
                             Theme: 'ChatSHell',
                             Uptime:
@@ -480,9 +471,6 @@
                                 'x' +
                                 window.screen.height,
                         } as { [key: string]: string }
-                        if (backend.isDesktop()) {
-                            infoList.Kernel = packageInfo.version + '-electron'
-                        }
                         let info = ''
                         Object.keys(infoList).forEach((key) => {
                             info += `<span>${key}<span>: ${infoList[key]}</span></span>`
@@ -490,7 +478,7 @@
                         this.addCommandOut(
                             '',
                             '',
-                            `<div class="shell-neofetch"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>&nbsp;*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;************<br>&nbsp;************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***********<br>&nbsp;***********,**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*.***********<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;&nbsp;&nbsp;***********************************&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***</span><div><span>${runtimeData.loginInfo.nickname}<span>@</span>sql-vue</span><a>-----------------</a>${info}<div><div style="background:black"></div><div style="background:red"></div><div style="background:green"></div><div style="background:yellow"></div><div style="background:blue"></div><div style="background:violet"></div></div></div></div>`,
+                            `<div class="shell-fastfetch"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>&nbsp;*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;************<br>&nbsp;************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***********<br>&nbsp;***********,**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*.***********<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;&nbsp;&nbsp;***********************************&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***</span><div><span>${runtimeData.loginInfo.nickname}<span>@</span>ssqq-vue</span><a>-----------------</a>${info}<div><div style="background:black"></div><div style="background:red"></div><div style="background:green"></div><div style="background:yellow"></div><div style="background:blue"></div><div style="background:violet"></div></div></div></div>`,
                         )
                     },
                 },
@@ -502,8 +490,8 @@
                         this.addCommandOut('')
                     },
                 },
-                cd: {
-                    info: 'Alias for "cd /[id]"',
+                screen: {
+                    info: 'Switch to a specified contact chat.',
                     fun: (_: string, itemInfo: string[]) => {
                         let id = '0'
                         if (
@@ -586,7 +574,7 @@
                     second: 'numeric',
                 }).format(new Date())
                 // 刷新新消息数
-                this.tags.newMsg = [...runtimeData.baseOnMsgList.values()].filter((item) => {
+                this.tags.newMsg = [...runtimeData.onMsgList.values()].filter((item) => {
                     return item.new_msg == true
                 }).length
             }, 1000)
@@ -648,15 +636,20 @@
                     this.tags.fistget = false
                     this.addCommandOutF(':: joining chat ..', 'yellow')
                     this.addCommandLineF(
-                        'cd ' + runtimeData.chatInfo.show.id,
+                        'screen ' + runtimeData.chatInfo.show.id,
                         runtimeData.chatInfo.show.type,
                     )
+                    this.addCommandLineF('[screen is terminating]')
                     this.addCommandOutF(
-                        '* Stapxs QQ Lite 2.0 Shell requires "FiraCode Nerd Font" to display complete command line symbols, please ensure the device has installed this font.\n\n* Use the command "fullscreen" or return to the parent directory to exit the full screen mode.\n\n* 使用 "help" 命令查看所有可用命令。\n\n\n',
+                        '* Stapxs QQ Lite Shell requires "FiraCode Nerd Font" to display complete command line symbols, please ensure the device has installed this font.\n\n* Use the command "fullscreen" or return to the parent directory to exit the full screen mode.\n\n* 使用 "help" 命令查看所有可用命令。\n\n\n',
                         'var(--color-font)',
                     )
                     this.addCommandOutF(
-                        `Welcome to Stapxs QQ Lite ${packageInfo.version} (Vue ${packageInfo.devDependencies.vue}-${this.runMode})\n\n`,
+                        `  => 当前存在 ${runtimeData.onMsgList.length} 个活跃会话\n\n`,
+                        'var(--color-font)',
+                    )
+                    this.addCommandOutF(
+                        `Welcome to Stapxs QQ Lite ${packageInfo.version} (Vue ${packageInfo.devDependencies.vue}-${this.runMode ? 'development' : 'production'})\n\n`,
                         'var(--color-font)',
                     )
                 }
@@ -747,7 +740,7 @@
                     // 检查是否是支持的指令
                     if (this.msg[0] == '/') {
                         this.msg =
-                            'sql send ' + this.msg.substring(1, this.msg.length)
+                            'ssqq send ' + this.msg.substring(1, this.msg.length)
                     }
                     const msgList = this.msg.split(' ')
                     new Logger().add(
@@ -781,7 +774,7 @@
             copy(str: string) {
                 const input = document.getElementById('msgInput')
                 if (input) {
-                    this.msg = 'sql reply ' + str + ' '
+                    this.msg = 'ssqq reply ' + str + ' '
                     input.focus()
                 }
                 app.config.globalProperties.$copyText(String(str)).then(
@@ -906,6 +899,15 @@
 </script>
 
 <style>
+    .shell-pan-title {
+        display: block;
+        height: 40px;
+        width: 100%;
+        text-align: center;
+        line-height: 40px;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
     .shell-pan a,
     .shell-pan span {
         font-family: 'FiraCode Nerd Font', Helvetica, Arial,
@@ -951,7 +953,6 @@
     }
 
     .shell-pan {
-        margin-top: 40px;
         padding: 0 20px;
         pointer-events: all;
         overflow-y: scroll;
@@ -1006,37 +1007,37 @@
         border: 0;
     }
 
-    .shell-neofetch {
+    .shell-fastfetch {
         display: flex;
         flex-wrap: wrap;
     }
-    .shell-neofetch span {
+    .shell-fastfetch span {
         line-height: 1.2rem;
     }
-    .shell-neofetch > span {
+    .shell-fastfetch > span {
         color: var(--color-main-0);
         margin-bottom: 20px;
         margin-right: 20px;
         letter-spacing: -1px;
     }
-    .shell-neofetch > div {
+    .shell-fastfetch > div {
         flex-direction: column;
         display: flex;
     }
-    .shell-neofetch > div > a {
+    .shell-fastfetch > div > a {
         font-family: unset;
     }
-    .shell-neofetch > div > span {
+    .shell-fastfetch > div > span {
         color: var(--color-main);
     }
-    .shell-neofetch > div > span > span {
+    .shell-fastfetch > div > span > span {
         color: var(--color-font);
     }
-    .shell-neofetch > div > div {
+    .shell-fastfetch > div > div {
         margin-top: 1rem;
         display: flex;
     }
-    .shell-neofetch > div > div > div {
+    .shell-fastfetch > div > div > div {
         height: 1.5rem;
         width: 2rem;
     }

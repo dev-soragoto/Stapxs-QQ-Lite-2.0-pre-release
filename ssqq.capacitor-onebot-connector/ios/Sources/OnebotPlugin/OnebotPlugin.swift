@@ -19,6 +19,7 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "changeIcon", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getUsedIcon", returnType: CAPPluginReturnPromise),
 
+        CAPPluginMethod(name: "getRelease", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getSystemInfo", returnType: CAPPluginReturnPromise),
 
         CAPPluginMethod(name: "getFinalRedirectUrl", returnType: CAPPluginReturnPromise),
@@ -86,6 +87,27 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
                 self.notifyListeners("onebot:icon", data: [ "name": name ])
             })
         ])
+    }
+
+    @objc func getRelease(_ call: CAPPluginCall) {
+        // 获取操作系统版本
+        let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
+        let versionString = "\(systemVersion.majorVersion).\(systemVersion.minorVersion).\(systemVersion.patchVersion)"
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        let osType = isIPad ? "iPadOS" : "iOS"
+        let osInfo = "\(osType) \(versionString)"
+        // 获取设备架构
+        var arch = "Unknown"
+        #if arch(x86_64)
+        arch = "x86_64"
+        #elseif arch(arm64)
+        arch = "arm64"
+        #elseif arch(i386)
+        arch = "i386"
+        #elseif arch(arm)
+        arch = "arm"
+        #endif
+        call.resolve(["release": osInfo, "arch": arch])
     }
 
     @objc func getSystemInfo(_ call: CAPPluginCall) {

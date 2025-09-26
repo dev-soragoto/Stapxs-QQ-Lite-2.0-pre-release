@@ -40,15 +40,40 @@ pub fn sys_get_platform() -> String {
     }
 }
 
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct SystemInfo {
+    release: String,
+    arch: String,
+}
+
 #[command]
-pub fn sys_get_release() -> String {
+pub fn sys_get_release() -> Option<SystemInfo> {
+    let arch = std::env::consts::ARCH.to_string();
     #[cfg(target_os = "windows")] {
         use winver::WindowsVersion;
         let version = WindowsVersion::detect().unwrap();
-        return format!("{}.{}.{}", version.major, version.minor, version.build)
+        Some(SystemInfo {
+            release: format!("{} {}.{}.{}", "Windows", version.major, version.minor, version.build),
+            arch,
+        })
     }
-    #[cfg(not(target_os = "windows"))] {
-        return "".to_string();
+    #[cfg(target_os = "macos")] {
+        let output = Command::new("sw_vers")
+            .arg("-productVersion")
+            .output().ok()?;
+        if !output.status.success() {
+            return Some(SystemInfo { release: "".to_string(), arch });
+        }
+        let version_string = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        Some(SystemInfo {
+            release: format!("macOS {}", version_string),
+            arch,
+        })
+    }
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))] {
+        Some(SystemInfo { release: "".to_string(), arch })
     }
 }
 
@@ -444,7 +469,8 @@ pub fn sys_create_menu(app: tauri::AppHandle, data: HashMap<String, String>) -> 
             .build().map_err(|e| e.to_string())?;
 
         app.set_menu(menu).map_err(|e| e.to_string())?;
-        app.on_menu_event(|app, menu| {
+        app.on_menu_event(move |app, menu| {
+            let repo_name = data.get("repo").unwrap();
             match menu.id().0.as_str() {
                 "about" => {
                     app.emit("app:about", "").unwrap();
@@ -459,13 +485,13 @@ pub fn sys_create_menu(app: tauri::AppHandle, data: HashMap<String, String>) -> 
                     app.emit("bot:flushUser", "").unwrap();
                 }
                 "doc" => {
-                    app.emit("app:openLink", "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/wiki").unwrap();
+                    app.emit("app:openLink", &format!("https://github.com/{}/wiki", repo_name)).unwrap();
                 }
                 "feedback" => {
-                    app.emit("app:openLink", "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues").unwrap();
+                    app.emit("app:openLink", &format!("https://github.com/{}/issues", repo_name)).unwrap();
                 }
                 "license" => {
-                    app.emit("app:openLink", "https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/blob/master/LICENSE").unwrap();
+                    app.emit("app:openLink", &format!("https://github.com/{}/blob/master/LICENSE", repo_name)).unwrap();
                 }
                 _ => {}
             }
@@ -579,12 +605,12 @@ pub fn sys_get_win_color() -> Option<String> {
 }
 
 // macOS：Touch Bar 支持
-// #[command]
-// pub fn sys_flush_on_message() -> String {
-//     return "".to_string();
-// }
+#[command]
+pub fn sys_flush_on_message() -> String {
+    return "".to_string();
+}
 
-// #[command]
-// pub fn sys_flush_friend_search() -> String {
-//     return "".to_string();
-// }
+#[command]
+pub fn sys_flush_friend_search() -> String {
+    return "".to_string();
+}

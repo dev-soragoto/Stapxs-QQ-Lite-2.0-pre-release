@@ -39,6 +39,7 @@ import {
     downloadFile,
     updateMenu,
     loadJsonMap,
+    sendIdentifyData,
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
 import { reactive, markRaw, defineAsyncComponent, nextTick } from 'vue'
@@ -57,6 +58,8 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
+import { refreshFavicon } from './favicon'
+import { Img } from './model/img'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -375,11 +378,11 @@ const msgFunctions = {
 
             runtimeData.botInfo = data
             if (Option.get('open_ga_bot') !== false) {
-                if (data.app_name !== undefined) {
-                    sendStatEvent('connect', { method: data.app_name })
-                } else {
-                    sendStatEvent('connect', { method: '（未知）' })
-                }
+                const appVersion = data.app_version ? ',' + data.app_version : ''
+                const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
+
+                sendStatEvent('connect', { method: data.app_version })
+                sendIdentifyData({ bot_version: appInfo })
             }
             if (!login.status) {
                 // 尝试动态载入对应的 pathMap
@@ -414,7 +417,7 @@ const msgFunctions = {
                 action: 'label',
                 value: data.nickname,
             })
-            const title = `${data.nickname}（${data.uin}）`
+            const title = `${data.nickname} `
             if(backend.platform == 'web') {
                 document.title = title + '- Stapxs QQ Lite'
             } else {
@@ -575,15 +578,16 @@ const msgFunctions = {
         const pan = document.getElementById('msgPan')
         if(pan) {
             const oldScrollHeight = pan.scrollHeight
-            saveMsg(msg, 'top')
-            nextTick(() => {
-                setTimeout(() => {
-                    logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
-                    pan.style.scrollBehavior = 'unset'
-                    // 纠正滚动位置
-                    pan.scrollTop = pan.scrollHeight - oldScrollHeight
-                    pan.style.scrollBehavior = 'smooth'
-                }, 200);
+            saveMsg(msg, 'top').then(() => {
+                nextTick(() => {
+                    setTimeout(() => {
+                        logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                        pan.style.scrollBehavior = 'unset'
+                        // 纠正滚动位置
+                        pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                        pan.style.scrollBehavior = 'smooth'
+                    }, 200);
+                })
             })
         }
     },
@@ -616,51 +620,6 @@ const msgFunctions = {
                 }
             } catch (e) {
                 // do nothing
-            }
-        }
-    },
-
-    /**
-     * 保存合并转发消息
-     */
-    getForwardMsg: (_: string, msg: { [key: string]: any }) => {
-        if (
-            msg.error !== null &&
-            (msg.error !== undefined || msg.status === 'failed')
-        ) {
-            popInfo.add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取合并转发消息失败'),
-            )
-        } else {
-            let list = getMsgData(
-                'forward_message_list',
-                msg,
-                msgPath.forward_msg,
-            )
-            list = getMessageList(list)
-            if (list != undefined) {
-                runtimeData.mergeMessageList = list
-                // 提取合并转发中的消息图片列表
-                const imgList = [] as {
-                    index: number
-                    message_id: string
-                    img_url: string
-                }[]
-                let index = 0
-                list.forEach((item) => {
-                    item.message.forEach((msg) => {
-                        if (msg.type == 'image') {
-                            imgList.push({
-                                index: index,
-                                message_id: item.message_id,
-                                img_url: msg.url,
-                            })
-                            index++
-                        }
-                    })
-                })
-                runtimeData.mergeMessageImgList = imgList
             }
         }
     },
@@ -765,9 +724,20 @@ const msgFunctions = {
      */
     getGroupNotices: (_: string, msg: { [key: string]: any }) => {
         const list = getMsgData('group_notices', msg, msgPath.group_notices)
-        if (list != undefined) {
-            runtimeData.chatInfo.info.group_notices = list
+        if (!list) return
+
+        // 组装img信息
+        let lastImg: Img | undefined
+        for (const notice of list) {
+            if (!notice.img_id || notice.img_id.length == 0) continue
+            const img = markRaw(new Img(
+                `https://p.qlogo.cn/gdynamic/${notice.img_id}/0/`
+            ))
+            if(lastImg) img.insertPrev(lastImg)
+            notice.img = img
+            lastImg = img
         }
+        runtimeData.chatInfo.info.group_notices = list
     },
 
     /**
@@ -1001,22 +971,23 @@ const msgFunctions = {
                 // 预发送消息刷新
                 if (fakeIndex != -1) {
                     // 将这条消息直接替换掉
-                    let trueMsg = getMsgData(
+                    const trueMsg = getMsgData(
                         'message_list',
                         buildMsgList([msg.data]),
                         msgPath.message_list,
                     )
-                    trueMsg = getMessageList(trueMsg)
-                    if (trueMsg && trueMsg.length == 1) {
-                        runtimeData.messageList[fakeIndex].message = trueMsg[0].message
-                        runtimeData.messageList[fakeIndex].raw_message =
-                            trueMsg[0].raw_message
-                        runtimeData.messageList[fakeIndex].time = trueMsg[0].time
+                    getMessageList(trueMsg).then((trueMsg) => {
+                        if (trueMsg && trueMsg.length == 1 &&
+                            runtimeData.messageList[fakeIndex]) {
+                            runtimeData.messageList[fakeIndex].message = trueMsg[0].message
+                            runtimeData.messageList[fakeIndex].raw_message =
+                                trueMsg[0].raw_message
+                            runtimeData.messageList[fakeIndex].time = trueMsg[0].time
 
-                        runtimeData.messageList[fakeIndex].fake_msg = undefined
-                        runtimeData.messageList[fakeIndex].revoke = false
-                    }
-                    return
+                            runtimeData.messageList[fakeIndex].fake_msg = undefined
+                            runtimeData.messageList[fakeIndex].revoke = false
+                        }
+                    })
                 }
             }
         }
@@ -1372,9 +1343,9 @@ function saveClassInfo(
     runtimeData.tags.classes = list
 }
 
-function saveMsg(msg: any, append = undefined as undefined | string) {
+async function saveMsg(msg: any, append = undefined as undefined | string) {
     let list = getMsgData('message_list', msg, msgPath.message_list)
-    list = getMessageList(list)
+    list = await getMessageList(list)
     if (list != undefined) {
         // 检查消息是否是当前聊天的消息
         const firstMsg = list[0]
@@ -1454,26 +1425,72 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
     }
 }
 
-export function getMessageList(list: any[] | undefined) {
-    if (list != undefined) {
-        list = parseMsgList(
-            list,
-            msgPath.message_list.type,
-            msgPath.message_value,
-        )
-        // 倒序处理
-        if (msgPath.message_list.order === 'reverse') {
-            list.reverse()
-        }
-        // 检查必要字段
-        list.forEach((item: any) => {
-            if (!item.post_type) {
-                item.post_type = 'message'
-            }
-        })
-        return list
+export async function getMessageList(list: any[] | undefined) {
+    if (!list) return undefined
+
+    list = parseMsgList(
+        list,
+        msgPath.message_list.type,
+        msgPath.message_value,
+    )
+    // 倒序处理
+    if (msgPath.message_list.order === 'reverse') {
+        list.reverse()
     }
-    return undefined
+    // 检查必要字段
+    list.forEach((item: any) => {
+        if (!item.post_type) {
+            item.post_type = 'message'
+        }
+    })
+    return Promise.all(list.map(msgPreprocess))
+}
+
+/**
+ * 消息预处理
+ * @param msg 要处理的消息
+ */
+async function msgPreprocess(msg: any): Promise<any> {
+    //#region == json 合并转发 ============================
+    if (msg.message.at(0)?.type === 'json') {
+        try {
+            const data = JSON.parse(msg.message.at(0).data)
+            if (data['app'] === 'com.tencent.multimsg') {
+                msg.message = [{
+                    type: 'forward',
+                    id: data['meta']['detail']['resid'],
+                }]
+            }
+        } catch (e){/**/}
+    }
+    //#endregion
+
+    //#region == 合并转发解析 ==============================
+    if (msg.message.at(0)?.type === 'forward') {
+        const forwardId = msg.message.at(0).id
+        if (forwardId) {
+            try {
+                const originData = await Connector.callApi('forward_msg', {id: forwardId})
+                const data = await getMessageList(originData)
+                if (data) msg.message.at(0).content = data
+            }catch (e) {/**/}
+        }else {
+            msg.message.at(0).content = []
+        }
+    }
+    //#endregion
+
+    //#region == lgr 商场表情 =============================
+    // 过滤掉mface后面尾随的字符串
+    const filter: any[] = []
+    for (let id = 0;id < msg.message.length;id++) {
+        const seg = msg.message[id]
+        filter.push(seg)
+        if (seg.type === 'mface') id++
+    }
+    msg.message = filter
+    //#endregion
+    return msg
 }
 
 function revokeMsg(_: string, msg: any) {
@@ -1548,25 +1565,30 @@ function newMsg(_: string, data: any) {
         // 预发送消息刷新
         if (fakeIndex != -1) {
             // 将这条消息直接替换掉
-            let trueMsg = getMsgData(
+            const trueMsg = getMsgData(
                 'message_list',
                 buildMsgList([data]),
                 msgPath.message_list,
             )
-            trueMsg = getMessageList(trueMsg)
-            if (trueMsg && trueMsg.length == 1) {
-                runtimeData.messageList[fakeIndex].message = trueMsg[0].message
-                runtimeData.messageList[fakeIndex].raw_message =
-                    trueMsg[0].raw_message
-                runtimeData.messageList[fakeIndex].time = trueMsg[0].time
+            getMessageList(trueMsg).then((trueMsg) => {
+                if (trueMsg && trueMsg.length == 1 &&
+                    runtimeData.messageList[fakeIndex]) {
+                    runtimeData.messageList[fakeIndex].message = trueMsg[0].message
+                    runtimeData.messageList[fakeIndex].raw_message =
+                        trueMsg[0].raw_message
+                    runtimeData.messageList[fakeIndex].time = trueMsg[0].time
 
-                runtimeData.messageList[fakeIndex].fake_msg = undefined
-                runtimeData.messageList[fakeIndex].revoke = false
-            }
+                    runtimeData.messageList[fakeIndex].fake_msg = undefined
+                    runtimeData.messageList[fakeIndex].revoke = false
+                }
+            })
             // 移除最顶端的一条消息以被动刷新整个列表
             runtimeData.messageList.shift()
             return
         }
+
+        // 刷新 favicon
+        refreshFavicon()
 
         // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
@@ -1576,7 +1598,7 @@ function newMsg(_: string, data: any) {
             saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
             const num = randomNum(0, 10000)
-            if (num >= 4500 && num <= 5500) {
+            if (num >= 400 && num <= 500) {
                 logger.add(
                     LogType.INFO,
                     num.toString() + '，这只是个神秘的数字...',
@@ -1584,7 +1606,7 @@ function newMsg(_: string, data: any) {
                     true,
                 )
             }
-            if (num === 5000) {
+            if (num === 495) {  // QED怎么能和芙兰无关？(◣_◢)吃我一发 QED [495年的波纹]
                 const popInfo = {
                     html: qed,
                     button: [

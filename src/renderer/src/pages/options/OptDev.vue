@@ -22,17 +22,19 @@
                         $t('[CQ:faceid=1]你好啊👋，这个选项将会强制覆盖自动检测')
                     }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.msg_type"
-                    name="msg_type"
-                    title="msg_type"
-                    @change="save">
-                    <option v-for="item in Object.values(BotMsgType)
-                                .filter(value => typeof value === 'number')"
-                        :key="item"
-                        :value="item">
-                        {{ getBotTypeName(item) }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.msg_type"
+                        name="msg_type"
+                        title="msg_type"
+                        @change="save">
+                        <option v-for="item in Object.values(BotMsgType)
+                                    .filter(value => typeof value === 'number')"
+                            :key="item"
+                            :value="item">
+                            {{ getBotTypeName(item) }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'gear']" />
@@ -42,14 +44,16 @@
                         $t('不同框架之间的化学反应我们将其称之为达利园效应')
                     }}</span>
                 </div>
-                <select v-model="jsonMapName" @change="changeJsonMap">
-                    <option v-if="jsonMapName == ''" value="">
-                        {{ $t('未连接') }}
-                    </option>
-                    <option v-for="item in getPathMapList()" :key="item" :value="item">
-                        {{ item.replace('Chat', '') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="jsonMapName" @change="changeJsonMap">
+                        <option v-if="jsonMapName == ''" value="">
+                            {{ $t('未连接') }}
+                        </option>
+                        <option v-for="item in getPathMapList()" :key="item" :value="item">
+                            {{ item.replace('Chat', '') }}
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -62,21 +66,23 @@
                     <span>{{ $t('日志等级') }}</span>
                     <span>{{ $t('ReferenceError: moYu is not defined') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.log_level"
-                    name="log_level" title="log_level" @change="save">
-                    <option value="err">
-                        {{ $t('错误') }}
-                    </option>
-                    <option value="debug">
-                        {{ $t('调试') }}
-                    </option>
-                    <option value="info">
-                        {{ $t('基本') }}
-                    </option>
-                    <option value="all">
-                        {{ $t('全部') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.log_level"
+                        name="log_level" title="log_level" @change="save">
+                        <option value="err">
+                            {{ $t('错误') }}
+                        </option>
+                        <option value="debug">
+                            {{ $t('调试') }}
+                        </option>
+                        <option value="info">
+                            {{ $t('基本') }}
+                        </option>
+                        <option value="all">
+                            {{ $t('全部') }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('debug_msg')" />
@@ -175,7 +181,7 @@
         <div class="ss-card">
             <header>{{ $t('维护与备份') }}</header>
             <div class="opt-item">
-                <font-awesome-icon :icon="['fas', 'download']" />
+                <font-awesome-icon :icon="['fas', 'upload']" />
                 <div>
                     <span>{{ $t('导出设置项') }}</span>
                     <span>{{
@@ -188,7 +194,7 @@
                 </button>
             </div>
             <div class="opt-item">
-                <font-awesome-icon :icon="['fas', 'upload']" />
+                <font-awesome-icon :icon="['fas', 'download']" />
                 <div>
                     <span>{{ $t('导入设置项') }}</span>
                     <span>{{ $t('tar zxvf cache.tar.gz /localStorage') }}</span>
@@ -447,7 +453,7 @@
             printSetUpInfo() {
                 const json = JSON.stringify(runtimeData.sysConfig)
                 const popInfo = {
-                    svg: 'download',
+                    svg: 'upload',
                     html:
                         '<textarea style="width: calc(100% - 40px);min-height: 90px;background: var(--color-card-1);color: var(--color-font);border: 0;padding: 20px;border-radius: 7px;margin-top: -10px;">' +
                         json +
@@ -477,7 +483,7 @@
             },
             importSetUpInfo() {
                 const popInfo = {
-                    svg: 'upload',
+                    svg: 'download',
                     html: '<textarea id="importSetUpInfoTextArea" style="width: calc(100% - 40px);min-height: 90px;background: var(--color-card-1);color: var(--color-font);border: 0;padding: 20px;border-radius: 7px;margin-top: -10px;"></textarea>',
                     title: this.$t('导入设置项'),
                     button: [

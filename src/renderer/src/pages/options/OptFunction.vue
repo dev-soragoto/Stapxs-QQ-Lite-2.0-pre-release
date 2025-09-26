@@ -47,18 +47,20 @@
                     <span>{{ $t('群消息通知方式') }}</span>
                     <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.group_notice_type"
-                    name="group_notice_type" title="group_notice_type" @change="save">
-                    <option value="none">
-                        {{ $t('不通知（默认）') }}
-                    </option>
-                    <option value="inner">
-                        {{ $t('仅应用内通知') }}
-                    </option>
-                    <option value="all">
-                        {{ $t('应用内通知和系统通知') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.group_notice_type"
+                        name="group_notice_type" title="group_notice_type" @change="save">
+                        <option value="none">
+                            {{ $t('不通知（默认）') }}
+                        </option>
+                        <option value="inner">
+                            {{ $t('仅应用内通知') }}
+                        </option>
+                        <option value="all">
+                            {{ $t('应用内通知和系统通知') }}
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="ss-card">
@@ -131,21 +133,23 @@
                     <span>{{ $t('默认功能按钮') }}</span>
                     <span>{{ $t('可以右击试试哦') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
-                    title="quick_send" @change="save">
-                    <option value="default">
-                        {{ $t('默认') }}
-                    </option>
-                    <option value="img">
-                        {{ $t('图片') }}
-                    </option>
-                    <option value="file">
-                        {{ $t('文件') }}
-                    </option>
-                    <option value="face">
-                        {{ $t('表情') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
+                        title="quick_send" @change="save">
+                        <option value="default">
+                            {{ $t('默认') }}
+                        </option>
+                        <option value="img">
+                            {{ $t('图片') }}
+                        </option>
+                        <option value="file">
+                            {{ $t('文件') }}
+                        </option>
+                        <option value="face">
+                            {{ $t('表情') }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('send_face')" />
@@ -237,20 +241,19 @@
                 v-if="runtimeData.sysConfig.close_ga !== true"
                 class="tip">
                 {{
-                    $t('我们使用 Umami 对应用的使用情况进行分析，它将不会上传精确到用户的信息；你也可以在这儿控制分析功能的开关和额外分析项。同时我们的统计信息公开展示在此处以便查阅：')
+                    $t('我们使用 Umami 对应用的使用情况进行分析，它将不会上传精确到用户的信息；你也可以在这儿控制分析功能的开关和额外分析项。')
                 }}
-                <div class="ga-share">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                        viewBox="0 0 428 389.11">
-                        <circle cx="214.15" cy="181" r="171"
-                            fill="none" stroke="currentColor" stroke-miterlimit="10"
-                            stroke-width="20" />
-                        <path d="M413 134.11H15.29a15 15 0 0 0-15 15v15.3C.12 168 0 171.52 0 175.11c0 118.19 95.81 214 214 214 116.4 0 211.1-92.94 213.93-208.67 0-.44.07-.88.07-1.33v-30a15 15 0 0 0-15-15Z" />
-                    </svg>
-                    <a target="_blank" @click="showStatus">
-                        {{ $t('Stapxs QQ Lite') }} {{ $t('访问统计信息') }}
-                    </a>
+            </div>
+            <div v-if="runtimeData.sysConfig.close_ga !== true" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'file-invoice']" />
+                <div>
+                    <span>{{ $t('分析统计信息') }}</span>
+                    <span>{{ $t('都有些什么数据呢') }}</span>
                 </div>
+                <button style="width: 100px; font-size: 0.8rem"
+                    class="ss-button" @click=" showUmamiInfo">
+                    {{ $t('查看') }}
+                </button>
             </div>
             <div v-if="runtimeData.sysConfig.close_ga !== true"
                 class="opt-item">
@@ -273,10 +276,11 @@
 </template>
 
 <script lang="ts">
-    import { defineComponent } from 'vue'
+    import { defineComponent, markRaw } from 'vue'
     import { runASWEvent as save, checkDefault } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
-    import { openLink } from '@renderer/function/utils/appUtil'
+
+    import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
 
     export default defineComponent({
         name: 'ViewOptFunction',
@@ -290,6 +294,16 @@
             }
         },
         methods: {
+            showUmamiInfo() {
+                const popInfo = {
+                    title: '',
+                    template: markRaw(UmamiInfoPan),
+                    full: true,
+                    allowQuickClose: false
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+
             msgND: function () {
                 this.ndt++
                 setTimeout(() => {
@@ -314,12 +328,7 @@
                     }
                     runtimeData.popBoxList.push(popInfo)
                 }
-            },
-            showStatus() {
-                if (import.meta.env.VITE_APP_MU_SHARE) {
-                    openLink(import.meta.env.VITE_APP_MU_SHARE, true)
-                }
-            },
+            }
         },
     })
 </script>

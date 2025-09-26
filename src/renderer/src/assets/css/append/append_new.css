@@ -1,9 +1,8 @@
+/* 桌面端基本样式 */
+
 html,
 body {
     background: none;
-}
-.viewer {
-    margin-top: 10px;
 }
 .ss-button {
     height: 35px;
@@ -223,6 +222,12 @@ body {
 .face-pan div.tab-main > div {
     margin-bottom: 0 !important;
 }
+.face-pan div.system-face-bar {
+    height: calc(300px - 75px);
+    overflow-y: scroll;
+    margin-top: 15px;
+    width: 100%;
+}
 
 .jin-ppan {
     max-width: 350px;
@@ -294,16 +299,17 @@ body {
 .logo-card > a {
     font-size: 0.7rem;
 }
-.contributors-card > div > div {
-    min-width: calc(20% - 10px);
-    aspect-ratio: 1;
-    margin: 5px;
-}
 
 .contributors-card {
     width: calc(100% - 20px);
     min-height: 0;
 }
+.contributors-card > div.contributors > div {
+    min-width: calc(20% - 10px);
+    aspect-ratio: 1;
+    margin: 5px;
+}
+
 .buttons > a {
     height: 35px;
     font-size: 0.75rem;
@@ -313,9 +319,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-.bcd-about > div > div {
-    height: 15px;
 }
 .logo-card > div,
 .opt-main > div:first-child > div:not(:first-child) {
@@ -611,7 +614,6 @@ body {
     width: 17px;
 }
 .base-face {
-    height: calc(300px - 110px);
     padding: 0;
 }
 .base-face > div {

@@ -78,6 +78,7 @@
                     @contextmenu.prevent="listMenuShow($event, item)"
                     @click="userClick(item)"
                     @touchstart="showMenuStart($event, item)"
+                    @touchmove="showMenuMove"
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
@@ -124,6 +125,7 @@
                     @contextmenu.prevent="listMenuShow($event, item)"
                     @click="userClick(item)"
                     @touchstart="showMenuStart($event, item)"
+                    @touchmove="showMenuMove"
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
@@ -158,7 +160,7 @@
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
             </div>
-            <div v-else class="ss-card">
+            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'angles-right']" />
                 <span>(っ≧ω≦)っ</span>
                 <span>{{ $t('别划了别划了被看见了啦') }}</span>
@@ -195,6 +197,8 @@
         faGripLines,
     } from '@fortawesome/free-solid-svg-icons'
     import { Notify } from '@renderer/function/notify'
+    import { refreshFavicon } from '@renderer/function/favicon'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'VueMessages',
@@ -246,15 +250,14 @@
                         this.$emit('loadHistory', back)
                         // 重置消息面板
                         // PS：这儿的作用是在运行时如果切换到了特殊面板，在点击联系人的时候可以切回来
-                        if (
-                            runtimeData.sysConfig.chatview_name != '' &&
-                            runtimeData.sysConfig.chatview_name !=
-                                decodeURIComponent(getOpt('chatview_name') ?? '')
-                        ) {
-                            runtimeData.sysConfig.chatview_name =
-                                decodeURIComponent(getOpt('chatview_name') ?? '')
-                            runOpt('chatview_name', decodeURIComponent(getOpt('chatview_name') ?? ''))
-                        }
+                        getOpt('chatview_name').then((chatViewName) => {
+                            const getChatViewName = decodeURIComponent(chatViewName ?? '')
+                            if (runtimeData.sysConfig.chatview_name != '' &&
+                                    runtimeData.sysConfig.chatview_name != getChatViewName) {
+                                runtimeData.sysConfig.chatview_name = getChatViewName
+                                runOpt('chatview_name', getChatViewName)
+                            }
+                        })
                     }
                     // 清除新消息标记
                     const item = runtimeData.baseOnMsgList.get(id)
@@ -336,6 +339,8 @@
                         })
                     }
                 }
+                // 刷新 favicon
+                refreshFavicon()
             },
 
             /**
@@ -361,10 +366,13 @@
                         }
                         case 'readed':
                             this.readMsg(item)
+                            // 刷新 favicon
+                            refreshFavicon()
                             break
                         case 'remove': {
                             const id = item.user_id ? item.user_id : item.group_id
                             runtimeData.baseOnMsgList.delete(id)
+                            refreshFavicon()
                             break
                         }
                         case 'top':
@@ -487,7 +495,7 @@
              * 显示群收纳盒
              */
             showGroupAssistCheck() {
-                if(!this.showGroupAssist && runtimeData.chatInfo.show.id == 0) {
+                if(!this.showGroupAssist && runtimeData.chatInfo.show.id == 0 && backend.type != 'capacitor' ) {
                     // 如果没有打开聊天框，打开收纳盒中的第一个群；这么做主要是为了防止动画穿帮 😭
                     const assistGroup = document.getElementById('group-assist-message-list-body')
                     if(assistGroup && assistGroup.children.length > 0) {
@@ -521,6 +529,9 @@
                         this.showMenu = false
                     }
                 }, 500)
+            },
+            showMenuMove() {
+                this.showMenu = false
             },
             showMenuEnd() {
                 this.showMenu = false

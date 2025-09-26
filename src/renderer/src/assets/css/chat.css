@@ -71,6 +71,7 @@ input {
     border: 2px solid var(--color-card-2);
     border-radius: 7px;
     margin-right: 10px;
+    object-fit: cover;
     height: 50px;
     width: 50px;
 }
@@ -399,7 +400,7 @@ input {
     height: calc(100% - var(--safe-area-bottom)) !important;
     top: 0;
     width: 100%;
-    z-index: 10;
+    z-index: 30;
 }
 .msg-menu.withBar {
     height: calc(100% + 40px);
@@ -1251,13 +1252,18 @@ input {
     cursor: pointer;
 }
 
-.base-face {
+.face-pan div.system-face-bar {
     height: calc(300px - 145px);
-    justify-content: center;
     overflow-y: scroll;
+    width: 100%;
+}
+
+.base-face {
+    justify-content: center;
     padding: 0 20px;
     flex-wrap: wrap;
     display: flex;
+    align-content: flex-start;
 }
 .base-face > div {
     background: var(--color-card-2);
@@ -1266,9 +1272,13 @@ input {
     height: 40px;
     width: 40px;
     margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.base-face > div > img {
-    margin: 10px;
+.base-face > div > .emoji-face {
+    display: block;
+    margin: 7.5px;
     height: 20px;
     width: 20px;
 }
@@ -1400,7 +1410,7 @@ input {
     border-radius: 7px;
     max-width: 60%;
 }
-.jin-pan-body > div > div.context > img.face {
+.jin-pan-body > div > div.context > .emoji-face {
     margin: -5px 5px 0 5px;
     height: 1.4rem;
 }
@@ -1689,6 +1699,7 @@ div.tiny-session-body > img {
     margin-right: 10px;
     height: 2.5rem;
     width: 2.5rem;
+    object-fit: cover;
 }
 div.tiny-session-body > svg {
     border-radius: 7px;
@@ -1770,6 +1781,7 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
     padding: 2.5px;
     border-radius: 7px;
 }
+.respond > span,
 .respond > img {
     transition: background 0.3s;
     border-radius: 7px;
@@ -1778,6 +1790,7 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
     height: 25px;
     width: 25px;
 }
+.respond > span:hover,
 .respond > svg:hover,
 .respond > img:hover {
     background: var(--color-card-2);
@@ -1858,7 +1871,6 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
         width: calc(100% - 40px);
         height: 330px;
     }
-    .base-face,
     .face-stickers {
         height: calc(330px - 120px);
     }

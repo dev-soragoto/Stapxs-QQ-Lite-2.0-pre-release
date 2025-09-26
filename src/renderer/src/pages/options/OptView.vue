@@ -26,13 +26,15 @@
                     <span>{{ $t('语言（Language）') }}</span>
                     <span>{{ $t('喵喵喵喵？') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.language"
-                    name="language" title="language"
-                    @change="save($event);gaLanguage($event)">
-                    <option v-for="item in languages" :key="item.value" :value="item.value">
-                        {{ item.name }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.language"
+                        name="language" title="language"
+                        @change="save($event);gaLanguage($event)">
+                        <option v-for="item in languages" :key="item.value" :value="item.value">
+                            {{ item.name }}
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
         <div v-if="backend.isMobile()" class="ss-card">
@@ -122,6 +124,21 @@
                     </label>
                 </div>
             </template>
+            <div v-if="backend.isDesktop()" class="opt-item">
+                <div :class="checkDefault('chat_more_blur')" />
+                <font-awesome-icon :icon="['fas', 'expand']" />
+                <div>
+                    <span>{{ $t('增强透明') }}</span>
+                    <span>{{ $t('超级加倍！') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.chat_more_blur"
+                        type="checkbox" name="chat_more_blur" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
             <div class="opt-item">
                 <div :class="checkDefault('chat_background')" />
                 <font-awesome-icon :icon="['fas', 'image']" />
@@ -159,17 +176,19 @@
                     <span>{{ $t('消息页面主题') }}</span>
                     <span>{{ $t('一些好玩的主题！') }}</span>
                 </div>
-                <select v-model="runtimeData.sysConfig.chatview_name"
-                    name="chatview_name" title="chatview_name"
-                    @change="save($event);gaChatView($event)">
-                    <option value="">
-                        {{ $t('默认') }}
-                    </option>
-                    <option v-for="item in getAppendChatView()"
-                        :key="item" :value="item">
-                        {{ item.replace('Chat', '') }}
-                    </option>
-                </select>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.chatview_name"
+                        name="chatview_name" title="chatview_name"
+                        @change="save($event);gaChatView($event)">
+                        <option value="">
+                            {{ $t('默认') }}
+                        </option>
+                        <option v-for="item in getAppendChatView()"
+                            :key="item" :value="item">
+                            {{ item.replace('Chat', '') }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('opt_fast_animation')" />
@@ -261,6 +280,38 @@
                 <label class="ss-switch">
                     <input v-model="runtimeData.sysConfig.merge_forward_width_type"
                         type="checkbox" name="merge_forward_width_type" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div class="opt-item">
+                <div :class="checkDefault('use_super_face')" />
+                <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
+                <div>
+                    <span>{{ $t('超级表情') }}</span>
+                    <span>{{
+                        $t('小黄脸长大了，变成了大黄脸！')
+                    }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.use_super_face"
+                        type="checkbox" name="use_super_face" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div v-if="backend.type == 'web'" class="opt-item">
+                <div :class="checkDefault('use_favicon_notice')" />
+                <font-awesome-icon :icon="['fas', 'bell']" />
+                <div>
+                    <span>{{ $t('在图标上显示通知') }}</span>
+                    <span>{{ $t('呜呜呜——图标都被遮挡的看不到了！') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.use_favicon_notice"
+                        type="checkbox" name="use_favicon_notice" @change="save">
                     <div>
                         <div />
                     </div>
@@ -439,12 +490,13 @@
                 const iconList = import.meta.glob('@renderer/assets/img/icons/*.png', { eager: true })
                 const iconListInfo = [] as { name: string, icon: any }[]
                 Object.keys(iconList).forEach((key: string) => {
-                    const name = key.split('/').pop()?.split('.')[0].replace('AppIcon', '')
-                    if(name || name === '') {
-                        if(!runtimeData.tags.darkMode && !name.endsWith('Dark')) {
-                            iconListInfo.push({ name: name, icon: (iconList[key] as any).default })
-                        } else if(runtimeData.tags.darkMode && name.endsWith('Dark')) {
-                            iconListInfo.push({ name: name.replace('Dark', ''), icon: (iconList[key] as any).default })
+                    const name = key.split('/').pop()?.split('.')[0]
+                    const iconName = name?.replace('AppIcon', '')
+                    if( name && name.indexOf('AppIcon') >= 0 && iconName != undefined) {
+                        if(!runtimeData.tags.darkMode && !iconName.endsWith('Dark')) {
+                            iconListInfo.push({ name: iconName, icon: (iconList[key] as any).default })
+                        } else if(runtimeData.tags.darkMode && iconName.endsWith('Dark')) {
+                            iconListInfo.push({ name: iconName.replace('Dark', ''), icon: (iconList[key] as any).default })
                         }
                     }
                 })

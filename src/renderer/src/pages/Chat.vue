@@ -11,14 +11,12 @@
 
 <template>
     <div id="chat-pan"
+        v-move="chatMoveOptions"
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
-        @touchstart="chatMoveStartEvent"
-        @touchmove="chatMoveEvent"
-        @touchend="chatMoveEndEvent"
-        @wheel="chatWheelEvent">
+        @v-move-right.prevent="exitWin()">
         <!-- 聊天基本信息 -->
         <div class="info">
             <font-awesome-icon :icon="['fas', 'bars-staggered']" @click="openLeftBar" />
@@ -99,6 +97,7 @@
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
                         :user-info-pan="userInfoPanFunc"
+                        :image-list-header="chatImg"
                         @click="msgClick($event, msgIndex)"
                         @show-menu="showMsgMeun"
                         @scroll-to-msg="scrollToMsg"
@@ -204,10 +203,13 @@
                                         <template
                                             v-for="(context, indexc) in item.msg_content"
                                             :key="'jinc-' + index + '-' + indexc">
-                                            <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                            <img v-if="context.msg_type === 2"
-                                                class="face" :src="getFace(context.face_index)">
-                                            <img v-if="context.msg_type === 3" :src="context.image_url">
+                                            <span v-if="context.type === 'text'">
+                                                {{ context.data.text }}
+                                            </span>
+                                            <EmojiFace v-if="context.type === 'face'"
+                                                :emoji="Emoji.get(Number(context.data.id))" />
+                                            <img v-if="context.type === 'image'"
+                                                :src="context.data.url">
                                         </template>
                                     </div>
                                 </div>
@@ -377,10 +379,11 @@
                     <div v-if="runtimeData.chatInfo.show.type == 'group'"
                         v-show="tags.menuDisplay.showRespond"
                         :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
-                        <template v-for="(num, index) in respondIds" :key="'respond-' + num">
-                            <img v-if="getFace(num) != ''" loading="lazy"
-                                :src="getFace(num) as any" @click="sendRespond(num)">
-                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']" @click="tags.menuDisplay.respond = true" />
+                        <template v-for="(num, index) in Emoji.responseId" :key="'respond-' + num">
+                            <EmojiFace :emoji="Emoji.get(num)!"
+                                @click="sendRespond(num)" />
+                            <font-awesome-icon v-if="index == 4" :icon="['fas', 'angle-up']"
+                                @click="tags.menuDisplay.respond = true" />
                         </template>
                     </div>
                     <div v-show="tags.menuDisplay.add" @click="forwardSelf()">
@@ -440,6 +443,10 @@
                     <div v-show="tags.menuDisplay.jumpToMsg" @click="jumpSearchMsg">
                         <div><font-awesome-icon :icon="['fas', 'arrow-up-right-from-square']" /></div>
                         <a>{{ $t('跳转到消息') }}</a>
+                    </div>
+                    <div v-show="isDev" @click="consoleLogMsg">
+                        <div><font-awesome-icon :icon="['fas', 'screwdriver-wrench']" /></div>
+                        <a>{{ $t('调试信息') }}</a>
                     </div>
                 </div>
             </div>
@@ -537,9 +544,13 @@ import {
 } from 'vue'
 import { v4 as uuid } from 'uuid'
 import {
+	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
     shouldAutoFocus,
+	vMenu,
+	vMove,
+	VMoveOptions,
 } from '@renderer/function/utils/appUtil'
 import {
     getTimeConfig,
@@ -549,12 +560,10 @@ import {
 import {
     getMsgRawTxt,
     sendMsgRaw,
-    getFace,
     getShowName,
     isShowTime,
     isDeleteMsg,
 } from '@renderer/function/utils/msgUtil'
-import { scrollToMsg } from '@renderer/function/utils/appUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
@@ -567,10 +576,11 @@ import {
     UserGroupElem,
     MenuEventData,
 } from '@renderer/function/elements/information'
-import { wheelMask } from '@renderer/function/input'
 import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
-import { vMenu } from '@renderer/function/utils/appUtil'
+import Emoji from '@renderer/function/model/emoji'
+import EmojiFace from '@renderer/components/EmojiFace.vue'
+import { Img } from '@renderer/function/model/img'
 
 type IUser = any
 
@@ -602,6 +612,58 @@ const userInfoPanFunc: UserInfoPan = {
         name: 'ViewChat',
         props: ['chat', 'list', 'imgView'],
         data() {
+            //#region == 窗口移动相关 ==================================================
+            const chatMoveOptions: VMoveOptions<HTMLDivElement> = {
+                beforeHook: (_) => {
+                    // 移除不需要的css
+                    const target = this.getTargetWin()
+                    if (!target) return
+                    target.style.transition = 'all 0s'
+                    // 禁用滚动
+                    const pan = document.getElementById('chat-pan')
+                    if (!pan) return
+                    const chat = pan.getElementsByClassName('chat')[0] as HTMLDivElement
+                    if(chat)
+                        chat.style.overflowY = 'hidden'
+                },
+                moveHook: (_, move: number) => {
+                    // 移动距离 css
+                    const target = this.getTargetWin()
+                    if (!target) return
+                    target.style.transform = 'translateX(' + move + 'px)'
+                },
+                endHook: (_) => {
+                    // 复原css
+                    const pan = document.getElementById('chat-pan')
+                    const chat = pan?.getElementsByClassName('chat')[0] as HTMLDivElement
+                    if(chat) {
+                        chat.style.overflowY = 'scroll'
+                    }
+                    const target = this.getTargetWin()
+                    if (!target) return
+                    target.style.transition = 'transform 0.3s'
+                    target.style.transform = ''
+                },
+                rightLimit: {
+                    value: 100,
+                    type: '%',
+                },
+                speedCondition: {
+                    minMove: {
+                        value: 0.5 * runtimeData.inch,
+                        type: 'px',
+                    },
+                    minSpeed: 5 * runtimeData.inch,
+                },
+                moveCondition: {
+                    minMove: {
+                        value: 33,
+                        type: '%',
+                    }
+                },
+            }
+            //#endregion
+
             return {
                 backend,
                 uuid,
@@ -610,7 +672,6 @@ const userInfoPanFunc: UserInfoPan = {
                     getMsgRawTxt: getMsgRawTxt,
                 },
                 Option: Option,
-                getFace: getFace,
                 Connector: Connector,
                 runtimeData: runtimeData,
                 getTimeConfig: getTimeConfig,
@@ -655,13 +716,6 @@ const userInfoPanFunc: UserInfoPan = {
                         msgOnTouchDown: false,
                         onMove: 'no',
                     },
-                    chatMove: {
-                        move: 0,
-                        onScroll: 'none' as 'none' | 'touch' | 'wheel',
-                        lastTime: null as null | number,
-                        speedList: [] as number[],
-                        touchLast: null as null | TouchEvent,
-                    },
                 },
                 details: [
                     { open: false },
@@ -678,24 +732,11 @@ const userInfoPanFunc: UserInfoPan = {
                 selectCache: '',
                 replyMsgInfo: null,
                 atFindList: null as GroupMemberInfoElem[] | null,
-                getImgList: [] as {
-                    index: number
-                    message_id: string
-                    img_url: string
-                }[],
-                respondIds: [
-                    4, 5, 8, 9, 10, 12, 14, 16, 21, 23, 24, 25, 26, 27, 28, 29,
-                    30, 32, 33, 34, 38, 39, 41, 42, 43, 49, 53, 60, 63, 66, 74,
-                    75, 76, 78, 79, 85, 89, 96, 97, 98, 99, 100, 101, 102, 103,
-                    104, 106, 109, 111, 116, 118, 120, 122, 123, 124, 125, 129,
-                    144, 147, 171, 173, 174, 175, 176, 179, 180, 181, 182, 183,
-                    201, 203, 212, 214, 219, 222, 227, 232, 240, 243, 246, 262,
-                    264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 277, 278,
-                    281, 282, 284, 285, 287, 289, 290, 293, 294, 297, 298, 299,
-                    305, 306, 307, 314, 315, 318, 319, 320, 322, 324, 326,
-                ],
                 isShowTime,
                 isDeleteMsg,
+                isDev: import.meta.env.DEV,
+                chatMoveOptions,
+                chatImg: undefined as any
             }
         },
         watch: {
@@ -720,16 +761,6 @@ const userInfoPanFunc: UserInfoPan = {
                 () => this.chat.info.jin_info.list.length,
                 () => {
                     this.tags.isJinLoading = false
-                },
-            )
-            // 为 viewer 绑定关闭事件
-            const viewer = app.config.globalProperties.$viewer
-            this.$watch(
-                () => viewer.hiding,
-                (newVall) => {
-                    if (newVall) {
-                        runtimeData.chatInfo.info.image_list = this.getImgList
-                    }
                 },
             )
             // Capacitor：系统返回操作（Android）
@@ -1243,6 +1274,12 @@ const userInfoPanFunc: UserInfoPan = {
                 this.tags.isReply = false
             },
 
+            consoleLogMsg() {
+                if (!this.selectedMsg) return
+                // eslint-disable-next-line no-console
+                console.log(this.selectedMsg)
+            },
+
             /**
              * 取消转发
              */
@@ -1352,7 +1389,7 @@ const userInfoPanFunc: UserInfoPan = {
                     // 二次确认转发
                     const popInfo = {
                         title: this.$t('合并转发消息'),
-                        template: MsgBody,
+                        template: markRaw(MsgBody),
                         templateValue: markRaw({ data: previewMsg, type: 'forward' }),
                         button: [
                             {
@@ -1391,7 +1428,7 @@ const userInfoPanFunc: UserInfoPan = {
                     // 二次确认转发
                     const popInfo = {
                         title: this.$t('转发消息'),
-                        template: MsgBody,
+                        template: markRaw(MsgBody),
                         templateValue: markRaw({ data: msg, type: 'forward' }),
                         button: [
                             {
@@ -1622,20 +1659,22 @@ const userInfoPanFunc: UserInfoPan = {
                             Object.keys(this.chat.info.group_notices).length ===
                                 0)
                     ) {
-                        if (noticeName && noticeName != 'http_proxy') {
+                        if (noticeName) {
                             Connector.send(
                                 noticeName,
                                 { group_id: this.chat.show.id },
                                 'getGroupNotices',
                             )
-                        } else {
-                            const url = `https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${runtimeData.loginInfo.bkn}&qid=${this.chat.show.id}&ft=23&s=-1&n=20`
-                            Connector.send(
-                                'http_proxy',
-                                { url: url },
-                                'getGroupNotices',
-                            )
                         }
+                        // 反正运行不了，注释了
+                        // {
+                        //     const url = `https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${runtimeData.loginInfo.bkn}&qid=${this.chat.show.id}&ft=23&s=-1&n=20`
+                        //     Connector.send(
+                        //         'http_proxy',
+                        //         { url: url },
+                        //         'getGroupNotices',
+                        //     )
+                        // }
                     }
                     // 加载群文件列表
                     if (this.chat.show.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
@@ -2031,9 +2070,7 @@ const userInfoPanFunc: UserInfoPan = {
                         }
                         // 刷新图片列表
                         // TODO: 需要优化性能
-                        let initMainList = false
-                        if (this.getImgList.length == 0) initMainList = true
-                        this.getImgList = []
+                        const getImgList = [] as string[]
                         this.list.forEach((item: any) => {
                             if (item.message !== undefined) {
                                 item.message.forEach((msg: MsgItemElem) => {
@@ -2041,21 +2078,12 @@ const userInfoPanFunc: UserInfoPan = {
                                         msg.type === 'image' &&
                                         msg.file != 'marketface'
                                     ) {
-                                        const info = {
-                                            index: item.message_id,
-                                            message_id: item.message_id,
-                                            img_url: backend.proxyUrl(msg.url)
-                                        }
-                                        this.getImgList.push(info)
+                                        getImgList.push(msg.url)
                                     }
                                 })
                             }
                         })
-                        const viewer = app.config.globalProperties.$viewer
-                        if (!viewer.isShown || initMainList) {
-                            runtimeData.chatInfo.info.image_list =
-                                this.getImgList
-                        }
+                        this.chatImg = Img.fromList(getImgList)
                         // 处理跳入跳转预设
                         // 如果 jump 参数不是 undefined，则意味着这次加载历史记录的同时需要跳转到指定的消息
                         if (
@@ -2270,163 +2298,6 @@ const userInfoPanFunc: UserInfoPan = {
                 runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
             },
 
-            //#region == 窗口移动相关 ==================================================
-            // 滚轮滑动
-            chatWheelEvent(event: WheelEvent) {
-                const process = (event: WheelEvent) => {
-                    // 正在触屏,不处理
-                    if (this.tags.chatMove.onScroll === 'touch') return false
-                    const x = event.deltaX
-                    const y = event.deltaY
-                    const absX = Math.abs(x)
-                    const absY = Math.abs(y)
-                    // 斜度过大
-                    if (absY !== 0 && absX / absY < 2) return false
-                    this.dispenseMove('wheel', -x / 3)
-                    return true
-                }
-                if (!process(event)) return
-                event.preventDefault()
-                // 创建遮罩
-                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
-                // 所以要创建一个不会动的全局遮罩来处理
-                wheelMask(process,()=>{
-                    this.dispenseMove('wheel', 0, true)
-                })
-            },
-
-            // 触屏开始
-            chatMoveStartEvent(event: TouchEvent) {
-                if (this.tags.chatMove.onScroll === 'wheel') return
-                // 触屏开始时，记录触摸点
-                this.tags.chatMove.touchLast = event
-            },
-
-            // 触屏滑动
-            chatMoveEvent(event: TouchEvent) {
-                if (this.tags.chatMove.onScroll === 'wheel') return
-                if (!this.tags.chatMove.touchLast) return
-                const touch = event.changedTouches[0]
-                const lastTouch = this.tags.chatMove.touchLast.changedTouches[0]
-                const deltaX = touch.clientX - lastTouch.clientX
-                const deltaY = touch.clientY - lastTouch.clientY
-                const absX = Math.abs(deltaX)
-                const absY = Math.abs(deltaY)
-                // 斜度过大
-                if (absY !== 0 && absX / absY < 2) return
-                // 触屏移动
-                this.tags.chatMove.touchLast = event
-                this.dispenseMove('touch', deltaX)
-            },
-
-            // 触屏滑动结束
-            chatMoveEndEvent(event: TouchEvent) {
-                if (this.tags.chatMove.onScroll === 'wheel') return
-                const touch = event.changedTouches[0]
-                const lastTouch = this.tags.chatMove.touchLast?.changedTouches[0]
-                if (lastTouch) {
-                    const deltaX = touch.clientX - lastTouch.clientX
-                    const deltaY = touch.clientY - lastTouch.clientY
-                    const absX = Math.abs(deltaX)
-                    const absY = Math.abs(deltaY)
-                    // 斜度过大
-                    if (absY === 0 || absX / absY > 2) {
-                        this.dispenseMove('touch', deltaX)
-                    }
-                }
-                this.dispenseMove('touch', 0, true)
-                this.tags.chatMove.touchLast = null
-            },
-            /**
-             * 分发触屏/滚轮情况
-             */
-            dispenseMove(type: 'touch' | 'wheel', value: number, end: boolean = false) {
-                if (!end && this.tags.chatMove.onScroll === 'none') this.startMove(type, value)
-                if (this.tags.chatMove.onScroll === 'none') return
-                if (end) this.endMove()
-                else this.keepMove(value)
-            },
-            /**
-             * 开始窗口移动
-             */
-            startMove(type: 'touch' | 'wheel', value: number) {
-                // 移除不需要的css
-                const target = this.getTargetWin()
-                if (!target) return
-                target.style.transition = 'all 0s'
-                // 禁用滚动
-                const chatPan = document.getElementById('chat-pan')
-                if (!chatPan) return
-                const chat = chatPan.getElementsByClassName('chat')[0] as HTMLDivElement
-                if(chat) {
-                    chat.style.overflowY = 'hidden'
-                }
-                this.tags.chatMove.onScroll = type
-                this.tags.chatMove.move = value
-                this.tags.chatMove.lastTime = Date.now()
-            },
-            /**
-             * 保持窗口移动
-             */
-            keepMove(value: number){
-                this.tags.chatMove.move += value
-                const nowDate = Date.now()
-                if (!this.tags.chatMove.lastTime) return
-                const deltaTime = nowDate - this.tags.chatMove.lastTime
-                this.tags.chatMove.lastTime = nowDate
-                this.tags.chatMove.speedList.push(
-                    value / deltaTime
-                )
-                if (this.tags.chatMove.move < 0) this.tags.chatMove.move = 0
-                const move = this.tags.chatMove.move
-                const target = this.getTargetWin()
-                if (!target) return
-                target.style.transform = 'translateX(' + move + 'px)'
-            },
-            /**
-             * 结束窗口移动
-             */
-            endMove() {
-                // 保留自己要的数据
-                const move = this.tags.chatMove.move
-                const speedList = this.tags.chatMove.speedList
-                // 重置数据
-                this.tags.chatMove.onScroll = 'none'
-                this.tags.chatMove.lastTime = 0
-                this.tags.chatMove.speedList = []
-                this.tags.chatMove.move = 0
-                // 复原css
-                const chatPan = document.getElementById('chat-pan')
-                const chat = chatPan?.getElementsByClassName('chat')[0] as HTMLDivElement
-                if(chat) {
-                    chat.style.overflowY = 'scroll'
-                }
-                const target = this.getTargetWin()
-                if (!target) return
-                target.style.transition = 'transform 0.3s'
-                target.style.transform = ''
-                // 移动距离大小判定
-                const width = target.offsetWidth
-                // 如果移动距离大于屏幕宽度的三分之一，视为关闭
-                if (move > width / 3) {
-                    return this.exitWin()
-                }
-                // 末端速度法
-                // 防止误触
-                if (move < runtimeData.inch * 0.5) return
-                const endSpeedList = speedList.reverse().slice(0, 10)
-                let endSpeed = 0
-                for (const speed of endSpeedList) {
-                    endSpeed += speed
-                }
-                endSpeed /= endSpeedList.length
-                endSpeed /= runtimeData.inch
-                // 如果末端速度大于 5，则视为关闭
-                if (endSpeed > 5) {
-                    return this.exitWin()
-                }
-            },
-            //#endregion
             /**
              * 得到焦点窗口
              */
