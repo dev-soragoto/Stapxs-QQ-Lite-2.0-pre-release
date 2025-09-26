@@ -13,7 +13,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 export default defineConfig({
     root: './src/renderer',
     envDir: '../../',
-    base: process.env.BUILD_ENV == 'github-actions'? '/Stapxs-QQ-Lite-2.0/' : './',
+    base: process.env.BUILD_ENV == 'github-actions'? '/Stapxs-QQ-Lite-2.0-pre-release/' : './',
     server: {
         port: 8080,
         proxy: {
