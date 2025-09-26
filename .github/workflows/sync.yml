@@ -87,7 +87,7 @@ jobs:
 
           sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\\1\\2-pre.$latest_time\\3/g" package.json
 
-          find . -type f -exec sed -i 's#https://api.github.com/repos/.+?/releases/latest#https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest#gI' {} +
+          find . -type f -exec sed -i -E 's#https://api\.github\.com/repos/.+/releases/latest#https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest#gI' {} +
 
           sed -i 's#/Stapxs-QQ-Lite-2.0#/Stapxs-QQ-Lite-2.0-pre-release#gI' vite.config.ts
           # sed -i 's#VITE_APP_REPO_NAME=Stapxs/Stapxs-QQ-Lite-2.0#VITE_APP_REPO_NAME=dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release#gI' .env
