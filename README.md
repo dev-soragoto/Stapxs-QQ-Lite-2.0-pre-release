@@ -25,6 +25,13 @@
 
 ![view](README/view.png)
 
+## ☕️ 赞助项目
+<p align="center">
+    <a href="https://www.ifdian.net/a/stapxs" target="_blank">
+    <img src="README/sponsor.png" width="600">
+    </a>
+</p>
+
 ## ✨ 特性支持
 
 - ✅ 使用 Vue.js 全家桶开发，快乐前后端分离
