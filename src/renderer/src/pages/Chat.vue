@@ -1562,8 +1562,6 @@ const userInfoPanFunc: UserInfoPan = {
                 // 类型白名单
                 const typeWhiteList = [
                     'image/png',
-                    'image/gif',
-                    'image/webp',
                     'image/svg+xml',
                 ]
 
