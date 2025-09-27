@@ -1403,3 +1403,6 @@ msgstr ""
 
 msgid "切换语言"
 msgstr ""
+
+msgid "复制图片"
+msgstr ""
