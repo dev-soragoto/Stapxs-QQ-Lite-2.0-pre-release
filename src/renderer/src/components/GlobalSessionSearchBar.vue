@@ -176,7 +176,11 @@ function init() {
     const mainList: Session[] = []
     for (const session of runtimeData.userList) {
         if (runtimeData.onMsgList.find(
-            s => s.user_id === session.user_id || s.group_id === session.group_id,
+            s => (
+                s.user_id && s.user_id === session.user_id
+            ) || (
+                s.group_id && s.group_id === session.group_id
+            )
         )) continue
         mainList.push(session)
     }
