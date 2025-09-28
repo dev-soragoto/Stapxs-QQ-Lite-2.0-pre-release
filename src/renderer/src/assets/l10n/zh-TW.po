@@ -235,7 +235,7 @@ msgid "开发者选项"
 msgstr "開發人員選項"
 
 msgid "日志等级"
-msgstr "日誌等級"
+msgstr "紀錄等級"
 
 msgid "全部"
 msgstr "全部"
@@ -682,7 +682,7 @@ msgid "取消置顶"
 msgstr "取消釘選"
 
 msgid "删除"
-msgstr "删除"
+msgstr "刪除"
 
 msgid "标记已读"
 msgstr "標示為已讀"
