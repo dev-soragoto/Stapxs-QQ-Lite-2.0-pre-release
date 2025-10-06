@@ -1404,6 +1404,23 @@ msgstr ""
 msgid "切换语言"
 msgstr ""
 
+msgid "复制图片"
+msgstr ""
+
+msgid "赞助者"
+msgstr ""
+
+msgid "增强透明"
+msgstr ""
+
+msgid "超级加倍！"
+msgstr ""
+
+msgid "网易云音乐预览信息服务"
+msgstr ""
+
+msgid "Bilibili 预览信息服务"
+
 msgid "发送键"
 msgstr ""
 
