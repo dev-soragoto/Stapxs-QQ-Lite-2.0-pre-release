@@ -381,7 +381,7 @@ const msgFunctions = {
                 const appVersion = data.app_version ? ',' + data.app_version : ''
                 const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
 
-                sendStatEvent('connect', { method: data.app_version })
+                sendStatEvent('connect', { method: data.app_name })
                 sendIdentifyData({ bot_version: appInfo })
             }
             if (!login.status) {
