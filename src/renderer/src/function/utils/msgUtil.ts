@@ -735,6 +735,68 @@ export function qqLevelToEmoji(level) {
 }
 
 /**
+ * 将图片 URL 转换为 PNG 格式的 Uint8Array
+ * 支持 base64 和 HTTP URL 格式的图片
+ * @param imageUrl 图片 URL
+ */
+export async function getImageUrlData(imageUrl: string): Promise<{ buffer: Uint8Array, blob: Blob }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+
+    img.onload = () => {
+      try {
+        // 创建 canvas 并设置尺寸
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+
+        // 获取 2D 上下文并绘制图片
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('无法获取 Canvas 上下文'))
+          return
+        }
+
+        ctx.drawImage(img, 0, 0)
+
+        // 将 canvas 转换为 PNG 格式的 blob
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('图片转换失败'))
+            return
+          }
+
+          // 读取 blob 为 ArrayBuffer，然后转换为 Uint8Array
+          const reader = new FileReader()
+          reader.onload = () => {
+            const arrayBuffer = reader.result as ArrayBuffer
+            resolve({
+                buffer: new Uint8Array(arrayBuffer),
+                blob: blob
+            }
+            )
+          }
+          reader.onerror = () => {
+            reject(new Error('读取图片数据失败'))
+          }
+          reader.readAsArrayBuffer(blob)
+        }, 'image/png') // 强制转换为 PNG 格式
+      } catch (error) {
+        reject(error)
+      }
+    }
+
+    img.onerror = () => {
+      reject(new Error('图片加载失败'))
+    }
+
+    // 处理跨域问题
+    img.crossOrigin = 'anonymous'
+    img.src = imageUrl
+  })
+}
+
+/**
  * 判断这个消息是不是[已删除]
  * @param msg
  */
