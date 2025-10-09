@@ -561,13 +561,13 @@ msgstr ""
 msgid "转发消息"
 msgstr ""
 
-msgid "使用 shift enter 换行"
+msgid "多行模式"
 msgstr ""
 
 msgid "I have a shift I have an enter ..."
 msgstr ""
 
-msgid "开启 shift enter 换行可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
+msgid "开启多行模式可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
 msgstr ""
 
 msgid "点击展开"
@@ -1218,7 +1218,7 @@ msgstr ""
 msgid "禁止解析[已删除]"
 msgstr ""
 
-msgid "ob会把撤回的消息显示为你自己发的[已删除]"
+msgid "在tx服务器里，被撤回的消息为[已删除]"
 msgstr ""
 
 msgid "这条消息迷失在虚空里了"
@@ -1420,4 +1420,9 @@ msgid "网易云音乐预览信息服务"
 msgstr ""
 
 msgid "Bilibili 预览信息服务"
+
+msgid "发送键"
+msgstr ""
+
+msgid "你可以使用其他组合键来换行"
 msgstr ""
