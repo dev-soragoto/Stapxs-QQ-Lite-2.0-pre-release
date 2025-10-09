@@ -66,6 +66,7 @@ export const optDefault: { [key: string]: any } = {
     quick_send: 'default',
     group_notice_type: 'none',
     send_face: false,
+    use_breakline: true,
     send_key: 'none',
     close_browser: false,
     close_ga: false,

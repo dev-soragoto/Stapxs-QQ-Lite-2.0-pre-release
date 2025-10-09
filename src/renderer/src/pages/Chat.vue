@@ -2288,8 +2288,14 @@ const userInfoPanFunc: UserInfoPan = {
             },
 
             searchMessage(event: Event) {
+                const input = event.target as HTMLInputElement
+                // 获取 marginTop 用于计算高度
+                const margin = Number(getComputedStyle(input).marginTop.replace('px', ''))
+                input.style.height = 'auto' // 先重置高度
+                input.style.height = (input.scrollHeight - margin * 2) + 'px' // 设置为内容高度
+
                 if (this.details[3].open) {
-                    const value = (event.target as HTMLInputElement).value
+                    const value = input.value
                     if (value.length == 0) {
                         this.tags.search.list = reactive(this.list)
                     } else if (value.length > 0) {
