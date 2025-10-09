@@ -191,7 +191,25 @@
                     <span>{{ $t('你可以使用其他组合键来换行') }}</span>
                 </div>
                 <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.send_key"
+                    <select v-if="backend.platform === 'darwin' || backend.platform === 'ios'" v-model="runtimeData.sysConfig.send_key"
+                        name="send_key" title="send_key" @change="save">
+                        <option value="none">
+                            Enter
+                        </option>
+                        <option value="shift">
+                            Shift + Enter (⇧)
+                        </option>
+                        <option value="ctrl">
+                            Control + Enter (⌃)
+                        </option>
+                        <option value="alt">
+                            Option + Enter (⌥)
+                        </option>
+                        <option value="meta">
+                            Command + Enter (⌘)
+                        </option>
+                    </select>
+                    <select v-else v-model="runtimeData.sysConfig.send_key"
                         name="send_key" title="send_key" @change="save">
                         <option value="none">
                             Enter
@@ -309,11 +327,13 @@
     import { runtimeData } from '@renderer/function/msg'
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
+import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ViewOptFunction',
         data() {
             return {
+                backend,
                 checkDefault: checkDefault,
                 runtimeData: runtimeData,
                 save: save,
