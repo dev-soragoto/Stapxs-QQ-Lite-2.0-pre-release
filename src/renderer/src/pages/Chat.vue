@@ -570,6 +570,7 @@ import {
     getShowName,
     isShowTime,
     isDeleteMsg,
+    getImageUrlData,
 } from '@renderer/function/utils/msgUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
@@ -1230,7 +1231,7 @@ const userInfoPanFunc: UserInfoPan = {
                             this.tags.menuDisplay.downloadImg = (
                                 select as HTMLImageElement
                             ).src
-                            if (!backend.isWeb())
+                            if (backend.isDesktop())
                                 this.tags.menuDisplay.copyImg = true
                         }
                     }
@@ -1336,6 +1337,7 @@ const userInfoPanFunc: UserInfoPan = {
                 if (!this.selectedMsg) return
                 // eslint-disable-next-line no-console
                 console.log(this.selectedMsg)
+                this.closeMsgMenu()
             },
 
             /**
@@ -1603,53 +1605,36 @@ const userInfoPanFunc: UserInfoPan = {
              * 复制图片
              */
             async copyImg() {
-                if (!this.tags.menuDisplay.downloadImg) return
+                const url = this.tags.menuDisplay.downloadImg
+                if (!url) return
 
                 // 关闭菜单
                 this.closeMsgMenu()
 
-                // 类型白名单
-                const typeWhiteList = [
-                    'image/png',
-                    'image/svg+xml',
-                ]
-
                 // 获取图片数据
-                const response = await fetch(this.tags.menuDisplay.downloadImg)
-                let blob = await response.blob()
+                const { blob, buffer } = await getImageUrlData(url)
 
-                // 乱七八糟浏览器不一定支持的格式统统转png
-                if (!typeWhiteList.includes(blob.type)) {
-                    // 创建 canvas 来转换格式
-                    const img = new Image()
-                    const canvas = document.createElement('canvas')
-                    const ctx = canvas.getContext('2d')
+                const popInfo = new PopInfo()
+                if(backend.type === 'tauri') {
+                    try {
+                        const Clipboard = await import('@tauri-apps/plugin-clipboard-manager')
 
-                    await new Promise((resolve, reject) => {
-                        img.onload = resolve
-                        img.onerror = reject
-                        img.src = URL.createObjectURL(blob)
-                    })
-
-                    canvas.width = img.width
-                    canvas.height = img.height
-                    ctx?.drawImage(img, 0, 0)
-
-                    // 转换为 PNG blob
-                    blob = await new Promise(resolve => {
-                        canvas.toBlob((blob)=>{
-                            resolve(blob as Blob)
-                        }, 'image/png')
-                    })
-
-                    URL.revokeObjectURL(img.src)
+                        await Clipboard.writeImage(buffer)
+                        popInfo.add(PopType.INFO, this.$t('复制成功'))
+                    } catch(e) {
+                        popInfo.add(PopType.ERR, this.$t('复制失败'))
+                        new Logger().error(e as unknown as Error, '复制图片失败')
+                    }
+                } else {
+                    const item = new ClipboardItem({ [blob.type]: blob })
+                    try {
+                        await copyToClipboard([item])
+                        popInfo.add(PopType.INFO, this.$t('复制成功'))
+                    } catch (e) {
+                        popInfo.add(PopType.ERR, this.$t('复制失败'))
+                        new Logger().error(e as unknown as Error, '复制图片失败')
+                    }
                 }
-                const item = new ClipboardItem({ [blob.type]: blob })
-                try {
-                    await copyToClipboard([item])
-                    const popInfo = new PopInfo()
-                    popInfo.add(PopType.INFO, this.$t('复制成功'))
-                }catch {/**/}
             },
 
             /**
