@@ -356,7 +356,9 @@
                             @keydown="mainKey"
                             @keyup="mainKeyUp"
                             @click="selectSQIn()"
-                            @input="searchMessage" />
+                            @input="searchMessage"
+                            @compositionstart="handleCompositionStart"
+                            @compositionend="handleCompositionEnd" />
                     </form>
                     <div @click="sendMsg('sendMsgBack')">
                         <font-awesome-icon v-if="details[3].open" :icon="['fas', 'search']" />
@@ -684,6 +686,7 @@ const userInfoPanFunc: UserInfoPan = {
                 trueLang: getTrueLang(),
                 multipleSelectList: [] as string[],
                 tags: {
+                    sendTag: 'REFUSE' as 'READY' | 'PASS' | 'REFUSE',
                     nowGetHistroy: false,
                     showBottomButton: true,
                     showMoreDetail: false,
@@ -944,17 +947,31 @@ const userInfoPanFunc: UserInfoPan = {
                         break
                 }
 
-                if (canSend && this.msg !== '') this.sendMsg()
-                // 补加 enter
-                // ctrl + enter
-                // meta + enter
-                // alt + enter
-                // 上述组合不自带enter,需要手动补充
-                else if (
-                    event.key === 'Enter' &&
-                    (event.ctrlKey || event.metaKey || event.altKey)
-                ) this.msg += '\n'
+                if(canSend && this.tags.sendTag != 'PASS') {
+                    this.tags.sendTag = 'READY'
+                }
+
+                if (this.tags.sendTag == 'READY' && this.msg !== '') {
+                    this.sendMsg()
+                } else {
+                    if(event.key === 'Enter' &&
+                        (event.ctrlKey || event.metaKey || event.altKey)) {
+                        // 否则触发回车逻辑，补充换行
+                        this.msg += '\n'
+                    }
+                }
+
+                this.tags.sendTag = 'REFUSE'
             },
+
+            handleCompositionStart() {
+                this.tags.sendTag = 'REFUSE'
+            },
+            handleCompositionEnd() {
+                this.tags.sendTag = 'PASS'
+                setTimeout(() => { this.tags.sendTag = 'READY' }, 50)
+            },
+
             mainKeyUp(event: KeyboardEvent) {
                 const logger = new Logger()
                 // 发送完成后输入框会遗留一个换行，把它删掉 ……
@@ -1008,10 +1025,7 @@ const userInfoPanFunc: UserInfoPan = {
             mainSubmit(event) {
                 event.preventDefault()
                 // 多行模式下不通过这个处理
-                if (runtimeData.sysConfig.use_breakline) return
-                if (this.msg != '') {
-                    this.sendMsg()
-                }
+                // textarea 不会触发 submit 事件
             },
 
             /**
