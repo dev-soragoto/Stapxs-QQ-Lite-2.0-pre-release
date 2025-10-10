@@ -1025,6 +1025,9 @@ const userInfoPanFunc: UserInfoPan = {
              */
             mainSubmit(event) {
                 event.preventDefault()
+                if (this.msg != '') {
+                    this.sendMsg()
+                }
                 // 多行模式下不通过这个处理
                 // textarea 不会触发 submit 事件
             },
