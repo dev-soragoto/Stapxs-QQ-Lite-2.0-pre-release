@@ -842,6 +842,7 @@
 }
 
 .pie-pan {
+    position: relative;
     width: 100%;
     height: 100%;
     display: flex;
@@ -853,8 +854,9 @@
     margin-top: -15%;
 }
 .pie-pan > a {
-    display: block;
+    top: 5mm;
     width: 80%;
+    position: absolute;
     text-align: center;
     background: var(--color-card-1);
     padding: 10px;
