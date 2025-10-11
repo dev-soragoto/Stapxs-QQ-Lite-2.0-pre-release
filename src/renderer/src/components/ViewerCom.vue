@@ -343,7 +343,7 @@ async function editMode(dataurl: string): Promise<string> {
         mouseMoveInfo.value = undefined
         loading.value = false
         resetModify()
-        editImg()
+        setTimeout(editImg, 0)
     }, 0)
     return promise
 }
