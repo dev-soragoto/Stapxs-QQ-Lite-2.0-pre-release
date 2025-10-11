@@ -1513,6 +1513,122 @@ input {
     display: flex;
     height: 0;
 }
+
+.img-pan-enter-active {
+    animation: img-pan-appear 0.3s;
+}
+
+.img-pan-leave-active {
+    animation: img-pan-appear 0.3s reverse;
+}
+
+@keyframes img-pan-appear {
+    from {
+        height: 0;
+    }
+
+    to {
+        height: calc(15vh + 0.9rem + 5px + 30px);
+    }
+}
+
+.img-pan {
+    overflow-x: auto;
+    padding: 0;
+    background-color: var(--color-card-1);
+    pointer-events: all;
+    margin: 10px 15px;
+}
+
+.img-pan > .imgs {
+    height: auto;
+    width: auto;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+.img-pan > .imgs > div {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    padding: 5px;
+    border-radius: 7px;
+    border: 1px solid var(--color-main);
+    overflow: hidden;
+    margin: 10px 5px;
+    flex-shrink: 0;
+}
+
+.img-pan > .imgs > div:first-child {
+    margin-left: 10px;
+}
+.img-pan > .imgs > div:last-child {
+    margin-right: 10px;
+}
+
+.img-pan > .imgs > div > .img-btns {
+    position: absolute;
+    background-color: var(--color-bg);
+    display: flex;
+    border-radius: 1mm;
+    top: 1mm;
+    right: 1mm;
+}
+
+.img-pan > .imgs > div > .img-btns > div {
+    width: 5mm;
+    height: 5mm;
+    padding: 1mm;
+    display: flex;
+    transition: background-color 0.3s;
+}
+
+.img-pan > .imgs > div > .img-btns > div > svg {
+    width: 5mm;
+    height: 5mm;
+    margin: 0;
+}
+
+.img-pan > .imgs > div > .img-btns > div:hover {
+    background-color: var(--color-card-2);
+    cursor: pointer;
+}
+
+.img-pan > .imgs > div > .img {
+    width: 15vh;
+    height: 15vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-card-1);
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.img-pan > .imgs > div > .img > img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.img-pan > .imgs > div > span {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    text-align: center;
+    background-color: var(--color-card);
+    border-radius: 7px;
+}
+
+.input-special-tag {
+    background: var(--color-card);
+    transition: all 0.3s;
+    align-items: center;
+    flex-direction: row;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    height: 0;
+}
 .replay-tag.show {
     margin: 0 20px -10px 20px;
     margin-top: 20px;

@@ -207,7 +207,7 @@ msgstr "唔想得罪 Tencent，你自己 cap 圖好過喇"
 msgid "禁用图片发送框"
 msgstr "停用 send 圖 box"
 
-msgid "你也向往自由吗？"
+msgid "你也向往自由吗？（现在这个版本还不自由吗？"
 msgstr "反正 SS 都話佢唔用呢個 box 嘅"
 
 msgid "消息页面主题"
