@@ -82,8 +82,7 @@
                         </div>
                     </label>
                 </div>
-                <template
-                    v-if="runtimeData.sysConfig.opt_auto_win_color != true">
+                <template v-if="runtimeData.sysConfig.opt_auto_win_color != true">
                     <div class="opt-item">
                         <div :class="checkDefault('theme_color')" />
                         <font-awesome-icon :icon="['fas', 'palette']" />
@@ -92,6 +91,15 @@
                             <span>{{ $t('换个心情 🎵 ~') }}</span>
                         </div>
                         <div class="theme-color-col">
+                            <input id="theme_color_custom" type="color">
+                            <label class="ss-radio" style="margin-left: 10px;">
+                                <input type="radio" name="theme_color"
+                                    :checked="Number(runtimeData.sysConfig.theme_color) > 10"
+                                    @click="themeColorChange">
+                                <div style="background: linear-gradient(135deg, hsl(0 100% 50%) 0%, hsl(30 100% 60%) 16%, hsl(60 100% 60%) 33%, hsl(120 80% 45%) 50%, hsl(220 90% 45%) 66%, hsl(260 60% 40%) 83%, hsl(290 80% 50%) 100%);">
+                                    <div />
+                                </div>
+                            </label>
                             <label v-for="(name, index) in colors" :key="'color_id_' + index"
                                 :title="name" class="ss-radio">
                                 <input type="radio" name="theme_color" :data-id="index"
@@ -113,7 +121,7 @@
                     <font-awesome-icon :icon="['fas', 'wand-magic-sparkles']" />
                     <div>
                         <span>{{ $t('自动跟随主题色') }}</span>
-                        <span>{{ $t('自动获取的主题色设置并应用') }}</span>
+                        <span>{{ $t('自动获取系统的主题色设置并应用') }}</span>
                     </div>
                     <label class="ss-switch">
                         <input v-model="runtimeData.sysConfig.opt_auto_win_color"
@@ -128,62 +136,64 @@
                 <div :class="checkDefault('chat_more_blur')" />
                 <font-awesome-icon :icon="['fas', 'expand']" />
                 <div>
-                    <span>{{ $t('增强透明') }}</span>
-                    <span>{{ $t('超级加倍！') }}</span>
+                    <span>{{ $t('透明模式') }}</span>
+                    <span>{{ $t('透明超级加倍！在界面上使用更泛滥的透明和模糊。') }}</span>
                 </div>
                 <label class="ss-switch">
                     <input v-model="runtimeData.sysConfig.chat_more_blur"
-                        type="checkbox" name="chat_more_blur" @change="save">
+                        type="checkbox" name="chat_more_blur" @change="blurTip">
                     <div>
                         <div />
                     </div>
                 </label>
             </div>
-            <div class="opt-item">
-                <div :class="checkDefault('chat_background')" />
-                <font-awesome-icon :icon="['fas', 'image']" />
-                <div>
-                    <span>{{ $t('背景图片') }}</span>
-                    <span>{{ $t('嘿嘿嘿（痴呆') }}</span>
-                </div>
-                <div class="file-choice">
-                    <div class="choice-btn"
-                        @click="($refs.choiceImg as any)?.click()">
-                        {{
-                            runtimeData.sysConfig.chat_background
-                                ? $t('更换背景')
-                                : $t('上传背景')
-                        }}
-                        <input ref="choiceImg"
-                            type="file"
-                            style="display: none"
-                            name="chat_background"
-                            accept="image/*"
-                            @change="setBackground($event)">
+            <template v-if="!runtimeData.sysConfig.chat_more_blur">
+                <div class="opt-item">
+                    <div :class="checkDefault('chat_background')" />
+                    <font-awesome-icon :icon="['fas', 'image']" />
+                    <div>
+                        <span>{{ $t('背景图片') }}</span>
+                        <span>{{ $t('嘿嘿嘿（痴呆') }}</span>
                     </div>
-                    <div v-if="runtimeData.sysConfig.chat_background !== ''"
-                        class="rm-btn"
-                        @click="removeBackground">
-                        <font-awesome-icon :icon="['fas', 'xmark']" />
+                    <div class="file-choice">
+                        <div class="choice-btn"
+                            @click="($refs.choiceImg as any)?.click()">
+                            {{
+                                runtimeData.sysConfig.chat_background
+                                    ? $t('更换背景')
+                                    : $t('上传背景')
+                            }}
+                            <input ref="choiceImg"
+                                type="file"
+                                style="display: none"
+                                name="chat_background"
+                                accept="image/*"
+                                @change="setBackground($event)">
+                        </div>
+                        <div v-if="runtimeData.sysConfig.chat_background !== ''"
+                            class="rm-btn"
+                            @click="removeBackground">
+                            <font-awesome-icon :icon="['fas', 'xmark']" />
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="opt-item">
-                <div :class="checkDefault('chat_background_blur')" />
-                <font-awesome-icon :icon="['fas', 'o']" />
-                <div>
-                    <span>{{ $t('背景模糊') }}</span>
-                    <span>{{ $t('什么都看不见了（恼') }}</span>
+                <div class="opt-item">
+                    <div :class="checkDefault('chat_background_blur')" />
+                    <font-awesome-icon :icon="['fas', 'o']" />
+                    <div>
+                        <span>{{ $t('背景模糊') }}</span>
+                        <span>{{ $t('什么都看不见了（恼') }}</span>
+                    </div>
+                    <div class="ss-range">
+                        <input v-model="runtimeData.sysConfig.chat_background_blur"
+                            :style="`background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
+                            type="range" name="chat_background_blur" @input="save">
+                        <span :style="`color: var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
+                            {{ runtimeData.sysConfig.chat_background_blur }}
+                            px</span>
+                    </div>
                 </div>
-                <div class="ss-range">
-                    <input v-model="runtimeData.sysConfig.chat_background_blur"
-                        :style="`background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
-                        type="range" name="chat_background_blur" @input="save">
-                    <span :style="`color: var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
-                        {{ runtimeData.sysConfig.chat_background_blur }}
-                        px</span>
-                </div>
-            </div>
+            </template>
         </div>
         <div class="ss-card">
             <header>{{ $t('页面') }}</header>
@@ -356,13 +366,14 @@
 <script lang="ts">
     import { defineComponent, toRaw } from 'vue'
     import { runtimeData } from '../../function/msg'
-    import Option, { runASWEvent as save, get, checkDefault } from '../../function/option'
+    import Option, { runASWEvent as save, get, checkDefault, runAS } from '../../function/option'
     import { BrowserInfo, detect } from 'detect-browser'
     import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
     import languages from '../../assets/l10n/_l10nconfig.json'
     import { sendStatEvent } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
+import { Logger, LogType } from '@renderer/function/base'
 
     export default defineComponent({
         name: 'ViewOptTheme',
@@ -428,6 +439,60 @@
                 sendStatEvent('use_theme_color', {
                     name: this.colors[Number(sender.dataset.id)],
                 })
+            },
+
+            themeColorChange(event: Event) {
+                event.preventDefault()
+
+                const colorInput = document.getElementById(
+                    'theme_color_custom',
+                ) as HTMLInputElement
+                if (colorInput) {
+                    colorInput.click()
+                    colorInput.onchange = (e) => {
+                        const value = (e.target as HTMLInputElement).value
+                        const saveValue = parseInt(value.replace('#', ''), 16)
+                        runAS('theme_color', saveValue)
+                    }
+                }
+            },
+
+            blurTip(event: Event) {
+                const sender = event.target as HTMLInputElement
+                if (sender.checked) {
+                    const popInfo = {
+                        title: this.$t('提醒'),
+                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与“背景图片”相关功能冲突。')}<br><br>
+                        ${this.$t('确定要开启吗？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('确认'),
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    this.removeBackground()
+                                    save(event)
+                                    setTimeout(() => {
+                                        this.restartapp()
+                                    }, 500)
+                                },
+                            },
+                            {
+                                text: this.$t('取消'),
+                                master: true,
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    sender.checked = false
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                } else {
+                    save(event)
+                    setTimeout(() => {
+                        this.restartapp()
+                    }, 500)
+                }
             },
 
             scaleSave(event: Event) {

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use log::info;
 use tauri::{command, AppHandle};
 use tauri_plugin_store::StoreBuilder;
 use serde_json::Value as JsonValue;
@@ -45,8 +46,12 @@ pub fn opt_get_all(app: AppHandle) -> Result<HashMap<String, String>, String> {
 pub fn opt_get(app: AppHandle, data: String) -> Result<String, String> {
     let store =
         StoreBuilder::new(&app, ".settings.dat").build().map_err(|e| e.to_string())?;
-    let store_value = store.get(data).unwrap_or_default();
-    let value = store_value.as_str().unwrap_or("").to_string();
+    let entries = store.entries();
+    let value = entries
+        .iter()
+        .find(|(key, _)| key == &data)
+        .map(|(_, v)| v.to_string())
+        .unwrap_or_default();
     Ok(value)
 }
 

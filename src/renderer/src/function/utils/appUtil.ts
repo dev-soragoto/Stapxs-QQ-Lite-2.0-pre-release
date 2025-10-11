@@ -297,9 +297,8 @@ export function downloadFile(
 * Windows：获取加载系统主题色
 * @param color 颜色
 */
-export function updateWinColor(color: string) {
-    const process = window.electron?.process
-    if (process && process.platform == 'win32') {
+export function updateWinColor(color: string, type: string) {
+    if (type == 'windows') {
         const red = parseInt(color.substr(0, 2), 16)
         const green = parseInt(color.substr(2, 2), 16)
         const blue = parseInt(color.substr(4, 2), 16)
@@ -308,14 +307,19 @@ export function updateWinColor(color: string) {
         const media = window.matchMedia('(prefers-color-scheme: dark)')
         const autodark = option.get('opt_auto_dark')
         const dark = option.get('opt_dark')
+        let min = 0.35
+        let max = 0.8
         if (
             (autodark == true && media.matches) ||
             (autodark != true && dark == true)
         ) {
-            hsl[2] = 0.8
+            min = 0.35 + 0.225
+            max = 0.8
         } else {
-            hsl[2] = 0.3
+            min = 0.35
+            max = 0.8 - 0.225
         }
+        hsl[2] = min + hsl[2] * (max - min)
         const finalColor = hslToRgb(hsl[0], hsl[1], hsl[2])
         document.documentElement.style.setProperty(
             '--color-main',
@@ -327,7 +331,7 @@ export function updateWinColor(color: string) {
                 finalColor[2] +
                 ')',
         )
-    } else {
+    } else if(type == 'macos') {
         document.documentElement.style.setProperty(
             '--color-main',
             '#' + color.substring(0, 6) + 'CF',
@@ -335,8 +339,13 @@ export function updateWinColor(color: string) {
     }
 }
 export async function loadWinColor() {
+    const process = window.electron?.process
+    let type = 'macos'
+    if (process && process.platform == 'win32') {
+        type = 'windows'
+    }
     // 获取系统主题色
-    updateWinColor(await backend.call(undefined, 'sys:getWinColor', true))
+    updateWinColor(await backend.call(undefined, 'sys:getWinColor', true), type)
 }
 
 /**

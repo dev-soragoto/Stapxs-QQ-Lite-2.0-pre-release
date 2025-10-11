@@ -618,7 +618,7 @@ msgstr ""
 msgid "自动跟随主题色"
 msgstr ""
 
-msgid "自动获取的主题色设置并应用"
+msgid "自动获取系统的主题色设置并应用"
 msgstr ""
 
 msgid "背景图片"

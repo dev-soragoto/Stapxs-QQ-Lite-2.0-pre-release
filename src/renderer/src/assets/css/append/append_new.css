@@ -509,6 +509,7 @@ body {
     --switch-height: 24px;
     min-width: 42px;
 }
+.theme-color-col > input#theme_color_custom,
 .theme-color-col > label {
     --radio-size: 14px;
 }

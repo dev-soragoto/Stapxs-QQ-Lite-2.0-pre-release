@@ -544,9 +544,17 @@
     margin-top: -10px;
 }
 
+.theme-color-col > input#theme_color_custom,
 .theme-color-col > label {
     --radio-size: 16px;
     margin-left: -7px;
+}
+.theme-color-col > input#theme_color_custom {
+    transform: translateX(-100%);
+    width: var(--radio-size);
+    height: 1px;
+    z-index: -1;
+    opacity: 0;
 }
 
 .ss-radio:hover > div:nth-child(2) {
