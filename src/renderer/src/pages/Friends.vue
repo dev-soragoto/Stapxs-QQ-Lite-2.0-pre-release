@@ -128,7 +128,7 @@
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
             </div>
-            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card">
+            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card cd">
                 <font-awesome-icon :icon="['fas', 'angles-right']" />
                 <span>(っ≧ω≦)っ</span>
                 <span>{{ $t('别划了别划了被看见了啦') }}</span>

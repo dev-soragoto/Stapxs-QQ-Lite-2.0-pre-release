@@ -50,6 +50,7 @@ export const optDefault: { [key: string]: any } = {
     chat_background_blur: 0,
     chatview_name: '',
     opt_fast_animation: false,
+    chat_more_blur: false,
     initial_scale: 0.85,
     fs_adaptation: 0,
     opt_always_top: false,

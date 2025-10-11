@@ -216,6 +216,7 @@ pub fn run() {
             commands::win::win_move,
             commands::win::win_open_dev_tools,
             commands::win::win_set_title,
+            commands::win::win_relaunch,
             commands::opt::opt_get_system_info,
             commands::opt::opt_store,
             commands::opt::opt_save_all,
@@ -233,6 +234,19 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .title("Stapxs QQ Lite")
         .inner_size(850.0, 530.0)
         .transparent(true);
+    let store =
+            StoreBuilder::new(app, ".settings.dat").build()
+            .map_err(|e| tauri::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("failed to open settings store: {}", e),
+            )))?;
+    let chat_more_blur = store.get("chat_more_blur").and_then(|v| v.as_bool()).unwrap_or(false);
+    let mut window_effect = tauri::window::Effect::Sidebar;
+    if chat_more_blur {
+        window_effect = tauri::window::Effect::Menu;
+    }
+    #[cfg(target_os = "macos")]
+    info!("启用 macOS 视觉特效: {:?}", window_effect);
     #[cfg(target_os = "macos")]
     let win_builder = win_builder
         .title_bar_style(tauri::TitleBarStyle::Overlay)
@@ -240,7 +254,7 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .background_color(tauri::window::Color(0, 0, 0, 1))
         .accept_first_mouse(true)
         .effects(tauri::window::EffectsBuilder::new()
-            .effects(vec![tauri::window::Effect::Sidebar])
+            .effects(vec![window_effect])
             .build());
     #[cfg(target_os = "linux")]
     let win_builder = win_builder

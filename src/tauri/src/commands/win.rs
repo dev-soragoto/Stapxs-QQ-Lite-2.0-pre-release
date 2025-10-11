@@ -20,13 +20,10 @@ pub fn win_maximize(window: tauri::Window) {
     window.maximize().unwrap();
 }
 
-// #[command]
-// pub fn win_relaunch() {
-//     // 重新启动窗口
-//     let app = tauri::AppHandle::current();
-//     app.relaunch().unwrap();
-//     app.exit(0);
-// }
+#[command]
+pub fn win_relaunch(app_handle: tauri::AppHandle) {
+    app_handle.restart();
+}
 
 #[command]
 pub fn win_always_top(window: tauri::Window, data: bool) {
