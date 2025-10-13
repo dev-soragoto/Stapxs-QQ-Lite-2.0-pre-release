@@ -308,16 +308,16 @@ export function updateWinColor(color: string, type: string) {
         const autodark = option.get('opt_auto_dark')
         const dark = option.get('opt_dark')
         let min = 0.35
-        let max = 0.8
+        let max = 0.9
         if (
             (autodark == true && media.matches) ||
             (autodark != true && dark == true)
         ) {
             min = 0.35 + 0.225
-            max = 0.8
+            max = 0.9
         } else {
             min = 0.35
-            max = 0.8 - 0.225
+            max = 0.9 - 0.225
         }
         hsl[2] = min + hsl[2] * (max - min)
         const finalColor = hslToRgb(hsl[0], hsl[1], hsl[2])

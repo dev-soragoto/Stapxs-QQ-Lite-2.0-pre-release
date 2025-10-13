@@ -83,7 +83,7 @@
     background: rgba(var(--color-card-rgb), 0.5);
 }
 .message-body > div {
-    background: rgba(var(--color-card-rgb), 0.3);
+    background: rgba(var(--color-card-rgb), 0.5);
 }
 .msg-menu-body {
     background: rgba(var(--color-bg-rgb), 0.3);
