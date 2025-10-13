@@ -43,6 +43,7 @@
                 <!-- 按钮栏 -->
                 <div>
                     <Transition name="viewer-button" mode="out-in">
+                        <!-- 普通栏 -->
                         <div v-if="!edit"
                             key="1"
                             class="viewer-bar viewer-button-bar"
@@ -70,6 +71,7 @@
                                 :icon="['fas', 'angle-right']"
                                 @click.stop="nextImg" />
                         </div>
+                        <!-- 编辑栏 -->
                         <div v-else
                             key="2"
                             class="viewer-bar viewer-button-bar force-show">
@@ -98,6 +100,8 @@
                             <hr>
                             <font-awesome-icon :icon="['fas', 'xmark']"
                                 @click.stop="editExit" />
+                            <font-awesome-icon v-if="currentImgInfo?.editMode" :icon="['fas', 'check']"
+                                @click.stop="editFinish" />
                         </div>
                     </Transition>
                 </div>
@@ -120,12 +124,16 @@
                             @touchend="onGlobalTouchEnd">
                             <!-- 水平滚动条 -->
                             <div v-hide="!showScrollbarX" class="scrollbar x"
-                                @wheel.stop.prevent="onScrollbarWheel('x', $event)">
+                                :class="{ 'dragging': scrollBarDrag === 'x' }"
+                                @wheel.stop.prevent="onScrollbarWheel('x', $event)"
+                                @mousedown="onScrollbarDrag('x', $event)">
                                 <div class="scrollbar-thumb" :style="scrollbarThumbXStyle" />
                             </div>
                             <!-- 垂直滚动条 -->
                             <div v-hide="!showScrollbarY" class="scrollbar y"
-                                @wheel.stop.prevent="onScrollbarWheel('y', $event)">
+                                :class="{ 'dragging': scrollBarDrag === 'y' }"
+                                @wheel.stop.prevent="onScrollbarWheel('y', $event)"
+                                @mousedown.stop.prevent="onScrollbarDrag('y', $event)">
                                 <div class="scrollbar-thumb" :style="scrollbarThumbYStyle" />
                             </div>
                             <img v-show="!edit"
@@ -180,6 +188,7 @@
 
 <script setup lang="ts">
 import { PopInfo, PopType } from '@renderer/function/base'
+import { mousemoveMask } from '@renderer/function/input'
 import { Img } from '@renderer/function/model/img'
 import { runtimeData } from '@renderer/function/msg'
 import { copyToClipboard } from '@renderer/function/utils/systemUtil'
@@ -234,9 +243,16 @@ const currentLineWidth = computed(() => toolConfig[currentTool.value].width)
 const loading = shallowRef(true)
 const edit = shallowRef(false)
 const currentImgInfo = shallowRef<{
-    width: number,
-    height: number,
-    dom: HTMLImageElement,
+    width: number,                          // 图片实际宽度
+    height: number,                         // 图片实际高度
+    dom: HTMLImageElement,                  // 图片原始dom
+    editMode: false,                        // 是否为编辑模式
+} | {
+    width: number,                          // 图片实际宽度
+    height: number,                         // 图片实际高度
+    dom: HTMLImageElement,                  // 图片原始dom
+    editMode: true,                         // 是否为编辑模式
+    editPromise: (data: string) => void,    // 编辑完成回调
 } | undefined>(undefined)
 const mouseMoveInfo = shallowRef<{
     x: number,
@@ -246,6 +262,7 @@ const mouseMoveInfo = shallowRef<{
 } | undefined>(undefined)
 const zoomTimeout = shallowRef<ReturnType<typeof setTimeout> | undefined>()
 const moveTimeout = shallowRef<ReturnType<typeof setTimeout> | undefined>()
+const scrollBarDrag = shallowRef<undefined | 'x' | 'y'>()
 const changeViewerCssName = shallowRef('next')
 
 const forceShowButton = shallowRef(false)
@@ -280,6 +297,11 @@ const toolConfig = {
 
 const $t = i18n.global.t
 
+//#region == 公开函数 ===============================================
+/**
+ * 打开一张图片预览
+ * @param img 图片节点
+ */
 function open(img: Img) {
     currentImg.value = toRaw(img)
     init()
@@ -295,6 +317,37 @@ function openBySrc(img: Img, src: string) {
     currentImg.value = toRaw(target)
     init()
 }
+
+/**
+ * 编辑一张图片
+ * @param dataurl 图片url
+ * @returns 编辑完成后的dataurl
+ */
+async function editMode(dataurl: string): Promise<string> {
+    let r!: (dataurl: string) => void
+    const promise = new Promise<string>(resolve => {
+        r = resolve
+    })
+    currentImg.value = new Img(dataurl)
+
+    const img = new Image()
+    img.src = dataurl
+    setTimeout(()=>{
+        currentImgInfo.value = {
+            width: img.width,
+            height: img.height,
+            dom: img,
+            editMode: true,
+            editPromise: r,
+        }
+        mouseMoveInfo.value = undefined
+        loading.value = false
+        resetModify()
+        setTimeout(editImg, 0)
+    }, 0)
+    return promise
+}
+//#endregion
 
 /**
  * 重置变形参数
@@ -338,6 +391,7 @@ function init() {
             width: img.width,
             height: img.height,
             dom: img,
+            editMode: false,
         }
 
         resetModify()
@@ -500,6 +554,27 @@ function editExit() {
     edit.value = false
     currentTool.value = 'hand'
     editHistory = []
+
+    // 如果是编辑模式打开的图片，返回结果
+    if (currentImgInfo.value?.editMode) {
+        currentImgInfo.value.editPromise(currentImg.value?.src!)
+        close()
+    }
+}
+/**
+ * 接受编辑结果
+ */
+function editFinish() {
+    edit.value = false
+    currentTool.value = 'hand'
+    editHistory = []
+
+    // 如果是编辑模式打开的图片，返回结果
+    if (currentImgInfo.value?.editMode) {
+        const dataurl = canvas.value!.toDataURL('image/png')
+        currentImgInfo.value.editPromise(dataurl)
+        close()
+    }
 }
 /**
  * 复制编辑结果
@@ -608,6 +683,63 @@ function onScrollbarWheel(axis: 'x'|'y', event: WheelEvent) {
             modify.y = Math.max(-maxOffset, Math.min(modify.y, maxOffset))
         }
     }
+}
+/**
+ * 滚动条拖拽事件
+ * @param axis
+ * @param event
+ */
+function onScrollbarDrag(axis: 'x' | 'y', event: MouseEvent) {
+    let lastPos: number
+    scrollBarDrag.value = axis
+    const updatePos = (event: MouseEvent) => {
+        if (axis === 'x')
+            lastPos = event.clientX
+        else
+            lastPos = event.clientY
+    }
+    updatePos(event)
+    const getDeltaAndUpdate = (event: MouseEvent) => {
+        let delta: number
+        if (axis === 'x') {
+            delta = event.clientX - lastPos
+            lastPos = event.clientX
+        }else {
+            delta = event.clientY - lastPos
+            lastPos = event.clientY
+        }
+        return delta
+    }
+    mousemoveMask((event: MouseEvent) => {
+        const move = getDeltaAndUpdate(event)
+        if (axis === 'x') {
+            // 横向滚动
+            modify.x -= move * (currentImgInfo.value?.width || 0) / (vw.value * 100)
+            // 限制范围
+            const info = currentImgInfo.value
+            if (!info) return true
+            if (modify.rotate % 180 === 0) {
+                const maxOffset = (info.width * modify.scale - vw.value * 100) / 2
+                modify.x = Math.max(-maxOffset, Math.min(modify.x, maxOffset))
+            }
+            else{
+                const maxOffset = (info.height * modify.scale - vw.value * 100) / 2
+                modify.x = Math.max(-maxOffset, Math.min(modify.x, maxOffset))
+            }
+        } else {
+            // 纵向滚动
+            modify.y -= move * (currentImgInfo.value?.height || 0) / (vh.value * 100)
+            const info = currentImgInfo.value
+            if (!info) return true
+            if (modify.rotate % 180 === 0) {
+                const maxOffset = (info.height * modify.scale - vh.value * 100) / 2
+                modify.y = Math.max(-maxOffset, Math.min(modify.y, maxOffset))
+            }else {
+                const maxOffset = (info.width * modify.scale - vh.value * 100) / 2
+                modify.y = Math.max(-maxOffset, Math.min(modify.y, maxOffset))
+            }
+        }
+    }, _ => scrollBarDrag.value = undefined)
 }
 //#endregion
 
@@ -1174,5 +1306,6 @@ function mouseMoveCheck() {
 defineExpose({
     open,
     openBySrc,
+    edit: editMode,
 })
 </script>

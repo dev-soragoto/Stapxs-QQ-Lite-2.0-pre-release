@@ -243,6 +243,34 @@
                         <span>{{ $t('取消') }}</span>
                     </div>
                 </div>
+                <!-- 图片指示器 -->
+                <Transition name="img-pan">
+                    <div v-show="!runtimeData.sysConfig.close_chat_pic_pan && imgCache.size > 0"
+                        :class="{
+                            'img-pan': true,
+                            'ss-card': true,
+                        }"
+                        @wheel="($event.currentTarget as HTMLElement).scrollLeft += $event.deltaY">
+                        <div class="imgs">
+                            <div v-for="[key, value] in imgCache"
+                                :key="'imgCache-' + key">
+                                <div class="img-btns">
+                                    <div @click="editImg(key)">
+                                        <font-awesome-icon :icon="['fas', 'pencil']" />
+                                    </div>
+                                    <hr />
+                                    <div @click="deleteImg(key)">
+                                        <font-awesome-icon style="color: var(--color-red)" :icon="['fas', 'xmark']" />
+                                    </div>
+                                </div>
+                                <div class="img">
+                                    <img :src="value" :alt="`[SQ:${key}]`"/>
+                                </div>
+                                <span>[SQ:{{ key }}]</span>
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
                 <!-- 搜索指示器 -->
                 <div :class="details[3].open ? 'search-tag show' : 'search-tag'">
                     <font-awesome-icon :icon="['fas', 'search']" />
@@ -462,36 +490,6 @@
             <Info ref="infoRef" :chat="chat" :tags="tags"
                 @close="openChatInfoPan" />
         </Transition>
-        <!-- 图片发送器 -->
-        <Transition>
-            <div v-show="imgCache.length > 0" class="img-sender">
-                <div class="card ss-card">
-                    <div class="hander">
-                        <span>{{ $t('发送图片') }}</span>
-                        <button class="ss-button" @click="sendMsg('sendMsgBack')">
-                            {{ $t('发送') }}
-                        </button>
-                    </div>
-                    <div class="imgs">
-                        <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
-                            <div @click="deleteImg(index)">
-                                <font-awesome-icon :icon="['fas', 'xmark']" />
-                            </div>
-                            <img :src="img64">
-                        </div>
-                    </div>
-                    <div class="sender">
-                        <font-awesome-icon :icon="['fas', 'image']" @click="runSelectImg" />
-                        <input v-model="msg"
-                            type="text"
-                            :disabled="runtimeData.tags.openSideBar"
-                            @paste="addImg"
-                            @click="toMainInput">
-                    </div>
-                </div>
-                <div class="bg" @click="imgCache = []" />
-            </div>
-        </Transition>
         <!-- 转发面板 -->
         <Transition>
             <div v-if="tags.showForwardPan" class="forward-pan">
@@ -619,6 +617,7 @@ const userInfoPanFunc: UserInfoPan = {
     export default defineComponent({
         name: 'ViewChat',
         props: ['chat', 'list', 'imgView'],
+        inject: ['viewer'],
         data() {
             //#region == 窗口移动相关 ==================================================
             const chatMoveOptions: VMoveOptions<HTMLDivElement> = {
@@ -737,7 +736,7 @@ const userInfoPanFunc: UserInfoPan = {
                 msgMenus: [],
                 NewMsgNum: 0,
                 msg: '',
-                imgCache: [] as string[],
+                imgCache: new Map<number, string>(),
                 sendCache: [] as MsgItemElem[],
                 selectedMsg: null as { [key: string]: any } | null,
                 selectCache: '',
@@ -757,7 +756,7 @@ const userInfoPanFunc: UserInfoPan = {
                 this.tags = data.tags
                 this.msgMenus = data.msgMenus
                 this.sendCache = []
-                this.imgCache = [] as string[]
+                this.imgCache.clear()
                 this.multipleSelectList = []
                 this.initMenuDisplay()
             },
@@ -1793,7 +1792,19 @@ const userInfoPanFunc: UserInfoPan = {
              * @param { number } index 图片编号
              */
             deleteImg(index: number) {
-                this.imgCache.splice(index, 1)
+                this.imgCache.delete(index)
+                this.msg = this.msg.replace(
+                    '[SQ:' + index + ']',
+                    '',
+                )
+            },
+
+            async editImg(key: number) {
+                const img = this.imgCache.get(key)
+                if (!img) return
+                if (!this.viewer) return
+                const dataurl = await (this.viewer as any).edit(img)
+                this.imgCache.set(key, dataurl)
             },
 
             /**
@@ -1915,7 +1926,7 @@ const userInfoPanFunc: UserInfoPan = {
                         )
                         // 发送文件不能包含任何其他内容
                         this.sendCache = []
-                        this.imgCache = []
+                        this.imgCache.clear()
                         this.msg = ''
                         this.addSpecialMsg({
                             addText: true,
@@ -1941,70 +1952,75 @@ const userInfoPanFunc: UserInfoPan = {
              * 将图片转换为 base64 并缓存
              * @param blob 文件对象
              */
-            async setImg(blob: File | null) {
+            async setImg(file: File | null) {
                 const popInfo = new PopInfo()
-                if (
-                    blob !== null &&
-                    blob.type.indexOf('image/') >= 0 &&
-                    blob.size !== 0
-                ) {
-                    if (blob.size < 3145728) {
-                        // 转换为 Base64
-                        const reader = new FileReader()
-                        reader.readAsDataURL(blob)
-                        reader.onloadend = () => {
-                            const base64data = reader.result as string
-                            if (base64data !== null) {
-                                if (Option.get('close_chat_pic_pan') === true) {
-                                    // 在关闭图片插入面板的模式下将直接以 SQCode 插入输入框
-                                    const data = {
-                                        addText: true,
-                                        msgObj: {
-                                            type: 'image',
-                                            file:
-                                                'base64://' +
-                                                base64data.substring(
-                                                    base64data.indexOf(
-                                                        'base64,',
-                                                    ) + 7,
-                                                    base64data.length,
-                                                ),
-                                        },
-                                    }
-                                    this.addSpecialMsg(data)
-                                } else {
-                                    // 记录图片信息
-                                    // 只要你内存够猛，随便 cache 图片，这边就不做限制了
-                                    this.imgCache.push(base64data)
-                                }
-                            }
-                        }
-                    } else {
-                        // 压缩图片
-                        const options = { maxSizeMB: 3, useWebWorker: true }
-                        try {
-                            popInfo.add(
-                                PopType.INFO,
-                                this.$t('正在压缩图片 ……'),
-                            )
-                            const compressedFile = await imageCompression(
-                                blob,
-                                options,
-                            )
-                            new Logger().add(
-                                LogType.INFO,
-                                '图片压缩成功，原大小：' +
-                                    blob.size / 1024 / 1024 +
-                                    ' MB，压缩后大小：' +
-                                    compressedFile.size / 1024 / 1024 +
-                                    ' MB',
-                            )
-                            this.setImg(compressedFile)
-                        } catch (error) {
-                            popInfo.add(PopType.INFO, this.$t('压缩图片失败'))
-                        }
+                if (!file) return
+                if (!file.type.includes('image/')) return
+                if (file.size === 0) return
+
+                // 图片太大
+                if (file.size > 3145728) {
+                    const options = { maxSizeMB: 3, useWebWorker: true }
+                    try {
+                        popInfo.add(
+                            PopType.INFO,
+                            this.$t('正在压缩图片 ……'),
+                        )
+                        const compressedFile = await imageCompression(
+                            file,
+                            options,
+                        )
+                        new Logger().add(
+                            LogType.INFO,
+                            '图片压缩成功，原大小：' +
+                                file.size / 1024 / 1024 +
+                                ' MB，压缩后大小：' +
+                                compressedFile.size / 1024 / 1024 +
+                                ' MB',
+                        )
+                        this.setImg(compressedFile)
+                    } catch (error) {
+                        new Logger().error(error as Error, '图片压缩失败')
+                        popInfo.add(PopType.INFO, this.$t('压缩图片失败'))
                     }
+                    return
                 }
+
+                // sq 占位符
+                const id = this.sendCache.length
+                const data = {
+                    type: 'text',
+                    text: `[${this.$t('图片')}]`,
+                }
+                this.addSpecialMsg({
+                    addText: true,
+                    msgObj: data,
+                })
+
+                this.imgCache.set(id, await this.fileToDataURL(file))
+            },
+
+
+            /**
+             * 将文件转换为 data URL
+             * @param file 文件对象
+             * @returns data URL
+             */
+            async fileToDataURL(file: File): Promise<string> {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader()
+
+                    reader.onload = function(event) {
+                        if (!event.target) reject(new Error('读取文件失败'))
+                        else resolve(event.target.result as string) // 这就是 data URL
+                    }
+
+                    reader.onerror = function(error) {
+                        reject(error)
+                    }
+
+                    reader.readAsDataURL(file)
+                })
             },
 
             /**
@@ -2030,6 +2046,17 @@ const userInfoPanFunc: UserInfoPan = {
                 this.details.forEach((item) => {
                     item.open = false
                 })
+
+                // 解析图片
+                for (let [key, base64data] of this.imgCache) {
+                    this.sendCache[key] = {
+                        type: 'image',
+                        file: 'base64://' + base64data.substring(
+                            base64data.indexOf('base64,') + 7,
+                            base64data.length
+                        )
+                    }
+                }
                 // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
                 // "这是一段话 [SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
                 // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：
@@ -2039,7 +2066,7 @@ const userInfoPanFunc: UserInfoPan = {
                 const msg = SendUtil.parseMsg(
                     this.msg,
                     this.sendCache,
-                    this.imgCache,
+                    [],
                 )
                 if (this.chat.show.temp) {
                     sendMsgRaw(
@@ -2062,7 +2089,7 @@ const userInfoPanFunc: UserInfoPan = {
                 this.tags.checkNewLineFlag = true
                 this.msg = ''
                 this.sendCache = []
-                this.imgCache = []
+                this.imgCache.clear()
                 this.scrollBottom()
                 this.cancelReply()
             },
