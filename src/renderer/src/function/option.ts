@@ -72,7 +72,6 @@ export const optDefault: { [key: string]: any } = {
     close_browser: false,
     close_ga: false,
     open_ga_bot: true,
-    dont_parse_delete: false,
     // Dev
     msg_type: 2,
     log_level: 'err',

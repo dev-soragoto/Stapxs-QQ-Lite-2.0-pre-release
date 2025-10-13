@@ -801,7 +801,6 @@ export async function getImageUrlData(imageUrl: string): Promise<{ buffer: Uint8
  * @param msg
  */
 export function isDeleteMsg(msg: any): boolean {
-    if(runtimeData.sysConfig.dont_parse_delete === true)return false
     if(!['message', 'message_sent'].includes(msg.post_type)) return false
     if(msg.sender.user_id !== runtimeData.loginInfo.uin)return false
     if(msg.raw_message !== '&#91;已删除&#93;')return false
