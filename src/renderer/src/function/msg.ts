@@ -1524,7 +1524,7 @@ function revokeMsg(_: string, msg: any) {
             }
         }
     } else {
-        logger.error(null, '没有找到这条被撤回的消息 ……')
+        logger.add(LogType.UI, '没有找到这条被撤回的消息', undefined)
     }
     // 撤回通知
     new Notify().closeAll(chatId)

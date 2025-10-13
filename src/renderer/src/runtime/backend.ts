@@ -228,9 +228,12 @@ export const backend = {
         if(this.listener) {
             if(this.isDesktop()) {
                 this.listener(name, callBack)
+                return
             } else if(this.isMobile() && type) {
                 this.listener(type, name, callBack)
+                return
             }
         }
+        logger.error(null, `添加后端监听失败：${name}(${type})`)
     },
 }

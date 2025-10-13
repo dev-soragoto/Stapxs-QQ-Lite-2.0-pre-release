@@ -45,7 +45,9 @@ export class Logger {
         const logLevel = Option.get('log_level')
         // PS：WS, UI, ERR, INFO, DEBUG
         // all 将会输出以上全部类型，debug 将会输出 DEBUG、UI，info 将会输出 INFO，err 将会输出 ERR
-        if (logLevel === 'all') {
+        if(import.meta.env.DEV && type === LogType.SYSTEM) {
+            this.print(type, args, data, hidden)
+        } else if (logLevel === 'all') {
             this.print(type, args, data, hidden)
         } else if (
             logLevel === 'debug' &&
@@ -55,8 +57,6 @@ export class Logger {
         } else if (logLevel === 'info' && type === LogType.INFO) {
             this.print(type, args, data, hidden)
         } else if (logLevel === 'err' && type === LogType.ERR) {
-            this.print(type, args, data, hidden)
-        } else if(import.meta.env.MODE == 'development' && type == LogType.SYSTEM) {
             this.print(type, args, data, hidden)
         }
     }

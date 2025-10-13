@@ -1383,6 +1383,7 @@ const userInfoPanFunc: UserInfoPan = {
                         this.forwardList.unshift(item)
                     }
                 })
+                this.closeMsgMenu()
             },
 
             forwardSelf() {

@@ -56,7 +56,7 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div v-if="sponsorList.length > 3">
                     <img v-for="info in sponsorList.slice(3)"
                         :key="info.user.name"
                         :src="info.user.avatar">
