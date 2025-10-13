@@ -431,6 +431,16 @@ body {
     font-size: 0.8rem;
 }
 
+.img-pan {
+    padding: 5px;
+}
+.img-pan > .imgs > div > .img {
+    height: 13vh;
+}
+.img-pan > .imgs > div > span {
+    font-size: 0.8rem;
+}
+
 .chat-info-tab .tab-bar > li span {
     font-size: 0.8rem;
 }

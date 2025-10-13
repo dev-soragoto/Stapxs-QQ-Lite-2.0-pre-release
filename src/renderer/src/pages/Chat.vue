@@ -266,7 +266,7 @@
                                 <div class="img">
                                     <img :src="value" :alt="`[SQ:${key}]`">
                                 </div>
-                                <span>[SQ:{{ key }}]</span>
+                                <span>#{{ key }}</span>
                             </div>
                         </div>
                     </div>

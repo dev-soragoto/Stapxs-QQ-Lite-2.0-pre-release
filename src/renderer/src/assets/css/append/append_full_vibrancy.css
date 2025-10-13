@@ -96,7 +96,8 @@
 .face-pan,
 .jin-pan,
 .select-tag,
-.replay-tag {
+.replay-tag,
+.img-pan {
     background-color: rgba(var(--color-card-rgb), 0.5);
     backdrop-filter: blur(15px);
 }

@@ -1583,11 +1583,20 @@ input {
     display: flex;
     transition: background-color 0.3s;
 }
+.img-pan > .imgs > div > .img-btns > div:nth-child(1) {
+    margin-right: 1mm;
+}
 
 .img-pan > .imgs > div > .img-btns > div > svg {
     width: 5mm;
     height: 5mm;
     margin: 0;
+}
+.img-pan > .imgs > div > .img-btns > div:nth-child(1) > svg {
+    margin-top: 1mm;
+    margin-left: 1mm;
+    width: 5mm;
+    height: 4mm;
 }
 
 .img-pan > .imgs > div > .img-btns > div:hover {
@@ -1596,7 +1605,7 @@ input {
 }
 
 .img-pan > .imgs > div > .img {
-    width: 15vh;
+    width: 100px;
     height: 15vh;
     display: flex;
     justify-content: center;
@@ -1612,6 +1621,7 @@ input {
 }
 
 .img-pan > .imgs > div > span {
+    color: var(--color-font-1);
     margin-top: 5px;
     font-size: 0.9rem;
     text-align: center;
