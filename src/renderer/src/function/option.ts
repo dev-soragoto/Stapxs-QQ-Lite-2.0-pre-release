@@ -329,8 +329,8 @@ function changeColorMode(mode: string) {
     // 如果主题色模式是自定，则刷新系统主题色
     getRaw('theme_color').then((themeColor) => {
         if(themeColor && themeColor > 10) {
-            const color = ('000000' + (themeColor - 10).toString(16)).slice(-6)
-            updateWinColor(color, 'windows')
+            const colorUpdate = ('000000' + Number(themeColor).toString(16)).slice(-6)
+            updateWinColor(colorUpdate, 'windows')
         }
     })
     // 刷新页面主题色
@@ -371,7 +371,7 @@ function changeTheme(id: number) {
             ).getPropertyValue('--color-main-' + id)
         }
     } else {
-        const color = ('000000' + id.toString(16)).slice(-6)
+        const color = ('000000' + Number(id).toString(16)).slice(-6)
         updateWinColor(color, 'windows')
     }
     // 避免 css 未加载完

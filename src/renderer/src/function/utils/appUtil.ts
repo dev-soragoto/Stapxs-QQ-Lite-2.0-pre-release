@@ -313,11 +313,10 @@ export function updateWinColor(color: string, type: string) {
             (autodark == true && media.matches) ||
             (autodark != true && dark == true)
         ) {
-            min = 0.35 + 0.225
-            max = 0.9
+            min += ( max - min ) / 2
         } else {
             min = 0.35
-            max = 0.9 - 0.225
+            max -= ( max - min ) / 2
         }
         hsl[2] = min + hsl[2] * (max - min)
         const finalColor = hslToRgb(hsl[0], hsl[1], hsl[2])

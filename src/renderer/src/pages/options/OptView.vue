@@ -91,7 +91,7 @@
                             <span>{{ $t('换个心情 🎵 ~') }}</span>
                         </div>
                         <div class="theme-color-col">
-                            <input id="theme_color_custom" type="color">
+                            <input id="theme_color_custom" v-model="themeColorRaw" type="color">
                             <label class="ss-radio" style="margin-left: 10px;">
                                 <input type="radio" name="theme_color"
                                     :checked="Number(runtimeData.sysConfig.theme_color) > 10"
@@ -396,10 +396,12 @@
                 browser: detect() as BrowserInfo,
                 initialScaleShow: 0.5,
                 fsAdaptationShow: 0,
-                usedIcon: ''
+                usedIcon: '',
+                themeColorRaw: '',
             }
         },
         mounted() {
+            this.themeColorRaw = '#' + ('000000' + Number((this.runtimeData.sysConfig.theme_color || 0)).toString(16)).slice(-6)
             // 一次性初始化一次缩放级别
             const watch = this.$watch(
                 () => runtimeData.sysConfig,
