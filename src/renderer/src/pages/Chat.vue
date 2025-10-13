@@ -1802,6 +1802,11 @@ const userInfoPanFunc: UserInfoPan = {
                     '[SQ:' + index + ']',
                     '',
                 )
+                // 解决 ] 被删掉的情况
+                this.msg = this.msg.replace(
+                    '[SQ:' + index,
+                    '',
+                )
             },
 
             async editImg(key: number) {
@@ -1817,6 +1822,9 @@ const userInfoPanFunc: UserInfoPan = {
              * @param data obj
              */
             addSpecialMsg(data: SQCodeElem) {
+                const input = document.getElementById(
+                    'main-input',
+                ) as HTMLInputElement
                 if (data !== undefined) {
                     const index = this.sendCache.length
                     this.sendCache.push(data.msgObj)
@@ -1824,7 +1832,15 @@ const userInfoPanFunc: UserInfoPan = {
                         if (data.addTop === true) {
                             this.msg = '[SQ:' + index + ']' + this.msg
                         } else {
-                            this.msg += '[SQ:' + index + ']'
+                            const selectStart = input.selectionStart
+                            if(selectStart != null) {
+                                // 插到光标位置
+                                const first = this.msg.substring(0, selectStart)
+                                const last = this.msg.substring(selectStart, this.msg.length)
+                                this.msg = first + '[SQ:' + index + ']' + last
+                            } else {
+                                this.msg += '[SQ:' + index + ']'
+                            }
                         }
                     }
                     return index
@@ -2337,15 +2353,14 @@ const userInfoPanFunc: UserInfoPan = {
                 }
 
                 if(str.indexOf(']') >= 0) {
-                    this.msg = this.oldMsg
-                    // 判断光标位置前面前面是不是有 [SQ:xxx
                     const sqIndex = this.oldMsg.substring(0, end).lastIndexOf('[SQ:')
                     if(sqIndex >= 0 && sqIndex < end) {
                         // 取出整个 SQ
-                        const sq = this.oldMsg.slice(sqIndex, end + 1)
+                        const msgHas = this.oldMsg.substring(sqIndex)
+                        const sq = this.oldMsg.slice(sqIndex, msgHas.indexOf(']') + sqIndex + 1)
                         const numStr = sq.replace('[SQ:', '').replace(']', '')
                         const num = Number(numStr)
-                        if(!isNaN(num)) {
+                        if(!isNaN(num) && this.imgCache.has(num)) {
                             this.deleteImg(num)
                         }
                     }
