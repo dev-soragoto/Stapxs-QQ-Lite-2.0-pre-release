@@ -808,6 +808,52 @@ export function isDeleteMsg(msg: any): boolean {
 }
 
 /**
+ * 获取两个字符串之间的差异
+ * @param a 原字符串
+ * @param b 新字符串
+ * @returns 差异列表，包含差异的起始位置、结束位置和差异内容
+ */
+export function getDifferencesWithRanges(a: string, b: string) {
+    let i = 0; // a 的指针
+    let j = 0; // b 的指针
+    const diffs = [] as { start: number; end: number; str: string }[]
+    let currentDiffStart = null as number | null
+    let currentDiffStr = ''
+
+    while (j < b.length) {
+        if (i < a.length && a[i] === b[j]) {
+            // 遇到匹配字符，先保存上一个差异块
+            if (currentDiffStr) {
+                diffs.push({
+                    start: currentDiffStart!,
+                    end: j - 1,
+                    str: currentDiffStr
+                })
+                currentDiffStr = ''
+                currentDiffStart = null
+            }
+            i++;
+        } else {
+            // 遇到差异字符，记录
+            if (currentDiffStart === null) currentDiffStart = j;
+            currentDiffStr += b[j];
+        }
+        j++;
+    }
+
+    // 遍历结束，如果还有未保存的差异块
+    if (currentDiffStr) {
+        diffs.push({
+            start: currentDiffStart!,
+            end: j - 1,
+            str: currentDiffStr
+        });
+    }
+
+    return diffs;
+}
+
+/**
  * lgr专用发送消息，懒得写了，不做通用适配，胡乱应付下吧
  * @param msg 消息内容
  */

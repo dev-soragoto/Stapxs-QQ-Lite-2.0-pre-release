@@ -374,8 +374,8 @@
                                     }) : ''"
                             @paste="addImg"
                             @keyup="mainKeyUp"
-                            @click="selectSQIn()"
-                            @input="searchMessage">
+                            @click="selectSQIn"
+                            @input="handleInput">
                         <textarea v-else id="main-input"
                             v-model="msg"
                             type="text"
@@ -383,8 +383,8 @@
                             @paste="addImg"
                             @keydown="mainKey"
                             @keyup="mainKeyUp"
-                            @click="selectSQIn()"
-                            @input="searchMessage"
+                            @click="selectSQIn"
+                            @input="handleInput"
                             @compositionstart="handleCompositionStart"
                             @compositionend="handleCompositionEnd" />
                     </form>
@@ -569,6 +569,7 @@ import {
     isShowTime,
     isDeleteMsg,
     getImageUrlData,
+    getDifferencesWithRanges
 } from '@renderer/function/utils/msgUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
@@ -736,6 +737,7 @@ const userInfoPanFunc: UserInfoPan = {
                 msgMenus: [],
                 NewMsgNum: 0,
                 msg: '',
+                oldMsg: '',
                 imgCache: new Map<number, string>(),
                 sendCache: [] as MsgItemElem[],
                 selectedMsg: null as { [key: string]: any } | null,
@@ -760,6 +762,9 @@ const userInfoPanFunc: UserInfoPan = {
                 this.multipleSelectList = []
                 this.initMenuDisplay()
             },
+            msg(_: string, oldMsg: string) {
+                this.oldMsg = oldMsg
+            }
         },
         async mounted() {
             // 消息列表刷新
@@ -2048,7 +2053,7 @@ const userInfoPanFunc: UserInfoPan = {
                 })
 
                 // 解析图片
-                for (let [key, base64data] of this.imgCache) {
+                for (const [key, base64data] of this.imgCache) {
                     this.sendCache[key] = {
                         type: 'image',
                         file: 'base64://' + base64data.substring(
@@ -2317,12 +2322,34 @@ const userInfoPanFunc: UserInfoPan = {
                 this.tags.showMoreDetail = !this.tags.showMoreDetail
             },
 
-            searchMessage(event: Event) {
+            handleInput(event: Event) {
                 const input = event.target as HTMLInputElement
                 // 获取 marginTop 用于计算高度
                 const margin = Number(getComputedStyle(input).marginTop.replace('px', ''))
                 input.style.height = 'auto' // 先重置高度
                 input.style.height = (input.scrollHeight - margin * 2) + 'px' // 设置为内容高度
+
+                // 如果删掉了一个 ]
+                const diff = getDifferencesWithRanges(this.msg, this.oldMsg)
+                let { end, str } = { end: 0, str: '' }
+                if(diff.length > 0) {
+                    ({ end, str } = diff[0])
+                }
+
+                if(str.indexOf(']') >= 0) {
+                    this.msg = this.oldMsg
+                    // 判断光标位置前面前面是不是有 [SQ:xxx
+                    const sqIndex = this.oldMsg.substring(0, end).lastIndexOf('[SQ:')
+                    if(sqIndex >= 0 && sqIndex < end) {
+                        // 取出整个 SQ
+                        const sq = this.oldMsg.slice(sqIndex, end + 1)
+                        const numStr = sq.replace('[SQ:', '').replace(']', '')
+                        const num = Number(numStr)
+                        if(!isNaN(num)) {
+                            this.deleteImg(num)
+                        }
+                    }
+                }
 
                 if (this.details[3].open) {
                     const value = input.value
