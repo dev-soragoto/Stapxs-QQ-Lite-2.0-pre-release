@@ -373,7 +373,6 @@
     import languages from '../../assets/l10n/_l10nconfig.json'
     import { sendStatEvent } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
-import { Logger, LogType } from '@renderer/function/base'
 
     export default defineComponent({
         name: 'ViewOptTheme',

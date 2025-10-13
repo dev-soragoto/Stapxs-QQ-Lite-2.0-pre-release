@@ -61,7 +61,6 @@ export const optDefault: { [key: string]: any } = {
     // Function
     close_notice: false,
     bubble_sort_user: true,
-    close_chat_pic_pan: false,
     close_respond: false,
     msg_taill: '',
     quick_send: 'default',

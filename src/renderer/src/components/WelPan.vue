@@ -179,41 +179,6 @@
                 </div>
             </div>
         </div>
-        <button class="ss-button wel-next" @click="setPage('function_img')">
-            {{ $t('继续') }}
-        </button>
-    </div>
-    <div v-else-if="show == 'function_img'" class="function">
-        <div class="config">
-            <div>
-                <div class="chat_pic_pan">
-                    <div><div /><div>{{ $t('发送') }}</div></div>
-                    <div>
-                        <font-awesome-icon :icon="['fas', 'image']" />
-                        <font-awesome-icon :icon="['fas', 'image']" />
-                    </div>
-                    <div><div /><div /></div>
-                </div>
-            </div>
-            <div>
-                <span>{{ $t('图片发送框') }}</span>
-                <a>{{ $t('图片发送框默认启用，所有待发送的图片都将发送在文本之前。如果想要图文混排发送，你需要关闭这个功能以使用纯文本发送模式。') }}</a>
-                <div class="opt-item wel-opt-item">
-                    <div>
-                        <span>{{ $t('禁用图片发送框') }}</span>
-                        <span>{{ $t('你也向往自由吗？（现在这个版本还不自由吗？') }}</span>
-                    </div>
-                    <label class="ss-switch">
-                        <input v-model="runtimeData.sysConfig.close_chat_pic_pan"
-                            type="checkbox" name="close_chat_pic_pan"
-                            @change="save">
-                        <div>
-                            <div />
-                        </div>
-                    </label>
-                </div>
-            </div>
-        </div>
         <button class="ss-button wel-next" @click="setPage('tip')">
             {{ $t('继续') }}
         </button>

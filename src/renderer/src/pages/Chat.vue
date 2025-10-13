@@ -245,7 +245,7 @@
                 </div>
                 <!-- 图片指示器 -->
                 <Transition name="img-pan">
-                    <div v-show="!runtimeData.sysConfig.close_chat_pic_pan && imgCache.size > 0"
+                    <div v-show="imgCache.size > 0"
                         :class="{
                             'img-pan': true,
                             'ss-card': true,
@@ -258,13 +258,13 @@
                                     <div @click="editImg(key)">
                                         <font-awesome-icon :icon="['fas', 'pencil']" />
                                     </div>
-                                    <hr />
+                                    <hr>
                                     <div @click="deleteImg(key)">
                                         <font-awesome-icon style="color: var(--color-red)" :icon="['fas', 'xmark']" />
                                     </div>
                                 </div>
                                 <div class="img">
-                                    <img :src="value" :alt="`[SQ:${key}]`"/>
+                                    <img :src="value" :alt="`[SQ:${key}]`">
                                 </div>
                                 <span>[SQ:{{ key }}]</span>
                             </div>
