@@ -42,7 +42,7 @@
             <a class="ss-button" style="border-radius: 7px;" @click="dependencies()">{{ $t('更多信息') }}</a>
             <div v-if="sponsorList.length > 0 && showUI" class="contributors-card">
                 <div />
-                <span>{{ $t('赞助者') }}</span>
+                <span> {{ $t('赞助者') }} </span>
                 <div class="contributors">
                     <div v-for="info in sponsorList.slice(0, 3)" :key="info.user.name">
                         <img :src="info.user.avatar">
@@ -50,8 +50,8 @@
                             <span>{{ info.user.name }}</span>
                             <span>{{ Intl.DateTimeFormat(trueLang, {
                                 year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
+                                month: 'short',
+                                day: 'numeric',
                             }).format(getViewTime(Number(info.last_pay_time))) }}</span>
                         </div>
                     </div>

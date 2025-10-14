@@ -87,6 +87,10 @@ export const backend = {
         this.release = releaseData?.release || ''
         this.arch = releaseData?.arch || undefined
 
+        if(this.type == 'web' && !this.platform) {
+            this.platform = 'web'
+        }
+
         if (!this.release) {
             let os = ''
             let version = ''
@@ -196,9 +200,6 @@ export const backend = {
                 logger.add(LogType.DEBUG, `调用后端方法 ${(type ?? '') + ' - '}${name} 失败`, ex)
                 return undefined
             }
-        } else {
-            logger.add(LogType.ERR, '调用后端方法失败', new Error('当前运行环境不支持调用后端方法'))
-            return undefined
         }
     },
 

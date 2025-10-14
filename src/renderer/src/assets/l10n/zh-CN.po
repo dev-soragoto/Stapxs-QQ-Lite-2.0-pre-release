@@ -843,16 +843,7 @@ msgstr ""
 msgid "你也不想想让 ta 知道你不在看消息吧 ~"
 msgstr ""
 
-msgid "完整模糊"
-msgstr ""
-
-msgid "完整透明"
-msgstr ""
-
-msgid "窗口透明模式"
-msgstr ""
-
-msgid "怎么看光还要挑三拣四的"
+msgid "透明模式"
 msgstr ""
 
 msgid "此操作将在重启应用后生效，现在就要重启吗？"

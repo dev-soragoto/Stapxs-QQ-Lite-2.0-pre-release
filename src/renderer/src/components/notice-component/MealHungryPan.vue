@@ -13,8 +13,16 @@
                 <span>饿饿！饭饭！</span>
                 <a>非常感谢使用本项目，并给予关注与支持；你的信任是我持续改进与维护的最大动力。</a>
                 <a>本项目驱动自咖啡，如果你觉得这个项目帮到了你，欢迎赞助我一杯咖啡！</a>
+                <a style="
+                    font-size: 0.8rem;
+                    text-align: center;
+                    display: block;
+                    margin-top: 15px;
+                    color: var(--color-font-2);
+                    ">-- 表情包：Copyright @ 鹰角网络 --</a>
                 <br>
                 <a style="
+                    text-align: center;
                     font-size: 0.8rem;
                     text-wrap: nowrap;
                     color: var(--color-font-1);
@@ -68,6 +76,11 @@
     display: flex;
 }
 
+.meal-hungry-pan > div > div:last-child {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
 .hun-text {
     color: var(--color-font);
     width: 40vw;

@@ -16,6 +16,9 @@ select:focus,
 textarea:focus {
     outline: none;
 }
+::-webkit-scrollbar {
+    height: 7px;
+}
 
 .custom-focus {
     outline: none;
@@ -821,7 +824,7 @@ textarea:focus {
     position: absolute;
     user-select: text;
     height: 100%;
-    z-index: 20;
+    z-index: 50;
     width: 100%;
     left: 0;
     top: 0;
@@ -1293,7 +1296,7 @@ textarea:focus {
 }
 
 .viewer-button-bar > svg:hover {
-    background-color: var(--color-font);
+    background-color: var(--color-font-2);
     color: var(--color-font-r);
 }
 

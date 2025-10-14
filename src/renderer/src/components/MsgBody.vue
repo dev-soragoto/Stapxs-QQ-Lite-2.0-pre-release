@@ -288,7 +288,9 @@
                     </template>
                     <template v-else>
                         <!-- 特殊 URL 的预览 -->
-                        <div v-if="pageViewInfo.type == 'bilibili'" class="link-view-bilibili">
+                        <div v-if="pageViewInfo.type == 'bilibili'"
+                            class="link-view-bilibili"
+                            @click="openLink(pageViewInfo.url)">
                             <div class="user">
                                 <img :src="backend.proxyUrl(pageViewInfo.data.owner.face)">
                                 <span>{{ pageViewInfo.data.owner.name }}</span>
@@ -1285,6 +1287,7 @@ function getUserById(id: number): IUser | undefined {
 
     .link-view-bilibili {
         flex-direction: column;
+        cursor: pointer;
         width: 100%;
     }
     .link-view-bilibili > div.user {
@@ -1310,7 +1313,9 @@ function getUserById(id: number): IUser | undefined {
     .link-view-bilibili > img {
         margin-bottom: 10px;
         max-width: 100% !important;
+        max-height: 30vh !important;
         width: fit-content;
+        object-fit: contain;
     }
     .link-view-bilibili > a {
         color: var(--color-font-2) !important;

@@ -132,12 +132,12 @@
                     </label>
                 </div>
             </template>
-            <div v-if="backend.isDesktop()" class="opt-item">
+            <div class="opt-item">
                 <div :class="checkDefault('chat_more_blur')" />
                 <font-awesome-icon :icon="['fas', 'expand']" />
                 <div>
                     <span>{{ $t('透明模式') }}</span>
-                    <span>{{ $t('透明超级加倍！在界面上使用更泛滥的透明和模糊。') }}</span>
+                    <span>{{ $t('透明超级加倍！在界面上使用更泛滥的透明和模糊') }}</span>
                 </div>
                 <label class="ss-switch">
                     <input v-model="runtimeData.sysConfig.chat_more_blur"
@@ -463,7 +463,7 @@
                 if (sender.checked) {
                     const popInfo = {
                         title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与“背景图片”相关功能冲突。')}<br><br>
+                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与“背景图片”相关功能冲突同时会降低元素可读性。')}<br><br>
                         ${this.$t('确定要开启吗？')}</span>`,
                         button: [
                             {
