@@ -127,6 +127,10 @@
                             :data="item"
                             :index="index" />
                     </div>
+                    <div v-if="!chat.info.group_notices || chat.info.group_notices.length === 0"
+                        style="text-align: center; padding: 20px; color: var(--color-text-3);">
+                        {{ $t('这里还没有公告哦~') }}
+                    </div>
                 </div>
                 <div :name="$t('文件')">
                     <div
@@ -135,6 +139,10 @@
                             :key="'file-' + (item.folder_id ?? item.file_id)">
                             <FileBody :chat="chat" :item="item" />
                         </div>
+                    </div>
+                    <div v-if="!chat.info.group_files || chat.info.group_files.length === 0"
+                        style="text-align: center; padding: 20px; color: var(--color-text-3);">
+                        {{ $t('一点文件都没有耶——') }}
                     </div>
                 </div>
                 <div :name="$t('设置')">
@@ -187,7 +195,7 @@
                             type="text"
                             @change="updateMumberTitle($event, showUserConfig)">
                     </div>
-                    <template v-if="showUserConfig.role === 'member'">
+                    <template v-if="(chat.info.me_info.role === 'owner' && showUserConfig.role != 'owner') || (chat.info.me_info.role === 'admin' && showUserConfig.role === 'member')">
                         <header>{{ $t('操作') }}</header>
                         <div class="opt-item">
                             <font-awesome-icon :icon="['fas', 'clipboard-list']" />
@@ -226,7 +234,7 @@
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { defineComponent, toRaw } from 'vue'
-    import { getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { delay, getTrueLang } from '@renderer/function/utils/systemUtil'
     import { runtimeData } from '@renderer/function/msg'
     import {
         UserFriendElem,
@@ -274,6 +282,28 @@
                                     'setGroupKick',
                                 )
                                 runtimeData.popBoxList.shift()
+                                this.showUserConfig = {}
+                                const popInfo = {
+                                    title: this.$t('操作'),
+                                    html: `<span>${this.$t('正在确认操作……')}</span>`
+                                }
+                                runtimeData.popBoxList.push(popInfo)
+                                // 稍微等一下再刷新成员列表
+                                delay(1000).then(() => {
+                                    Connector.send(
+                                        'get_group_member_list',
+                                        { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                                        'getGroupMemberList',
+                                    )
+                                    return delay(1000)
+                                }).then(() => {
+                                    Connector.send(
+                                        'get_group_member_list',
+                                        { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                                        'getGroupMemberList',
+                                    )
+                                    runtimeData.popBoxList.shift()
+                                })
                             },
                         },
                         {
