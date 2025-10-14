@@ -262,9 +262,18 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .disable_drag_drop_handler();
     let window = win_builder.build()?;
     #[cfg(target_os = "windows")] {
+        use winver::WindowsVersion;
+        let version = WindowsVersion::detect().unwrap();
+        let major_id = version.major;
+        let build_id = version.build;
         let _ = window.set_decorations(false);
-        window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)))
-            .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
+        if(major_id == 10) {
+        if(build_id >= 21996) {
+            window_vibrancy::apply_mica(&window, None);
+        } else {
+            window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)));
+        }
+        }
     }
     #[cfg(debug_assertions)]
     {
