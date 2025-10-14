@@ -371,7 +371,7 @@
     import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
     import languages from '../../assets/l10n/_l10nconfig.json'
-    import { sendStatEvent } from '@renderer/function/utils/appUtil'
+    import { sendIdentifyData } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
@@ -427,19 +427,17 @@
         methods: {
             gaLanguage(event: Event) {
                 const sender = event.target as HTMLInputElement
-                sendStatEvent('use_language', { name: sender.value })
+                sendIdentifyData({ use_language: sender.value })
             },
 
             gaChatView(event: Event) {
                 const sender = event.target as HTMLInputElement
-                sendStatEvent('use_chatview', { name: sender.value })
+                sendIdentifyData({ use_chatview: sender.value })
             },
 
             gaColor(event: Event) {
                 const sender = event.target as HTMLInputElement
-                sendStatEvent('use_theme_color', {
-                    name: this.colors[Number(sender.dataset.id)],
-                })
+                sendIdentifyData({ use_theme_color: this.colors[Number(sender.dataset.id)] })
             },
 
             themeColorChange(event: Event) {
@@ -472,6 +470,7 @@
                                     runtimeData.popBoxList.shift()
                                     this.removeBackground()
                                     save(event)
+                                    sendIdentifyData({ use_transparent: true })
                                     setTimeout(() => {
                                         this.restartapp()
                                     }, 500)
@@ -490,6 +489,7 @@
                     runtimeData.popBoxList.push(popInfo)
                 } else {
                     save(event)
+                    sendIdentifyData({ use_transparent: false })
                     setTimeout(() => {
                         this.restartapp()
                     }, 500)
