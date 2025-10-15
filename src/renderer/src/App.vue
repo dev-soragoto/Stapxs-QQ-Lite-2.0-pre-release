@@ -306,10 +306,6 @@ export default defineComponent({
             Option.run('opt_dark', Option.get('opt_dark'))
             Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.run('theme_color', Option.get('theme_color'))
-            Option.run(
-                'merge_forward_width_type',
-                Option.get('merge_forward_width_type'),
-            )
             if (['linux', 'win32'].includes(backend.platform ?? '')) {
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')

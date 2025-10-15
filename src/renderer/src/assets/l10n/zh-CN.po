@@ -1197,12 +1197,6 @@ msgstr ""
 msgid "卡片消息"
 msgstr ""
 
-msgid "固定合并转发宽度"
-msgstr ""
-
-msgid "强迫症的福音～"
-msgstr ""
-
 msgid "禁止解析[已删除]"
 msgstr ""
 

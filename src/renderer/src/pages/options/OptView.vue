@@ -299,21 +299,6 @@
                 </label>
             </div>
             <div class="opt-item">
-                <div :class="checkDefault('merge_forward_width')" />
-                <font-awesome-icon :icon="['fas', 'text-width']" />
-                <div>
-                    <span>{{ $t('固定合并转发宽度') }}</span>
-                    <span>{{ $t('强迫症的福音～') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.merge_forward_width_type"
-                        type="checkbox" name="merge_forward_width_type" @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
-            </div>
-            <div class="opt-item">
                 <div :class="checkDefault('use_super_face')" />
                 <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
                 <div>
