@@ -73,35 +73,9 @@ export default {
  * @returns
  */
 function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
-    const back = [] as MsgItemElem[]
     // 处理消息文本
-    const specialList = getSQList(msg)
-    if (specialList !== null) {
-        specialList.forEach((item) => {
-            const index = Number(
-                item.replace('[', '').replace(']', '').split(':')[1],
-            )
-            const regCut = RegExp('^[^\\[]*\\[SQ:' + index + '\\]', 'g')
-            // 处理内容
-            const cutList = msg.match(regCut)
-            if (cutList !== null) {
-                const cutMsg = cutList[0].replace(item, '')
-                // 添加前段文本
-                if (cutMsg !== '') {
-                    back.push({ type: 'text', text: cutMsg })
-                }
-                // 添加后段特殊消息
-                if (cache[index] !== null) {
-                    back.push(cache[index])
-                }
-                // 去除内容
-                msg = msg.replace(cutList[0], '')
-            }
-        })
-    }
-    if (msg !== '') {
-        back.push({ type: 'text', text: msg })
-    }
+    const back = parserSqToMsg(msg, cache)
+
     // 在缓存堆中寻找其他需要特殊处理的消息
     cache.forEach((item) => {
         switch (item.type) {
@@ -174,4 +148,73 @@ function parseMsgToCQ(msg: string, cache: MsgItemElem[]) {
     }
     // 返回
     return back
+}
+
+/**
+ * 解析SQ码成消息段列表
+ * @param msg sq消息
+ * @param cache 特殊消息段缓存
+ * @returns 消息段列表
+ */
+function parserSqToMsg(msg: string, cache: MsgItemElem[]): MsgItemElem[] {
+    const re: MsgItemElem[] = []
+
+    let cacheTxt: string = ''
+
+    for (let idx = 0; idx < msg.length; ) {
+        const chr = msg.charAt(idx)
+
+        // SQ码检测
+        if (chr === '[' && msg.substring(idx).startsWith('[SQ:')) {
+            let sqId = ''
+            let isSqCode = true
+            let currentIdx = idx + 4
+            // SQ码 id 解析
+            while (currentIdx < msg.length) {
+                const currentChr = msg.charAt(currentIdx)
+                // 结束
+                if (currentChr === ']') break
+                // 非数字，非 SQ 码
+                if (currentChr < '0' || currentChr > '9') {
+                    isSqCode = false
+                    break
+                }
+                sqId += currentChr
+                currentIdx ++
+            }
+            const segId = Number(sqId)
+            const seg = cache.at(segId)
+            if (!seg) isSqCode = false
+
+            // 是 SQ 码，处理缓存文本
+            if (isSqCode) {
+                // 处理缓存文本
+                if (cacheTxt.length > 0) {
+                    re.push({
+                        type: 'text',
+                        text: cacheTxt,
+                    })
+                    cacheTxt = ''
+                }
+                // 添加 SQ 码消息段
+                re.push(seg!)
+                // 移动索引
+                idx = currentIdx + sqId.length
+                continue
+            }
+        }
+
+        // 文本处理
+        cacheTxt += chr
+        idx ++
+    }
+
+    if (cacheTxt.length > 0) {
+        re.push({
+            type: 'text',
+            text: cacheTxt,
+        })
+    }
+
+    return re
 }
