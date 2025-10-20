@@ -295,8 +295,9 @@
                     :class="atFindList != null ? 'at-tag show' : 'at-tag'"
                     contenteditable="true"
                     @blur="choiceAt(undefined)">
-                    <div v-for="item in atFindList != null ? atFindList : []"
+                    <div v-for="(item, index) in atFindList != null ? atFindList : []"
                         :key="'atFind-' + item.user_id"
+                        :class="{ selected: index === atSelectedIndex }"
                         @click="choiceAt(item.user_id)">
                         <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id">
                         <span>{{
@@ -744,6 +745,7 @@ const userInfoPanFunc: UserInfoPan = {
                 selectCache: '',
                 replyMsgInfo: null,
                 atFindList: null as GroupMemberInfoElem[] | null,
+                atSelectedIndex: 0,
                 isShowTime,
                 isDeleteMsg,
                 isDev: import.meta.env.DEV,
@@ -924,6 +926,7 @@ const userInfoPanFunc: UserInfoPan = {
              * @param event 事件
              */
             mainKey(event: KeyboardEvent) {
+                if(this.tags.onAtFind) return
                 if (event.key !== 'Enter') return
                 let canSend = false
                 switch (runtimeData.sysConfig.send_key) {
@@ -987,6 +990,33 @@ const userInfoPanFunc: UserInfoPan = {
                     }
                 }
 
+                // At 选择器激活时的键盘事件处理
+                if (this.tags.onAtFind && this.atFindList && this.atFindList.length > 0) {
+                    // 上箭头键 (keyCode 38)
+                    if (event.keyCode === 38) {
+                        event.preventDefault()
+                        this.atSelectedIndex = this.atSelectedIndex > 0? this.atSelectedIndex - 1: this.atFindList.length - 1
+                        this.scrollAtListToSelected()
+                        return
+                    }
+                    // 下箭头键 (keyCode 40)
+                    if (event.keyCode === 40) {
+                        event.preventDefault()
+                        this.atSelectedIndex = this.atSelectedIndex < this.atFindList.length - 1? this.atSelectedIndex + 1: 0
+                        this.scrollAtListToSelected()
+                        return
+                    }
+                    // 回车键 (keyCode 13)
+                    if (event.keyCode === 13) {
+                        event.preventDefault()
+                        const selectedMember = this.atFindList[this.atSelectedIndex]
+                        if (selectedMember) {
+                            this.choiceAt(selectedMember.user_id)
+                        }
+                        return
+                    }
+                }
+
                 if (event.keyCode != 13) {
                     // 获取最后一个输入的符号用于判定 at
                     const lastInput = this.msg.substring(this.msg.length - 1)
@@ -998,26 +1028,31 @@ const userInfoPanFunc: UserInfoPan = {
                     ) {
                         logger.add(LogType.UI, '开始匹配群成员列表 ……')
                         this.tags.onAtFind = true
+                        this.atSelectedIndex = 0
                     }
                     if (this.tags.onAtFind) {
                         if (this.msg.lastIndexOf('@') < 0) {
                             logger.add(LogType.UI, '匹配群成员列表被打断 ……')
                             this.tags.onAtFind = false
                             this.atFindList = null
+                            this.atSelectedIndex = 0
                         } else {
                             const atInfo = this.msg
                                 .substring(this.msg.lastIndexOf('@') + 1)
                                 .toLowerCase()
-                            if (atInfo != '') {
+                            this.atFindList = runtimeData.chatInfo.info.group_members
+                                    .filter((item) => { return (
+                                            (item.card != '' && item.card != null && item.card.toLowerCase().indexOf(atInfo) >=0) ||
+                                            item.nickname.toLowerCase().indexOf(atInfo) >= 0 ||
+                                            atInfo ==item.user_id.toString()
+                                        )
+                                    },
+                                )
+                            // 如果啥都没匹配到，就显示所有
+                            if (this.atFindList.length == 0) {
                                 this.atFindList = runtimeData.chatInfo.info.group_members
-                                        .filter((item) => { return (
-                                                (item.card != '' && item.card != null && item.card.toLowerCase().indexOf(atInfo) >=0) ||
-                                                item.nickname.toLowerCase().indexOf(atInfo) >= 0 ||
-                                                atInfo ==item.user_id.toString()
-                                            )
-                                        },
-                                    )
                             }
+                            this.atSelectedIndex = 0
                         }
                     }
                 }
@@ -1053,6 +1088,28 @@ const userInfoPanFunc: UserInfoPan = {
                 this.toMainInput()
                 this.tags.onAtFind = false
                 this.atFindList = null
+                this.atSelectedIndex = 0
+            },
+
+            /**
+             * 滚动 At 列表到选中项
+             */
+            scrollAtListToSelected() {
+                this.$nextTick(() => {
+                    const container = document.querySelector('.at-tag.show')
+                    const selectedItem = document.querySelector('.at-tag.show > div.selected')
+                    if (container && selectedItem) {
+                        const containerRect = container.getBoundingClientRect()
+                        const itemRect = selectedItem.getBoundingClientRect()
+
+                        // 如果选中项在容器可视范围之外，则滚动到该项
+                        if (itemRect.top < containerRect.top) {
+                            selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                        } else if (itemRect.bottom > containerRect.bottom) {
+                            selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                        }
+                    }
+                })
             },
 
             /**

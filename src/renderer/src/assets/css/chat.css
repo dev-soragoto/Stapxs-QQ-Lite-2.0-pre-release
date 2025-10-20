@@ -1698,6 +1698,9 @@ input {
 .at-tag > div:hover {
     background: var(--color-card-2);
 }
+.at-tag > div.selected {
+    background: var(--color-card-2);
+}
 .at-tag > div > img {
     border-radius: 100%;
     margin-right: 10px;
