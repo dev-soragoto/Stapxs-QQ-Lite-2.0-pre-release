@@ -1426,3 +1426,12 @@ msgstr ""
 
 msgid "你可以使用其他组合键来换行"
 msgstr ""
+
+msgid "透明超级加倍！在界面上使用更泛滥的透明和模糊"
+msgstr ""
+
+msgid "上传背景"
+msgstr ""
+
+msgid "连接超时"
+msgstr ""

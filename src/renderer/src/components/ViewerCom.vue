@@ -556,8 +556,10 @@ function editExit() {
     editHistory = []
 
     // 如果是编辑模式打开的图片，返回结果
-    if (currentImgInfo.value?.editMode) {
-        currentImgInfo.value.editPromise(currentImg.value?.src!)
+    const info = currentImgInfo.value
+    if (info?.editMode) {
+        const src = currentImg.value?.src ?? ''
+        info.editPromise(src)
         close()
     }
 }
@@ -739,6 +741,7 @@ function onScrollbarDrag(axis: 'x' | 'y', event: MouseEvent) {
                 modify.y = Math.max(-maxOffset, Math.min(modify.y, maxOffset))
             }
         }
+        return true
     }, _ => scrollBarDrag.value = undefined)
 }
 //#endregion

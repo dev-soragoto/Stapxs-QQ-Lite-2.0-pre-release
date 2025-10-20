@@ -446,8 +446,8 @@
                 if (sender.checked) {
                     const popInfo = {
                         title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与“背景图片”相关功能冲突同时会降低元素可读性。')}<br><br>
-                        ${this.$t('确定要开启吗？')}</span>`,
+                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与"背景图片"相关功能冲突同时会降低元素可读性。')}<br><br>
+                        ${this.$t('开启后需要重启应用才能生效，确定要开启吗？')}</span>`,
                         button: [
                             {
                                 text: this.$t('确认'),
@@ -473,11 +473,33 @@
                     }
                     runtimeData.popBoxList.push(popInfo)
                 } else {
-                    save(event)
-                    sendIdentifyData({ use_transparent: false })
-                    setTimeout(() => {
-                        this.restartapp()
-                    }, 500)
+                    const popInfo = {
+                        title: this.$t('提醒'),
+                        html: `<span>${this.$t('关闭透明模式需要重启应用才能生效。')}<br><br>
+                        ${this.$t('确定要重启吗？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('确认'),
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    save(event)
+                                    sendIdentifyData({ use_transparent: false })
+                                    setTimeout(() => {
+                                        this.restartapp()
+                                    }, 500)
+                                },
+                            },
+                            {
+                                text: this.$t('取消'),
+                                master: true,
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    sender.checked = true
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
                 }
             },
 
@@ -586,10 +608,15 @@
                 const img = sender.files?.[0]
                 if (!img) return
                 img.arrayBuffer().then((buffer) => {
-                    const base64String = btoa(
-                        new Uint8Array(buffer)
-                            .reduce((data, byte) => data + String.fromCharCode(byte), ''),
-                    )
+                    // 使用更可靠的方式将二进制数据转换为 base64
+                    const bytes = new Uint8Array(buffer)
+                    let binary = ''
+                    const chunkSize = 0x8000 // 32KB chunks to avoid call stack size exceeded
+                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                        const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length))
+                        binary += String.fromCharCode.apply(null, Array.from(chunk))
+                    }
+                    const base64String = btoa(binary)
                     const imgSrc = `data:${img.type};base64,${base64String}`
                     runtimeData.sysConfig.chat_background = imgSrc
                     Option.runAS('chat_background', imgSrc)

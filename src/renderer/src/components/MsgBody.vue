@@ -502,7 +502,8 @@ function getUserById(id: number): IUser | undefined {
     export default defineComponent({
         name: 'MsgBody',
         inject: ['viewer'],
-        props: ['data', 'type', 'selected'],
+        props: ['data', 'type', 'selected', 'imageListHeader'],
+        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
                 backend,

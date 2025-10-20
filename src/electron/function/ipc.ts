@@ -633,9 +633,7 @@ export function regIpcListener() {
             const fileData = fs.readFileSync(filePath)
 
             // 转换为 base64
-            const base64String = fileData.toString('base64')
-
-            return base64String
+            return fileData.toString('base64')
         } catch (error) {
             logger.error('读取文件失败:', error)
             throw error

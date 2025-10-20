@@ -28,7 +28,7 @@ const playAnimation = () => {
     try {
         lottieRef.value.play?.()
     } catch (e) {
-        console.error('Lottie play error:', e)
+        // do nothing
     }
 }
 

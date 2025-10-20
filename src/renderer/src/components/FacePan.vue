@@ -253,7 +253,6 @@
                 } catch (error) {
                     const { $t } = this as any
                     popInfo.add(PopType.ERR, $t('选择文件夹失败'))
-                    console.error('选择本地表情文件夹失败:', error)
                 }
             },
 
@@ -296,7 +295,6 @@
                         this.localEmojis = []
                     }
                 } catch (error) {
-                    console.error('加载本地表情失败:', error)
                     this.localEmojis = []
                 }
             },
@@ -324,7 +322,8 @@
                         this.$emit('sendMsg')
                     }
                 } catch (error) {
-                    console.error('读取本地表情失败:', error)
+                    const { $t } = this as any
+                    popInfo.add(PopType.ERR, $t('添加本地表情失败'))
                 }
             },
         },
