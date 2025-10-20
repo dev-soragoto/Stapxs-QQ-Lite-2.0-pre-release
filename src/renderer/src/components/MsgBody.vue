@@ -72,7 +72,7 @@
                 <!-- 超级表情 -->
                 <template v-else-if="isSuperFaceMsg()">
                     <div class="msg-img face lottie-face alone">
-                        <Lottie v-once
+                        <LazyLottie
                             :animation-link="Emoji.get(Number(data.message[0].id))!.superValue!"
                             :title="Emoji.get(Number(data.message[0].id))!.description" />
                     </div>
@@ -397,7 +397,7 @@ import { MenuEventData, MergeStackData } from '@renderer/function/elements/infor
 import { backend } from '@renderer/runtime/backend'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
-import { Vue3Lottie as Lottie } from 'vue3-lottie'
+import LazyLottie from './LazyLottie.vue'
 import { UserInfoPan } from './UserInfoPan.vue'
 import { Img } from '@renderer/function/model/img'
 
