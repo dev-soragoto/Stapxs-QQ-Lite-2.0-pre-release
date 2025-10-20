@@ -178,6 +178,59 @@
                 </div>
             </template>
         </div>
+
+        <div class="ss-card">
+            <header>{{ $t('自定义样式') }}</header>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'palette']" />
+                <div>
+                    <span>{{ $t('注入自定义样式') }}</span>
+                    <span v-if="!customCssLoaded">{{ $t('选择一个 CSS 文件上传') }}</span>
+                    <span v-else style="color: var(--color-main)">
+                        {{ $t('已加载自定义样式') }}
+                        ({{ customCssSize }})
+                    </span>
+                </div>
+                <input
+                    ref="cssFileInput"
+                    type="file"
+                    accept=".css"
+                    style="display: none"
+                    @change="handleCssFileUpload">
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="selectCssFile">
+                    {{ customCssLoaded ? $t('更换') : $t('上传') }}
+                </button>
+            </div>
+            <div v-if="customCssLoaded" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'eye']" />
+                <div>
+                    <span>{{ $t('查看自定义样式') }}</span>
+                    <span>{{ $t('查看当前加载的样式') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="viewCustomCss">
+                    {{ $t('查看') }}
+                </button>
+            </div>
+            <div v-if="customCssLoaded" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'trash']" />
+                <div>
+                    <span>{{ $t('清除自定义样式') }}</span>
+                    <span>{{ $t('移除已注入的自定义样式') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="clearCustomCss">
+                    {{ $t('清除') }}
+                </button>
+            </div>
+        </div>
         <div class="ss-card">
             <header>{{ $t('维护与备份') }}</header>
             <div class="opt-item">
@@ -230,6 +283,9 @@
         saveAll,
         checkDefault,
         optDefault,
+        runAS,
+        get,
+        getRaw,
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
@@ -255,7 +311,9 @@
                 ws_text: '',
                 parse_text: '',
                 appmsg_text: '',
-                dev: import.meta.env.DEV
+                dev: import.meta.env.DEV,
+                customCssLoaded: false,
+                customCssSize: '',
             }
         },
         mounted() {
@@ -263,6 +321,8 @@
                 () => runtimeData.jsonMap?.name,
                 () => { this.jsonMapName = runtimeData.jsonMap?.name ?? '' },
             )
+            // 检查是否已加载自定义 CSS
+            this.updateCustomCssStatus()
         },
         methods: {
             sendTestWs(event: KeyboardEvent) {
@@ -615,6 +675,166 @@
                                     delete runtimeData.sysConfig[key]
                                 }
                                 saveAll(runtimeData.sysConfig)
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+            // 自定义 CSS 相关方法
+            async updateCustomCssStatus() {
+                const customCss = await getRaw('custom_css')
+                this.customCssLoaded = customCss && customCss.trim().indexOf('null') < 0
+                if (this.customCssLoaded) {
+                    // 计算 CSS 大小
+                    const sizeInBytes = new Blob([customCss]).size
+                    if (sizeInBytes < 1024) {
+                        this.customCssSize = sizeInBytes + ' B'
+                    } else if (sizeInBytes < 1024 * 1024) {
+                        this.customCssSize = (sizeInBytes / 1024).toFixed(2) + ' KB'
+                    } else {
+                        this.customCssSize = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB'
+                    }
+                }
+            },
+            selectCssFile() {
+                // 触发文件选择
+                const fileInput = this.$refs.cssFileInput as HTMLInputElement
+                if (fileInput) {
+                    fileInput.click()
+                }
+            },
+            handleCssFileUpload(event: Event) {
+                const target = event.target as HTMLInputElement
+                const file = target.files?.[0]
+
+                if (!file) return
+
+                // 检查文件类型
+                if (!file.name.endsWith('.css')) {
+                    new PopInfo().add(
+                        PopType.ERR,
+                        this.$t('请选择 CSS 文件'),
+                    )
+                    return
+                }
+
+                // 检查文件大小（限制为 1MB）
+                if (file.size > 1024 * 1024) {
+                    new PopInfo().add(
+                        PopType.ERR,
+                        this.$t('CSS 文件大小不能超过 1MB'),
+                    )
+                    return
+                }
+
+                // 显示风险警告弹窗
+                const popInfo = {
+                    svg: 'triangle-exclamation',
+                    html: '<div style="text-align: left;"><p>' +
+                        this.$t('注意：自定义样式功能具有一定风险，请确保您了解以下事项：') +
+                        '</p><ul style="margin: 10px 0; padding-left: 20px;">' +
+                        '<li>' + this.$t('错误的 CSS 代码可能导致界面显示异常') + '</li>' +
+                        '<li>' + this.$t('某些样式可能会隐藏或覆盖重要的界面元素') + '</li>' +
+                        '<li>' + this.$t('如果出现严重问题，可能会导致完全无法重置此设置') + '</li>' +
+                        '</ul><p>' + this.$t('确认要继续上传并加载此 CSS 文件吗？') + '</p></div>',
+                    title: this.$t('自定义样式风险提醒'),
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('确认上传'),
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                                // 读取文件内容
+                                const reader = new FileReader()
+                                reader.onload = (e) => {
+                                    const cssContent = e.target?.result as string
+                                    if (cssContent) {
+                                        // 保存并注入 CSS
+                                        runAS('custom_css', cssContent)
+                                        this.updateCustomCssStatus()
+                                        new PopInfo().add(
+                                            PopType.INFO,
+                                            this.$t('自定义样式已加载'),
+                                        )
+                                    }
+                                }
+                                reader.onerror = () => {
+                                    new PopInfo().add(
+                                        PopType.ERR,
+                                        this.$t('读取文件失败'),
+                                    )
+                                }
+                                reader.readAsText(file)
+                                // 清空 input 值，允许重复选择同一文件
+                                target.value = ''
+                            },
+                        },
+                        {
+                            text: app.config.globalProperties.$t('取消'),
+                            master: true,
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                                // 清空 input 值
+                                target.value = ''
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+            viewCustomCss() {
+                const customCss = get('custom_css')
+                const popInfo = {
+                    svg: 'eye',
+                    html: '<textarea style="width: calc(100% - 40px);min-height: 300px;background: var(--color-card-1);color: var(--color-font);border: 0;padding: 20px;border-radius: 7px;margin-top: -10px;font-family: monospace;font-size: 0.9rem;" readonly>' +
+                        (customCss || '') +
+                        '</textarea>',
+                    title: this.$t('查看自定义样式'),
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('复制'),
+                            fun: () => {
+                                app.config.globalProperties.$copyText(customCss)
+                                new PopInfo().add(
+                                    PopType.INFO,
+                                    app.config.globalProperties.$t('复制成功'),
+                                )
+                            },
+                        },
+                        {
+                            text: app.config.globalProperties.$t('确定'),
+                            master: true,
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
+            clearCustomCss() {
+                const popInfo = {
+                    svg: 'trash',
+                    html: '<span>' + this.$t('确认要清除自定义样式吗？') + '</span>',
+                    title: this.$t('清除自定义样式'),
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('确定'),
+                            fun: () => {
+                                runAS('custom_css', null)
+                                this.updateCustomCssStatus()
+                                new PopInfo().add(
+                                    PopType.INFO,
+                                    app.config.globalProperties.$t('已清除自定义样式'),
+                                )
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                        {
+                            text: app.config.globalProperties.$t('取消'),
+                            master: true,
+                            fun: () => {
                                 runtimeData.popBoxList.shift()
                             },
                         },

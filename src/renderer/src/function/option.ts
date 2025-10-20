@@ -75,6 +75,7 @@ export const optDefault: { [key: string]: any } = {
     msg_type: 2,
     log_level: 'err',
     debug_msg: false,
+    custom_css: '',
 }
 
 // =============== 设置项事件 ===============
@@ -93,10 +94,28 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_fast_animation: updateFarstAnimation,
     bubble_sort_user: clearGroupAssist,
     use_favicon_notice: setFaviconNotice,
+    custom_css: injectCustomCss,
 }
 
 function setFaviconNotice(_: boolean) {
     refreshFavicon()
+}
+
+function injectCustomCss(value: string) {
+    // 移除旧的自定义 CSS
+    const oldStyle = document.getElementById('custom-css-inject')
+    if (oldStyle) {
+        document.head.removeChild(oldStyle)
+    }
+
+    // 如果有新的 CSS 内容，注入它
+    if (value && value.trim() !== '') {
+        const style = document.createElement('style')
+        style.id = 'custom-css-inject'
+        style.textContent = value
+        document.head.appendChild(style)
+        new Logger().add(LogType.UI, '已注入自定义 CSS')
+    }
 }
 
 function clearGroupAssist() {
@@ -429,7 +448,12 @@ function loadOptData(data: { [key: string]: any }) {
         } else if (value === 'null') {
             options[key] = null
         } else if (typeof value == 'string') {
-            options[key] = decodeURIComponent(value)
+            try {
+                options[key] = decodeURIComponent(value)
+            } catch (e: unknown) {
+                // 如果 decodeURIComponent 失败（比如 CSS 内容有特殊字符），直接使用原值
+                options[key] = value
+            }
             try {
                 options[key] = JSON.parse(options[key])
             } catch (e: unknown) {
