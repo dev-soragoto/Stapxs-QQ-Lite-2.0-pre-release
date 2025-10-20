@@ -1250,6 +1250,7 @@ input {
     color: var(--color-font-2);
 }
 .face-pan div.title > svg {
+    margin-left: 10px;
     cursor: pointer;
 }
 

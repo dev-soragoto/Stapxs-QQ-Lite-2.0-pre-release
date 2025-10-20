@@ -172,6 +172,9 @@ pub fn run() {
             #[cfg(not(target_os = "macos"))]
             build_tray(app.handle().clone());
 
+            // 注册本地文件协议
+            register_localfile_protocol(app)?;
+
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -205,6 +208,9 @@ pub fn run() {
             commands::sys::sys_download,
             commands::sys::sys_flush_on_message,
             commands::sys::sys_flush_friend_search,
+            commands::sys::sys_select_folder,
+            commands::sys::sys_get_local_emojis,
+            commands::sys::sys_read_file_as_base64,
             commands::onebot::onebot_connect,
             commands::onebot::onebot_send,
             commands::onebot::onebot_close,
@@ -328,4 +334,16 @@ fn show_hidden_app(app: AppHandle) {
     #[cfg(target_os = "macos")]
     tauri::AppHandle::show(&app).unwrap();
     window.set_focus().unwrap();
+}
+
+/// 配置本地文件访问权限
+fn register_localfile_protocol(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri::Manager;
+
+    // 允许 asset 协议访问所有文件
+    // 这样前端使用 convertFileSrc 就能正常加载本地图片
+    app.handle().asset_protocol_scope().allow_directory("/", true)?;
+
+    info!("本地文件访问权限配置完成");
+    Ok(())
 }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::CStr, fs::File, io::{self, Write}, path::PathBuf, process::Command, str::FromStr, sync::Arc, time::Duration};
+use std::{collections::HashMap, ffi::CStr, fs::{self, File}, io::{self, Write}, path::PathBuf, process::Command, str::FromStr, sync::Arc, time::Duration};
 use crate::{PROXY_PORT};
 
 use log::{debug, error, info};
@@ -613,4 +613,117 @@ pub fn sys_flush_on_message() -> String {
 #[command]
 pub fn sys_flush_friend_search() -> String {
     return "".to_string();
+}
+
+// ========== 本地表情功能 ==========
+
+/// 选择文件夹对话框
+#[command]
+pub async fn sys_select_folder() -> Result<Option<String>, String> {
+    use rfd::AsyncFileDialog;
+
+    let folder = AsyncFileDialog::new()
+        .set_title("选择本地表情文件夹")
+        .pick_folder()
+        .await;
+
+    match folder {
+        Some(handle) => {
+            let path = handle.path().to_string_lossy().to_string();
+            info!("选择的文件夹路径: {}", path);
+            Ok(Some(path))
+        },
+        None => {
+            info!("用户取消了文件夹选择");
+            Ok(None)
+        }
+    }
+}
+
+/// 获取本地表情列表
+///
+/// # 参数
+/// - data: 文件夹路径
+///
+/// # 返回
+/// 返回包含图片信息的 JSON 数组
+#[command]
+pub async fn sys_get_local_emojis(data: String) -> Result<Vec<HashMap<String, String>>, String> {
+    use std::fs;
+    use std::path::Path;
+
+    let folder_path = Path::new(&data);
+
+    // 验证路径是否存在且为目录
+    if !folder_path.exists() {
+        return Err(format!("文件夹不存在: {}", data));
+    }
+
+    if !folder_path.is_dir() {
+        return Err(format!("路径不是一个文件夹: {}", data));
+    }
+
+    // 支持的图片格式
+    let image_extensions = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
+
+    let mut emojis: Vec<HashMap<String, String>> = Vec::new();
+
+    // 读取文件夹中的所有文件
+    match fs::read_dir(folder_path) {
+        Ok(entries) => {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+
+                    // 只处理文件（不包括子文件夹）
+                    if path.is_file() {
+                        if let Some(extension) = path.extension() {
+                            let ext = extension.to_string_lossy().to_lowercase();
+
+                            // 检查是否为支持的图片格式
+                            if image_extensions.contains(&ext.as_str()) {
+                                let file_name = path.file_name()
+                                    .unwrap_or_default()
+                                    .to_string_lossy()
+                                    .to_string();
+
+                                let file_path = path.to_string_lossy().to_string();
+
+                                // 直接返回文件路径
+                                // 前端会使用 Tauri 的 convertFileSrc API 来转换为可加载的 URL
+                                let mut emoji_info = HashMap::new();
+                                emoji_info.insert("name".to_string(), file_name);
+                                emoji_info.insert("path".to_string(), file_path.clone());
+                                emoji_info.insert("url".to_string(), file_path);
+
+                                emojis.push(emoji_info);
+                            }
+                        }
+                    }
+                }
+            }
+
+            info!("成功加载 {} 个本地表情", emojis.len());
+            Ok(emojis)
+        },
+        Err(e) => {
+            error!("读取文件夹失败: {}", e);
+            Err(format!("读取文件夹失败: {}", e))
+        }
+    }
+}
+
+#[command]
+pub async fn sys_read_file_as_base64(data: String) -> Result<String, String> {
+    use base64::{engine::general_purpose, Engine as _};
+
+    // 读取文件内容
+    let file_data = fs::read(&data)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    // 转换为 base64
+    let base64_string = general_purpose::STANDARD.encode(&file_data);
+
+    // 返回纯 base64 字符串
+    Ok(base64_string)
 }

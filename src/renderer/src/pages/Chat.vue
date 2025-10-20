@@ -617,8 +617,8 @@ const userInfoPanFunc: UserInfoPan = {
 <script lang="ts">
     export default defineComponent({
         name: 'ViewChat',
-        props: ['chat', 'list', 'imgView'],
         inject: ['viewer'],
+        props: ['chat', 'list', 'imgView'],
         data() {
             //#region == 窗口移动相关 ==================================================
             const chatMoveOptions: VMoveOptions<HTMLDivElement> = {

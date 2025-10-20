@@ -1065,6 +1065,27 @@ msgstr ""
 msgid "收藏的表情"
 msgstr ""
 
+msgid "本地表情"
+msgstr ""
+
+msgid "选择文件夹"
+msgstr ""
+
+msgid "重新加载"
+msgstr ""
+
+msgid "选择本地表情文件夹"
+msgstr ""
+
+msgid "暂无图片"
+msgstr ""
+
+msgid "已设置本地表情文件夹"
+msgstr ""
+
+msgid "选择文件夹失败"
+msgstr ""
+
 msgid "跳转到消息"
 msgstr ""
 

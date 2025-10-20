@@ -40,6 +40,7 @@ export const optDefault: { [key: string]: any } = {
     save_password: '',
     notice_group: {},
     auto_connect: false,
+    local_emoji_folder: null,
     // View
     language: 'zh-CN',
     opt_dark: false,
