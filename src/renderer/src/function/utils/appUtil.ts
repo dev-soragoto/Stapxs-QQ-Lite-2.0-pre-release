@@ -12,7 +12,7 @@ import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.v
 
 import { KeyboardInfo } from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
-import { Connector, login } from '@renderer/function/connect'
+import { Connector, login, clearConnectionTimeout } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem, MenuEventData } from '@renderer/function/elements/information'
 import {
@@ -488,10 +488,21 @@ export async function loadMobile() {
         backend.addListener('Onebot', 'onebot:event', (data) => {
             const msg = JSON.parse(data.data)
             switch(data.type) {
-                case 'onopen': Connector.onopen(login.address, login.token); break
+                case 'onopen': {
+                    clearConnectionTimeout()
+                    login.creating = false
+                    Connector.onopen(login.address, login.token)
+                    break
+                }
                 case 'onmessage': Connector.onmessage(data.data); break
-                case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
+                case 'onclose': {
+                    clearConnectionTimeout()
+                    login.creating = false
+                    Connector.onclose(msg.code, msg.message, login.address, login.token)
+                    break
+                }
                 case 'onerror': {
+                    clearConnectionTimeout()
                     login.creating = false
                     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
                     break

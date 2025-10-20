@@ -24,8 +24,19 @@ const logger = new Logger()
 const popInfo = new PopInfo()
 
 let retry = 0
+let connectionTimeout: number | undefined = undefined
 
 export let websocket: WebSocket | undefined = undefined
+
+/**
+ * 清除连接超时定时器
+ */
+export function clearConnectionTimeout() {
+    if (connectionTimeout !== undefined) {
+        clearTimeout(connectionTimeout)
+        connectionTimeout = undefined
+    }
+}
 
 class TimeoutError extends Error {
     echo: string
@@ -49,6 +60,19 @@ export class Connector {
         const { $t } = app.config.globalProperties
         login.creating = true
 
+        // 清除之前的超时定时器
+        clearConnectionTimeout()
+
+        // 设置连接超时保护（30秒）
+        connectionTimeout = window.setTimeout(() => {
+            if (login.creating) {
+                logger.add(LogType.WS, '连接超时，恢复连接按钮状态')
+                login.creating = false
+                popInfo.add(PopType.ERR, $t('连接超时'))
+                connectionTimeout = undefined
+            }
+        }, 30000)
+
         logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
 
         // Electron 默认使用后端连接模式
@@ -71,6 +95,7 @@ export class Connector {
             logger.add(LogType.WS, '使用 SSE 连接模式')
             const sse = new EventSource(`${import.meta.env.VITE_APP_SSE_EVENT_ADDRESS}?access_token=${token}`)
             sse.onopen = () => {
+                clearConnectionTimeout()
                 login.creating = false
                 this.onopen(address, token)
             }
@@ -78,6 +103,7 @@ export class Connector {
                 this.onmessage(e.data)
             }
             sse.onerror = () => {
+                clearConnectionTimeout()
                 login.creating = false
                 popInfo.add(PopType.ERR, $t('连接不稳定'))
                 return
@@ -92,6 +118,7 @@ export class Connector {
             }
             // 最多自动重试连接五次
             if (retry > 5) {
+                clearConnectionTimeout()
                 login.creating = false
                 return
             }
@@ -115,6 +142,7 @@ export class Connector {
             }
 
             websocket.onopen = () => {
+                clearConnectionTimeout()
                 login.creating = false
                 this.onopen(address, token)
             }
@@ -122,10 +150,12 @@ export class Connector {
                 this.onmessage(e.data)
             }
             websocket.onclose = (e) => {
+                clearConnectionTimeout()
                 login.creating = false
                 this.onclose(e.code, e.reason, address, token)
             }
             websocket.onerror = (e) => {
+                clearConnectionTimeout()
                 login.creating = false
                 if (e instanceof ErrorEvent) {
                     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + e.message)
@@ -246,12 +276,14 @@ export class Connector {
                 break
             }
             default: {
+                clearConnectionTimeout()
                 login.creating = false
                 popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误 {code}',{ code: code }), false)
             }
         }
 
         logger.error(null, $t('连接失败') + ': ' + code)
+        clearConnectionTimeout()
         login.creating = false
         login.status = false
     }
