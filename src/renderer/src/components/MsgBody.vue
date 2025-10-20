@@ -71,8 +71,7 @@
                 </template>
                 <!-- 超级表情 -->
                 <template v-else-if="isSuperFaceMsg()">
-                    <div class="msg-img face alone"
-                        style="--width: 35vh">
+                    <div class="msg-img face lottie-face alone">
                         <Lottie v-once
                             :animation-link="Emoji.get(Number(data.message[0].id))!.superValue!"
                             :title="Emoji.get(Number(data.message[0].id))!.description" />
