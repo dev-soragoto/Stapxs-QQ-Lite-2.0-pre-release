@@ -223,6 +223,7 @@ pub fn run() {
             commands::win::win_open_dev_tools,
             commands::win::win_set_title,
             commands::win::win_relaunch,
+            commands::win::win_start_drag,
             commands::opt::opt_get_system_info,
             commands::opt::opt_store,
             commands::opt::opt_save_all,
