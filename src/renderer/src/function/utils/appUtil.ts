@@ -430,7 +430,10 @@ export function createIpc() {
         // 去消息列表内寻找，去除新消息标记
         const item = runtimeData.baseOnMsgList.get(info.id)
         if(item) {
-            item.new_msg = false
+            if(item.new_msg) {
+                item.new_msg = false
+                runtimeData.newMsgCount--
+            }
             item.highlight = undefined
             runtimeData.baseOnMsgList.set(Number(info.id), item)
         }
@@ -557,7 +560,10 @@ export async function loadMobile() {
                     // 去消息列表内寻找，去除新消息标记
                     const item = runtimeData.baseOnMsgList.get(Number(notification.extra.userId))
                     if(item) {
-                        item.new_msg = false
+                        if(item.new_msg) {
+                            item.new_msg = false
+                            runtimeData.newMsgCount--
+                        }
                         item.highlight = undefined
                         runtimeData.baseOnMsgList.set(Number(notification.extra.userId), item)
                     }

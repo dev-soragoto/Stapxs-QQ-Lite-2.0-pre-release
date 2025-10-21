@@ -1818,6 +1818,7 @@ function newMsg(_: string, data: any) {
                 const user = runtimeData.baseOnMsgList.get(id)
                 if (user) {
                     user.new_msg = true
+                    runtimeData.newMsgCount++
                     runtimeData.baseOnMsgList.set(id, user)
                 }
             }
@@ -1942,6 +1943,7 @@ const baseRuntime = {
     showList: [],
     systemNoticesList: undefined,
     baseOnMsgList: new Map<number, UserFriendElem & UserGroupElem>(),
+    newMsgCount: 0,
     onMsgList: [],
     groupAssistList: [],
     loginInfo: {},

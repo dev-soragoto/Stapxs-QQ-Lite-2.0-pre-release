@@ -442,6 +442,19 @@ textarea:focus {
 }
 .friend-list > div:first-child > div.base > span {
     font-weight: bold;
+    flex: 1;
+}
+.friend-list > div:first-child > div.base > a,
+.friend-list > div:first-child > div.small > span > a {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    font-weight: normal;
+    border-radius: 1rem;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+}
+.friend-list > div:first-child > div.small > span > a {
+    margin-left: 10px;
 }
 .friend-list > div:first-child > div.base.only {
     border-radius: 7px;
