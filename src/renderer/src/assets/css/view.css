@@ -3,6 +3,7 @@ body {
     font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif;
     background: var(--color-main);
     position: relative;
+    text-autospace: normal;
     user-select: none;
     overflow: hidden;
     height: 100%;
