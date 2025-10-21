@@ -83,22 +83,6 @@
                 </label>
             </div>
             <div class="opt-item">
-                <div :class="checkDefault('close_chat_pic_pan')" />
-                <font-awesome-icon :icon="['fas', 'window-maximize']" />
-                <div>
-                    <span>{{ $t('禁用图片发送框') }}</span>
-                    <span>{{ $t('你也向往自由吗？') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.close_chat_pic_pan"
-                        type="checkbox" name="close_chat_pic_pan"
-                        @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
-            </div>
-            <div class="opt-item">
                 <div :class="checkDefault('close_respond')" />
                 <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
                 <div>
@@ -172,7 +156,7 @@
                 <div :class="checkDefault('use_breakline')" />
                 <font-awesome-icon :icon="['fas', 'keyboard']" />
                 <div>
-                    <span>{{ $t('使用 shift enter 换行') }}</span>
+                    <span>{{ $t('多行模式') }}</span>
                     <span>{{ $t('I have a shift I have an enter ...') }}</span>
                 </div>
                 <label class="ss-switch">
@@ -183,20 +167,51 @@
                     </div>
                 </label>
             </div>
-            <div class="opt-item">
-                <div :class="checkDefault('dont_parse_delete')" />
-                <font-awesome-icon :icon="['fas', 'delete-left']" />
+            <div v-if="runtimeData.sysConfig.use_breakline" class="opt-item">
+                <div :class="checkDefault('send_key')" />
+                <font-awesome-icon :icon="['fas', 'keyboard']" />
                 <div>
-                    <span>{{ $t('禁止解析[已删除]') }}</span>
-                    <span>{{ $t('ob会把撤回的消息显示为你自己发的[已删除]') }}</span>
+                    <span>{{ $t('发送键') }}</span>
+                    <span>{{ $t('你可以使用其他组合键来换行') }}</span>
                 </div>
-                <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.dont_parse_delete"
-                        type="checkbox" name="dont_parse_delete" @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
+                <div class="select-wrapper">
+                    <select v-if="backend.platform === 'darwin' || backend.platform === 'ios'" v-model="runtimeData.sysConfig.send_key"
+                        name="send_key" title="send_key" @change="save">
+                        <option value="none">
+                            Enter
+                        </option>
+                        <option value="shift">
+                            Shift + Enter (⇧)
+                        </option>
+                        <option value="ctrl">
+                            Control + Enter (⌃)
+                        </option>
+                        <option value="alt">
+                            Option + Enter (⌥)
+                        </option>
+                        <option value="meta">
+                            Command + Enter (⌘)
+                        </option>
+                    </select>
+                    <select v-else v-model="runtimeData.sysConfig.send_key"
+                        name="send_key" title="send_key" @change="save">
+                        <option value="none">
+                            Enter
+                        </option>
+                        <option value="shift">
+                            Shift + Enter
+                        </option>
+                        <option value="ctrl">
+                            Ctrl + Enter
+                        </option>
+                        <option value="alt">
+                            Alt + Enter
+                        </option>
+                        <option value="meta">
+                            Meta + Enter
+                        </option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="ss-card">
@@ -281,11 +296,13 @@
     import { runtimeData } from '@renderer/function/msg'
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
+import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'ViewOptFunction',
         data() {
             return {
+                backend,
                 checkDefault: checkDefault,
                 runtimeData: runtimeData,
                 save: save,
@@ -315,7 +332,7 @@
                 if (sender.checked) {
                     const popInfo = {
                         title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启 shift enter 换行可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）')}</span>`,
+                        html: `<span>${this.$t('开启多行模式可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）')}</span>`,
                         button: [
                             {
                                 text: this.$t('知道了'),

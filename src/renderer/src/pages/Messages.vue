@@ -93,10 +93,12 @@
                         <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
                         {{ $t('群收纳盒') }}
                     </span>
+                    <a v-if="runtimeData.newMsgCount > 0">{{ runtimeData.newMsgCount }}</a>
                 </div>
                 <div class="small">
                     <span style="cursor: pointer;">
                         {{ $t('群收纳盒') }}
+                        <a v-if="runtimeData.newMsgCount > 0">{{ runtimeData.newMsgCount }}</a>
                     </span>
                     <div v-if="showGroupAssist"
                         style="margin-right: -5px;margin-left: 5px;"
@@ -160,7 +162,7 @@
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
             </div>
-            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card">
+            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card cd">
                 <font-awesome-icon :icon="['fas', 'angles-right']" />
                 <span>(っ≧ω≦)っ</span>
                 <span>{{ $t('别划了别划了被看见了啦') }}</span>
@@ -262,7 +264,10 @@
                     // 清除新消息标记
                     const item = runtimeData.baseOnMsgList.get(id)
                     if(item) {
-                        item.new_msg = false
+                        if(item.new_msg) {
+                            item.new_msg = false
+                            runtimeData.newMsgCount--
+                        }
                         item.highlight = undefined
                         runtimeData.baseOnMsgList.set(id, item)
                         // 关闭所有通知
@@ -302,7 +307,10 @@
                 const id = data.group_id ? data.group_id : data.user_id
                 const item = runtimeData.baseOnMsgList.get(id)
                 if(item) {
-                    item.new_msg = false
+                    if(item.new_msg) {
+                        item.new_msg = false
+                        runtimeData.newMsgCount--
+                    }
                     item.highlight = undefined
                     runtimeData.baseOnMsgList.set(id, item)
                 }
@@ -361,7 +369,10 @@
                 if (id) {
                     switch (id) {
                         case 'read': {
-                            item.new_msg = true
+                            if(!item.new_msg) {
+                                item.new_msg = true
+                                runtimeData.newMsgCount++
+                            }
                             break
                         }
                         case 'readed':

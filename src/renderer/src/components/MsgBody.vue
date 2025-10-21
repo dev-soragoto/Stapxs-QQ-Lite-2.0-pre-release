@@ -71,9 +71,8 @@
                 </template>
                 <!-- 超级表情 -->
                 <template v-else-if="isSuperFaceMsg()">
-                    <div class="msg-img face alone"
-                        style="--width: 35vh">
-                        <Lottie v-once
+                    <div class="msg-img face lottie-face alone">
+                        <LazyLottie
                             :animation-link="Emoji.get(Number(data.message[0].id))!.superValue!"
                             :title="Emoji.get(Number(data.message[0].id))!.description" />
                     </div>
@@ -288,7 +287,9 @@
                     </template>
                     <template v-else>
                         <!-- 特殊 URL 的预览 -->
-                        <div v-if="pageViewInfo.type == 'bilibili'" class="link-view-bilibili">
+                        <div v-if="pageViewInfo.type == 'bilibili'"
+                            class="link-view-bilibili"
+                            @click="openLink(pageViewInfo.url)">
                             <div class="user">
                                 <img :src="backend.proxyUrl(pageViewInfo.data.owner.face)">
                                 <span>{{ pageViewInfo.data.owner.name }}</span>
@@ -396,7 +397,7 @@ import { MenuEventData, MergeStackData } from '@renderer/function/elements/infor
 import { backend } from '@renderer/runtime/backend'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
-import { Vue3Lottie as Lottie } from 'vue3-lottie'
+import LazyLottie from './LazyLottie.vue'
 import { UserInfoPan } from './UserInfoPan.vue'
 import { Img } from '@renderer/function/model/img'
 
@@ -501,7 +502,8 @@ function getUserById(id: number): IUser | undefined {
     export default defineComponent({
         name: 'MsgBody',
         inject: ['viewer'],
-        props: ['data', 'type', 'selected'],
+        props: ['data', 'type', 'selected', 'imageListHeader'],
+        emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
                 backend,
@@ -1285,6 +1287,7 @@ function getUserById(id: number): IUser | undefined {
 
     .link-view-bilibili {
         flex-direction: column;
+        cursor: pointer;
         width: 100%;
     }
     .link-view-bilibili > div.user {
@@ -1310,7 +1313,9 @@ function getUserById(id: number): IUser | undefined {
     .link-view-bilibili > img {
         margin-bottom: 10px;
         max-width: 100% !important;
+        max-height: 30vh !important;
         width: fit-content;
+        object-fit: contain;
     }
     .link-view-bilibili > a {
         color: var(--color-font-2) !important;

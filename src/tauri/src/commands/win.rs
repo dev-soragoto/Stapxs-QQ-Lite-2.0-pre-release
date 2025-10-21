@@ -20,13 +20,10 @@ pub fn win_maximize(window: tauri::Window) {
     window.maximize().unwrap();
 }
 
-// #[command]
-// pub fn win_relaunch() {
-//     // 重新启动窗口
-//     let app = tauri::AppHandle::current();
-//     app.relaunch().unwrap();
-//     app.exit(0);
-// }
+#[command]
+pub fn win_relaunch(app_handle: tauri::AppHandle) {
+    app_handle.restart();
+}
 
 #[command]
 pub fn win_always_top(window: tauri::Window, data: bool) {
@@ -64,4 +61,10 @@ pub fn win_open_dev_tools(app: tauri::AppHandle) {
 #[command]
 pub fn win_set_title(window: tauri::Window, data: String) {
     window.set_title(&data).unwrap();
+}
+
+#[command]
+pub fn win_start_drag(app_handle: tauri::AppHandle) {
+    let window = app_handle.get_webview_window("main").unwrap();
+    let _ = window.start_dragging();
 }

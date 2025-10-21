@@ -11,6 +11,8 @@
     "shell:allow-open",
     "core:window:allow-start-dragging",
     "notification:allow-is-permission-granted",
-    "window-state:default"
+    "window-state:default",
+    "clipboard-manager:allow-write-image",
+    "core:image:allow-from-bytes"
   ]
 }

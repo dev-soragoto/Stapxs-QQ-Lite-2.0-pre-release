@@ -297,9 +297,8 @@ export function downloadFile(
 * Windows：获取加载系统主题色
 * @param color 颜色
 */
-export function updateWinColor(color: string) {
-    const process = window.electron?.process
-    if (process && process.platform == 'win32') {
+export function updateWinColor(color: string, type: string) {
+    if (type == 'windows') {
         const red = parseInt(color.substr(0, 2), 16)
         const green = parseInt(color.substr(2, 2), 16)
         const blue = parseInt(color.substr(4, 2), 16)
@@ -308,14 +307,18 @@ export function updateWinColor(color: string) {
         const media = window.matchMedia('(prefers-color-scheme: dark)')
         const autodark = option.get('opt_auto_dark')
         const dark = option.get('opt_dark')
+        let min = 0.35
+        let max = 0.9
         if (
             (autodark == true && media.matches) ||
             (autodark != true && dark == true)
         ) {
-            hsl[2] = 0.8
+            min += ( max - min ) / 2
         } else {
-            hsl[2] = 0.3
+            min = 0.35
+            max -= ( max - min ) / 2
         }
+        hsl[2] = min + hsl[2] * (max - min)
         const finalColor = hslToRgb(hsl[0], hsl[1], hsl[2])
         document.documentElement.style.setProperty(
             '--color-main',
@@ -327,7 +330,7 @@ export function updateWinColor(color: string) {
                 finalColor[2] +
                 ')',
         )
-    } else {
+    } else if(type == 'macos') {
         document.documentElement.style.setProperty(
             '--color-main',
             '#' + color.substring(0, 6) + 'CF',
@@ -335,8 +338,13 @@ export function updateWinColor(color: string) {
     }
 }
 export async function loadWinColor() {
+    const process = window.electron?.process
+    let type = 'macos'
+    if (process && process.platform == 'win32') {
+        type = 'windows'
+    }
     // 获取系统主题色
-    updateWinColor(await backend.call(undefined, 'sys:getWinColor', true))
+    updateWinColor(await backend.call(undefined, 'sys:getWinColor', true), type)
 }
 
 /**
@@ -422,7 +430,10 @@ export function createIpc() {
         // 去消息列表内寻找，去除新消息标记
         const item = runtimeData.baseOnMsgList.get(info.id)
         if(item) {
-            item.new_msg = false
+            if(item.new_msg) {
+                item.new_msg = false
+                runtimeData.newMsgCount--
+            }
             item.highlight = undefined
             runtimeData.baseOnMsgList.set(Number(info.id), item)
         }
@@ -480,9 +491,17 @@ export async function loadMobile() {
         backend.addListener('Onebot', 'onebot:event', (data) => {
             const msg = JSON.parse(data.data)
             switch(data.type) {
-                case 'onopen': Connector.onopen(login.address, login.token); break
+                case 'onopen': {
+                    login.creating = false
+                    Connector.onopen(login.address, login.token)
+                    break
+                }
                 case 'onmessage': Connector.onmessage(data.data); break
-                case 'onclose': Connector.onclose(msg.code, msg.message, login.address, login.token); break
+                case 'onclose': {
+                    login.creating = false
+                    Connector.onclose(msg.code, msg.message, login.address, login.token)
+                    break
+                }
                 case 'onerror': {
                     login.creating = false
                     popInfo.add(PopType.ERR, $t('连接失败') + ': ' + msg.type, false);
@@ -541,7 +560,10 @@ export async function loadMobile() {
                     // 去消息列表内寻找，去除新消息标记
                     const item = runtimeData.baseOnMsgList.get(Number(notification.extra.userId))
                     if(item) {
-                        item.new_msg = false
+                        if(item.new_msg) {
+                            item.new_msg = false
+                            runtimeData.newMsgCount--
+                        }
                         item.highlight = undefined
                         runtimeData.baseOnMsgList.set(Number(notification.extra.userId), item)
                     }
@@ -675,6 +697,13 @@ export async function loadAppendStyle() {
             logger.info('UI 2.0 附加样式加载完成')
         })
     }
+
+    if(option.get('chat_more_blur')) {
+        import('@renderer/assets/css/append/append_full_vibrancy.css').then(() => {
+                logger.info('完全透明 UI 附加样式加载完成')
+            })
+    }
+
     // 透明 UI 附加样式
     let subVersion = backend.release?.split(' ')?.[1]?.split('.') as any
     subVersion = subVersion ? Number(subVersion[2]) : 0

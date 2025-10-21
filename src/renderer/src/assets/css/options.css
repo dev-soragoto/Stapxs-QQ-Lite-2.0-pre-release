@@ -307,8 +307,9 @@
     background: var(--color-card-1);
     color: var(--color-font-2);
     border-radius: 7px;
+    font-size: 0.8rem;
     margin: 5px 0;
-    padding: 10px;
+    padding: 15px;
 }
 
 .opt-page > div:not(:first-child) {
@@ -416,6 +417,36 @@
     opacity: 0;
 }
 
+
+.opt-item > div.file-choice {
+    display: flex;
+    max-width: 170px;
+    flex-direction: row;
+    margin-right: 0;
+}
+
+.opt-item > div.file-choice > div {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    font-size: 0.8rem;
+    height: 30px;
+    min-width: 30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.opt-item > div.file-choice > div.choice-btn {
+    flex: 1;
+    padding: 0 10px;
+}
+
+.opt-item > div.file-choice > div.rm-btn {
+    margin-left: 10px;
+    width: 30px;
+    cursor: pointer;
+    color: var(--color-red);
+}
+
 .l10n-info {
     border-left: 7px solid var(--color-main);
     background: var(--color-card-1);
@@ -514,9 +545,17 @@
     margin-top: -10px;
 }
 
+.theme-color-col > input#theme_color_custom,
 .theme-color-col > label {
     --radio-size: 16px;
     margin-left: -7px;
+}
+.theme-color-col > input#theme_color_custom {
+    transform: translateX(-100%);
+    width: var(--radio-size);
+    height: 1px;
+    z-index: -1;
+    opacity: 0;
 }
 
 .ss-radio:hover > div:nth-child(2) {

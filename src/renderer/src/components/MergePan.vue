@@ -5,12 +5,13 @@
             <div>
                 <font-awesome-icon style="margin-top: 5px" :icon="['fas', 'message']" />
                 <span>{{ $t('合并消息') }}</span>
-                <font-awesome-icon :icon="['fas', 'xmark']" @click="exitMergeMsg" />
+                <font-awesome-icon v-if="stack.length <= 1" :icon="['fas', 'xmark']" @click="exitMergeMsg" />
+                <font-awesome-icon v-else :icon="['fas', 'angles-left']" @click="exitMergeMsg" />
             </div>
             <div v-if="nowData === undefined">
                 <!-- 无内容 -->
             </div>
-            <div v-else>
+            <TransitionGroup v-else :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
                 <template v-for="(msgIndex, index) in nowData.messageList" :key="'merge-' + nowData.forwardMsg.message[0].id + '-' + index">
                     <NoticeBody v-if=" isShowTime( nowData.messageList[index - 1] ?
                                     nowData.messageList[index - 1].time : undefined, msgIndex.time, index == 0)"
@@ -25,7 +26,7 @@
                     <!-- 合并转发消息忽略是不是自己的判定 -->
                     <MsgBody :data="msgIndex" :type="'merge'" />
                 </template>
-            </div>
+            </TransitionGroup>
         </div>
     </div>
 </template>
@@ -97,3 +98,27 @@
         }
     })
 </script>
+
+<style scoped>
+    /* 消息动画 */
+    .msglist-move {
+        transition: all 0.3s;
+    }
+
+    .msglist-enter-active {
+        transition: all 0.4s;
+    }
+
+    .msglist-leave-active {
+        transition: all 0.2s;
+    }
+
+    .msglist-enter-from {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+
+    .msglist-leave-to {
+        opacity: 0;
+    }
+</style>

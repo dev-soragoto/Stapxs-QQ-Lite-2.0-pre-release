@@ -42,17 +42,21 @@
             <a class="ss-button" style="border-radius: 7px;" @click="dependencies()">{{ $t('更多信息') }}</a>
             <div v-if="sponsorList.length > 0 && showUI" class="contributors-card">
                 <div />
-                <span>{{ $t('赞助者') }}</span>
+                <span> {{ $t('赞助者') }} </span>
                 <div class="contributors">
                     <div v-for="info in sponsorList.slice(0, 3)" :key="info.user.name">
                         <img :src="info.user.avatar">
                         <div>
                             <span>{{ info.user.name }}</span>
-                            <span>{{ info.last_pay_time }}</span>
+                            <span>{{ Intl.DateTimeFormat(trueLang, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                            }).format(getViewTime(Number(info.last_pay_time))) }}</span>
                         </div>
                     </div>
                 </div>
-                <div>
+                <div v-if="sponsorList.length > 3">
                     <img v-for="info in sponsorList.slice(3)"
                         :key="info.user.name"
                         :src="info.user.avatar">
@@ -93,6 +97,7 @@
     import { ContributorElem } from '@renderer/function/elements/system'
 
     import { runtimeData } from '@renderer/function/msg'
+    import { getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
 
     import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.vue'
 
@@ -106,8 +111,10 @@
         },
         data() {
             return {
-                packageInfo: packageInfo,
-                openLink: openLink,
+                trueLang: 'zh-CN',
+                getViewTime,
+                packageInfo,
+                openLink,
                 constList: [] as ContributorElem[],
                 sponsorList: [] as {
                     current_plan: string,
@@ -121,6 +128,9 @@
             }
         },
         mounted() {
+            window.onload = async () => {
+                this.trueLang = getTrueLang()
+            }
             const superThanks = ['doodlehuang']
             // 加载贡献者信息
             if(import.meta.env.VITE_APP_REPO_NAME) {

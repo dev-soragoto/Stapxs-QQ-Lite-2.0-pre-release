@@ -37,6 +37,7 @@ export const linkView = {
                 return {
                     type: 'bilibili',
                     sub_type: 'video',
+                    url: url,
                     data: {
                         title: data.data.title,
                         desc: data.data.desc,

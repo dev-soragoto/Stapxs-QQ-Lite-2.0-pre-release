@@ -561,4 +561,82 @@ export function regIpcListener() {
             touchBarInstance.flushFriendSearch(list)
         }
     })
+
+    // 选择文件夹
+    ipcMain.handle('sys:selectFolder', async () => {
+        const { dialog } = await import('electron')
+        const result = await dialog.showOpenDialog({
+            title: '选择文件夹',
+            properties: ['openDirectory']
+        })
+        if (!result.canceled && result.filePaths.length > 0) {
+            return result.filePaths[0]
+        }
+        return null
+    })
+
+    // 获取本地表情列表
+    ipcMain.handle('sys:getLocalEmojis', async (_, folderPath: string) => {
+        const fs = await import('fs')
+        const path = await import('path')
+        const { pathToFileURL } = await import('url')
+
+        try {
+            // 验证路径是否存在且为目录
+            const stats = fs.statSync(folderPath)
+            if (!stats.isDirectory()) {
+                throw new Error('路径不是一个文件夹')
+            }
+
+            // 支持的图片格式
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg']
+
+            // 读取文件夹中的所有文件
+            const files = fs.readdirSync(folderPath)
+            const emojis = [] as Array<{ name: string; path: string; url: string }>
+
+            for (const file of files) {
+                const filePath = path.join(folderPath, file)
+                const stats = fs.statSync(filePath)
+
+                // 只处理文件（不包括子文件夹）
+                if (stats.isFile()) {
+                    const ext = path.extname(file).toLowerCase()
+
+                    // 检查是否为支持的图片格式
+                    if (imageExtensions.includes(ext)) {
+                        // 使用 pathToFileURL 将文件路径转换为 file:// URL
+                        const fileUrl = pathToFileURL(filePath).href
+                        emojis.push({
+                            name: file,
+                            path: filePath,
+                            url: fileUrl
+                        })
+                    }
+                }
+            }
+
+            logger.info(`成功加载 ${emojis.length} 个本地表情`)
+            return emojis
+        } catch (error) {
+            logger.error('读取文件夹失败:', error)
+            throw error
+        }
+    })
+
+    // 读取文件为 base64
+    ipcMain.handle('sys:readFileAsBase64', async (_, filePath: string) => {
+        const fs = await import('fs')
+
+        try {
+            // 读取文件内容
+            const fileData = fs.readFileSync(filePath)
+
+            // 转换为 base64
+            return fileData.toString('base64')
+        } catch (error) {
+            logger.error('读取文件失败:', error)
+            throw error
+        }
+    })
 }

@@ -9,7 +9,7 @@ input {
     background-color: var(--color-card);
     background-repeat: no-repeat;
     background-position: center;
-    background-size: auto 100%;
+    background-size: cover;
 
     color: var(--color-font);
     flex-direction: column;
@@ -163,6 +163,7 @@ input {
     background: transparent;
 }
 .chat-pan > div.more > div:nth-child(2) {
+    align-items: end;
     display: flex;
     padding: 20px;
 }
@@ -183,8 +184,8 @@ input {
     width: 20px;
 }
 .chat-pan > div.more > div:nth-child(2) > div:nth-child(2) {
+    align-items: end;
     display: flex;
-    height: 50px;
     flex: 1;
 }
 .chat-pan > div.more > div:nth-child(2) > div > form {
@@ -192,22 +193,22 @@ input {
 }
 .chat-pan > div.more > div:nth-child(2) > div > form > input {
     padding-top: 0 !important;
-    margin-top: 0 !important;
-    height: 100% !important;
+    height: 50px !important;
+    margin: 0 !important;
 }
 .chat-pan > div.more > div:nth-child(2) > div > form > input,
 .chat-pan > div.more > div:nth-child(2) > div > form > textarea {
-    padding: 14px 20px 0 20px;
+    width: calc(100% - 40px);
     color: var(--color-font);
     background: transparent;
-    line-height: 1.1rem;
     border-radius: 7px;
     font-size: 0.85rem;
-    max-height: 50px;
-    margin-top: 5px;
-    height: 26px;
+    line-height: 20px;
+    max-height: 40vh;
+    padding: 0 20px;
+    margin: 15px 0;
+    height: 20px;
     resize: none;
-    width: 100%;
     border: 0;
 }
 .chat-pan > div.more > div:nth-child(2) > div > form > input:disabled,
@@ -221,10 +222,10 @@ input {
 }
 .chat-pan > div.more > div:nth-child(2) > div > div {
     border-radius: 7px;
-    min-height: 40px;
-    min-width: 40px;
     cursor: pointer;
+    height: 40px;
     margin: 5px;
+    width: 40px;
 }
 .chat-pan > div.more > div:nth-child(2) > div > div:hover {
     background: var(--color-card-2);
@@ -233,7 +234,7 @@ input {
     color: var(--color-font-1);
     width: 20px;
     height: 20px;
-    margin: 11px;
+    margin: 10px;
 }
 .chat-pan > div.loading {
     background: var(--color-card-1);
@@ -1249,6 +1250,7 @@ input {
     color: var(--color-font-2);
 }
 .face-pan div.title > svg {
+    margin-left: 10px;
     cursor: pointer;
 }
 
@@ -1512,6 +1514,132 @@ input {
     display: flex;
     height: 0;
 }
+
+.img-pan-enter-active {
+    animation: img-pan-appear 0.3s;
+}
+
+.img-pan-leave-active {
+    animation: img-pan-appear 0.3s reverse;
+}
+
+@keyframes img-pan-appear {
+    from {
+        height: 0;
+    }
+
+    to {
+        height: calc(15vh + 0.9rem + 5px + 30px);
+    }
+}
+
+.img-pan {
+    overflow-x: auto;
+    padding: 0;
+    background-color: var(--color-card-1);
+    pointer-events: all;
+    margin: 10px 15px;
+}
+
+.img-pan > .imgs {
+    height: auto;
+    width: auto;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+.img-pan > .imgs > div {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    padding: 5px;
+    border-radius: 7px;
+    border: 1px solid var(--color-main);
+    overflow: hidden;
+    margin: 10px 5px;
+    flex-shrink: 0;
+}
+
+.img-pan > .imgs > div:first-child {
+    margin-left: 10px;
+}
+.img-pan > .imgs > div:last-child {
+    margin-right: 10px;
+}
+
+.img-pan > .imgs > div > .img-btns {
+    position: absolute;
+    background-color: var(--color-bg);
+    display: flex;
+    border-radius: 1mm;
+    top: 1mm;
+    right: 1mm;
+}
+
+.img-pan > .imgs > div > .img-btns > div {
+    width: 5mm;
+    height: 5mm;
+    padding: 1mm;
+    display: flex;
+    transition: background-color 0.3s;
+}
+.img-pan > .imgs > div > .img-btns > div:nth-child(1) {
+    margin-right: 1mm;
+}
+
+.img-pan > .imgs > div > .img-btns > div > svg {
+    width: 5mm;
+    height: 5mm;
+    margin: 0;
+}
+.img-pan > .imgs > div > .img-btns > div:nth-child(1) > svg {
+    margin-top: 1mm;
+    margin-left: 1mm;
+    width: 5mm;
+    height: 4mm;
+}
+
+.img-pan > .imgs > div > .img-btns > div:hover {
+    background-color: var(--color-card-2);
+    cursor: pointer;
+}
+
+.img-pan > .imgs > div > .img {
+    width: 100px;
+    height: 15vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-card-1);
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.img-pan > .imgs > div > .img > img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.img-pan > .imgs > div > span {
+    color: var(--color-font-1);
+    margin-top: 5px;
+    font-size: 0.9rem;
+    text-align: center;
+    background-color: var(--color-card);
+    border-radius: 7px;
+}
+
+.input-special-tag {
+    background: var(--color-card);
+    transition: all 0.3s;
+    align-items: center;
+    flex-direction: row;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    height: 0;
+}
 .replay-tag.show {
     margin: 0 20px -10px 20px;
     margin-top: 20px;
@@ -1566,8 +1694,12 @@ input {
     cursor: pointer;
     padding: 10px;
     display: flex;
+    margin: 5px;
 }
 .at-tag > div:hover {
+    background: var(--color-card-2);
+}
+.at-tag > div.selected {
     background: var(--color-card-2);
 }
 .at-tag > div > img {

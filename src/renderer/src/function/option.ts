@@ -40,6 +40,7 @@ export const optDefault: { [key: string]: any } = {
     save_password: '',
     notice_group: {},
     auto_connect: false,
+    local_emoji_folder: null,
     // View
     language: 'zh-CN',
     opt_dark: false,
@@ -50,31 +51,31 @@ export const optDefault: { [key: string]: any } = {
     chat_background_blur: 0,
     chatview_name: '',
     opt_fast_animation: false,
+    chat_more_blur: false,
     initial_scale: 0.85,
     fs_adaptation: 0,
     opt_always_top: false,
     opt_revolve: false,
-    merge_forward_width_type: false,
     use_favicon_notice: true,
     use_super_face: true,
     // Function
     close_notice: false,
     bubble_sort_user: true,
-    close_chat_pic_pan: false,
     close_respond: false,
     msg_taill: '',
     quick_send: 'default',
     group_notice_type: 'none',
     send_face: false,
-    use_breakline: false,
+    use_breakline: true,
+    send_key: 'none',
     close_browser: false,
     close_ga: false,
     open_ga_bot: true,
-    dont_parse_delete: false,
     // Dev
     msg_type: 2,
     log_level: 'err',
     debug_msg: false,
+    custom_css: '',
 }
 
 // =============== 设置项事件 ===============
@@ -92,28 +93,29 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_always_top: viewAlwaysTop,
     opt_fast_animation: updateFarstAnimation,
     bubble_sort_user: clearGroupAssist,
-    merge_forward_width_type: setMergeForwardWidth,
     use_favicon_notice: setFaviconNotice,
+    custom_css: injectCustomCss,
 }
 
 function setFaviconNotice(_: boolean) {
     refreshFavicon()
 }
 
-function setMergeForwardWidth(value: boolean | null) {
-    if (value === null) {
-        value = false
+function injectCustomCss(value: string) {
+    // 移除旧的自定义 CSS
+    const oldStyle = document.getElementById('custom-css-inject')
+    if (oldStyle) {
+        document.head.removeChild(oldStyle)
     }
-    let css: string
-    if (value) {
-        css = '17rem'
-    } else {
-        css = 'auto'
+
+    // 如果有新的 CSS 内容，注入它
+    if (value && value.trim() !== '') {
+        const style = document.createElement('style')
+        style.id = 'custom-css-inject'
+        style.textContent = value
+        document.head.appendChild(style)
+        new Logger().add(LogType.UI, '已注入自定义 CSS')
     }
-    document.documentElement.style.setProperty(
-        '--merge-forward-width',
-        css,
-    )
 }
 
 function clearGroupAssist() {
@@ -158,7 +160,7 @@ function viewRevolve(value: boolean) {
 function updateWinColorOpt(value: boolean) {
     if (value == true) {
         backend.addListener(undefined, 'sys:WinColorChanged', (_, params) => {
-            updateWinColor(params)
+            updateWinColor(params, backend.platform == 'win32' ? 'windows' : 'macos')
         })
         loadWinColor()
     }
@@ -326,6 +328,13 @@ function changeColorMode(mode: string) {
             }
         })
     }
+    // 如果主题色模式是自定，则刷新系统主题色
+    getRaw('theme_color').then((themeColor) => {
+        if(themeColor && themeColor > 10) {
+            const colorUpdate = ('000000' + Number(themeColor).toString(16)).slice(-6)
+            updateWinColor(colorUpdate, 'windows')
+        }
+    })
     // 刷新页面主题色
     const meta = document.getElementsByName('theme-color')[0]
     if (meta) {
@@ -352,15 +361,20 @@ function changeColorMode(mode: string) {
  * @param id 主题色编号
  */
 function changeTheme(id: number) {
-    document.documentElement.style.setProperty(
-        '--color-main',
-        'var(--color-main-' + id + ')',
-    )
-    const meta = document.getElementsByName('theme-color')[0]
-    if (meta) {
-        (meta as HTMLMetaElement).content = getComputedStyle(
-            document.documentElement,
-        ).getPropertyValue('--color-main-' + id)
+    if(id < 10) {
+        document.documentElement.style.setProperty(
+            '--color-main',
+            'var(--color-main-' + id + ')',
+        )
+        const meta = document.getElementsByName('theme-color')[0]
+        if (meta) {
+            (meta as HTMLMetaElement).content = getComputedStyle(
+                document.documentElement,
+            ).getPropertyValue('--color-main-' + id)
+        }
+    } else {
+        const color = ('000000' + Number(id).toString(16)).slice(-6)
+        updateWinColor(color, 'windows')
     }
     // 避免 css 未加载完
     setTimeout(refreshFavicon, 10)
@@ -434,7 +448,12 @@ function loadOptData(data: { [key: string]: any }) {
         } else if (value === 'null') {
             options[key] = null
         } else if (typeof value == 'string') {
-            options[key] = decodeURIComponent(value)
+            try {
+                options[key] = decodeURIComponent(value)
+            } catch (e: unknown) {
+                // 如果 decodeURIComponent 失败（比如 CSS 内容有特殊字符），直接使用原值
+                options[key] = value
+            }
             try {
                 options[key] = JSON.parse(options[key])
             } catch (e: unknown) {
@@ -621,6 +640,7 @@ export function runASWEvent(event: Event) {
                         value = sender.dataset.id
                         break
                     }
+                    case 'color':
                     case 'range':
                     case 'number':
                     case 'text': {

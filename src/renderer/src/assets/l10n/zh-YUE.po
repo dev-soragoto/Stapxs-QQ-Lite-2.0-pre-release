@@ -204,10 +204,7 @@ msgstr "黑猫警長最愛"
 msgid "说了不做这功能就是不做"
 msgstr "唔想得罪 Tencent，你自己 cap 圖好過喇"
 
-msgid "禁用图片发送框"
-msgstr "停用 send 圖 box"
-
-msgid "你也向往自由吗？"
+msgid "你也向往自由吗？（现在这个版本还不自由吗？"
 msgstr "反正 SS 都話佢唔用呢個 box 嘅"
 
 msgid "消息页面主题"
@@ -561,13 +558,13 @@ msgstr "訊息已轉傳"
 msgid "转发消息"
 msgstr "轉傳到"
 
-msgid "使用 shift enter 换行"
+msgid "多行模式"
 msgstr "使用 Shift + Enter 換行"
 
 msgid "I have a shift I have an enter ..."
 msgstr "I have a shift I have an enter ..."
 
-msgid "开启 shift enter 换行可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
+msgid "开启多行模式可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
 msgstr "啟用 Shift + Enter 換行後可能會在使用一些具有特殊選詞方式的輸入法時遇到问题，如7 內建的繁體中文輸入法 以及 絕大部分很早期的拼音輸入法；如果在使用的時候遇到問題，可以嘗試關閉此功能。（或者改用更現代的輸入法）"
 
 msgid "点击展开"
@@ -618,7 +615,7 @@ msgstr "（實驗設定）自動使用 GTK 設定的主題色"
 msgid "自动跟随主题色"
 msgstr "跟隨主題色"
 
-msgid "自动获取的主题色设置并应用"
+msgid "自动获取系统的主题色设置并应用"
 msgstr "自動取得的主題色並套用到本程式"
 
 msgid "背景图片"
@@ -846,16 +843,7 @@ msgstr ""
 msgid "你也不想想让 ta 知道你不在看消息吧 ~"
 msgstr ""
 
-msgid "完整模糊"
-msgstr ""
-
-msgid "完整透明"
-msgstr ""
-
-msgid "窗口透明模式"
-msgstr ""
-
-msgid "怎么看光还要挑三拣四的"
+msgid "透明模式"
 msgstr ""
 
 msgid "此操作将在重启应用后生效，现在就要重启吗？"

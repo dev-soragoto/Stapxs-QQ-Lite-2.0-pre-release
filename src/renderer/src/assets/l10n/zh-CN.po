@@ -204,9 +204,6 @@ msgstr ""
 msgid "说了不做这功能就是不做"
 msgstr ""
 
-msgid "禁用图片发送框"
-msgstr ""
-
 msgid "你也向往自由吗？"
 msgstr ""
 
@@ -561,13 +558,13 @@ msgstr ""
 msgid "转发消息"
 msgstr ""
 
-msgid "使用 shift enter 换行"
+msgid "多行模式"
 msgstr ""
 
 msgid "I have a shift I have an enter ..."
 msgstr ""
 
-msgid "开启 shift enter 换行可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
+msgid "开启多行模式可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）"
 msgstr ""
 
 msgid "点击展开"
@@ -618,7 +615,7 @@ msgstr ""
 msgid "自动跟随主题色"
 msgstr ""
 
-msgid "自动获取的主题色设置并应用"
+msgid "自动获取系统的主题色设置并应用"
 msgstr ""
 
 msgid "背景图片"
@@ -846,16 +843,7 @@ msgstr ""
 msgid "你也不想想让 ta 知道你不在看消息吧 ~"
 msgstr ""
 
-msgid "完整模糊"
-msgstr ""
-
-msgid "完整透明"
-msgstr ""
-
-msgid "窗口透明模式"
-msgstr ""
-
-msgid "怎么看光还要挑三拣四的"
+msgid "透明模式"
 msgstr ""
 
 msgid "此操作将在重启应用后生效，现在就要重启吗？"
@@ -1077,6 +1065,27 @@ msgstr ""
 msgid "收藏的表情"
 msgstr ""
 
+msgid "本地表情"
+msgstr ""
+
+msgid "选择文件夹"
+msgstr ""
+
+msgid "重新加载"
+msgstr ""
+
+msgid "选择文件夹"
+msgstr ""
+
+msgid "暂无图片"
+msgstr ""
+
+msgid "已设置本地表情文件夹"
+msgstr ""
+
+msgid "选择文件夹失败"
+msgstr ""
+
 msgid "跳转到消息"
 msgstr ""
 
@@ -1209,16 +1218,10 @@ msgstr ""
 msgid "卡片消息"
 msgstr ""
 
-msgid "固定合并转发宽度"
-msgstr ""
-
-msgid "强迫症的福音～"
-msgstr ""
-
 msgid "禁止解析[已删除]"
 msgstr ""
 
-msgid "ob会把撤回的消息显示为你自己发的[已删除]"
+msgid "在tx服务器里，被撤回的消息为[已删除]"
 msgstr ""
 
 msgid "这条消息迷失在虚空里了"
@@ -1402,4 +1405,108 @@ msgid "触发彩蛋"
 msgstr ""
 
 msgid "切换语言"
+msgstr ""
+
+msgid "复制图片"
+msgstr ""
+
+msgid "赞助者"
+msgstr ""
+
+msgid "超级加倍！"
+msgstr ""
+
+msgid "网易云音乐预览信息服务"
+msgstr ""
+
+msgid "Bilibili 预览信息服务"
+
+msgid "发送键"
+msgstr ""
+
+msgid "你可以使用其他组合键来换行"
+msgstr ""
+
+msgid "透明超级加倍！在界面上使用更泛滥的透明和模糊"
+msgstr ""
+
+msgid "上传背景"
+msgstr ""
+
+msgid "连接超时"
+msgstr ""
+
+msgid "自定义样式"
+msgstr ""
+
+msgid "注入自定义样式"
+msgstr ""
+
+msgid "选择一个 CSS 文件上传"
+msgstr ""
+
+msgid "已加载自定义样式"
+msgstr ""
+
+msgid "更换"
+msgstr ""
+
+msgid "上传"
+msgstr ""
+
+msgid "查看自定义样式"
+msgstr ""
+
+msgid "查看当前加载的样式"
+msgstr ""
+
+msgid "查看"
+msgstr ""
+
+msgid "清除自定义样式"
+msgstr ""
+
+msgid "移除已注入的自定义样式"
+msgstr ""
+
+msgid "清除"
+msgstr ""
+
+msgid "请选择 CSS 文件"
+msgstr ""
+
+msgid "CSS 文件大小不能超过 1MB"
+msgstr ""
+
+msgid "自定义样式已加载"
+msgstr ""
+
+msgid "读取文件失败"
+msgstr ""
+
+msgid "确认要清除自定义样式吗？"
+msgstr ""
+
+msgid "已清除自定义样式"
+msgstr ""
+
+msgid "自定义样式风险提醒"
+msgstr ""
+
+msgid "注意：自定义样式功能具有一定风险，请确保您了解以下事项："
+msgstr ""
+
+msgid "错误的 CSS 代码可能导致界面显示异常"
+msgstr ""
+
+msgid "某些样式可能会隐藏或覆盖重要的界面元素"
+msgstr ""
+
+msgid "如果出现严重问题，可能会导致完全无法重置此设置"
+msgstr ""
+
+msgid "确认要继续上传并加载此 CSS 文件吗？"
+msgstr ""
+
+msgid "确认上传"
 msgstr ""

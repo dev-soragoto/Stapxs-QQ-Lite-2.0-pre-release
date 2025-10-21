@@ -172,6 +172,9 @@ pub fn run() {
             #[cfg(not(target_os = "macos"))]
             build_tray(app.handle().clone());
 
+            // 注册本地文件协议
+            register_localfile_protocol(app)?;
+
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -184,6 +187,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .invoke_handler(tauri::generate_handler![
             commands::sys::sys_front_loaded,
             commands::sys::sys_get_platform,
@@ -204,6 +208,9 @@ pub fn run() {
             commands::sys::sys_download,
             commands::sys::sys_flush_on_message,
             commands::sys::sys_flush_friend_search,
+            commands::sys::sys_select_folder,
+            commands::sys::sys_get_local_emojis,
+            commands::sys::sys_read_file_as_base64,
             commands::onebot::onebot_connect,
             commands::onebot::onebot_send,
             commands::onebot::onebot_close,
@@ -215,6 +222,8 @@ pub fn run() {
             commands::win::win_move,
             commands::win::win_open_dev_tools,
             commands::win::win_set_title,
+            commands::win::win_relaunch,
+            commands::win::win_start_drag,
             commands::opt::opt_get_system_info,
             commands::opt::opt_store,
             commands::opt::opt_save_all,
@@ -232,6 +241,19 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .title("Stapxs QQ Lite")
         .inner_size(850.0, 530.0)
         .transparent(true);
+    let store =
+            StoreBuilder::new(app, ".settings.dat").build()
+            .map_err(|e| tauri::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("failed to open settings store: {}", e),
+            )))?;
+    let chat_more_blur = store.get("chat_more_blur").and_then(|v| v.as_bool()).unwrap_or(false);
+    let mut window_effect = tauri::window::Effect::Sidebar;
+    if chat_more_blur {
+        window_effect = tauri::window::Effect::Menu;
+    }
+    #[cfg(target_os = "macos")]
+    info!("启用 macOS 视觉特效: {:?}", window_effect);
     #[cfg(target_os = "macos")]
     let win_builder = win_builder
         .title_bar_style(tauri::TitleBarStyle::Overlay)
@@ -239,7 +261,7 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .background_color(tauri::window::Color(0, 0, 0, 1))
         .accept_first_mouse(true)
         .effects(tauri::window::EffectsBuilder::new()
-            .effects(vec![tauri::window::Effect::Sidebar])
+            .effects(vec![window_effect])
             .build());
     #[cfg(target_os = "linux")]
     let win_builder = win_builder
@@ -247,9 +269,18 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         .disable_drag_drop_handler();
     let window = win_builder.build()?;
     #[cfg(target_os = "windows")] {
+        use winver::WindowsVersion;
+        let version = WindowsVersion::detect().unwrap();
+        let major_id = version.major;
+        let build_id = version.build;
         let _ = window.set_decorations(false);
-        window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)))
-            .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
+        if(major_id == 10) {
+        if(build_id >= 21996) {
+            window_vibrancy::apply_mica(&window, None);
+        } else {
+            window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)));
+        }
+        }
     }
     #[cfg(debug_assertions)]
     {
@@ -304,4 +335,16 @@ fn show_hidden_app(app: AppHandle) {
     #[cfg(target_os = "macos")]
     tauri::AppHandle::show(&app).unwrap();
     window.set_focus().unwrap();
+}
+
+/// 配置本地文件访问权限
+fn register_localfile_protocol(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri::Manager;
+
+    // 允许 asset 协议访问所有文件
+    // 这样前端使用 convertFileSrc 就能正常加载本地图片
+    app.handle().asset_protocol_scope().allow_directory("/", true)?;
+
+    info!("本地文件访问权限配置完成");
+    Ok(())
 }

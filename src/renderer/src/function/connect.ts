@@ -49,6 +49,13 @@ export class Connector {
         const { $t } = app.config.globalProperties
         login.creating = true
 
+        // 设置连接超时保护
+        window.setTimeout(() => {
+            if (login.creating) {
+                login.creating = false
+            }
+        }, 10000)
+
         logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
 
         // Electron 默认使用后端连接模式

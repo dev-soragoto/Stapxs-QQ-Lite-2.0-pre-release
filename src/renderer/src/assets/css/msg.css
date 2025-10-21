@@ -92,7 +92,7 @@
 .message-body > span {
     margin-right: 3px;
     font-size: 0.7rem;
-    background: var(--color-main);
+    background: var(--color-font);
     color: var(--color-font-r);
     border-radius: 10px;
     padding: 1px 4px;
@@ -219,6 +219,9 @@
 }
 .msg-img.face {
 	max-width: calc(var(--width) / 2 + 20px);
+}
+.msg-img.face.lottie-face {
+    max-width: 30vh
 }
 
 .msg-face {
@@ -535,7 +538,7 @@ span.user-title.robot {
 
 .msg-raw-forward {
     cursor: pointer;
-    width: var(--merge-forward-width);
+    width: 17rem;
 }
 .msg-raw-forward > span {
     font-weight: bold;
@@ -700,5 +703,11 @@ span.user-title.robot {
         animation: rotate 1.5s linear infinite;
         color: var(--color-font-2);
         width: 0.75rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .msg-img.face.lottie-face {
+        max-width: 40vw;
     }
 }

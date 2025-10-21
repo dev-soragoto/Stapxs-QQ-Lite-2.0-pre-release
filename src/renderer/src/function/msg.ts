@@ -235,6 +235,30 @@ const noticeFunctions = {
     },
 
     /**
+     * 踢人
+     */
+    kick: (_: string, msg: { [key: string]: any }) => {
+        const groupId = msg.group_id
+        if(groupId == runtimeData.chatInfo.show.id) {
+            // 稍微等一下再刷新成员列表
+            delay(1000).then(() => {
+                Connector.send(
+                    'get_group_member_list',
+                    { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                    'getGroupMemberList',
+                )
+                return delay(1000)
+            }).then(() => {
+                Connector.send(
+                    'get_group_member_list',
+                    { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                    'getGroupMemberList',
+                )
+            })
+        }
+    },
+
+    /**
      * 戳一戳
      */
     poke: (_: string, msg: { [key: string]: any }) => {
@@ -381,7 +405,7 @@ const msgFunctions = {
                 const appVersion = data.app_version ? ',' + data.app_version : ''
                 const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
 
-                sendStatEvent('connect', { method: data.app_version })
+                sendStatEvent('connect', { method: data.app_name })
                 sendIdentifyData({ bot_version: appInfo })
             }
             if (!login.status) {
@@ -1470,10 +1494,19 @@ async function msgPreprocess(msg: any): Promise<any> {
         const forwardId = msg.message.at(0).id
         if (forwardId) {
             try {
-                const originData = await Connector.callApi('forward_msg', {id: forwardId})
-                const data = await getMessageList(originData)
-                if (data) msg.message.at(0).content = data
-            }catch (e) {/**/}
+                if(msg.message.at(0).content && msg.message.at(0).content.length > 0) {
+                    // 如果 content 里已经有内容了就直接用 content 里的内容
+                    const data = await getMessageList(msg.message.at(0).content)
+                    if (data) msg.message.at(0).content = data
+                } else {
+                    // 否则调用接口获取
+                    const originData = await Connector.callApi('forward_msg', { id: forwardId })
+                    const data = await getMessageList(originData)
+                    if (data) msg.message.at(0).content = data
+                }
+            }catch (e) {
+                logger.error(e as unknown as Error, '合并转发解析失败')
+            }
         }else {
             msg.message.at(0).content = []
         }
@@ -1524,7 +1557,7 @@ function revokeMsg(_: string, msg: any) {
             }
         }
     } else {
-        logger.error(null, '没有找到这条被撤回的消息 ……')
+        logger.add(LogType.UI, '没有找到这条被撤回的消息', undefined)
     }
     // 撤回通知
     new Notify().closeAll(chatId)
@@ -1784,7 +1817,10 @@ function newMsg(_: string, data: any) {
             if(id !== showId) {
                 const user = runtimeData.baseOnMsgList.get(id)
                 if (user) {
-                    user.new_msg = true
+                    if(!user.new_msg) {
+                        user.new_msg = true
+                        runtimeData.newMsgCount++
+                    }
                     runtimeData.baseOnMsgList.set(id, user)
                 }
             }
@@ -1909,6 +1945,7 @@ const baseRuntime = {
     showList: [],
     systemNoticesList: undefined,
     baseOnMsgList: new Map<number, UserFriendElem & UserGroupElem>(),
+    newMsgCount: 0,
     onMsgList: [],
     groupAssistList: [],
     loginInfo: {},

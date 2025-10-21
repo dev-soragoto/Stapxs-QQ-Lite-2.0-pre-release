@@ -8,7 +8,8 @@
     <div v-if="['linux', 'win32'].includes(backend.platform ?? '')"
         :class="'top-bar' + ((backend.platform == 'win32' && dev) ? ' win' : '')"
         name="appbar"
-        data-tauri-drag-region="true">
+        data-tauri-drag-region="true"
+        @mousedown="handleAppbarMouseDown">
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />
         <div class="controller">
@@ -306,10 +307,6 @@ export default defineComponent({
             Option.run('opt_dark', Option.get('opt_dark'))
             Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.run('theme_color', Option.get('theme_color'))
-            Option.run(
-                'merge_forward_width_type',
-                Option.get('merge_forward_width_type'),
-            )
             if (['linux', 'win32'].includes(backend.platform ?? '')) {
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')
@@ -470,6 +467,22 @@ export default defineComponent({
          */
         controllWin(name: string) {
             backend.call(undefined, 'win:' + name, false)
+        },
+
+        /**
+         * 处理 appbar 鼠标按下事件（Linux 平台窗口拖拽）
+         */
+        handleAppbarMouseDown(event: MouseEvent) {
+            // 只在 Linux + Tauri 平台生效
+            if (backend.platform === 'linux' && backend.type === 'tauri') {
+                // 检查是否点击了按钮或控制器
+                const target = event.target as HTMLElement
+                if (target.closest('.bar-button') || target.closest('.controller')) {
+                    return
+                }
+                // 调用 Tauri 拖拽命令
+                backend.call(undefined, 'win:startDrag', false)
+            }
         },
 
         /**

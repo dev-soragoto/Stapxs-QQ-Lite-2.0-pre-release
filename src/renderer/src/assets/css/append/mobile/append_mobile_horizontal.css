@@ -162,11 +162,13 @@ html {
     background: transparent;
     border: 1px solid var(--color-font-2);
     opacity: 0.7;
-    border-radius: 999px;
-    height: 40px;
+    border-radius: 40px;
 }
 .chat-pan > div.more > div:nth-child(2) > div:nth-child(2) > div {
     display: none;
+}
+.chat-pan > div.more > div:nth-child(2) > div > form > textarea {
+    max-height: 30vh;
 }
 .msg-menu-body {
     max-width: 35%;
@@ -266,6 +268,9 @@ html {
 .chat-pan > div.more > div:nth-child(2) > div > form > input,
 .chat-pan > div.more > div:nth-child(2) > div > form > textarea {
     font-weight: normal;
+}
+.chat-pan > div.more > div:nth-child(2) > div > form > textarea {
+    margin: 10px 0;
 }
 
 .friend-list > div:first-child {

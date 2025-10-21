@@ -171,6 +171,28 @@ yarn dev:electron
 yarn build:win
 ```
 
+### > 构建 Tauri 应用
+
+在 `3.2.0` 版本后，Stapxs QQ Lite 支持构建为 Tauri 应用并补充部分平台特性的功能，你也可以自行构建。
+
+下面是构建 Tauri 应用的命令，构建结果将最终输出在 `src/tauri/target/release/bundle` 目录下：
+
+``` bash
+# tauri 运行本地调试
+yarn dev:tauri
+
+# tauri 构建应用
+yarn build:tauri
+
+# tauri 构建指定架构
+yarn build:tauri -t x86_64-apple-darwin -b dmg
+
+# 查看支持架构
+rustup target list
+```
+
+注意，tauri 不支持跨平台构建，你需要在对应的平台上进行构建。
+
 ### > 构建 Capacitor 应用
 在 `3.0.0` 版本及以后，Stapxs QQ Lite 2.0 支持通过 Capacitor 构建为移动端应用并补充部分平台特性的功能，你也可以自行构建。
 

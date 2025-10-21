@@ -3,6 +3,7 @@ body {
     font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif;
     background: var(--color-main);
     position: relative;
+    text-autospace: normal;
     user-select: none;
     overflow: hidden;
     height: 100%;
@@ -15,6 +16,9 @@ input::placeholder {
 select:focus,
 textarea:focus {
     outline: none;
+}
+::-webkit-scrollbar {
+    height: 7px;
 }
 
 .custom-focus {
@@ -78,7 +82,7 @@ textarea:focus {
     display: flex;
     height: 40px;
     width: 100%;
-    z-index: 99;
+    z-index: 999;
 }
 .top-bar.win {
     background: var(--color-bg-yellow);
@@ -439,6 +443,19 @@ textarea:focus {
 }
 .friend-list > div:first-child > div.base > span {
     font-weight: bold;
+    flex: 1;
+}
+.friend-list > div:first-child > div.base > a,
+.friend-list > div:first-child > div.small > span > a {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    font-weight: normal;
+    border-radius: 1rem;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+}
+.friend-list > div:first-child > div.small > span > a {
+    margin-left: 10px;
 }
 .friend-list > div:first-child > div.base.only {
     border-radius: 7px;
@@ -821,7 +838,7 @@ textarea:focus {
     position: absolute;
     user-select: text;
     height: 100%;
-    z-index: 20;
+    z-index: 50;
     width: 100%;
     left: 0;
     top: 0;
@@ -1293,7 +1310,7 @@ textarea:focus {
 }
 
 .viewer-button-bar > svg:hover {
-    background-color: var(--color-font);
+    background-color: var(--color-font-2);
     color: var(--color-font-r);
 }
 
@@ -1407,6 +1424,7 @@ textarea:focus {
 
 .viewer-img.grab > div.scrollbar,
 .viewer-img.zooming > div.scrollbar,
+.viewer-img > div.scrollbar.dragging,
 .viewer-img > div.scrollbar:hover {
     opacity: 1;
 }
