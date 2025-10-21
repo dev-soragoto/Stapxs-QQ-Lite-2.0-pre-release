@@ -1817,8 +1817,10 @@ function newMsg(_: string, data: any) {
             if(id !== showId) {
                 const user = runtimeData.baseOnMsgList.get(id)
                 if (user) {
-                    user.new_msg = true
-                    runtimeData.newMsgCount++
+                    if(!user.new_msg) {
+                        user.new_msg = true
+                        runtimeData.newMsgCount++
+                    }
                     runtimeData.baseOnMsgList.set(id, user)
                 }
             }

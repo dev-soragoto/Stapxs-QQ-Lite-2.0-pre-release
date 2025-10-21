@@ -1028,7 +1028,7 @@ const userInfoPanFunc: UserInfoPan = {
             },
             handleCompositionEnd() {
                 this.tags.sendTag = 'PASS'
-                setTimeout(() => { this.tags.sendTag = 'READY' }, 50)
+                setTimeout(() => { this.tags.sendTag = 'REFUSE' }, 50)
             },
 
             mainKeyUp(event: KeyboardEvent) {

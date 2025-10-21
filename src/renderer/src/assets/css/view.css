@@ -82,7 +82,7 @@ textarea:focus {
     display: flex;
     height: 40px;
     width: 100%;
-    z-index: 99;
+    z-index: 999;
 }
 .top-bar.win {
     background: var(--color-bg-yellow);
