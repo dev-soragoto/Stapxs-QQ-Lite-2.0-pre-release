@@ -1694,6 +1694,7 @@ input {
     cursor: pointer;
     padding: 10px;
     display: flex;
+    margin: 5px;
 }
 .at-tag > div:hover {
     background: var(--color-card-2);

@@ -746,6 +746,8 @@ const userInfoPanFunc: UserInfoPan = {
                 replyMsgInfo: null,
                 atFindList: null as GroupMemberInfoElem[] | null,
                 atSelectedIndex: 0,
+                atScrollTimer: null as NodeJS.Timeout | null,
+                atScrollInterval: null as NodeJS.Timeout | null,
                 isShowTime,
                 isDeleteMsg,
                 isDev: import.meta.env.DEV,
@@ -926,6 +928,55 @@ const userInfoPanFunc: UserInfoPan = {
              * @param event 事件
              */
             mainKey(event: KeyboardEvent) {
+                // At 选择器激活时的键盘事件处理
+                if (this.tags.onAtFind && this.atFindList && this.atFindList.length > 0) {
+                    // 上下箭头键（支持按住快速滚动）
+                    if (event.keyCode === 38 || event.keyCode === 40) {
+                        event.preventDefault()
+
+                        const direction = event.keyCode === 38 ? -1 : 1
+
+                        // 立即执行一次移动
+                        this.moveAtSelection(direction)
+
+                        // 如果定时器已经存在，说明已经在处理按住状态，直接返回
+                        if (this.atScrollTimer !== null) return
+
+                        // 延迟后开始快速滚动
+                        this.atScrollTimer = setTimeout(() => {
+                            this.atScrollInterval = setInterval(() => {
+                                this.moveAtSelection(direction)
+                            }, 50) // 每50ms移动一次
+                        }, 300) // 300ms后开始快速滚动
+
+                        return
+                    }
+
+                    // 回车键选择
+                    if (event.keyCode === 13) {
+                        event.preventDefault()
+                        const selectedMember = this.atFindList[this.atSelectedIndex]
+                        if (selectedMember) {
+                            this.choiceAt(selectedMember.user_id)
+                        }
+                        return
+                    }
+
+                    // ESC 键取消
+                    if (event.keyCode === 27) {
+                        event.preventDefault()
+                        // 删除输入框中从最后一个 @ 开始的所有内容
+                        const lastAtIndex = this.msg.lastIndexOf('@')
+                        if (lastAtIndex >= 0) {
+                            this.msg = this.msg.substring(0, lastAtIndex)
+                        }
+                        this.tags.onAtFind = false
+                        this.atFindList = null
+                        this.atSelectedIndex = 0
+                        return
+                    }
+                }
+
                 if(this.tags.onAtFind) return
                 if (event.key !== 'Enter') return
                 let canSend = false
@@ -982,6 +1033,19 @@ const userInfoPanFunc: UserInfoPan = {
 
             mainKeyUp(event: KeyboardEvent) {
                 const logger = new Logger()
+
+                // 清除箭头键快速滚动定时器
+                if (event.keyCode === 38 || event.keyCode === 40) {
+                    if (this.atScrollTimer !== null) {
+                        clearTimeout(this.atScrollTimer)
+                        this.atScrollTimer = null
+                    }
+                    if (this.atScrollInterval !== null) {
+                        clearInterval(this.atScrollInterval)
+                        this.atScrollInterval = null
+                    }
+                }
+
                 // 发送完成后输入框会遗留一个换行，把它删掉 ……
                 if (this.tags.checkNewLineFlag){
                     this.tags.checkNewLineFlag = false
@@ -990,29 +1054,9 @@ const userInfoPanFunc: UserInfoPan = {
                     }
                 }
 
-                // At 选择器激活时的键盘事件处理
+                // At 选择器激活时的回车键处理在 keydown 中完成，这里不需要额外处理
                 if (this.tags.onAtFind && this.atFindList && this.atFindList.length > 0) {
-                    // 上箭头键 (keyCode 38)
-                    if (event.keyCode === 38) {
-                        event.preventDefault()
-                        this.atSelectedIndex = this.atSelectedIndex > 0? this.atSelectedIndex - 1: this.atFindList.length - 1
-                        this.scrollAtListToSelected()
-                        return
-                    }
-                    // 下箭头键 (keyCode 40)
-                    if (event.keyCode === 40) {
-                        event.preventDefault()
-                        this.atSelectedIndex = this.atSelectedIndex < this.atFindList.length - 1? this.atSelectedIndex + 1: 0
-                        this.scrollAtListToSelected()
-                        return
-                    }
-                    // 回车键 (keyCode 13)
-                    if (event.keyCode === 13) {
-                        event.preventDefault()
-                        const selectedMember = this.atFindList[this.atSelectedIndex]
-                        if (selectedMember) {
-                            this.choiceAt(selectedMember.user_id)
-                        }
+                    if (event.keyCode === 38 || event.keyCode === 40 || event.keyCode === 13 || event.keyCode === 27) {
                         return
                     }
                 }
@@ -1110,6 +1154,24 @@ const userInfoPanFunc: UserInfoPan = {
                         }
                     }
                 })
+            },
+
+            /**
+             * 移动 At 列表选中项
+             * @param direction 方向，-1 为向上，1 为向下
+             */
+            moveAtSelection(direction: number) {
+                if (!this.atFindList || this.atFindList.length === 0) return
+
+                if (direction === -1) {
+                    // 向上移动
+                    this.atSelectedIndex = this.atSelectedIndex > 0? this.atSelectedIndex - 1: this.atFindList.length - 1
+                } else {
+                    // 向下移动
+                    this.atSelectedIndex = this.atSelectedIndex < this.atFindList.length - 1? this.atSelectedIndex + 1: 0
+                }
+
+                this.scrollAtListToSelected()
             },
 
             /**
