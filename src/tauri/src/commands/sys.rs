@@ -623,7 +623,7 @@ pub async fn sys_select_folder() -> Result<Option<String>, String> {
     use rfd::AsyncFileDialog;
 
     let folder = AsyncFileDialog::new()
-        .set_title("选择本地表情文件夹")
+        .set_title("选择文件夹")
         .pick_folder()
         .await;
 

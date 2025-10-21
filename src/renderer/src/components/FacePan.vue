@@ -94,7 +94,7 @@
                     <div v-show="!runtimeData.sysConfig.local_emoji_folder"
                         class="ss-card">
                         <font-awesome-icon :icon="['fas', 'folder-open']" />
-                        <span>{{ $t('选择本地表情文件夹') }}</span>
+                        <span>{{ $t('选择文件夹') }}</span>
                     </div>
                     <div v-show="runtimeData.sysConfig.local_emoji_folder && localEmojis.length <= 0"
                         class="ss-card">
@@ -231,7 +231,7 @@
             // ========== 本地表情相关方法 ==========
 
             /**
-             * 选择本地表情文件夹
+             * 选择文件夹
              */
             async selectLocalEmojiFolder() {
                 try {

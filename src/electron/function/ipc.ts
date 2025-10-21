@@ -566,7 +566,7 @@ export function regIpcListener() {
     ipcMain.handle('sys:selectFolder', async () => {
         const { dialog } = await import('electron')
         const result = await dialog.showOpenDialog({
-            title: '选择本地表情文件夹',
+            title: '选择文件夹',
             properties: ['openDirectory']
         })
         if (!result.canceled && result.filePaths.length > 0) {

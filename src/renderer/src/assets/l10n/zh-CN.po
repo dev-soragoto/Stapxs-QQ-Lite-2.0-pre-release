@@ -1074,7 +1074,7 @@ msgstr ""
 msgid "重新加载"
 msgstr ""
 
-msgid "选择本地表情文件夹"
+msgid "选择文件夹"
 msgstr ""
 
 msgid "暂无图片"
