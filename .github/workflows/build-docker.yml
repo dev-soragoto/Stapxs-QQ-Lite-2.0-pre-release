@@ -44,7 +44,7 @@ jobs:
       - name: 构建并推送 Docker 镜像到多个仓库
         run: |
           # 使用动态用户名构建GHCR镜像标签
-          GHCR_IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/qq-web:latest"
+          GHCR_IMAGE_NAME=$(echo "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest" | tr '[:upper:]' '[:lower:]')
           
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
