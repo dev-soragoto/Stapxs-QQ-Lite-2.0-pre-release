@@ -493,7 +493,8 @@ export default defineComponent({
                 // PS：快速连接的地址只会是局域网，所以默认 ws 协议
                 loginInfo.address = 'ws://' + this.tags.quickLoginSelect
             }
-            Connector.create(loginInfo.address, loginInfo.token)
+            // https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/issues/312
+            Connector.create(loginInfo.address, encodeURIComponent(loginInfo.token))
         },
         selectQuickLogin(address: string) {
             this.tags.quickLoginSelect = address
