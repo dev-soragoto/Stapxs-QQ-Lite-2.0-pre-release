@@ -22,13 +22,5 @@ export default defineConfig({
     preload: {
         plugins: [externalizeDepsPlugin()],
     },
-    renderer: {
-        server: viteConfig.default.server,
-        resolve: viteConfig.default.resolve,
-        plugins: viteConfig.default.plugins,
-        build: {
-            ...viteConfig.default.build,
-            outDir: 'out/renderer',
-        }
-    },
+    renderer: viteConfig.configFactory('out/renderer'),
 })

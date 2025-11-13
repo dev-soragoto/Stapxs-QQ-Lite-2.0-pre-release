@@ -194,15 +194,30 @@ export default class Emoji {
 
     get value(): string {
         if (this.type === 'apng')
-            return `./img/qqface/${this.id}/apng/${this.id}.png`
+            return this.getNormalUrl(this.id)
         else
             return String.fromCodePoint(this.id)
     }
 
     get superValue(): string | undefined {
         if (!this.hasSuper) return undefined
-        if (this.superSuffix.length === 0) return `./img/qqface/${this.id}/lottie/${this.id}.json`
-        return `./img/qqface/${this.id}/lottie/${this.id}_${this.suffixId}.json`
+        if (this.superSuffix.length === 0) return this.getSuperUrl(this.id)
+        else return this.getSuperUrl(this.id, this.suffixId)
+    }
+
+    private getNormalUrl(id: number): string {
+        if (import.meta.env.VITE_LOCAL_FACE == 'true')
+            return `./img/qface/${id}.png`
+        else
+            return `https://koishi.js.org/QFace/assets/qq_emoji/${id}/apng/${id}.png`
+    }
+
+    private getSuperUrl(id: number, suffix?: number): string {
+        const name = suffix ? `${id}_${suffix}` : `${id}`
+        if (import.meta.env.VITE_LOCAL_FACE == 'true')
+            return `./img/qface/${name}.json`
+        else
+            return `https://koishi.js.org/QFace/assets/qq_emoji/${id}/lottie/${name}.json`
     }
 }
 
