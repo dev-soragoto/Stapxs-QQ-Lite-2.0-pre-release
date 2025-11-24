@@ -10,7 +10,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 import qfaceInfo from './src/renderer/src/assets/img/qq-face/public/assets/qq_emoji/_index.json' with { type: 'json' }
 
 export function configFactory(outPath: string): UserConfigFnObject {
-    return ({mode}) => {
+    return ({ mode }) => {
         const env = loadEnv(mode, process.cwd())
         const useLocalFace = env.VITE_LOCAL_FACE == 'true'
 
@@ -22,42 +22,42 @@ export function configFactory(outPath: string): UserConfigFnObject {
             visualizer() as PluginOption,
         ]
 
-    if (useLocalFace) {
-        const apngList: string[] = []
-        const lottieList: string[] = []
-        for (const info of qfaceInfo) {
-            for (const pathInfo of info.assets) {
-                if (pathInfo.type === 2)
-                    apngList.push(`src/assets/img/qq-face/public/${pathInfo.path}`)
+        if (useLocalFace) {
+            const apngList: string[] = []
+            const lottieList: string[] = []
+            for (const info of qfaceInfo) {
+                for (const pathInfo of info.assets) {
+                    if (pathInfo.type === 2)
+                        apngList.push(`src/assets/img/qq-face/public/${pathInfo.path}`)
 
-                else if (pathInfo.type === 3)
-                    lottieList.push(`src/assets/img/qq-face/public/${pathInfo.path}`)
+                    else if (pathInfo.type === 3)
+                        lottieList.push(`src/assets/img/qq-face/public/${pathInfo.path}`)
+                }
             }
-        }
 
-        const targets: any = []
-        for (const src of apngList) {
-            targets.push({
-                src: src,
-                dest: 'img/qface/',
-            })
-        }
-        for (const src of lottieList) {
-            targets.push({
-                src: src,
-                dest: 'img/qface/',
-            })
-        }
+            const targets: any = []
+            for (const src of apngList) {
+                targets.push({
+                    src: src,
+                    dest: 'img/qface/',
+                })
+            }
+            for (const src of lottieList) {
+                targets.push({
+                    src: src,
+                    dest: 'img/qface/',
+                })
+            }
 
-        plugins.push(viteStaticCopy({
-            targets: targets
-        }))
-    }
+            plugins.push(viteStaticCopy({
+                targets: targets
+            }))
+        }
 
         return {
             root: './src/renderer',
             envDir: '../../',
-            base: process.env.BUILD_ENV == 'github-actions'? '/Stapxs-QQ-Lite-2.0/' : './',
+            base: process.env.BUILD_ENV == 'github-actions' ? '/Stapxs-QQ-Lite-2.0/' : './',
             server: {
                 port: 8080,
                 proxy: {
@@ -81,9 +81,9 @@ export function configFactory(outPath: string): UserConfigFnObject {
                 chunkSizeWarningLimit: 1100,
                 rollupOptions: {
                     input: { main: resolve('src/renderer/index.html') },
-                    external: [ resolve('src/renderer/src/assets/img/qq-face/docs') ],
+                    external: [resolve('src/renderer/src/assets/img/qq-face/docs')],
                     onwarn: (warning) => {
-                        if(warning.code === 'CIRCULAR_DEPENDENCY') return
+                        if (warning.code === 'CIRCULAR_DEPENDENCY') return
                     },
                     output: {
                         chunkFileNames: 'assets/js/[name]-[hash].js',

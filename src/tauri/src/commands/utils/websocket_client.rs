@@ -1,7 +1,7 @@
 use futures_util::{StreamExt, SinkExt};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    Arc, Mutex
+    Arc, Mutex, Once,
 };
 use tokio::sync::mpsc;
 use tokio_tungstenite::connect_async;
@@ -31,7 +31,12 @@ impl WebSocketClient {
         F2: FnMut(String) + Send + 'static,
         F3: FnMut(CloseCode, Utf8Bytes) + Send + 'static,
     {
-        rustls::crypto::ring::default_provider().install_default().unwrap();
+        static INSTALL_ONCE: Once = Once::new();
+        INSTALL_ONCE.call_once(|| {
+            if let Err(e) = rustls::crypto::ring::default_provider().install_default() {
+                eprintln!("warning: failed to install rustls ring default provider: {:?}", e);
+            }
+        });
         let timeout_duration = Duration::from_secs(5);
 
         println!("{}", url.to_string());

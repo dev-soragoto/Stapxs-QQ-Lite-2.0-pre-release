@@ -389,8 +389,8 @@ function changeTheme(id: number) {
  * @param name 文件名
  */
 function changeChatView(name: string | undefined) {
-    const safeName = (name || '').toString().replace(/^['"]|['"]$/g, '').trim()
-    if (safeName !== '') {
+    const safeName = (name || '').toString().replaceAll(/(^['"])|(['"]$)/g, '').trim()
+    if (safeName) {
         runtimeData.pageView.chatView = markRaw(
             defineAsyncComponent(
                 () => import(`@renderer/pages/chat-view/${safeName}.vue`),

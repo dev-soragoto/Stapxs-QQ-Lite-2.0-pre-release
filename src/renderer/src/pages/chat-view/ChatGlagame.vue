@@ -40,6 +40,7 @@ import { get, save } from '@renderer/function/option'
 import { Logger, PopInfo, PopType } from '@renderer/function/base'
 import { getViewTime } from '@renderer/function/utils/systemUtil'
 import { getMsgRawTxt } from '@renderer/function/utils/msgUtil'
+import xss from 'xss'
 
 export default defineComponent({
     name: 'ChatGlagame',
@@ -114,21 +115,22 @@ export default defineComponent({
                     this.dataList = data.choices?.[0]?.message?.content?.trim().split('\n') || []
                 })
                 .catch(error => {
+                    this.onLoading = false
                     new PopInfo().add(PopType.ERR, $t('请求失败：') + error.message);
                 });
         },
         openAPIConfig() {
             const { $t } = app.config.globalProperties
-            const curApi = get('openai_api') ?? ''
-            const curToken = get('openai_token') ?? ''
-            const curModel = get('openai_model') ?? 'gpt-4o'
+            const curApi = xss(get('openai_api') ?? '')
+            const curToken = xss(get('openai_token') ?? '')
+            const curModel = xss(get('openai_model') ?? 'gpt-4o')
 
             const popInfo = {
                 title: 'OpenAPI 设置',
                 html: `<div class="glagame-api-config">
-                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" style="width:100%" value="${String(curApi).replace(/"/g, '&quot;')}" /></div>
-                    <div><label>Token</label><br /><input id="glagame_token_input" type="text" style="width:100%" value="${String(curToken).replace(/"/g, '&quot;')}" /></div>
-                    <div><label>模型名称</label><br /><input id="glagame_model_input" type="text" style="width:100%" value="${String(curModel).replace(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" style="width:100%" value="${String(curApi).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div><label>Token</label><br /><input id="glagame_token_input" type="text" style="width:100%" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div><label>模型名称</label><br /><input id="glagame_model_input" type="text" style="width:100%" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
                 </div>`,
                 button: [
                     {
