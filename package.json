@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "private": false,
   "author": "Stapx Steve [林槐]",
   "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
@@ -25,7 +25,8 @@
     "build:electron": "electron-vite build && electron-builder",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
     "build:android": "vite build && capacitor sync android && capacitor build android",
-    "build:tauri": "tauri build -c src/tauri/tauri.conf.json"
+    "build:tauri": "tauri build -c src/tauri/tauri.conf.json",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",

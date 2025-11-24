@@ -213,7 +213,7 @@
                         </option>
                         <option v-for="item in getAppendChatView()"
                             :key="item" :value="item">
-                            {{ item.replace('Chat', '') }}
+                            {{ item.replace('Chat', '').replace(/^['"]|['"]$/g, '').trim() }}
                         </option>
                     </select>
                 </div>
@@ -569,7 +569,8 @@
                 const chatView = import.meta.glob('@renderer/pages/chat-view/*.vue', { eager: true })
                 const chatViewList: string[] = []
                 Object.keys(chatView).forEach((key: string) => {
-                    const name = key.split('/').pop()?.split('.')[0]
+                    let name = key.split('/').pop()?.split('.')[0]
+                    name = name ? name.toString().replaceAll(/(^['"]|['"]$)/g, '').trim() : name
                     if (name && name.startsWith('Chat')) {
                         chatViewList.push(name)
                     }
@@ -614,7 +615,8 @@
                     const chunkSize = 0x8000 // 32KB chunks to avoid call stack size exceeded
                     for (let i = 0; i < bytes.length; i += chunkSize) {
                         const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length))
-                        binary += String.fromCharCode.apply(null, Array.from(chunk))
+                        // 使用 fromCodePoint 为每个字节生成字符并拼接，避免使用 apply 导致的参数长度问题
+                        binary += Array.from(chunk, (b) => String.fromCodePoint(b)).join('')
                     }
                     const base64String = btoa(binary)
                     const imgSrc = `data:${img.type};base64,${base64String}`

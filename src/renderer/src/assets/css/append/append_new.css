@@ -187,7 +187,7 @@ body {
     height: 40px !important;
 }
 .chat-pan > div.more > div:nth-child(2) > div > form > textarea {
-    margin: 10px 0;
+    margin: 8.5px 0;
 }
 .chat-pan > div.more > div:nth-child(2) > div:first-child {
     margin-right: 10px;

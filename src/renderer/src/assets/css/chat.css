@@ -205,8 +205,9 @@ input {
     font-size: 0.85rem;
     line-height: 20px;
     max-height: 40vh;
+    min-height: 20px;
     padding: 0 20px;
-    margin: 15px 0;
+    margin: 10px 0;
     height: 20px;
     resize: none;
     border: 0;

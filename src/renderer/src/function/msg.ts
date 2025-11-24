@@ -1001,7 +1001,7 @@ const msgFunctions = {
                         msgPath.message_list,
                     )
                     getMessageList(trueMsg).then((trueMsg) => {
-                        if (trueMsg && trueMsg.length == 1 &&
+                        if (trueMsg?.length == 1 &&
                             runtimeData.messageList[fakeIndex]) {
                             runtimeData.messageList[fakeIndex].message = trueMsg[0].message
                             runtimeData.messageList[fakeIndex].raw_message =
@@ -1604,7 +1604,7 @@ function newMsg(_: string, data: any) {
                 msgPath.message_list,
             )
             getMessageList(trueMsg).then((trueMsg) => {
-                if (trueMsg && trueMsg.length == 1 &&
+                if (trueMsg?.length == 1 &&
                     runtimeData.messageList[fakeIndex]) {
                     runtimeData.messageList[fakeIndex].message = trueMsg[0].message
                     runtimeData.messageList[fakeIndex].raw_message =
@@ -1724,7 +1724,8 @@ function newMsg(_: string, data: any) {
 
         // 通知判定 ============================================
         // eslint-disable-next-line max-len
-        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 开启了群组通知模式 || 群组 AT || 群组 AT 全体 || 群组开启了通知)) 这些情况需要进行新消息处理
+        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 开启了群组通知模式 || 群组 AT
+        //      || 群组 AT 全体 || 群组开启了通知)) 这些情况需要进行新消息处理
         if (
             sender != loginId &&
             sender != 0 &&

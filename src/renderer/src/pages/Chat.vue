@@ -17,6 +17,7 @@
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @v-move-right.prevent="exitWin()">
+        <slot name="chat-extra" />
         <!-- 聊天基本信息 -->
         <div class="info">
             <font-awesome-icon :icon="['fas', 'bars-staggered']" @click="openLeftBar" />
@@ -389,6 +390,7 @@
                             @compositionstart="handleCompositionStart"
                             @compositionend="handleCompositionEnd" />
                     </form>
+                    <slot name="main-input-button" />
                     <div @click="sendMsg('sendMsgBack')">
                         <font-awesome-icon v-if="details[3].open" :icon="['fas', 'search']" />
                         <font-awesome-icon v-else :icon="['fas', 'angle-right']" />
@@ -454,7 +456,7 @@
                         <a>{{ $t('撤回') }}</a>
                     </div>
                     <div v-show="tags.menuDisplay.at"
-                        @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: selectedMsg.sender.user_id }, addText: true, }): '';
+                        @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: Number(selectedMsg.sender.user_id) }, addText: true, }): '';
                                 toMainInput();
                                 closeMsgMenu()">
                         <div><font-awesome-icon :icon="['fas', 'at']" /></div>
@@ -1125,7 +1127,7 @@ const userInfoPanFunc: UserInfoPan = {
                     this.msg = this.msg.substring(0, this.msg.lastIndexOf('@'))
                     // 添加 at 信息
                     this.addSpecialMsg({
-                        msgObj: { type: 'at', qq: id },
+                        msgObj: { type: 'at', qq: Number(id) },
                         addText: true,
                     })
                 }
@@ -2461,8 +2463,12 @@ const userInfoPanFunc: UserInfoPan = {
                 const input = event.target as HTMLInputElement
                 // 获取 marginTop 用于计算高度
                 const margin = Number(getComputedStyle(input).marginTop.replace('px', ''))
+                const scrollHeight = input.scrollHeight
+                const lineHeight = Number(getComputedStyle(input).lineHeight.replace('px', ''))
+                // 将 scrollHeight 格式化为 lineHeight 的整数倍，不足的省去
+                const height = Math.floor(scrollHeight / lineHeight) * lineHeight
                 input.style.height = 'auto' // 先重置高度
-                input.style.height = (input.scrollHeight - margin * 2) + 'px' // 设置为内容高度
+                input.style.height = (height - margin * 2) + 'px' // 设置为内容高度
 
                 // 如果删掉了一个 ]
                 const diff = getDifferencesWithRanges(this.msg, this.oldMsg)
