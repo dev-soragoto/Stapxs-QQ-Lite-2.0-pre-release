@@ -31,6 +31,7 @@ impl WebSocketClient {
         F2: FnMut(String) + Send + 'static,
         F3: FnMut(CloseCode, Utf8Bytes) + Send + 'static,
     {
+        rustls::crypto::ring::default_provider().install_default().unwrap();
         let timeout_duration = Duration::from_secs(5);
 
         println!("{}", url.to_string());

@@ -213,7 +213,7 @@
                         </option>
                         <option v-for="item in getAppendChatView()"
                             :key="item" :value="item">
-                            {{ item.replace('Chat', '') }}
+                            {{ item.replace('Chat', '').replace(/^['"]|['"]$/g, '').trim() }}
                         </option>
                     </select>
                 </div>
@@ -569,7 +569,8 @@
                 const chatView = import.meta.glob('@renderer/pages/chat-view/*.vue', { eager: true })
                 const chatViewList: string[] = []
                 Object.keys(chatView).forEach((key: string) => {
-                    const name = key.split('/').pop()?.split('.')[0]
+                    let name = key.split('/').pop()?.split('.')[0]
+                    name = name ? name.toString().replace(/^['"]|['"]$/g, '').trim() : name
                     if (name && name.startsWith('Chat')) {
                         chatViewList.push(name)
                     }

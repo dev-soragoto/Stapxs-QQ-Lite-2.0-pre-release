@@ -76,6 +76,10 @@ export const optDefault: { [key: string]: any } = {
     log_level: 'err',
     debug_msg: false,
     custom_css: '',
+    // Glagame
+    openai_api: '',
+    openai_token: '',
+    openai_model: '',
 }
 
 // =============== 设置项事件 ===============
@@ -385,10 +389,11 @@ function changeTheme(id: number) {
  * @param name 文件名
  */
 function changeChatView(name: string | undefined) {
-    if (name && name != '') {
+    const safeName = (name || '').toString().replace(/^['"]|['"]$/g, '').trim()
+    if (safeName !== '') {
         runtimeData.pageView.chatView = markRaw(
             defineAsyncComponent(
-                () => import(`@renderer/pages/chat-view/${name}.vue`),
+                () => import(`@renderer/pages/chat-view/${safeName}.vue`),
             ),
         )
     } else {

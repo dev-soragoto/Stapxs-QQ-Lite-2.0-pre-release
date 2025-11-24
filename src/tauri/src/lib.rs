@@ -275,11 +275,11 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
         let build_id = version.build;
         let _ = window.set_decorations(false);
         if(major_id == 10) {
-        if(build_id >= 21996) {
-            window_vibrancy::apply_mica(&window, None);
-        } else {
-            window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)));
-        }
+            if(build_id >= 21996) {
+                window_vibrancy::apply_mica(&window, None);
+            } else {
+                window_vibrancy::apply_acrylic(&window, Some((18, 18, 18, 125)));
+            }
         }
     }
     #[cfg(debug_assertions)]

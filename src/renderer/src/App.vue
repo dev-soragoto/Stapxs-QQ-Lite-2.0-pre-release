@@ -158,16 +158,12 @@
                 </div>
             </div>
         </TransitionGroup>
-        <Transition>
+        <Transition name="modal">
             <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
                          (runtimeData.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
-                    :style="'transform: translate(-50%, calc(-50% - ' +
-                        (runtimeData.popBoxList.length > 3 ?
-                            3 : runtimeData.popBoxList.length) * 10 + 'px));' +
-                        (get('fs_adaptation') > 0 ?
-                            ` margin-bottom: ${40 + Number(get('fs_adaptation'))}px;` : '')">
+                    :style="(get('fs_adaptation') > 0 ? ` margin-bottom: ${40 + Number(get('fs_adaptation'))}px;` : '')">
                     <header v-show="runtimeData.popBoxList[0].title != undefined">
                         <div v-if="runtimeData.popBoxList[0].svg != undefined">
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
@@ -774,5 +770,50 @@ export default defineComponent({
 .appbar-enter-from,
 .appbar-leave-to {
     transform: translateY(-60px);
+}
+
+/* 弹窗动画 */
+.modal-enter-active {
+    transition: opacity 0.2s ease-out;
+}
+
+.modal-leave-active {
+    transition: opacity 0.2s ease-in;
+}
+
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-active .pop-box-body {
+    animation: panelSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active .pop-box-body {
+    animation: panelSlideDown 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes panelSlideUp {
+    from {
+        transform: translate(-50%, -20%) scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes panelSlideDown {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: translate(-50%, -5%) scale(0.98);
+        opacity: 0;
+    }
 }
 </style>
