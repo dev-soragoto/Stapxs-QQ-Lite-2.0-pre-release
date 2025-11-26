@@ -1,18 +1,18 @@
 name: 构建 Web
 
 on:
-  workflow_call:
-    inputs:
-      version:
-        description: '应用版本'
-        required: true
-        type: string
+    workflow_call:
+        inputs:
+            version:
+                description: "应用版本"
+                required: true
+                type: string
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    steps:
+        steps:
             - name: 拉取代码
               uses: actions/checkout@v4
               with:
