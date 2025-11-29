@@ -15,7 +15,6 @@ import qed from '@renderer/assets/qed.txt?raw'
 
 import app from '@renderer/main'
 import Option from './option'
-import pinyin from 'tiny-pinyin'
 
 import Umami from '@stapxs/umami-logger-typescript'
 
@@ -60,6 +59,7 @@ import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
+import { getPinyin } from './utils/pinyin'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -543,10 +543,7 @@ const msgFunctions = {
 
             // 获取拼音首字母
             const first = name.substring(0, 1)
-            item.py_start = pinyin
-                .convertToPinyin(first, '')
-                .toUpperCase()
-                .substring(0, 1)
+            item.py_start = getPinyin(first).main[0].substring(0, 1).toUpperCase()
         })
         // 筛选列表
         const adminList = data.filter((item: GroupMemberInfoElem) => {
@@ -1240,18 +1237,19 @@ function saveUser(msg: { [key: string]: any }, type: string) {
                 item.group_name = ''
             }
             // 为所有项目追加拼音名称
-            let py_name = ''
+            let pyMatchName = ''
             if (item.group_id) {
-                py_name = pinyin.convertToPinyin(item.group_name)
+                pyMatchName = item.group_name
             } else {
-                py_name =
-                    pinyin.convertToPinyin(item.nickname) +
-                    ',' +
-                    pinyin.convertToPinyin(item.remark)
+                pyMatchName = `${item.nickname},${item.remark}`
             }
-            if (list && list[index]) {
-                list[index].py_name = py_name.toLowerCase()
-                list[index].py_start = py_name.substring(0, 1).toUpperCase()
+            if (list?.[index]) {
+                list[index].py_name = getPinyin(pyMatchName)
+                list[index].py_start = list[index]
+                                        .py_name
+                                        .main[0]
+                                        .substring(0, 1)
+                                        .toUpperCase()
             }
             // 构建分类
             if (type == 'friend') {

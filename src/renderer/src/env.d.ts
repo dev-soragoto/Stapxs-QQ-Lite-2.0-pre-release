@@ -47,3 +47,15 @@ declare module '@renderer/assets/img/qq-face/public/assets/qq_emoji/_index.json'
     }[]
     export default content
 }[]
+
+declare module 'https://cdn.jsdelivr.net/npm/pinyin@4.0.0/lib/umd/pinyin.min.js'
+
+declare interface PinyinOptions {
+    heteronym?: boolean
+    compact?: boolean
+    style?: string
+}
+
+declare const pinyin: {
+    pinyin(text: string, options?: PinyinOptions): string[][]
+}

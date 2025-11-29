@@ -1,4 +1,5 @@
 import { optDefault } from '../option'
+import { PinYinData } from '../utils/pinyin'
 
 export enum BotMsgType {
     CQCode,
@@ -108,7 +109,7 @@ export interface UserElem {
 export interface UserFriendElem extends UserElem {
     group_id: number
     group_name: string
-    py_name?: string
+    py_name?: PinYinData
     py_start?: string
     member_count?: number
     admin_flag?: boolean
@@ -119,7 +120,7 @@ export interface UserGroupElem extends UserElem {
     nickname: string
     remark: string
     raw_msg_base?: string       // 给群收纳箱用的
-    py_name?: string
+    py_name?: PinYinData
     py_start?: string
     class_id?: number
     class_name?: string
