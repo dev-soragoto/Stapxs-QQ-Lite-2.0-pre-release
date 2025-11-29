@@ -543,7 +543,11 @@ const msgFunctions = {
 
             // 获取拼音首字母
             const first = name.substring(0, 1)
-            item.py_start = getPinyin(first).main[0].substring(0, 1).toUpperCase()
+            item.py_start = getPinyin(first)
+                                .main
+                                .at(0)
+                                ?.substring(0, 1)
+                                .toUpperCase() ?? ' '
         })
         // 筛选列表
         const adminList = data.filter((item: GroupMemberInfoElem) => {
@@ -1247,9 +1251,9 @@ function saveUser(msg: { [key: string]: any }, type: string) {
                 list[index].py_name = getPinyin(pyMatchName)
                 list[index].py_start = list[index]
                                         .py_name
-                                        .main[0]
-                                        .substring(0, 1)
-                                        .toUpperCase()
+                                        .main.at(0)
+                                        ?.substring(0, 1)
+                                        .toUpperCase() ?? ' '
             }
             // 构建分类
             if (type == 'friend') {
