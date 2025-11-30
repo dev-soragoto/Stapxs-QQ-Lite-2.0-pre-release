@@ -36,7 +36,7 @@ import { defineComponent, toRaw } from 'vue'
 import Chat from '../Chat.vue'
 import app from '@renderer/main'
 import { runtimeData } from '@renderer/function/msg'
-import { get, save } from '@renderer/function/option'
+import { get, save, optDefault } from '@renderer/function/option'
 import { Logger, PopInfo, PopType } from '@renderer/function/base'
 import { getViewTime } from '@renderer/function/utils/systemUtil'
 import { getMsgRawTxt } from '@renderer/function/utils/msgUtil'
@@ -56,8 +56,8 @@ export default defineComponent({
         onRobotClick() {
             const { $t } = app.config.globalProperties
             const logger = new Logger()
-            const systemContent = get('glagame_prompt') ?? ''
-            const maxMessages = Number(get('glagame_max_messages')) || 50
+            const systemContent = get('glagame_prompt') ?? optDefault.glagame_prompt
+            const maxMessages = Number(get('glagame_max_messages')) || optDefault.glagame_max_messages
             // 只取最多 maxMessages 条聊天记录
             const chatData = toRaw(runtimeData.messageList).filter(item => item.raw_message && item.sender.user_id !== runtimeData.loginInfo.uin).slice(-maxMessages)
             const chatStr = chatData.map(item => {
@@ -103,8 +103,8 @@ export default defineComponent({
             const curApi = xss(get('openai_api') ?? '')
             const curToken = xss(get('openai_token') ?? '')
             const curModel = xss(get('openai_model') ?? 'gpt-4o')
-            const curPrompt = xss(get('glagame_prompt') ?? '')
-            const curMaxMessages = Number(get('glagame_max_messages')) || 50
+            const curPrompt = xss(get('glagame_prompt') ?? optDefault.glagame_prompt)
+            const curMaxMessages = Number(get('glagame_max_messages')) || optDefault.glagame_max_messages
 
             const popInfo = {
                 title: 'OpenAPI 设置',
@@ -134,7 +134,7 @@ export default defineComponent({
                             const api = apiEl && apiEl instanceof HTMLInputElement ? apiEl.value : ''
                             const token = tokenEl && tokenEl instanceof HTMLInputElement ? tokenEl.value : ''
                             const model = modelEl && modelEl instanceof HTMLInputElement ? modelEl.value : ''
-                            const maxMessages = maxMessagesEl && maxMessagesEl instanceof HTMLInputElement ? Number(maxMessagesEl.value) || 50 : 50
+                            const maxMessages = maxMessagesEl && maxMessagesEl instanceof HTMLInputElement ? Number(maxMessagesEl.value) || optDefault.glagame_max_messages : optDefault.glagame_max_messages
                             const prompt = promptEl && promptEl instanceof HTMLTextAreaElement ? promptEl.value : ''
                             // 保存设置
                             save('openai_api', api)
