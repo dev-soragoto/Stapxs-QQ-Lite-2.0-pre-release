@@ -109,11 +109,11 @@ export default defineComponent({
             const popInfo = {
                 title: 'OpenAPI 设置',
                 html: `<div class="glagame-api-config">
-                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" style="width:100%" value="${String(curApi).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div style="margin-bottom:8px;"><label>Token</label><br /><input id="glagame_token_input" type="text" style="width:100%" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div style="margin-bottom:8px;"><label>模型名称</label><br /><input id="glagame_model_input" type="text" style="width:100%" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div style="margin-bottom:8px;"><label>最大消息数</label><br /><input id="glagame_max_messages_input" type="number" style="width:100%" value="${curMaxMessages}" min="1" max="200" /></div>
-                    <div><label>Prompt</label><br /><textarea id="glagame_prompt_input" style="width:100%;min-height:120px;resize:vertical">${String(curPrompt).replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')}</textarea></div>
+                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" value="${String(curApi).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>Token</label><br /><input id="glagame_token_input" type="text" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>模型名称</label><br /><input id="glagame_model_input" type="text" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>最大消息数</label><br /><input id="glagame_max_messages_input" type="number" value="${curMaxMessages}" min="1" max="200" /></div>
+                    <div><label>Prompt</label><br /><textarea id="glagame_prompt_input" style="min-height:120px;resize:vertical">${String(curPrompt).replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')}</textarea></div>
                 </div>`,
                 button: [
                     {
@@ -223,10 +223,16 @@ export default defineComponent({
 </style>
 <style>
 .glagame-api-config {
-    width: calc(100% - 20px);
+    width: calc(100% - 10px);
+    max-height: 55vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding-right: 10px;
 }
 .glagame-api-config input,
 .glagame-api-config textarea {
+    color: var(--color-font);
+    width: calc(100% - 20px);
     background: var(--color-card-1);
     border: unset;
     padding: 10px;
