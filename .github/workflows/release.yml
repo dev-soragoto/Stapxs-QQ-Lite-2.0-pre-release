@@ -96,7 +96,7 @@ jobs:
         needs: init
         uses: ./.github/workflows/build-tauri.yml
         with:
-          version: ${{ needs.init.outputs.version }}
+            version: ${{ needs.init.outputs.version }}
 
     # ========================= 发布构建结果 =========================
     release:
