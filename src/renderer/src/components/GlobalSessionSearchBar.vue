@@ -66,6 +66,7 @@ import { runtimeData } from '@renderer/function/msg'
 import { UserFriendElem, UserGroupElem } from '@renderer/function/elements/information'
 import { login } from '@renderer/function/connect'
 import { backend } from '@renderer/runtime/backend'
+import { matchPinyin } from '@renderer/function/utils/pinyin'
 
 //#region == 移植相关 ====================================================================
 /**
@@ -97,16 +98,15 @@ function changeSession(session: Session) {
  * @param query
  */
 function sessionSearchMatch(session: Session, query: string): boolean {
+    const value = query.toLowerCase()
     const name = (
         session.user_id? session.nickname + session.remark: session.group_name
     ).toLowerCase()
-    const py = session.py_name ? session.py_name : ''
+    if (name.includes(value)) return true
     const id = session.user_id? session.user_id: session.group_id
-    return (
-        id.toString() === query ||
-        py.indexOf(query.toLowerCase()) != -1 ||
-        name.indexOf(query.toLowerCase()) != -1
-    )
+    if (id.toString() === value) return true
+    if (session.py_name && matchPinyin(session.py_name, value)) return true
+    return false
 }
 /**
  * 判断有没有弹窗
