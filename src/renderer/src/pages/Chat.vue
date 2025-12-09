@@ -1773,7 +1773,8 @@ const userInfoPanFunc: UserInfoPan = {
             downloadImg() {
                 const url = this.tags.menuDisplay.downloadImg
                 if (url != false) {
-                    downloadFile(url as string, 'img.png', () => undefined, () => undefined)
+
+                    downloadFile(url as string, `img_${new Date().getTime()}.png`, () => undefined, () => undefined)
                 }
                 this.closeMsgMenu()
             },
