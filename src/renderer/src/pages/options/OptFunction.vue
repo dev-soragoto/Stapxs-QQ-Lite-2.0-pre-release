@@ -83,23 +83,6 @@
                 </label>
             </div>
             <div class="opt-item">
-                <div :class="checkDefault('close_respond')" />
-                <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
-                <div>
-                    <span>{{ $t('关闭回应功能') }}</span>
-                    <span>{{
-                        $t('如果你不想用它或者 bot 不支持，可以关闭这个功能')
-                    }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.close_respond"
-                        type="checkbox" name="close_respond" @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
-            </div>
-            <div class="opt-item">
                 <div :class="checkDefault('msg_taill')" />
                 <font-awesome-icon :icon="['fas', 'fish-fins']" />
                 <div>
@@ -109,31 +92,6 @@
                 <input v-model="runtimeData.sysConfig.msg_taill"
                     class="ss-input" style="width: 150px"
                     type="text" name="msg_taill" @keyup="save">
-            </div>
-            <div class="opt-item">
-                <div :class="checkDefault('quick_send')" />
-                <font-awesome-icon :icon="['fas', 'square-xmark']" />
-                <div>
-                    <span>{{ $t('默认功能按钮') }}</span>
-                    <span>{{ $t('可以右击试试哦') }}</span>
-                </div>
-                <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
-                        title="quick_send" @change="save">
-                        <option value="default">
-                            {{ $t('默认') }}
-                        </option>
-                        <option value="img">
-                            {{ $t('图片') }}
-                        </option>
-                        <option value="file">
-                            {{ $t('文件') }}
-                        </option>
-                        <option value="face">
-                            {{ $t('表情') }}
-                        </option>
-                    </select>
-                </div>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('send_face')" />
@@ -216,6 +174,49 @@
         </div>
         <div class="ss-card">
             <header>{{ $t('浏览') }}</header>
+            <div class="opt-item">
+                <div :class="checkDefault('close_respond')" />
+                <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
+                <div>
+                    <span>{{ $t('关闭回应功能') }}</span>
+                    <span>{{
+                        $t('如果你不想用它或者 bot 不支持，可以关闭这个功能')
+                    }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.close_respond"
+                        type="checkbox" name="close_respond" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+
+            <div class="opt-item">
+                <div :class="checkDefault('quick_send')" />
+                <font-awesome-icon :icon="['fas', 'square-xmark']" />
+                <div>
+                    <span>{{ $t('默认功能按钮') }}</span>
+                    <span>{{ $t('可以右击试试哦') }}</span>
+                </div>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
+                        title="quick_send" @change="save">
+                        <option value="default">
+                            {{ $t('默认') }}
+                        </option>
+                        <option value="img">
+                            {{ $t('图片') }}
+                        </option>
+                        <option value="file">
+                            {{ $t('文件') }}
+                        </option>
+                        <option value="face">
+                            {{ $t('表情') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
             <div class="opt-item">
                 <div :class="checkDefault('close_browser')" />
                 <font-awesome-icon :icon="['fas', 'globe']" />
