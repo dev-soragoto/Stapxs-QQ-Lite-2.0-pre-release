@@ -1095,7 +1095,7 @@ msgstr ""
 msgid "查看 {count} 条转发消息"
 msgstr ""
 
-msgid "浏览"
+msgid "浏览选项"
 msgstr ""
 
 msgid "禁用内置浏览器"

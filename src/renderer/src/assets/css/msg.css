@@ -14,6 +14,12 @@
     font-size: 1rem;
     flex-wrap: wrap;
 }
+.message.me {
+    flex-direction: row-reverse;
+}
+.message.me.right {
+    flex-direction: row-reverse !important;
+}
 .message.selected {
     background: #0000001d;
 }
@@ -29,6 +35,12 @@
     height: 35px;
     border-radius: 7px;
     margin: 10px 15px 0 0;
+}
+.message.me > img {
+    margin: 10px 0 0 15px;
+}
+.message.me.right > img {
+    margin: 10px 0 0 15px !important;
 }
 .message > div.sending {
     width: 13px;
@@ -71,8 +83,17 @@
 .message-body a {
     color: var(--color-font);
 }
+.message-body.me {
+    text-align: end;
+}
+.message-body.me.right {
+    text-align: end !important;
+}
 .message-body.me a {
     color: var(--color-font-r);
+}
+.message-body.me > a {
+    color: var(--color-font) !important;
 }
 .message-body a:link {
     text-decoration: underline;
@@ -133,10 +154,6 @@
 .message-body.super-face > div > div {
     padding: 20px 10px;
     border: 0;
-}
-
-.message-space {
-    flex: 1;
 }
 
 .message-mine {
@@ -679,11 +696,17 @@ span.user-title.robot {
 
 @media (max-width: 992px) {
     /* 消息体 */
+    .message-body.me {
+        text-align: start;
+    }
+    .message.me {
+        flex-direction: row;
+    }
     .message > img {
         display: unset !important;
     }
-    .message-space {
-        display: none;
+    .message.me > img {
+        margin: 10px 15px 0 0;
     }
     .message-body {
         max-width: calc(100% - 50px);

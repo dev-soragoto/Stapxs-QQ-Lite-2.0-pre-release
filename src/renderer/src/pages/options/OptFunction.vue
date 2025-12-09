@@ -173,10 +173,10 @@
             </div>
         </div>
         <div class="ss-card">
-            <header>{{ $t('浏览') }}</header>
+            <header>{{ $t('浏览选项') }}</header>
             <div class="opt-item">
                 <div :class="checkDefault('close_respond')" />
-                <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
+                <font-awesome-icon :icon="['fas', 'comments']" />
                 <div>
                     <span>{{ $t('关闭回应功能') }}</span>
                     <span>{{
@@ -191,31 +191,41 @@
                     </div>
                 </label>
             </div>
-
             <div class="opt-item">
-                <div :class="checkDefault('quick_send')" />
-                <font-awesome-icon :icon="['fas', 'square-xmark']" />
+                <div :class="checkDefault('use_super_face')" />
+                <font-awesome-icon :icon="['fas', 'face-laugh-squint']" />
                 <div>
-                    <span>{{ $t('默认功能按钮') }}</span>
-                    <span>{{ $t('可以右击试试哦') }}</span>
+                    <span>{{ $t('超级表情') }}</span>
+                    <span>{{
+                        $t('小黄脸长大了，变成了大黄脸！')
+                    }}</span>
                 </div>
-                <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.quick_send" name="quick_send"
-                        title="quick_send" @change="save">
-                        <option value="default">
-                            {{ $t('默认') }}
-                        </option>
-                        <option value="img">
-                            {{ $t('图片') }}
-                        </option>
-                        <option value="file">
-                            {{ $t('文件') }}
-                        </option>
-                        <option value="face">
-                            {{ $t('表情') }}
-                        </option>
-                    </select>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.use_super_face"
+                        type="checkbox" name="use_super_face" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+
+            <div v-if="backend.isDesktop()"
+                class="opt-item">
+                <div :class="checkDefault('opt_always_top')" />
+                <font-awesome-icon :icon="['fas', 'angle-up']" />
+                <div>
+                    <span>{{ $t('置顶窗口') }}</span>
+                    <span>{{
+                        $t('你也不想想让 ta 知道你不在看消息吧 ~')
+                    }}</span>
                 </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.opt_always_top"
+                        type="checkbox" name="opt_always_top" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('close_browser')" />
