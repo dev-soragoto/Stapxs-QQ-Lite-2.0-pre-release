@@ -21,6 +21,7 @@
         <!-- 聊天基本信息 -->
         <div class="info">
             <font-awesome-icon :icon="['fas', 'bars-staggered']" @click="openLeftBar" />
+            <font-awesome-icon class="back" :icon="['fas', 'angle-left']" @click="exitWin" />
             <img :src="chat.show.avatar">
             <div class="info">
                 <p>

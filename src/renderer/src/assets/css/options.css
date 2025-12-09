@@ -397,6 +397,7 @@
     height: 1.1rem;
     width: 1.1rem;
 }
+.opt-item input[type='password'],
 .opt-item input[type='text'] {
     line-height: 35px;
     font-size: 0.8rem;
@@ -737,6 +738,7 @@
         flex:unset;
     }
     .opt-item div.ss-range,
+    .opt-item input[type='password'],
     .opt-item input[type='text'],
     .opt-item input[type='number'] {
         margin-left: calc(1.1rem + 20px);

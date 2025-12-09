@@ -1436,9 +1436,6 @@ msgstr ""
 msgid "连接超时"
 msgstr ""
 
-msgid "自定义样式"
-msgstr ""
-
 msgid "注入自定义样式"
 msgstr ""
 

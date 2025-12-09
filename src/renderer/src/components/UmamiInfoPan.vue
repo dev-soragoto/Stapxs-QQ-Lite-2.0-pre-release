@@ -109,6 +109,9 @@
                             <a>{{ formatNumber(visitData.status[name].value) }}</a>
                             <span v-if="name !== 'bounces' && name !== 'totaltime'">
                                 {{ $t('访客数据_' + name) }}
+                                <span v-if="visitData.status[name].comparison !== undefined">
+                                    ({{ visitData.status[name].comparison >= 0 ? '+' : '' }}{{ visitData.status[name].comparison.toFixed(0) }}%)
+                                </span>
                             </span>
                         </div>
                     </div>
@@ -135,9 +138,12 @@
                 </template>
                 <!-- 访客详情 & 事件详情 -->
                 <template v-if="showName === 'event' || showName === 'session'">
-                    <div v-show="mainListSelected != ''" v-if="eventData != null" class="pie-pan">
+                    <div v-show="mainListSelected != ''" v-if="eventData != null && eventData.color" class="pie-pan">
                         <v-chart :option="eventData" autoresize />
                         <a>{{ $t('占比小于 {per}% 的数据将不会展示在饼图中', { per: minPiePercentage * 100 }) }}</a>
+                    </div>
+                    <div v-show="mainListSelected != ''" v-else>
+                        <a>{{ $t('暂无数据') }}</a>
                     </div>
                 </template>
             </div>
@@ -184,7 +190,7 @@
         data() {
             return {
                 metricTypes: {
-                    'url': '页面',
+                    'path': '页面',
                     'browser': '浏览器',
                     'os': '操作系统',
                     'device': '设备',
@@ -194,18 +200,27 @@
                 },
                 eventTypes: {
                     'send_msg': '发送消息',
+                    'sendMsg': '发送消息（弃用）',
                     'connect': '连接',
                     'use_theme_color': '切换主题色',
                     'use_language': '切换语言',
                     'click_statistics': '触发按钮',
                     'use_chatview': '切换聊天面板样式',
-                    'cilent': '上报客户端',
+                    'cilent': '上报版本（弃用）',
                     'show_qed': '触发彩蛋',
+                    'use_transparent': '切换窗口透明',
+                    'link_view': '链接预览',
 
                     'app_version': '应用版本',
                     'os_version': '系统版本',
                     'bot_version': '机器人版本',
                     'os_arch': '系统架构',
+                },
+                buttonTypes: {
+                    'touch_randomly': '彩蛋按钮',
+                    'visit_fish': '赞助按钮',
+                    'visit_github': 'GitHub 按钮',
+                    'visit_blog': '博客按钮',
                 },
                 minPiePercentage: 0.0084, // 饼图中最小显示百分比
                 showName: 'website',
@@ -371,12 +386,203 @@
                         // }
                         // 按 value 降序排列
                         pieData.sort((a: any, b: any) => b.value - a.value)
+                        // ======= 特殊处理 =======
+                        // 应用版本去除 beta- 后的部分，pre. 后的部分
+                        if(value.indexOf('app_version') == 0) {
+                            pieData = pieData.map((item: any) => {
+                                let name = item.name
+                                if(name.includes('beta-')) {
+                                    name = name.split('beta-')[0] + 'beta'
+                                }
+                                if(name.includes('pre.')) {
+                                    name = name.split('pre.')[0] + 'pre'
+                                }
+                                return { value: item.value, name }
+                            })
+                            // 合并同名项
+                            const mergedData: Record<string, number> = {}
+                            for(const item of pieData) {
+                                if(mergedData[item.name]) {
+                                    mergedData[item.name] += item.value
+                                } else {
+                                    mergedData[item.name] = item.value
+                                }
+                            }
+                            pieData = Object.keys(mergedData).map(name => ({
+                                name,
+                                value: mergedData[name]
+                            }))
+                            // 按 value 降序排列
+                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        }
+                        // 系统版本格式是：Windows 10.0.22031 (Web) 这样的，只取前两段。如果有 Web 全都归为 Web
+                        if(value.indexOf('os_version') == 0) {
+                            pieData = pieData.map((item: any) => {
+                                if(item.name.includes('(Web)')) {
+                                    return { value: item.value, name: 'Web' }
+                                } else {
+                                    const parts = item.name.split(' ')
+                                    // 对 Windows 11 特殊处理一下
+
+                                    return { value: item.value, name: parts.slice(0, 2).join(' ') }
+                                }
+                            })
+                            // 合并同名项
+                            const mergedData: Record<string, number> = {}
+                            for(const item of pieData) {
+                                if(mergedData[item.name]) {
+                                    mergedData[item.name] += item.value
+                                } else {
+                                    mergedData[item.name] = item.value
+                                }
+                            }
+                            pieData = Object.keys(mergedData).map(name => ({
+                                name,
+                                value: mergedData[name]
+                            }))
+                            // 按 value 降序排列
+                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        }
+                        // 机器人版本忽略版本号第三位，如果版本号前有 v 也去掉
+                        if(value.indexOf('bot_version') == 0) {
+                            pieData = pieData.map((item: any) => {
+                                const name = item.name.split(',')[0]
+                                let version = item.name.split(',')[1]
+
+                                if(!item.name || !name || !version) {
+                                    return { value: item.value, name: item.name }
+                                }
+
+                                if(version.startsWith('v')) {
+                                    version = version.slice(1)
+                                }
+                                const parts = version.split('.')
+                                if(parts.length >= 2 && Number(parts[1]) != 0) {
+                                    version = parts[0] + '.' + parts[1]
+                                }
+                                return { value: item.value, name: name + ',' + version }
+                            })
+                            // 合并同名项
+                            const mergedData: Record<string, number> = {}
+                            for(const item of pieData) {
+                                if(mergedData[item.name]) {
+                                    mergedData[item.name] += item.value
+                                } else {
+                                    mergedData[item.name] = item.value
+                                }
+                            }
+                            pieData = Object.keys(mergedData).map(name => ({
+                                name,
+                                value: mergedData[name]
+                            }))
+                            // 按 value 降序排列
+                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        }
+                        // 系统架构将 x86_64 统一为 x64、arm64 统一为 aarch64
+                        if(value.indexOf('os_arch') == 0) {
+                            pieData = pieData.map((item: any) => {
+                                let name = item.name
+                                if(name === 'x86_64') {
+                                    name = 'x64'
+                                } else if(name === 'arm64') {
+                                    name = 'aarch64'
+                                }
+                                return { value: item.value, name }
+                            })
+                            // 合并同名项
+                            const mergedData: Record<string, number> = {}
+                            for(const item of pieData) {
+                                if(mergedData[item.name]) {
+                                    mergedData[item.name] += item.value
+                                } else {
+                                    mergedData[item.name] = item.value
+                                }
+                            }
+                            pieData = Object.keys(mergedData).map(name => ({
+                                name,
+                                value: mergedData[name]
+                            }))
+                            // 按 value 降序排列
+                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        }
+                        // 触发按钮进行名称映射
+                        if(value.indexOf('click_statistics') == 0) {
+                            pieData = pieData.map((item: any) => {
+                                let name = item.name
+                                if(this.buttonTypes[name]) {
+                                    name = this.$t(this.buttonTypes[name])
+                                }
+                                return { value: item.value, name }
+                            })
+                            // 合并同名项
+                            const mergedData: Record<string, number> = {}
+                            for(const item of pieData) {
+                                if(mergedData[item.name]) {
+                                    mergedData[item.name] += item.value
+                                } else {
+                                    mergedData[item.name] = item.value
+                                }
+                            }
+                            pieData = Object.keys(mergedData).map(name => ({
+                                name,
+                                value: mergedData[name]
+                            }))
+                            // 按 value 降序排列
+                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        }
+                        // 触发彩蛋的数值实际上是尝试次数，把它们划到一个合适的指数区间内
+                        if(value.indexOf('show_qed') == 0) {
+                            pieData = pieData.map((item: any) => {
+                                let name = item.name
+                                const num = Number(name)
+                                if(isNaN(num)) {
+                                    name = this.$t('未知')
+                                } else if(num >= 1000) {
+                                    name = '1000+'
+                                } else if(num >= 500) {
+                                    name = '500-999'
+                                } else if(num >= 200) {
+                                    name = '200-499'
+                                } else if(num >= 100) {
+                                    name = '100-199'
+                                } else if(num >= 50) {
+                                    name = '50-99'
+                                } else if(num >= 20) {
+                                    name = '20-49'
+                                } else if(num >= 10) {
+                                    name = '10-19'
+                                } else if(num >= 5) {
+                                    name = '5-9'
+                                } else if(num >= 1) {
+                                    name = '1-4'
+                                } else {
+                                    name = this.$t('未知')
+                                }
+                                return { value: item.value, name }
+                            })
+                            // 合并同名项
+                            const mergedData: Record<string, number> = {}
+                            for(const item of pieData) {
+                                if(mergedData[item.name]) {
+                                    mergedData[item.name] += item.value
+                                } else {
+                                    mergedData[item.name] = item.value
+                                }
+                            }
+                            pieData = Object.keys(mergedData).map(name => ({
+                                name,
+                                value: mergedData[name]
+                            }))
+                            // 这边按区间顺序排列
+                            const order = ['1-4', '5-9', '10-19', '20-49', '50-99', '100-199', '200-499', '500-999', '1000+', this.$t('未知')]
+                            pieData.sort((a: any, b: any) => order.indexOf(a.name) - order.indexOf(b.name))
+                        }
                         // 这边的颜色用 colorMainRaw 创建 10 级不同透明度的颜色，不需要转为 rgba，使用十六进制颜色
-                        // const colors = [] as string[]
-                        // for (let i = 10; i >= 1; i--) {
-                        //     const alpha = Math.floor((i / 10) * 255).toString(16).padStart(2, '0')
-                        //     colors.push(colorMainRaw + alpha)
-                        // }
+                        const colors = [] as string[]
+                        for (let i = 10; i >= 1; i--) {
+                            const alpha = Math.floor((i / 10) * 255).toString(16).padStart(2, '0')
+                            colors.push(colorMainRaw + alpha)
+                        }
                         // 去除占比小于等于 0.84% 的
                         pieData = pieData.filter((item: any) => (item.value / pieData.reduce((sum: number, it: any) => sum + it.value, 0)) > this.minPiePercentage)
                         this.eventData = {
@@ -448,7 +654,7 @@
                 const res = await fetch(url)
                 const data = await res.json()
                 if(!data.error) {
-                    this.visitData.online = data.x
+                    this.visitData.online = data.visitors
                 }
             },
 
@@ -513,17 +719,24 @@
              * 获取访客数据总览
              */
             async getStatus() {
-                // 获取页面浏览量
-                this.visitData.status = {
-                    pageviews: {value: 0},
-                    visitors: {value: 0},
-                    visits: {value: 0}
-                }
                 const url = API_URL + '/status/' + this.getRealTimeRange().time
                 const res = await fetch(url)
                 const data = await res.json()
                 if(!data.error) {
-                    this.visitData.status = data
+                    this.visitData.status = {
+                        pageviews: {
+                            value: data.pageviews || 0,
+                            comparison: (data.pageviews - data.comparison.pageviews) / (data.comparison.pageviews || 1) * 100
+                        },
+                        visitors: {
+                            value: data.visitors || 0,
+                            comparison: (data.visitors - data.comparison.visitors) / (data.comparison.visitors || 1) * 100
+                        },
+                        visits: {
+                            value: data.visits || 0,
+                            comparison: (data.visits - data.comparison.visits) / (data.comparison.visits || 1) * 100
+                        }
+                    }
                 }
             },
 

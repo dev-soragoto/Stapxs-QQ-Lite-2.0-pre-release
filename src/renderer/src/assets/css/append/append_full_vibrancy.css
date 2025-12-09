@@ -133,6 +133,7 @@
 .opt-item:hover {
     background: rgba(var(--color-card-1-rgb), 0.8);
 }
+.opt-item input[type='password'],
 .opt-item input[type='text'],
 .opt-item select,
 .ss-range input,
