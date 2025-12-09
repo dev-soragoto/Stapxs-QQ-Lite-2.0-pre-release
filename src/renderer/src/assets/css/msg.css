@@ -65,6 +65,8 @@
 
 .message-body {
     color: var(--color-font);
+    display: flex;
+    flex-direction: column;
     max-width: 60%;
 }
 .message-body.me {
@@ -83,17 +85,15 @@
 .message-body a {
     color: var(--color-font);
 }
-.message-body.me {
-    text-align: end;
-}
+.message-body.me,
 .message-body.me.right {
-    text-align: end !important;
+    align-items: end;
 }
 .message-body.me a {
     color: var(--color-font-r);
 }
-.message-body.me > a {
-    color: var(--color-font) !important;
+.message-body.me > header > a {
+    color: var(--color-font);
 }
 .message-body a:link {
     text-decoration: underline;
@@ -110,7 +110,11 @@
 .message-body.me a:link::before {
     text-shadow: 0 0 0 var(--color-font-1-r);
 }
-.message-body > span {
+.message-body > header {
+    flex-wrap: wrap;
+    display: flex;
+}
+.message-body > header > span {
     margin-right: 3px;
     font-size: 0.7rem;
     background: var(--color-font);
@@ -118,22 +122,22 @@
     border-radius: 10px;
     padding: 1px 4px;
 }
-.message-body > span.owner {
+.message-body > header > span.owner {
     background: var(--color-yellow);
 }
-.message-body > span.admin {
+.message-body > header > span.admin {
     background: var(--color-green);
 }
-.message-body > span.robot {
+.message-body > header > span.robot {
     background: var(--color-blue);
 }
-.message-body > a {
+.message-body > header > a {
     color: var(--color-font-1);
     display: inline-block;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     margin: 0 5px;
 }
-.message-body > a.time {
+.message-body > header > a.time {
     color: var(--color-font-2);
     font-size: 0.75rem;
     opacity: 0.7;
@@ -697,7 +701,7 @@ span.user-title.robot {
 @media (max-width: 992px) {
     /* 消息体 */
     .message-body.me {
-        text-align: start;
+        align-items: start;
     }
     .message.me {
         flex-direction: row;

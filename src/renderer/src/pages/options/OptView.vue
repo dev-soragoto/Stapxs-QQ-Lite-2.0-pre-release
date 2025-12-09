@@ -247,7 +247,7 @@
                 <div :class="checkDefault('opt_ind_message')" />
                 <font-awesome-icon :icon="['fas', 'message']" />
                 <div>
-                    <span>{{ $t('独立消息') }}</span>
+                    <span>{{ $t('独立显示消息') }}</span>
                     <span>{{ $t('始终让自己的消息显示在右边') }}</span>
                 </div>
                 <label class="ss-switch">

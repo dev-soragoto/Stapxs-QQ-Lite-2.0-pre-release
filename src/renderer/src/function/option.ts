@@ -124,7 +124,14 @@ const configFunction: { [key: string]: (value: any) => void } = {
     bubble_sort_user: clearGroupAssist,
     use_favicon_notice: setFaviconNotice,
     custom_css: injectCustomCss,
+    opt_ind_message: updateChatPan
 }
+
+function updateChatPan() {
+    runtimeData.chatInfo.show.id = 0
+    runtimeData.tags.openSideBar = true
+}
+
 
 function setFaviconNotice(_: boolean) {
     refreshFavicon()

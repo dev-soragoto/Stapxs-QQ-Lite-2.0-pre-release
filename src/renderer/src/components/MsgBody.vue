@@ -12,6 +12,7 @@
 <template>
     <div :id="'chat-' + data.message_id"
         ref="msgMain"
+        v-menu.prevent="event => $emit('showMenu', event, data)"
         :class="'message' +
             (type ? ' ' + type : '') +
             (data.revoke ? ' revoke' : '') +
@@ -35,31 +36,31 @@
             <font-awesome-icon :icon="['fas', 'spinner']" />
         </div>
         <div :class="msgBodyClass">
-            <template v-if="runtimeData.chatInfo.show.type == 'group'">
-                <span v-if="senderInfo && isRobot(senderInfo.user_id)" class="robot">{{ $t('机器人') }}</span>
-                <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
-                <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
-                <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title.replace(/[\u202A-\u202E\u2066-\u2069]/g, '') }}</span>
-            </template>
-            <a v-if="data.sender.card || data.sender.nickname">
-                {{ data.sender.card ? data.sender.card : data.sender.nickname }}
-            </a>
-            <a v-else>
-                {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
-            </a>
-            <a v-if="selected" class="time">
-                {{ Intl.DateTimeFormat(trueLang, {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    second: 'numeric',
-                }).format(getViewTime(getViewTime(data.time))) }}
-            </a>
-            <div
-                v-menu.prevent="event => $emit('showMenu', event, data)"
-                v-move="moveOptions"
+            <header>
+                <template v-if="runtimeData.chatInfo.show.type == 'group'">
+                    <span v-if="senderInfo && isRobot(senderInfo.user_id)" class="robot">{{ $t('机器人') }}</span>
+                    <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
+                    <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
+                    <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title.replace(/[\u202A-\u202E\u2066-\u2069]/g, '') }}</span>
+                </template>
+                <a v-if="data.sender.card || data.sender.nickname">
+                    {{ data.sender.card ? data.sender.card : data.sender.nickname }}
+                </a>
+                <a v-else>
+                    {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
+                </a>
+                <a v-if="selected" class="time">
+                    {{ Intl.DateTimeFormat(trueLang, {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        second: 'numeric',
+                    }).format(getViewTime(getViewTime(data.time))) }}
+                </a>
+            </header>
+            <div v-move="moveOptions"
                 @v-move-left.prevent="$emit('leftMove', data)"
                 @v-move-right.prevent="$emit('rightMove', data)">
                 <!-- 消息体 -->
@@ -503,6 +504,7 @@ function getUserById(id: number): IUser | undefined {
         emits: ['scrollToMsg', 'imageLoaded', 'sendPoke'],
         data() {
             return {
+                Emoji,
                 backend,
                 md: markdownit({ breaks: true }),
                 isMe: false,
