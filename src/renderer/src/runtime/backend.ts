@@ -51,6 +51,24 @@ export const backend = {
     },
 
     /**
+     * 反代理 URL 转换
+     * @param url 需要转换的 URL
+     * @returns 转换后的 URL
+     */
+    unProxyUrl(url: string) {
+        if (this.proxy && url && url.startsWith('http://localhost')) {
+            const urlObj = new URL(url)
+            if (urlObj.pathname == '/proxy') {
+                const realUrl = urlObj.searchParams.get('url')
+                if (realUrl) {
+                    return decodeURIComponent(realUrl)
+                }
+            }
+        }
+        return url
+    },
+
+    /**
      * 初始化后端功能
      *
      * @returns {Promise<void>}

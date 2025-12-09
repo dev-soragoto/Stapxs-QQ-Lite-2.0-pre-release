@@ -101,7 +101,7 @@ export function openLink(url: string, external = false) {
                             if (shell) {
                                 shell.openExternal(url)
                             } else {
-                                backend.call('', 'sys:openInBrowser', false, backend.proxyUrl(url))
+                                backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
                             }
                             runtimeData.popBoxList.shift()
                         },
@@ -121,10 +121,7 @@ export function openLink(url: string, external = false) {
             if (shell) {
                 shell.openExternal(url)
             } else {
-                if(backend.proxy) {
-                    url = decodeURIComponent(url.replace(`http://localhost:${backend.proxy}/proxy?url=`, ''))
-                }
-                backend.call('', 'sys:openInBrowser', false, url)
+                backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
             }
         }
     } else {

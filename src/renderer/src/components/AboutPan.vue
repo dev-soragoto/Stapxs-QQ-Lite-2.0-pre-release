@@ -176,7 +176,14 @@
 
             goFish() {
                 sendStatEvent('click_statistics', { name: 'visit_fish' })
-                if(!import.meta.env.VITE_APP_SPONSORS_URL) return
+                if(!import.meta.env.VITE_APP_SPONSORS_URL) {
+                    // eslint-disable-next-line no-console
+                    console.error('是谁没有设置赞助链接？')
+                    sendStatEvent('error_statistics', {
+                        type: 'sponsor_link_missing'
+                    })
+                    return
+                }
                 const popInfo = {
                     title: '',
                     template: markRaw(MealHungryPan),
@@ -186,7 +193,7 @@
                             text: this.$t('打开…'),
                             master: true,
                             fun: () => {
-                                openLink(import.meta.env.VITE_APP_SPONSORS_URL)
+                                openLink(import.meta.env.VITE_APP_SPONSORS_URL, true)
                                 runtimeData.popBoxList.shift()
                             },
                         }
