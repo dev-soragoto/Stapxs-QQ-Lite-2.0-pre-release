@@ -77,6 +77,7 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
 /**
  * 打开链接
  * @param url 链接
+ * @param external 是否外部打开
  */
 export function openLink(url: string, external = false) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
