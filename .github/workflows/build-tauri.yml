@@ -52,7 +52,7 @@ jobs:
 
             - name: 构建 Tauri 应用
               if: matrix.os == 'windows-2022'
-              run: yarn build:tauri -t x86_64-pc-windows-msvc -b nsis
+              run: yarn build:tauri -t x86_64-pc-windows-msvc -b
             - name: 构建 Tauri 应用
               if: matrix.os == 'ubuntu-22.04'
               run: yarn build:tauri -t x86_64-unknown-linux-gnu -b appimage,deb
@@ -73,7 +73,7 @@ jobs:
               shell: pwsh
               run: |
                   New-Item -ItemType Directory -Path upload -Force
-                  $files = Get-ChildItem -Path "src/tauri/target/*/release/bundle/nsis/" -Filter *.exe -Recurse
+                  $files = Get-ChildItem -Path "src/tauri/target/*/release/" -Filter *.exe -Recurse
                   foreach ($file in $files) {
                       Copy-Item -Path $file.FullName -Destination "upload/"
                   }
