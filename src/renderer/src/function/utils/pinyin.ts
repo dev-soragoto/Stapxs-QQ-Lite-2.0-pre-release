@@ -1,4 +1,4 @@
-import 'https://cdn.jsdelivr.net/npm/pinyin@4.0.0/lib/umd/pinyin.min.js'
+import 'https://lib.stapxs.cn/modules/pinyin.min.js'
 
 export type PinYinData = {
     main: string[]
