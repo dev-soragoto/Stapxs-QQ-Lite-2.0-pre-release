@@ -25,7 +25,7 @@
     "build:electron": "cross-env DESKTOP=1 electron-vite build && electron-builder",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
     "build:android": "vite build && capacitor sync android && capacitor build android",
-    "build:tauri": "tauri build -c src/tauri/tauri.conf.json",
+    "build:tauri": "cross-env DESKTOP=1 tauri build -c src/tauri/tauri.conf.json",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -76,6 +76,7 @@
     "animejs": "^3.2.2",
     "browser-image-compression": "^2.0.2",
     "capacitor-onebot-connctor": "./ssqq.capacitor-onebot-connector",
+    "cross-env": "^10.1.0",
     "detect-browser": "^5.3.0",
     "echarts": "^6.0.0",
     "electron": "^31.0.2",
