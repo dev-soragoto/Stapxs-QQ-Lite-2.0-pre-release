@@ -1,10 +1,8 @@
 /* Windows 桌面端附加样式 */
 
-body {
-    font:
-        14px 'SF Pro Text',
-        'Source Han Sans',
-        sans-serif !important;
+body,
+input {
+    font: 14px "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif !important;
 }
 
 #base-app.withBar {
@@ -39,8 +37,8 @@ body {
 .chat-pan.withBar {
     left: 275px;
     top: 0;
-    height: calc(100% - 20px);
-    padding-top: 20px;
+    height: calc(100% - 25px);
+    padding-top: 25px;
 }
 .card-info-pan-bg {
     margin-top: -20px;
