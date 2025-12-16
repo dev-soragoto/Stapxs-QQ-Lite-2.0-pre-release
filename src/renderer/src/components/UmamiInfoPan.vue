@@ -30,7 +30,8 @@
                 </template>
                 <template v-if="showName === 'session'">
                     <span>{{ $t('访客详情') }}</span>
-                    <a> {{ $t('访客数据表示访问网站的独立会话，同一个访客只会统计一次。并且在下次访问时覆盖上次的数据。') }} </a>
+                    <a> {{ $t('访客数据表示访问网站的独立会话，同一个访客只会统计一次。并且在下次访问时覆盖上次的数据。') }}
+                        <a v-if="onlyValidData"><br><br>{{ $t('“有效数据”仅包含了访客中连接了 bot 的部分会话。') }}</a></a>
                 </template>
                 <template v-if="showName === 'event'">
                     <span>{{ $t('事件详情') }}</span>
@@ -65,6 +66,17 @@
                             </option>
                         </select>
                     </div>
+                </div>
+                <div v-if="showName === 'session'" class="only-valid-data">
+                    <span>{{ $t('仅有效数据') }}</span>
+                    <label class="ss-switch">
+                        <input v-model="onlyValidData" :disabled="loading"
+                            type="checkbox"
+                            @change="changeTime">
+                        <div>
+                            <div />
+                        </div>
+                    </label>
                 </div>
             </div>
             <div class="view-pan">
@@ -242,6 +254,7 @@
                     online: 0
                 },
                 eventData: null as any,
+                onlyValidData: false,
             }
         },
         mounted() {
@@ -684,7 +697,21 @@
                     if(this.showName == 'session') {
                         url = API_URL + '/sessions/' + this.getRealTimeRange().time
                     }
-                    const res = await fetch(url)
+                    let res
+                    if(this.showName == 'session' && this.onlyValidData) {
+                        url = API_URL + '/sessions/' + this.getRealTimeRange().time + '/filter'
+                        res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                event: 'eq.send_msg'
+                            })
+                        })
+                    } else {
+                        res = await fetch(url)
+                    }
                     const data = await res.json()
                     if(!data.error) {
                         const list = [] as {
@@ -924,6 +951,22 @@
     margin: 0 1rem 1rem 1rem;
     font-size: 0.8rem;
     color: var(--color-font-1);
+}
+
+.only-valid-data {
+    font-size: 0.8rem;
+    display: flex;
+    margin: 0 20px 20px 20px;
+}
+.only-valid-data > span {
+    flex: 1;
+}
+.only-valid-data > label {
+    --switch-height: 20px;
+    min-width: 35px;
+}
+.only-valid-data > label > div {
+    background: var(--color-card-2);
 }
 
 .time-select {
