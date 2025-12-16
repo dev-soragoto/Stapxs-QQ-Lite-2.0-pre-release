@@ -61,6 +61,11 @@
             "entitlements": "../../build/entitlements.mac.plist"
         },
         "windows": {
+            "allowDowngrades": false,
+            "webviewInstallMode": {
+                "silent": true,
+                "type": "downloadBootstrapper"
+            },
             "wix": null
         },
         "linux": {
