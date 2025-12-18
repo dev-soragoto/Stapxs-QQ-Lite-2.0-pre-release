@@ -106,6 +106,14 @@ export default defineComponent({
             const curPrompt = xss(get('glagame_prompt') ?? optDefault.glagame_prompt)
             const curMaxMessages = Number(get('glagame_max_messages')) || optDefault.glagame_max_messages
 
+            const safePrompt = String(curPrompt)
+                .replaceAll(/&/g, '&amp;')
+                .replaceAll(/</g, '&lt;')
+                .replaceAll(/>/g, '&gt;')
+                .replaceAll(/"/g, '&quot;')
+                .replaceAll(/'/g, '&#39;')
+                .replaceAll(/<\/textarea/gi, '&lt;/textarea')
+
             const popInfo = {
                 title: 'OpenAPI 设置',
                 html: `<div class="glagame-api-config">
@@ -113,7 +121,7 @@ export default defineComponent({
                     <div style="margin-bottom:8px;"><label>Token</label><br /><input id="glagame_token_input" type="text" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
                     <div style="margin-bottom:8px;"><label>模型名称</label><br /><input id="glagame_model_input" type="text" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
                     <div style="margin-bottom:8px;"><label>最大消息数</label><br /><input id="glagame_max_messages_input" type="number" value="${curMaxMessages}" min="1" max="200" /></div>
-                    <div><label>Prompt</label><br /><textarea id="glagame_prompt_input" style="min-height:120px;resize:vertical">${String(curPrompt).replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')}</textarea></div>
+                    <div><label>Prompt</label><br /><textarea id="glagame_prompt_input" style="min-height:120px;resize:vertical">${safePrompt}</textarea></div>
                 </div>`,
                 button: [
                     {

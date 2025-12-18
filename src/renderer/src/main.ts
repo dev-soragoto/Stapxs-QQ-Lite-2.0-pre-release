@@ -19,6 +19,7 @@ import './assets/css/options.css'
 import './assets/css/sys_notice.css'
 
 import { getPortableFileLang } from './function/utils/systemUtil'
+import { preloadPinyin } from './function/utils/pinyin'
 
 /* eslint-disable no-console */
 const zh = getPortableFileLang('zh-CN')
@@ -47,6 +48,9 @@ app.component('FontAwesomeIcon', FontAwesomeIcon)
 app.mount('#app')
 export default app
 export const uptime = new Date().getTime()
+
+// 预加载拼音库（非阻塞，失败不影响应用启动）
+preloadPinyin()
 
 const strList = ['VERSION', 'WELCOME', 'HELLO']
 const colorList = [

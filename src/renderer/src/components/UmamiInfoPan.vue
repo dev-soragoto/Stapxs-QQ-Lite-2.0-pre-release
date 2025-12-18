@@ -26,16 +26,16 @@
         <div :class="mainListSelected ? 'select' : ''">
             <div v-if="showName != 'overview'" class="detail-list">
                 <template v-if="showName === 'website'">
-                    <span>{{ $t('访客数据') }}</span>
+                    <p>{{ $t('访客数据') }}</p>
                 </template>
                 <template v-if="showName === 'session'">
-                    <span>{{ $t('访客详情') }}</span>
-                    <a> {{ $t('访客数据表示访问网站的独立会话，同一个访客只会统计一次。并且在下次访问时覆盖上次的数据。') }}
-                        <a v-if="onlyValidData"><br><br>{{ $t('“有效数据”仅包含了访客中连接了 bot 的部分会话。') }}</a></a>
+                    <p>{{ $t('访客详情') }}</p>
+                    <span> {{ $t('访客数据表示访问网站的独立会话，同一个访客只会统计一次。并且在下次访问时覆盖上次的数据。') }}
+                        <span v-if="onlyValidData"><br><br>{{ $t('“有效数据”仅包含了访客中连接了 bot 的部分会话。') }}</span></span>
                 </template>
                 <template v-if="showName === 'event'">
-                    <span>{{ $t('事件详情') }}</span>
-                    <a> {{ $t('事件数据表示用户在访问期间的具体操作或上报行为，每次触发都会单独记录，因此同一个访客可能产生多个事件。') }} </a>
+                    <p>{{ $t('事件详情') }}</p>
+                    <span> {{ $t('事件数据表示用户在访问期间的具体操作或上报行为，每次触发都会单独记录，因此同一个访客可能产生多个事件。') }} </span>
                 </template>
                 <div class="list">
                     <div v-for="(item, index) in mainList"
@@ -597,7 +597,8 @@
                             colors.push(colorMainRaw + alpha)
                         }
                         // 去除占比小于等于 0.84% 的
-                        pieData = pieData.filter((item: any) => (item.value / pieData.reduce((sum: number, it: any) => sum + it.value, 0)) > this.minPiePercentage)
+                        const total = pieData.reduce((sum: number, it: any) => sum + it.value, 0)
+                        pieData = pieData.filter((item: any) => (item.value / total) > this.minPiePercentage)
                         this.eventData = {
                             // colors: colors,
                             color: ['#d87c7c', '#919e8b', '#d7ab82', '#6e7074', '#61a0a8', '#efa18d', '#787464', '#cc7e63', '#724e58', '#4b565b'],
@@ -750,18 +751,28 @@
                 const res = await fetch(url)
                 const data = await res.json()
                 if(!data.error) {
+                    const calculateComparison = (current: number, baseline: number): number => {
+                        const currentVal = current || 0
+                        const baselineVal = baseline || 0
+                        // 如果基准值为 0，则无法计算百分比变化
+                        if (baselineVal === 0) {
+                            return currentVal === 0 ? 0 : 100
+                        }
+                        const result = ((currentVal - baselineVal) / baselineVal) * 100
+                        return isNaN(result) ? 0 : result
+                    }
                     this.visitData.status = {
                         pageviews: {
                             value: data.pageviews || 0,
-                            comparison: (data.pageviews - data.comparison.pageviews) / (data.comparison.pageviews || 1) * 100
+                            comparison: calculateComparison(data.pageviews, data.comparison?.pageviews)
                         },
                         visitors: {
                             value: data.visitors || 0,
-                            comparison: (data.visitors - data.comparison.visitors) / (data.comparison.visitors || 1) * 100
+                            comparison: calculateComparison(data.visitors, data.comparison?.visitors)
                         },
                         visits: {
                             value: data.visits || 0,
-                            comparison: (data.visits - data.comparison.visits) / (data.comparison.visits || 1) * 100
+                            comparison: calculateComparison(data.visits, data.comparison?.visits)
                         }
                     }
                 }
@@ -937,14 +948,14 @@
     display: flex;
     width: 30%;
 }
-.detail-list > span {
+.detail-list > p {
     color: var(--color-font);
     font-size: 1rem;
     font-weight: bold;
     display: block;
     margin: 1rem;
 }
-.detail-list > a {
+.detail-list > span {
     border-radius: 7px;
     padding: 10px;
     background: var(--color-card-2);

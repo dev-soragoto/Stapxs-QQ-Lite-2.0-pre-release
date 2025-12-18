@@ -48,14 +48,15 @@ declare module '@renderer/assets/img/qq-face/public/assets/qq_emoji/_index.json'
     export default content
 }[]
 
-declare module 'https://lib.stapxs.cn/modules/pinyin.min.js'
-
+// 拼音库全局类型定义（动态加载）
 declare interface PinyinOptions {
     heteronym?: boolean
     compact?: boolean
     style?: string
 }
 
-declare const pinyin: {
-    pinyin(text: string, options?: PinyinOptions): string[][]
+declare interface Window {
+    pinyin?: {
+        pinyin(text: string, options?: PinyinOptions): string[][]
+    }
 }
