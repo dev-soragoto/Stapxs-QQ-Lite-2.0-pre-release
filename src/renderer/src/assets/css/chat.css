@@ -67,6 +67,11 @@ input {
     height: 20px;
     width: 20px;
 }
+.chat-pan > div.info > svg.back {
+    background: rgba(var(--color-card-2-rgb), 0.8);
+    display: block !important;
+    color: var(--color-font);
+}
 .chat-pan > div.info > img {
     border: 2px solid var(--color-card-2);
     border-radius: 7px;

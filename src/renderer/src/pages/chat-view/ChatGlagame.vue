@@ -36,7 +36,7 @@ import { defineComponent, toRaw } from 'vue'
 import Chat from '../Chat.vue'
 import app from '@renderer/main'
 import { runtimeData } from '@renderer/function/msg'
-import { get, save } from '@renderer/function/option'
+import { get, save, optDefault } from '@renderer/function/option'
 import { Logger, PopInfo, PopType } from '@renderer/function/base'
 import { getViewTime } from '@renderer/function/utils/systemUtil'
 import { getMsgRawTxt } from '@renderer/function/utils/msgUtil'
@@ -56,31 +56,10 @@ export default defineComponent({
         onRobotClick() {
             const { $t } = app.config.globalProperties
             const logger = new Logger()
-            const systemContent = `你是 glagame 游戏内的对话助手。你将根据历史的对话内容生成 3 条可供玩家选择回复的选项。
-
-- 输出格式：只输出三条回复文本
-- 玩家默认是温和、体贴、日常向、有点小俏皮。
-- **不要**为玩家本人的消息生成回复，玩家本人的消息仅供上下文参考。
-- 若对话之间时间相隔较久，可自然应对（如“刚看到消息”）。
-- 避免引入与对话无关的新背景。
-
-# 示例
-示例：
-【1763695603000】三硝基猫猫酚：我们学校有实力的课倒是不少
-【1763695610000】三硝基猫猫酚：可惜校区不好
-【1763695614000】三硝基猫猫酚：好多选不上
-【1763695616000】林小槐：我记得我大学选了个商务学院的 AI 选修课
-【1763695620000】林小槐：给我上无聊死了
-
-正确输出示例：
-选课系统真是让人头疼    ← 继续他人话题
-要不下次咱们一起选课吧？    ← 自然衔接
-
-错误示例：
-我觉得 AI 课还挺有意思的    ← 错误，不能改变玩家
-无聊可以找我陪你玩游戏啊    ← 错误，不能回复自己`
-            // 只取最多 50 条聊天记录
-            const chatData = toRaw(runtimeData.messageList).filter(item => item.raw_message && item.sender.user_id !== runtimeData.loginInfo.uin).slice(-50)
+            const systemContent = get('glagame_prompt') ?? optDefault.glagame_prompt
+            const maxMessages = Number(get('glagame_max_messages')) || optDefault.glagame_max_messages
+            // 只取最多 maxMessages 条聊天记录
+            const chatData = toRaw(runtimeData.messageList).filter(item => item.raw_message && item.sender.user_id !== runtimeData.loginInfo.uin).slice(-maxMessages)
             const chatStr = chatData.map(item => {
                 return `【${getViewTime(item.time)}】${item.sender.nickname}: ${getMsgRawTxt(item)}`
             }).join('\n')
@@ -124,13 +103,25 @@ export default defineComponent({
             const curApi = xss(get('openai_api') ?? '')
             const curToken = xss(get('openai_token') ?? '')
             const curModel = xss(get('openai_model') ?? 'gpt-4o')
+            const curPrompt = xss(get('glagame_prompt') ?? optDefault.glagame_prompt)
+            const curMaxMessages = Number(get('glagame_max_messages')) || optDefault.glagame_max_messages
+
+            const safePrompt = String(curPrompt)
+                .replaceAll(/&/g, '&amp;')
+                .replaceAll(/</g, '&lt;')
+                .replaceAll(/>/g, '&gt;')
+                .replaceAll(/"/g, '&quot;')
+                .replaceAll(/'/g, '&#39;')
+                .replaceAll(/<\/textarea/gi, '&lt;/textarea')
 
             const popInfo = {
                 title: 'OpenAPI 设置',
                 html: `<div class="glagame-api-config">
-                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" style="width:100%" value="${String(curApi).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div><label>Token</label><br /><input id="glagame_token_input" type="text" style="width:100%" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div><label>模型名称</label><br /><input id="glagame_model_input" type="text" style="width:100%" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" value="${String(curApi).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>Token</label><br /><input id="glagame_token_input" type="text" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>模型名称</label><br /><input id="glagame_model_input" type="text" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
+                    <div style="margin-bottom:8px;"><label>最大消息数</label><br /><input id="glagame_max_messages_input" type="number" value="${curMaxMessages}" min="1" max="200" /></div>
+                    <div><label>Prompt</label><br /><textarea id="glagame_prompt_input" style="min-height:120px;resize:vertical">${safePrompt}</textarea></div>
                 </div>`,
                 button: [
                     {
@@ -146,13 +137,19 @@ export default defineComponent({
                             const apiEl = document.getElementById('glagame_api_input')
                             const tokenEl = document.getElementById('glagame_token_input')
                             const modelEl = document.getElementById('glagame_model_input')
+                            const maxMessagesEl = document.getElementById('glagame_max_messages_input')
+                            const promptEl = document.getElementById('glagame_prompt_input')
                             const api = apiEl && apiEl instanceof HTMLInputElement ? apiEl.value : ''
                             const token = tokenEl && tokenEl instanceof HTMLInputElement ? tokenEl.value : ''
                             const model = modelEl && modelEl instanceof HTMLInputElement ? modelEl.value : ''
+                            const maxMessages = maxMessagesEl && maxMessagesEl instanceof HTMLInputElement ? Number(maxMessagesEl.value) || optDefault.glagame_max_messages : optDefault.glagame_max_messages
+                            const prompt = promptEl && promptEl instanceof HTMLTextAreaElement ? promptEl.value : ''
                             // 保存设置
                             save('openai_api', api)
                             save('openai_token', token)
                             save('openai_model', model)
+                            save('glagame_max_messages', maxMessages)
+                            save('glagame_prompt', prompt)
                             runtimeData.popBoxList.shift()
                         },
                     },
@@ -234,9 +231,16 @@ export default defineComponent({
 </style>
 <style>
 .glagame-api-config {
-    width: calc(100% - 20px);
+    width: calc(100% - 10px);
+    max-height: 55vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding-right: 10px;
 }
-.glagame-api-config input {
+.glagame-api-config input,
+.glagame-api-config textarea {
+    color: var(--color-font);
+    width: calc(100% - 20px);
     background: var(--color-card-1);
     border: unset;
     padding: 10px;

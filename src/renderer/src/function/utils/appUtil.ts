@@ -77,6 +77,7 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
 /**
  * 打开链接
  * @param url 链接
+ * @param external 是否外部打开
  */
 export function openLink(url: string, external = false) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
@@ -101,7 +102,7 @@ export function openLink(url: string, external = false) {
                             if (shell) {
                                 shell.openExternal(url)
                             } else {
-                                backend.call('', 'sys:openInBrowser', false, backend.proxyUrl(url))
+                                backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
                             }
                             runtimeData.popBoxList.shift()
                         },
@@ -121,10 +122,7 @@ export function openLink(url: string, external = false) {
             if (shell) {
                 shell.openExternal(url)
             } else {
-                if(backend.proxy) {
-                    url = decodeURIComponent(url.replace(`http://localhost:${backend.proxy}/proxy?url=`, ''))
-                }
-                backend.call('', 'sys:openInBrowser', false, url)
+                backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
             }
         }
     } else {

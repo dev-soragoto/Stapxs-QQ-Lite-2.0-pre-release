@@ -509,6 +509,7 @@ body {
     height: 1rem;
     width: 1rem;
 }
+.opt-item input[type='password'],
 .opt-item input[type='text'] {
     border-bottom: 1px solid var(--color-font-2);
     line-height: 28px;

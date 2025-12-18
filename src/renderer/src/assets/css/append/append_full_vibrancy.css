@@ -76,6 +76,15 @@
     background: unset;
 }
 
+.user-config {
+    background: rgba(var(--color-card-rgb), 0.7);
+    backdrop-filter: blur(25px);
+}
+.chat-info-base {
+    background: rgba(var(--color-card-1-rgb), 0.8);
+    backdrop-filter: blur(25px);
+}
+
 .chat-pan > div.more > div:nth-child(2) > div {
     background: rgba(var(--color-card-2-rgb), 0.5);
 }
@@ -133,6 +142,7 @@
 .opt-item:hover {
     background: rgba(var(--color-card-1-rgb), 0.8);
 }
+.opt-item input[type='password'],
 .opt-item input[type='text'],
 .opt-item select,
 .ss-range input,
@@ -149,6 +159,19 @@
 .dept-list-body > div.info,
 .dept > div {
     background: rgba(var(--color-card-rgb), 0.3) !important;
+}
+
+.umami-info-pan {
+    background: transparent !important;
+}
+.view-pan {
+    background: rgba(var(--color-card-rgb), 0);
+}
+.type-list {
+    background: rgba(var(--color-card-2-rgb), 0.5) !important;
+}
+.detail-list {
+    background: rgba(var(--color-card-1-rgb), 0.5) !important;
 }
 
 .end-card > svg {

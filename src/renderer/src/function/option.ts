@@ -58,6 +58,7 @@ export const optDefault: { [key: string]: any } = {
     opt_revolve: false,
     use_favicon_notice: true,
     use_super_face: true,
+    opt_ind_message: false,
     // Function
     close_notice: false,
     bubble_sort_user: true,
@@ -80,6 +81,30 @@ export const optDefault: { [key: string]: any } = {
     openai_api: '',
     openai_token: '',
     openai_model: '',
+    glagame_prompt: `你是 glagame 游戏内的对话助手。你将根据历史的对话内容生成 3 条可供玩家选择回复的选项。
+
+- 输出格式：只输出三条回复文本
+- 玩家默认是温和、体贴、日常向、有点小俏皮。
+- **不要**为玩家本人的消息生成回复，玩家本人的消息仅供上下文参考。
+- 若对话之间时间相隔较久，可自然应对（如"刚看到消息"）。
+- 避免引入与对话无关的新背景。
+
+# 示例
+示例：
+【1763695603000】三硝基猫猫酚：我们学校有实力的课倒是不少
+【1763695610000】三硝基猫猫酚：可惜校区不好
+【1763695614000】三硝基猫猫酚：好多选不上
+【1763695616000】林小槐：我记得我大学选了个商务学院的 AI 选修课
+【1763695620000】林小槐：给我上无聊死了
+
+正确输出示例：
+选课系统真是让人头疼    ← 继续他人话题
+要不下次咱们一起选课吧？    ← 自然衔接
+
+错误示例：
+我觉得 AI 课还挺有意思的    ← 错误，不能改变玩家
+无聊可以找我陪你玩游戏啊    ← 错误，不能回复自己`,
+    glagame_max_messages: 50,
 }
 
 // =============== 设置项事件 ===============
@@ -99,7 +124,14 @@ const configFunction: { [key: string]: (value: any) => void } = {
     bubble_sort_user: clearGroupAssist,
     use_favicon_notice: setFaviconNotice,
     custom_css: injectCustomCss,
+    opt_ind_message: updateChatPan
 }
+
+function updateChatPan() {
+    runtimeData.chatInfo.show.id = 0
+    runtimeData.tags.openSideBar = true
+}
+
 
 function setFaviconNotice(_: boolean) {
     refreshFavicon()

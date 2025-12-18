@@ -1095,7 +1095,7 @@ msgstr ""
 msgid "查看 {count} 条转发消息"
 msgstr ""
 
-msgid "浏览"
+msgid "浏览选项"
 msgstr ""
 
 msgid "禁用内置浏览器"
@@ -1434,9 +1434,6 @@ msgid "上传背景"
 msgstr ""
 
 msgid "连接超时"
-msgstr ""
-
-msgid "自定义样式"
 msgstr ""
 
 msgid "注入自定义样式"

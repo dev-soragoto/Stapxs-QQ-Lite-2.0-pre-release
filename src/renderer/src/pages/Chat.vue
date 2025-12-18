@@ -21,6 +21,7 @@
         <!-- 聊天基本信息 -->
         <div class="info">
             <font-awesome-icon :icon="['fas', 'bars-staggered']" @click="openLeftBar" />
+            <font-awesome-icon class="back" :icon="['fas', 'angle-left']" @click="exitWin" />
             <img :src="chat.show.avatar">
             <div class="info">
                 <p>
@@ -767,9 +768,17 @@ const userInfoPanFunc: UserInfoPan = {
                 this.imgCache.clear()
                 this.multipleSelectList = []
                 this.initMenuDisplay()
+                this.$nextTick(() => {
+                    this.resizeMainInput()
+                })
             },
-            msg(_: string, oldMsg: string) {
+            msg(newMsg: string, oldMsg: string) {
                 this.oldMsg = oldMsg
+                if (!newMsg) {
+                    this.$nextTick(() => {
+                        this.resizeMainInput()
+                    })
+                }
             }
         },
         async mounted() {
@@ -795,8 +804,41 @@ const userInfoPanFunc: UserInfoPan = {
                 this.exitWin()
 
             })
+            this.$nextTick(() => {
+                this.resizeMainInput()
+            })
         },
         methods: {
+            resizeMainInput(target?: HTMLTextAreaElement | HTMLInputElement | null) {
+                const input = target ?? (document.getElementById('main-input') as HTMLTextAreaElement | HTMLInputElement | null)
+                if (!input) return
+                if (!this.Option.get('use_breakline')) {
+                    input.style.height = ''
+                    return
+                }
+                const computed = getComputedStyle(input)
+                const lineHeight = parseFloat(computed.lineHeight)
+                const fontSize = parseFloat(computed.fontSize)
+                const baseLineHeight = Number.isFinite(lineHeight) ? lineHeight : fontSize
+                const paddingTop = parseFloat(computed.paddingTop) || 0
+                const paddingBottom = parseFloat(computed.paddingBottom) || 0
+                const borderTop = parseFloat(computed.borderTopWidth) || 0
+                const borderBottom = parseFloat(computed.borderBottomWidth) || 0
+                let minHeight = (Number.isFinite(baseLineHeight) ? baseLineHeight : 0) + paddingTop + paddingBottom + borderTop + borderBottom
+                if (minHeight <= 0) {
+                    const fallback = input.offsetHeight || parseFloat(computed.height) || fontSize
+                    if (fallback && Number.isFinite(fallback)) {
+                        minHeight = fallback
+                    }
+                }
+                if (!input.dataset.baseHeight) {
+                    input.dataset.baseHeight = String(minHeight)
+                }
+                input.style.height = 'auto'
+                const baseHeight = parseFloat(input.dataset.baseHeight) || minHeight
+                const targetHeight = input.scrollHeight > baseHeight * 2 ? Math.max(input.scrollHeight, baseHeight): baseHeight
+                input.style.height = targetHeight + 'px'
+            },
             jumpSearchMsg() {
                 this.closeSearch()
                 setTimeout(() => {
@@ -1772,7 +1814,8 @@ const userInfoPanFunc: UserInfoPan = {
             downloadImg() {
                 const url = this.tags.menuDisplay.downloadImg
                 if (url != false) {
-                    downloadFile(url as string, 'img.png', () => undefined, () => undefined)
+
+                    downloadFile(url as string, `img_${new Date().getTime()}.png`, () => undefined, () => undefined)
                 }
                 this.closeMsgMenu()
             },
@@ -2234,6 +2277,9 @@ const userInfoPanFunc: UserInfoPan = {
                 this.imgCache.clear()
                 this.scrollBottom()
                 this.cancelReply()
+                this.$nextTick(() => {
+                    this.resizeMainInput()
+                })
             },
 
             updateList(newLength: number, oldLength: number) {
@@ -2461,14 +2507,7 @@ const userInfoPanFunc: UserInfoPan = {
 
             handleInput(event: Event) {
                 const input = event.target as HTMLInputElement
-                // 获取 marginTop 用于计算高度
-                const margin = Number(getComputedStyle(input).marginTop.replace('px', ''))
-                const scrollHeight = input.scrollHeight
-                const lineHeight = Number(getComputedStyle(input).lineHeight.replace('px', ''))
-                // 将 scrollHeight 格式化为 lineHeight 的整数倍，不足的省去
-                const height = Math.floor(scrollHeight / lineHeight) * lineHeight
-                input.style.height = 'auto' // 先重置高度
-                input.style.height = (height - margin * 2) + 'px' // 设置为内容高度
+                this.resizeMainInput(input)
 
                 // 如果删掉了一个 ]
                 const diff = getDifferencesWithRanges(this.msg, this.oldMsg)
@@ -2513,6 +2552,9 @@ const userInfoPanFunc: UserInfoPan = {
                 this.details[3].open = !this.details[3].open
                 this.msg = ''
                 this.tags.search.list = reactive(this.list)
+                this.$nextTick(() => {
+                    this.resizeMainInput()
+                })
             },
 
             /**

@@ -9,6 +9,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import qfaceInfo from './src/renderer/src/assets/img/qq-face/public/assets/qq_emoji/_index.json' with { type: 'json' }
 
+const isDesktop = !!process.env.DESKTOP
+
 export function configFactory(outPath: string): UserConfigFnObject {
     return ({ mode }) => {
         const env = loadEnv(mode, process.cwd())
@@ -18,7 +20,7 @@ export function configFactory(outPath: string): UserConfigFnObject {
             vue(),
             vueDevTools(),
             ViteYaml(),
-            VitePWA({ registerType: 'autoUpdate' }),
+            !isDesktop && VitePWA({ registerType: 'autoUpdate' }),
             visualizer() as PluginOption,
         ]
 

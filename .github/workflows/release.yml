@@ -74,7 +74,7 @@ jobs:
 
             # 部署 Web 版本
             - name: Deploy
-              uses: JamesIves/github-pages-deploy-action@v4
+              uses: JamesIves/github-pages-deploy-action@4a3abc783e1a24aeb44c16e869ad83caf6b4cc23
               with:
                   token: ${{ secrets.ACCESS_TOKEN }}
                   branch: gh-pages
@@ -120,7 +120,7 @@ jobs:
               run: ls -R
             # 发布构建结果
             - name: Publish Release
-              uses: softprops/action-gh-release@v2
+              uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
               with:
                   files: ./${{ needs.init.outputs.version }}-*/*
                   tag_name: v${{ needs.init.outputs.version }}

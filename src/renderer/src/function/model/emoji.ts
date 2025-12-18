@@ -209,7 +209,7 @@ export default class Emoji {
         if (import.meta.env.VITE_LOCAL_FACE == 'true')
             return `./img/qface/${id}.png`
         else
-            return `https://koishi.js.org/QFace/assets/qq_emoji/${id}/apng/${id}.png`
+            return `https://lib.stapxs.cn/download/stapxs-qq-lite/qq_emoji/${id}/apng/${id}.png`
     }
 
     private getSuperUrl(id: number, suffix?: number): string {
@@ -217,7 +217,7 @@ export default class Emoji {
         if (import.meta.env.VITE_LOCAL_FACE == 'true')
             return `./img/qface/${name}.json`
         else
-            return `https://koishi.js.org/QFace/assets/qq_emoji/${id}/lottie/${name}.json`
+            return `https://lib.stapxs.cn/download/stapxs-qq-lite/qq_emoji/${id}/lottie/${name}.json`
     }
 }
 

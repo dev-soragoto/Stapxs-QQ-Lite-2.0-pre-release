@@ -101,6 +101,55 @@
                     </div>
                 </label>
             </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'palette']" />
+                <div>
+                    <span>{{ $t('注入自定义样式') }}</span>
+                    <span v-if="!customCssLoaded">{{ $t('选择一个 CSS 文件上传') }}</span>
+                    <span v-else style="color: var(--color-main)">
+                        {{ $t('已加载自定义样式') }}
+                        ({{ customCssSize }})
+                    </span>
+                </div>
+                <input
+                    ref="cssFileInput"
+                    type="file"
+                    accept=".css"
+                    style="display: none"
+                    @change="handleCssFileUpload">
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="selectCssFile">
+                    {{ customCssLoaded ? $t('更换') : $t('上传') }}
+                </button>
+            </div>
+            <div v-if="customCssLoaded" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'eye']" />
+                <div>
+                    <span>{{ $t('查看自定义样式') }}</span>
+                    <span>{{ $t('查看当前加载的样式') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="viewCustomCss">
+                    {{ $t('查看') }}
+                </button>
+            </div>
+            <div v-if="customCssLoaded" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'trash']" />
+                <div>
+                    <span>{{ $t('清除自定义样式') }}</span>
+                    <span>{{ $t('移除已注入的自定义样式') }}</span>
+                </div>
+                <button
+                    style="width: 100px; font-size: 0.8rem"
+                    class="ss-button"
+                    @click="clearCustomCss">
+                    {{ $t('清除') }}
+                </button>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('调试') }}</header>
@@ -177,59 +226,6 @@
                     </button>
                 </div>
             </template>
-        </div>
-
-        <div class="ss-card">
-            <header>{{ $t('自定义样式') }}</header>
-            <div class="opt-item">
-                <font-awesome-icon :icon="['fas', 'palette']" />
-                <div>
-                    <span>{{ $t('注入自定义样式') }}</span>
-                    <span v-if="!customCssLoaded">{{ $t('选择一个 CSS 文件上传') }}</span>
-                    <span v-else style="color: var(--color-main)">
-                        {{ $t('已加载自定义样式') }}
-                        ({{ customCssSize }})
-                    </span>
-                </div>
-                <input
-                    ref="cssFileInput"
-                    type="file"
-                    accept=".css"
-                    style="display: none"
-                    @change="handleCssFileUpload">
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="selectCssFile">
-                    {{ customCssLoaded ? $t('更换') : $t('上传') }}
-                </button>
-            </div>
-            <div v-if="customCssLoaded" class="opt-item">
-                <font-awesome-icon :icon="['fas', 'eye']" />
-                <div>
-                    <span>{{ $t('查看自定义样式') }}</span>
-                    <span>{{ $t('查看当前加载的样式') }}</span>
-                </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="viewCustomCss">
-                    {{ $t('查看') }}
-                </button>
-            </div>
-            <div v-if="customCssLoaded" class="opt-item">
-                <font-awesome-icon :icon="['fas', 'trash']" />
-                <div>
-                    <span>{{ $t('清除自定义样式') }}</span>
-                    <span>{{ $t('移除已注入的自定义样式') }}</span>
-                </div>
-                <button
-                    style="width: 100px; font-size: 0.8rem"
-                    class="ss-button"
-                    @click="clearCustomCss">
-                    {{ $t('清除') }}
-                </button>
-            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('维护与备份') }}</header>
@@ -660,21 +656,20 @@
                         <header>以下配置将被删除</header>
                         <div style="color: var(--color-red);font-weight: 700;">
                     ` + needless.join('<br>') + '</div>',
-                    button: [
-                        {
-                            text: this.$t('取消'),
-                            master: true,
-                            fun: () => {
-                                runtimeData.popBoxList.shift()
-                            },
-                        },
-                        {
+                    button: [{
                             text: this.$t('确定'),
                             fun: () => {
                                 for (const key of needless) {
                                     delete runtimeData.sysConfig[key]
                                 }
                                 saveAll(runtimeData.sysConfig)
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                        {
+                            text: this.$t('取消'),
+                            master: true,
+                            fun: () => {
                                 runtimeData.popBoxList.shift()
                             },
                         },
