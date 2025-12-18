@@ -399,7 +399,7 @@
                         // }
                         // 按 value 降序排列
                         pieData.sort((a: any, b: any) => b.value - a.value)
-                        
+
                         // ======= 特殊处理 =======
                         // 应用版本去除 beta- 后的部分，pre. 后的部分
                         if (value.indexOf('app_version') == 0) {
@@ -772,7 +772,7 @@
                     }
                     return { value: item.value, name }
                 })
-                
+
                 // 合并同名项
                 const mergedData: Record<string, number> = {}
                 for (const item of mapped) {
@@ -786,7 +786,7 @@
                     name,
                     value: mergedData[name]
                 }))
-                
+
                 // 按区间顺序排列
                 const order = ['1-4', '5-9', '10-19', '20-49', '50-99', '100-199', '200-499', '500-999', '1000+', this.$t('未知')]
                 result.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name))
