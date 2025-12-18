@@ -399,196 +399,31 @@
                         // }
                         // 按 value 降序排列
                         pieData.sort((a: any, b: any) => b.value - a.value)
+                        
                         // ======= 特殊处理 =======
                         // 应用版本去除 beta- 后的部分，pre. 后的部分
-                        if(value.indexOf('app_version') == 0) {
-                            pieData = pieData.map((item: any) => {
-                                let name = item.name
-                                if(name.includes('beta-')) {
-                                    name = name.split('beta-')[0] + 'beta'
-                                }
-                                if(name.includes('pre.')) {
-                                    name = name.split('pre.')[0] + 'pre'
-                                }
-                                return { value: item.value, name }
-                            })
-                            // 合并同名项
-                            const mergedData: Record<string, number> = {}
-                            for(const item of pieData) {
-                                if(mergedData[item.name]) {
-                                    mergedData[item.name] += item.value
-                                } else {
-                                    mergedData[item.name] = item.value
-                                }
-                            }
-                            pieData = Object.keys(mergedData).map(name => ({
-                                name,
-                                value: mergedData[name]
-                            }))
-                            // 按 value 降序排列
-                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        if (value.indexOf('app_version') == 0) {
+                            pieData = this.processAppVersion(pieData)
                         }
                         // 系统版本格式是：Windows 10.0.22031 (Web) 这样的，只取前两段。如果有 Web 全都归为 Web
-                        if(value.indexOf('os_version') == 0) {
-                            pieData = pieData.map((item: any) => {
-                                if(item.name.includes('(Web)')) {
-                                    return { value: item.value, name: 'Web' }
-                                } else {
-                                    const parts = item.name.split(' ')
-                                    // 对 Windows 11 特殊处理一下
-
-                                    return { value: item.value, name: parts.slice(0, 2).join(' ') }
-                                }
-                            })
-                            // 合并同名项
-                            const mergedData: Record<string, number> = {}
-                            for(const item of pieData) {
-                                if(mergedData[item.name]) {
-                                    mergedData[item.name] += item.value
-                                } else {
-                                    mergedData[item.name] = item.value
-                                }
-                            }
-                            pieData = Object.keys(mergedData).map(name => ({
-                                name,
-                                value: mergedData[name]
-                            }))
-                            // 按 value 降序排列
-                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        else if (value.indexOf('os_version') == 0) {
+                            pieData = this.processOsVersion(pieData)
                         }
                         // 机器人版本忽略版本号第三位，如果版本号前有 v 也去掉
-                        if(value.indexOf('bot_version') == 0) {
-                            pieData = pieData.map((item: any) => {
-                                const name = item.name.split(',')[0]
-                                let version = item.name.split(',')[1]
-
-                                if(!item.name || !name || !version) {
-                                    return { value: item.value, name: item.name }
-                                }
-
-                                if(version.startsWith('v')) {
-                                    version = version.slice(1)
-                                }
-                                const parts = version.split('.')
-                                if(parts.length >= 2 && Number(parts[1]) != 0) {
-                                    version = parts[0] + '.' + parts[1]
-                                }
-                                return { value: item.value, name: name + ',' + version }
-                            })
-                            // 合并同名项
-                            const mergedData: Record<string, number> = {}
-                            for(const item of pieData) {
-                                if(mergedData[item.name]) {
-                                    mergedData[item.name] += item.value
-                                } else {
-                                    mergedData[item.name] = item.value
-                                }
-                            }
-                            pieData = Object.keys(mergedData).map(name => ({
-                                name,
-                                value: mergedData[name]
-                            }))
-                            // 按 value 降序排列
-                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        else if (value.indexOf('bot_version') == 0) {
+                            pieData = this.processBotVersion(pieData)
                         }
                         // 系统架构将 x86_64 统一为 x64、arm64 统一为 aarch64
-                        if(value.indexOf('os_arch') == 0) {
-                            pieData = pieData.map((item: any) => {
-                                let name = item.name
-                                if(name === 'x86_64') {
-                                    name = 'x64'
-                                } else if(name === 'arm64') {
-                                    name = 'aarch64'
-                                }
-                                return { value: item.value, name }
-                            })
-                            // 合并同名项
-                            const mergedData: Record<string, number> = {}
-                            for(const item of pieData) {
-                                if(mergedData[item.name]) {
-                                    mergedData[item.name] += item.value
-                                } else {
-                                    mergedData[item.name] = item.value
-                                }
-                            }
-                            pieData = Object.keys(mergedData).map(name => ({
-                                name,
-                                value: mergedData[name]
-                            }))
-                            // 按 value 降序排列
-                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        else if (value.indexOf('os_arch') == 0) {
+                            pieData = this.processOsArch(pieData)
                         }
                         // 触发按钮进行名称映射
-                        if(value.indexOf('click_statistics') == 0) {
-                            pieData = pieData.map((item: any) => {
-                                let name = item.name
-                                if(this.buttonTypes[name]) {
-                                    name = this.$t(this.buttonTypes[name])
-                                }
-                                return { value: item.value, name }
-                            })
-                            // 合并同名项
-                            const mergedData: Record<string, number> = {}
-                            for(const item of pieData) {
-                                if(mergedData[item.name]) {
-                                    mergedData[item.name] += item.value
-                                } else {
-                                    mergedData[item.name] = item.value
-                                }
-                            }
-                            pieData = Object.keys(mergedData).map(name => ({
-                                name,
-                                value: mergedData[name]
-                            }))
-                            // 按 value 降序排列
-                            pieData.sort((a: any, b: any) => b.value - a.value)
+                        else if (value.indexOf('click_statistics') == 0) {
+                            pieData = this.processClickStatistics(pieData)
                         }
                         // 触发彩蛋的数值实际上是尝试次数，把它们划到一个合适的指数区间内
-                        if(value.indexOf('show_qed') == 0) {
-                            pieData = pieData.map((item: any) => {
-                                let name = item.name
-                                const num = Number(name)
-                                if(isNaN(num)) {
-                                    name = this.$t('未知')
-                                } else if(num >= 1000) {
-                                    name = '1000+'
-                                } else if(num >= 500) {
-                                    name = '500-999'
-                                } else if(num >= 200) {
-                                    name = '200-499'
-                                } else if(num >= 100) {
-                                    name = '100-199'
-                                } else if(num >= 50) {
-                                    name = '50-99'
-                                } else if(num >= 20) {
-                                    name = '20-49'
-                                } else if(num >= 10) {
-                                    name = '10-19'
-                                } else if(num >= 5) {
-                                    name = '5-9'
-                                } else if(num >= 1) {
-                                    name = '1-4'
-                                } else {
-                                    name = this.$t('未知')
-                                }
-                                return { value: item.value, name }
-                            })
-                            // 合并同名项
-                            const mergedData: Record<string, number> = {}
-                            for(const item of pieData) {
-                                if(mergedData[item.name]) {
-                                    mergedData[item.name] += item.value
-                                } else {
-                                    mergedData[item.name] = item.value
-                                }
-                            }
-                            pieData = Object.keys(mergedData).map(name => ({
-                                name,
-                                value: mergedData[name]
-                            }))
-                            // 这边按区间顺序排列
-                            const order = ['1-4', '5-9', '10-19', '20-49', '50-99', '100-199', '200-499', '500-999', '1000+', this.$t('未知')]
-                            pieData.sort((a: any, b: any) => order.indexOf(a.name) - order.indexOf(b.name))
+                        else if (value.indexOf('show_qed') == 0) {
+                            pieData = this.processShowQed(pieData)
                         }
                         // 这边的颜色用 colorMainRaw 创建 10 级不同透明度的颜色，不需要转为 rgba，使用十六进制颜色
                         const colors = [] as string[]
@@ -803,6 +638,160 @@
             },
 
             // ========== 工具函数 ===========
+
+            /**
+             * 合并同名项并降序排序
+             */
+            mergeAndSort(pieData: Array<{ name: string, value: number }>) {
+                const mergedData: Record<string, number> = {}
+                for (const item of pieData) {
+                    if (mergedData[item.name]) {
+                        mergedData[item.name] += item.value
+                    } else {
+                        mergedData[item.name] = item.value
+                    }
+                }
+                const result = Object.keys(mergedData).map(name => ({
+                    name,
+                    value: mergedData[name]
+                }))
+                result.sort((a, b) => b.value - a.value)
+                return result
+            },
+
+            /**
+             * 处理应用版本数据
+             */
+            processAppVersion(pieData: Array<{ name: string, value: number }>) {
+                return this.mergeAndSort(pieData.map(item => {
+                    let name = item.name
+                    if (name.includes('beta-')) {
+                        name = name.split('beta-')[0] + 'beta'
+                    }
+                    if (name.includes('pre.')) {
+                        name = name.split('pre.')[0] + 'pre'
+                    }
+                    return { value: item.value, name }
+                }))
+            },
+
+            /**
+             * 处理系统版本数据
+             */
+            processOsVersion(pieData: Array<{ name: string, value: number }>) {
+                return this.mergeAndSort(pieData.map(item => {
+                    if (item.name.includes('(Web)')) {
+                        return { value: item.value, name: 'Web' }
+                    } else {
+                        const parts = item.name.split(' ')
+                        return { value: item.value, name: parts.slice(0, 2).join(' ') }
+                    }
+                }))
+            },
+
+            /**
+             * 处理机器人版本数据
+             */
+            processBotVersion(pieData: Array<{ name: string, value: number }>) {
+                return this.mergeAndSort(pieData.map(item => {
+                    const name = item.name.split(',')[0]
+                    let version = item.name.split(',')[1]
+
+                    if (!item.name || !name || !version) {
+                        return { value: item.value, name: item.name }
+                    }
+
+                    if (version.startsWith('v')) {
+                        version = version.slice(1)
+                    }
+                    const parts = version.split('.')
+                    if (parts.length >= 2 && Number(parts[1]) != 0) {
+                        version = parts[0] + '.' + parts[1]
+                    }
+                    return { value: item.value, name: name + ',' + version }
+                }))
+            },
+
+            /**
+             * 处理系统架构数据
+             */
+            processOsArch(pieData: Array<{ name: string, value: number }>) {
+                return this.mergeAndSort(pieData.map(item => {
+                    let name = item.name
+                    if (name === 'x86_64') {
+                        name = 'x64'
+                    } else if (name === 'arm64') {
+                        name = 'aarch64'
+                    }
+                    return { value: item.value, name }
+                }))
+            },
+
+            /**
+             * 处理触发按钮数据
+             */
+            processClickStatistics(pieData: Array<{ name: string, value: number }>) {
+                return this.mergeAndSort(pieData.map(item => {
+                    let name = item.name
+                    if (this.buttonTypes[name]) {
+                        name = this.$t(this.buttonTypes[name])
+                    }
+                    return { value: item.value, name }
+                }))
+            },
+
+            /**
+             * 处理彩蛋数据
+             */
+            processShowQed(pieData: Array<{ name: string, value: number }>) {
+                const mapped = pieData.map(item => {
+                    let name = item.name
+                    const num = Number(name)
+                    if (isNaN(num)) {
+                        name = this.$t('未知')
+                    } else if (num >= 1000) {
+                        name = '1000+'
+                    } else if (num >= 500) {
+                        name = '500-999'
+                    } else if (num >= 200) {
+                        name = '200-499'
+                    } else if (num >= 100) {
+                        name = '100-199'
+                    } else if (num >= 50) {
+                        name = '50-99'
+                    } else if (num >= 20) {
+                        name = '20-49'
+                    } else if (num >= 10) {
+                        name = '10-19'
+                    } else if (num >= 5) {
+                        name = '5-9'
+                    } else if (num >= 1) {
+                        name = '1-4'
+                    } else {
+                        name = this.$t('未知')
+                    }
+                    return { value: item.value, name }
+                })
+                
+                // 合并同名项
+                const mergedData: Record<string, number> = {}
+                for (const item of mapped) {
+                    if (mergedData[item.name]) {
+                        mergedData[item.name] += item.value
+                    } else {
+                        mergedData[item.name] = item.value
+                    }
+                }
+                const result = Object.keys(mergedData).map(name => ({
+                    name,
+                    value: mergedData[name]
+                }))
+                
+                // 按区间顺序排列
+                const order = ['1-4', '5-9', '10-19', '20-49', '50-99', '100-199', '200-499', '500-999', '1000+', this.$t('未知')]
+                result.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name))
+                return result
+            },
 
             getRealTimeRange() {
                 const now = new Date()
