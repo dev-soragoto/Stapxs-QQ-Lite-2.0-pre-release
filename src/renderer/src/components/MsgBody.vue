@@ -671,8 +671,20 @@ function getUserById(id: number): IUser | undefined {
                 const vh = document.documentElement.clientHeight || document.body.clientHeight
                 const imgHeight = img.naturalHeight || img.height
                 let imgWidth = img.naturalWidth || img.width
-                if (imgHeight > vh * 0.35)
-                    imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
+
+                // 计算长宽比，检测是否为长图
+                const aspectRatio = imgHeight / imgWidth
+
+                // 常见的手机里最大的可能一般是 20:9
+                // 避免截图被判为长图，这里设置为它
+                if (aspectRatio > 2.5) {
+                    img.classList.add('long-img')
+                } else {
+                    // 普通图片的处理逻辑保持不变
+                    if (imgHeight > vh * 0.35)
+                        imgWidth = (imgWidth * (vh * 0.35)) / imgHeight
+                }
+
                 img.style.setProperty('--width', `${imgWidth}px`)
                 this.$emit('imageLoaded', img.offsetHeight)
             },

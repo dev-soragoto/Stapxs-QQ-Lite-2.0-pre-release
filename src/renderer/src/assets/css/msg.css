@@ -244,6 +244,32 @@
 .msg-img.face.lottie-face {
     max-width: 30vh
 }
+/* 长图优化样式 */
+div:has(> .msg-img.long-img)::after {
+    content: '长图';
+    background: rgba(var(--color-card-2-rgb), 0.5);
+    width: calc(100% - 10px);
+    display: block;
+    position: sticky;
+    margin-bottom: -20px;
+    transform: translateY(-100%);
+    text-align: center;
+    padding: 5px;
+    border-radius: 7px;
+    font-size: 0.65rem;
+    backdrop-filter: blur(20px);
+}
+.msg-img.long-img {
+    max-height: 40vh;
+    width: 20vw;
+    height: 40vh;
+    object-fit: cover;
+    object-position: top center;
+}
+.msg-img.long-img.alone {
+    max-width: calc(100% + 20px);
+    margin: -10px;
+}
 
 .msg-face {
     width: 1.5rem;
