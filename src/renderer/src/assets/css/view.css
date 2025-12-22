@@ -861,6 +861,7 @@ textarea:focus {
     min-width: 360px;
     display: flex;
     z-index: 20;
+    overflow: visible;
 }
 .pop-box-body.full {
     height: calc(100vh - 120px);

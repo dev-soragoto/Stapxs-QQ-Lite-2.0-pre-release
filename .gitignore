@@ -1,12 +1,10 @@
 .DS_Store
 node_modules
-*.log*
 yarn.lock
 package-lock.json
-.npmrc
+Cargo.lock
 
 out
-
 dev-dist
 dist
 dist_electron
@@ -15,3 +13,5 @@ dist_capacitor
 stats.html
 
 notice_local.json
+.npmrc
+*.log*

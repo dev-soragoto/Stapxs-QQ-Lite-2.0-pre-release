@@ -177,3 +177,7 @@
 .end-card > svg {
     opacity: 0.5;
 }
+
+.release-item {
+    background: rgba(var(--color-card-rgb), 0.5) !important;
+}

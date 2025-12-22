@@ -35,6 +35,9 @@
             <a>v{{ packageInfo.version }}</a>
             <div class="buttons">
                 <a class="ss-button" @click="goGithub()">{{ $t('访问 GitHub 仓库') }}</a>
+                <a class="ss-button" style="width: 30px" @click="showReleaseHistory()">
+                    <font-awesome-icon :icon="['fas', 'clock-rotate-left']" />
+                </a>
                 <a class="ss-button" style="width: 30px" @click="goFish()">
                     <font-awesome-icon :icon="['fas', 'fish']" style="transform: rotate(-45deg);" />
                 </a>
@@ -93,13 +96,15 @@
     import packageInfo from '../../../../package.json'
 
     import { defineComponent, markRaw } from 'vue'
-    import { openLink, sendStatEvent } from '@renderer/function/utils/appUtil'
+    import { openLink, sendStatEvent, showReleaseHistory } from '@renderer/function/utils/appUtil'
     import { ContributorElem } from '@renderer/function/elements/system'
 
     import { runtimeData } from '@renderer/function/msg'
     import { getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
 
     import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.vue'
+    import { library } from '@fortawesome/fontawesome-svg-core'
+    import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons'
 
     export default defineComponent({
         name: 'AboutPan',
@@ -128,6 +133,7 @@
             }
         },
         mounted() {
+            library.add(faClockRotateLeft)
             window.onload = async () => {
                 this.trueLang = getTrueLang()
             }
@@ -172,6 +178,10 @@
                 const repoName = import.meta.env.VITE_APP_REPO_NAME
                 openLink(`https://github.com/${repoName}`)
                 sendStatEvent('click_statistics', { name: 'visit_github' })
+            },
+
+            showReleaseHistory() {
+                showReleaseHistory()
             },
 
             goFish() {

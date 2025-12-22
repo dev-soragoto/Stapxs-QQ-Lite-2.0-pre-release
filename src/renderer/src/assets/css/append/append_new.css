@@ -317,8 +317,10 @@ body {
     height: 35px;
     font-size: 0.75rem;
 }
-.buttons > a:last-child {
-    width: 35px !important;
+
+.buttons > a:not(:first-child) {
+    margin-left: 10px !important;
+    width: 40px !important;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -859,6 +859,77 @@ function showReleaseLog(data: any, isUpdated: boolean) {
 }
 
 /**
+ * 获取并展示最近5条更新记录
+ */
+export function showReleaseHistory() {
+    const { $t } = app.config.globalProperties
+    const repoName = import.meta.env.VITE_APP_REPO_NAME
+    const packageUrl = `https://api.github.com/repos/${repoName}/releases?per_page=5`
+
+    fetch(packageUrl).then((response) => {
+        if (response.ok) {
+            response.json().then((dataList: any[]) => {
+                // 解析最近5条更新记录
+                const releases = dataList.map((data) => {
+                    let msg = data.body
+                    const title = msg.split('\r\n')[0].substring(1)
+                    const start = msg.indexOf('## 更新内容\r\n')
+                    if (start != -1) {
+                        msg = msg.substring(start + 9)
+                        const end = msg.indexOf('##')
+                        if (end != -1) {
+                            msg = msg.substring(0, end)
+                        }
+                    }
+                    msg = title + '\r\n' + msg
+
+                    return {
+                        version: data.tag_name.substring(1),
+                        date: data.published_at,
+                        user: {
+                            name: data.author.login,
+                            avatar: data.author.avatar_url,
+                            url: data.author.html_url,
+                        },
+                        message: msg,
+                        html_url: data.html_url,
+                    }
+                })
+
+                const popInfo = {
+                    title: $t('更新历史'),
+                    template: markRaw(UpdatePan),
+                    templateValue: toRaw({ releases }),
+                    full: true,
+                    button: [
+                        {
+                            text: $t('关闭'),
+                            master: true,
+                            fun: () => {
+                                runtimeData.popBoxList.shift()
+                            },
+                        },
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            })
+        } else {
+            new PopInfo().add(
+                PopType.ERR,
+                $t('获取更新历史失败'),
+                false,
+            )
+        }
+    }).catch(() => {
+        new PopInfo().add(
+            PopType.ERR,
+            $t('获取更新历史失败'),
+            false,
+        )
+    })
+}
+
+/**
 * 显示使用次数弹窗
 */
 export function checkOpenTimes() {

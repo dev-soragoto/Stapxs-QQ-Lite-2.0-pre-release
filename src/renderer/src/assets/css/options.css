@@ -145,6 +145,7 @@
 }
 .buttons > a:not(:first-child) {
     margin-left: 10px !important;
+    width: 40px !important;
 }
 
 .contributors-card {
