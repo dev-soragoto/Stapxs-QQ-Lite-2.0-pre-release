@@ -225,6 +225,10 @@
     flex-direction: column;
     display: flex;
 }
+.opt-tab div.tab-body > div {
+    padding-right: 7px;
+    overflow-x: hidden;
+}
 .opt-tab > div:first-child {
     min-height: 5px;
 }

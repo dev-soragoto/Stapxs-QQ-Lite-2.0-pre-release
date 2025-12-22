@@ -1215,6 +1215,9 @@ input {
     width: 300px;
     padding: 0;
 }
+.face-pan div.tab-body > div {
+    overflow: hidden !important;
+}
 .fase-pan-tab > li > svg {
     color: var(--color-font);
     margin-top: 10px;

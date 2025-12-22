@@ -317,4 +317,7 @@
         margin-bottom: 5px !important;
         box-shadow: none !important;
     }
+    .dept-list div.tab-body > div {
+        overflow: hidden;
+    }
 </style>
