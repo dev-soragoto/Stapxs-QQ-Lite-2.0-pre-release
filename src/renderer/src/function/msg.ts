@@ -985,16 +985,16 @@ const msgFunctions = {
                 }, 5000)
             } else {
                 // 列表内最近的一条 fake_msg（倒序查找）
-                let fakeIndex = -1
+                let fakeMsg = null as any
                 for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
                     const msg = runtimeData.messageList[i]
                     if (msg.fake_msg != undefined && info.sender == runtimeData.loginInfo.uin) {
-                        fakeIndex = i
+                        fakeMsg = msg
                         break
                     }
                 }
                 // 预发送消息刷新
-                if (fakeIndex != -1) {
+                if (fakeMsg != null) {
                     // 将这条消息直接替换掉
                     const trueMsg = getMsgData(
                         'message_list',
@@ -1002,15 +1002,13 @@ const msgFunctions = {
                         msgPath.message_list,
                     )
                     getMessageList(trueMsg).then((trueMsg) => {
-                        if (trueMsg?.length == 1 &&
-                            runtimeData.messageList[fakeIndex]) {
-                            runtimeData.messageList[fakeIndex].message = trueMsg[0].message
-                            runtimeData.messageList[fakeIndex].raw_message =
-                                trueMsg[0].raw_message
-                            runtimeData.messageList[fakeIndex].time = trueMsg[0].time
-
-                            runtimeData.messageList[fakeIndex].fake_msg = undefined
-                            runtimeData.messageList[fakeIndex].revoke = false
+                        if (trueMsg?.length == 1) {
+                            // 使用消息对象引用直接更新，避免索引问题
+                            fakeMsg.message = trueMsg[0].message
+                            fakeMsg.raw_message = trueMsg[0].raw_message
+                            fakeMsg.time = trueMsg[0].time
+                            fakeMsg.fake_msg = undefined
+                            fakeMsg.revoke = false
                         }
                     })
                 }
@@ -1589,16 +1587,16 @@ function newMsg(_: string, data: any) {
 
         // 预发送消息填充 ============================================
         // 列表内最近的一条 fake_msg（倒序查找）
-        let fakeIndex = -1
+        let fakeMsg = null as any
         for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
             const msg = runtimeData.messageList[i]
             if (msg.fake_msg != undefined && sender == loginId) {
-                fakeIndex = i
+                fakeMsg = msg
                 break
             }
         }
         // 预发送消息刷新
-        if (fakeIndex != -1) {
+        if (fakeMsg != null) {
             // 将这条消息直接替换掉
             const trueMsg = getMsgData(
                 'message_list',
@@ -1606,15 +1604,13 @@ function newMsg(_: string, data: any) {
                 msgPath.message_list,
             )
             getMessageList(trueMsg).then((trueMsg) => {
-                if (trueMsg?.length == 1 &&
-                    runtimeData.messageList[fakeIndex]) {
-                    runtimeData.messageList[fakeIndex].message = trueMsg[0].message
-                    runtimeData.messageList[fakeIndex].raw_message =
-                        trueMsg[0].raw_message
-                    runtimeData.messageList[fakeIndex].time = trueMsg[0].time
-
-                    runtimeData.messageList[fakeIndex].fake_msg = undefined
-                    runtimeData.messageList[fakeIndex].revoke = false
+                if (trueMsg?.length == 1) {
+                    // 使用消息对象引用直接更新，避免索引问题
+                    fakeMsg.message = trueMsg[0].message
+                    fakeMsg.raw_message = trueMsg[0].raw_message
+                    fakeMsg.time = trueMsg[0].time
+                    fakeMsg.fake_msg = undefined
+                    fakeMsg.revoke = false
                 }
             })
             // 移除最顶端的一条消息以被动刷新整个列表
