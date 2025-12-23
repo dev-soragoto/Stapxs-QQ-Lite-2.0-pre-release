@@ -147,6 +147,21 @@
                     </div>
                 </label>
             </div>
+            <div v-if="runtimeData.sysConfig.chat_more_blur && backend.platform === 'darwin' && Number(backend.release.split(' ')[1].split('.')[0]) >= 26" class="opt-item">
+                <div :class="checkDefault('glass_effect')" />
+                <font-awesome-icon :icon="['fas', 'wand-sparkles']" />
+                <div>
+                    <span>{{ $t('流体玻璃窗口') }}</span>
+                    <span>{{ $t('仅支持 macOS 26 及以上系统') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.glass_effect"
+                        type="checkbox" name="glass_effect" @change="glassEffectToggle">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
             <template v-if="!runtimeData.sysConfig.chat_more_blur">
                 <div class="opt-item">
                     <div :class="checkDefault('chat_background')" />
@@ -634,6 +649,69 @@
             removeBackground() {
                 runtimeData.sysConfig.chat_background = ''
                 Option.runAS('chat_background', '')
+            },
+
+            /**
+             * 切换 Glass Effect
+             */
+            glassEffectToggle(event: Event) {
+                const sender = event.target as HTMLInputElement
+
+                if (sender.checked) {
+                    const popInfo = {
+                        title: this.$t('提醒'),
+                        html: `<span>${this.$t('开启原生玻璃效果需要重启应用才能生效。')}<br><br>
+                        ${this.$t('确定要重启吗？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('确认'),
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    save(event)
+                                    setTimeout(() => {
+                                        this.restartapp()
+                                    }, 500)
+                                },
+                            },
+                            {
+                                text: this.$t('取消'),
+                                master: true,
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    sender.checked = false
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                } else {
+                    const popInfo = {
+                        title: this.$t('提醒'),
+                        html: `<span>${this.$t('关闭流体玻璃效果需要重启应用才能生效')}<br><br>
+                        ${this.$t('确定要重启吗？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('确认'),
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    save(event)
+                                    setTimeout(() => {
+                                        this.restartapp()
+                                    }, 500)
+                                },
+                            },
+                            {
+                                text: this.$t('取消'),
+                                master: true,
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    sender.checked = true
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                }
             },
         },
     })

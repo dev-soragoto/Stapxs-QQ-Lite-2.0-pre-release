@@ -1,5 +1,5 @@
 <template>
-    <div class="chat-test">
+    <div>
         <chat v-bind="$props">
             <template #main-input-button>
                 <div style="cursor: pointer" @click="onRobotClick" @contextmenu.prevent="openAPIConfig">

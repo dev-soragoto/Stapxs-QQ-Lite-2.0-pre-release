@@ -36,6 +36,8 @@
 
 .chat-pan {
     background: transparent;
+    box-shadow: unset !important;
+    border-left: 1px solid rgba(var(--color-bg-rgb), 0.1);
 }
 .chat-pan > div.bg {
     background: unset;

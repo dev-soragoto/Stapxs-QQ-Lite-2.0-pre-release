@@ -2,7 +2,6 @@ import path from 'path'
 import Store from 'electron-store'
 import fs from 'fs'
 import log4js from 'log4js'
-import liquidGlass from 'electron-liquid-glass'
 
 import windowStateKeeper from 'electron-window-state'
 import packageInfo from '../../package.json' with { type: 'json' }
@@ -23,11 +22,14 @@ protocol.registerSchemesAsPrivileged([
 
 export let win = undefined as BrowserWindow | undefined
 export let touchBarInstance = undefined as touchBar | undefined
-export let viewId: number | null = null
 const isDev = import.meta.env.DEV
 
 async function createWindow() {
     const store = new Store()
+    let glassEffect = false
+    if (store.get('glass_effect')) {
+        glassEffect = store.get('glass_effect') as boolean
+    }
     if (store.get('opt_log_level')) {
         logLevel = (store.get('opt_log_level') ?? 'info') as string
     }
@@ -76,7 +78,7 @@ async function createWindow() {
             trafficLightPosition: { x: 11, y: 10 },
             transparent: true,
         }
-        if (parseInt(process.getSystemVersion().split('.')[0]) < 26) {
+        if (!glassEffect) {
             windowConfig = {
                 ...windowConfig,
                 vibrancy: 'fullscreen-ui',
@@ -116,14 +118,15 @@ async function createWindow() {
         win.loadURL('app://./index.html')
     }
 
-    if (process.platform === 'darwin' &&
-        parseInt(process.getSystemVersion().split('.')[0]) >= 26
-    ) {
+    if (glassEffect) {
         win.webContents.once('did-finish-load', () => {
             if(win) {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const liquidGlass = require('electron-liquid-glass')
                 try {
-                    viewId = liquidGlass.addView(win.getNativeWindowHandle(), {
+                    const viewId = liquidGlass.addView(win.getNativeWindowHandle(), {
                         cornerRadius: 24,
+                        tinitCOlor: '#00000000'
                     })
                     win.setWindowButtonVisibility(true)
                     liquidGlass.unstable_setVariant(viewId!, 9)

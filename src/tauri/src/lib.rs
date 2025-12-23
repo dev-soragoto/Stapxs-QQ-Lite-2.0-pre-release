@@ -5,6 +5,11 @@ use std::collections::HashMap;
 use commands::utils::http_proxy::ProxyServer;
 use log::{info, error};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
+
+#[cfg(target_os = "macos")]
+use liquid_glass_rs::{GlassOptions, GlassMaterialVariant, GlassViewManager};
+#[cfg(target_os = "macos")]
+use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 use once_cell::sync::OnceCell;
 use tauri::{ async_runtime::handle, menu::{Menu, MenuEvent, MenuItem}, tray::{TrayIcon, TrayIconBuilder, TrayIconEvent}, AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder };
 use tauri_plugin_store::StoreBuilder;
@@ -248,26 +253,121 @@ fn create_window(app: &mut tauri::App) -> tauri::Result<tauri::WebviewWindow> {
                 format!("failed to open settings store: {}", e),
             )))?;
     let chat_more_blur = store.get("chat_more_blur").and_then(|v| v.as_bool()).unwrap_or(false);
+    let glass_effect = store.get("glass_effect").and_then(|v| v.as_bool()).unwrap_or(false);
     let mut window_effect = tauri::window::Effect::Sidebar;
     if chat_more_blur {
         window_effect = tauri::window::Effect::Menu;
     }
     #[cfg(target_os = "macos")]
-    info!("启用 macOS 视觉特效: {:?}", window_effect);
-    #[cfg(target_os = "macos")]
-    let win_builder = win_builder
-        .title_bar_style(tauri::TitleBarStyle::Overlay)
-        .hidden_title(true)
-        .background_color(tauri::window::Color(0, 0, 0, 1))
-        .accept_first_mouse(true)
-        .effects(tauri::window::EffectsBuilder::new()
-            .effects(vec![window_effect])
-            .build());
+    let win_builder = {
+        if glass_effect {
+            info!("启用原生玻璃效果");
+            let builder = win_builder
+                .title_bar_style(tauri::TitleBarStyle::Overlay)
+                .hidden_title(true)
+                .accept_first_mouse(true)
+                .background_color(tauri::window::Color(0, 0, 0, 0));
+            builder
+        } else {
+            info!("启用 macOS 视觉特效: {:?}", window_effect);
+            let builder = win_builder
+                .title_bar_style(tauri::TitleBarStyle::Overlay)
+                .hidden_title(true)
+                .accept_first_mouse(true)
+                .background_color(tauri::window::Color(0, 0, 0, 0))
+                .effects(tauri::window::EffectsBuilder::new()
+                    .effects(vec![window_effect])
+                    .build());
+            builder
+        }
+    };
     #[cfg(target_os = "linux")]
     let win_builder = win_builder
         .decorations(false)
         .disable_drag_drop_handler();
     let window = win_builder.build()?;
+
+    // macOS: 应用玻璃效果
+    #[cfg(target_os = "macos")]
+    if glass_effect {
+        let window_handle = window.raw_window_handle()
+            .map_err(|e| tauri::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("无法获取窗口句柄: {:?}", e),
+            )))?;
+
+        let ns_view_ptr = match window_handle {
+            RawWindowHandle::AppKit(handle) => handle.ns_view.as_ptr(),
+            _ => {
+                error!("不是 macOS AppKit 窗口");
+                return Err(tauri::Error::Io(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "不是 macOS AppKit 窗口",
+                )));
+            }
+        };
+
+        let options = GlassOptions {
+            corner_radius: 25.0,
+            tint_color: Some("#00000000".to_string()),
+            opaque: false,
+        };
+
+        let mut manager = GlassViewManager::new();
+        match manager.add_glass_view(ns_view_ptr as *mut std::ffi::c_void, options) {
+            Ok(view_id) => {
+                info!("Glass 视图创建成功，ID: {}", view_id);
+
+                // 设置材质变体
+                if let Some(variant_str) = "notification-center".to_owned().into() {
+                    let material = match variant_str.as_str() {
+                        "regular" => GlassMaterialVariant::Regular,
+                        "clear" => GlassMaterialVariant::Clear,
+                        "dock" => GlassMaterialVariant::Dock,
+                        "app-icons" => GlassMaterialVariant::AppIcons,
+                        "widgets" => GlassMaterialVariant::Widgets,
+                        "text" => GlassMaterialVariant::Text,
+                        "av-player" => GlassMaterialVariant::AVPlayer,
+                        "facetime" => GlassMaterialVariant::FaceTime,
+                        "control-center" => GlassMaterialVariant::ControlCenter,
+                        "notification-center" => GlassMaterialVariant::NotificationCenter,
+                        "monogram" => GlassMaterialVariant::Monogram,
+                        "bubbles" => GlassMaterialVariant::Bubbles,
+                        "identity" => GlassMaterialVariant::Identity,
+                        "focus-border" => GlassMaterialVariant::FocusBorder,
+                        "focus-platter" => GlassMaterialVariant::FocusPlatter,
+                        "keyboard" => GlassMaterialVariant::Keyboard,
+                        "sidebar" => GlassMaterialVariant::Sidebar,
+                        "abutted-sidebar" => GlassMaterialVariant::AbuttedSidebar,
+                        "inspector" => GlassMaterialVariant::Inspector,
+                        "control" => GlassMaterialVariant::Control,
+                        "loupe" => GlassMaterialVariant::Loupe,
+                        "slider" => GlassMaterialVariant::Slider,
+                        "camera" => GlassMaterialVariant::Camera,
+                        "cartouche-popover" => GlassMaterialVariant::CartouchePopover,
+                        _ => GlassMaterialVariant::Dock,
+                    };
+
+                    if let Err(e) = manager.set_variant(view_id, material) {
+                        error!("设置 Glass 材质变体失败: {:?}", e);
+                    } else {
+                        info!("Glass 材质变体设置为: {}", "control-center");
+                    }
+                }
+
+                // 将 manager 泄漏以保持 Glass 效果活跃
+                std::mem::forget(manager);
+            }
+            Err(e) => {
+                error!("添加 glass 视图失败: {:?}", e);
+                return Err(tauri::Error::Io(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("添加 glass 视图失败: {:?}", e),
+                )));
+            }
+        }
+    }
+
     #[cfg(target_os = "windows")] {
         use winver::WindowsVersion;
         let version = WindowsVersion::detect().unwrap();

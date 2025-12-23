@@ -303,6 +303,15 @@ export default defineComponent({
             Option.run('opt_dark', Option.get('opt_dark'))
             Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.run('theme_color', Option.get('theme_color'))
+            // 流体玻璃样式附加设置
+            if (Option.get('glass_effect')) {
+                const app = document.getElementById('app')
+                const body = document.body
+                if(app && body) {
+                    body.style.setProperty('background', 'rgba(var(--color-bg-rgb), 0.5)', 'important')
+                    app.style.borderRadius = '25px'
+                }
+            }
             if (['linux', 'win32'].includes(backend.platform ?? '')) {
                 const app = document.getElementById('base-app')
                 if (app) app.classList.add('withBar')
@@ -318,15 +327,6 @@ export default defineComponent({
             document.body.style.setProperty('--safe-area-top', '0')
             document.body.style.setProperty('--safe-area-left', '0')
             document.body.style.setProperty('--safe-area-right', '0')
-            // macOS 下如果开启了透明模式的特殊处理
-            if (backend.platform == 'darwin' && Option.get('chat_more_blur') &&
-                Number(backend.release.split(' ')[1].split('.')[0]) >= 26) {
-                const app = document.getElementById('app')
-                if(app) {
-                    app.style.background = 'rgba(var(--color-bg-rgb), 0.3) !important'
-                    app.style.borderRadius = '25px'
-                }
-            }
             // Capacitor：移动端初始化安全区域
             if (backend.isMobile()) {
                 // 我把 viewer 挂在 body 上，所以css也得改到 body 上
