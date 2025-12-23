@@ -2,6 +2,7 @@ import path from 'path'
 import Store from 'electron-store'
 import fs from 'fs'
 import log4js from 'log4js'
+import liquidGlass from 'electron-liquid-glass'
 
 import windowStateKeeper from 'electron-window-state'
 import packageInfo from '../../package.json' with { type: 'json' }
@@ -22,11 +23,12 @@ protocol.registerSchemesAsPrivileged([
 
 export let win = undefined as BrowserWindow | undefined
 export let touchBarInstance = undefined as touchBar | undefined
+export let viewId: number | null = null
 const isDev = import.meta.env.DEV
 
 async function createWindow() {
     const store = new Store()
-    if(store.get('opt_log_level')) {
+    if (store.get('opt_log_level')) {
         logLevel = (store.get('opt_log_level') ?? 'info') as string
     }
     logger.level = logLevel
@@ -34,9 +36,9 @@ async function createWindow() {
     /* eslint-disable no-console */
     console.log('')
     console.log(' _____ _____ _____ _____ __ __  \n' +
-                '|   __|_   _|  _  |  _  |  |  | \n' +
-                '|__   | | | |     |   __|-   -| \n' +
-                '|_____| |_| |__|__|__|  |__|__| CopyRight © Stapx Steve')
+        '|   __|_   _|  _  |  _  |  |  | \n' +
+        '|__   | | | |     |   __|-   -| \n' +
+        '|_____| |_| |__|__|__|  |__|__| CopyRight © Stapx Steve')
     console.log('=======================================================')
     console.log('日志等级:', logLevel)
     /* eslint-enable no-console */
@@ -57,7 +59,7 @@ async function createWindow() {
         height: mainWindowState.height,
         minWidth: 350,
         minHeight: 450,
-        icon: path.join(__dirname,'/public/img/icons/icon.png'),
+        icon: path.join(__dirname, '/public/img/icons/icon.png'),
         webPreferences: {
             preload: join(__dirname, '../preload/index.mjs'),
             sandbox: false,
@@ -66,17 +68,22 @@ async function createWindow() {
         maximizable: false,
         fullscreen: false
     } as Electron.BrowserWindowConstructorOptions
-    if(process.platform === 'darwin') {
+    if (process.platform === 'darwin') {
         // macOS
         windowConfig = {
             ...windowConfig,
             titleBarStyle: 'hidden',
             trafficLightPosition: { x: 11, y: 10 },
-            vibrancy: 'fullscreen-ui',
             transparent: true,
-            visualEffectState: 'followWindow'
         }
-    } else if(process.platform === 'win32') {
+        if (parseInt(process.getSystemVersion().split('.')[0]) < 26) {
+            windowConfig = {
+                ...windowConfig,
+                vibrancy: 'fullscreen-ui',
+                visualEffectState: 'followWindow'
+            }
+        }
+    } else if (process.platform === 'win32') {
         // Windows
         windowConfig = {
             ...windowConfig,
@@ -84,7 +91,7 @@ async function createWindow() {
             backgroundMaterial: 'acrylic',
             frame: false
         }
-    } else if(process.platform === 'linux') {
+    } else if (process.platform === 'linux') {
         // Linux
         windowConfig = {
             ...windowConfig,
@@ -93,7 +100,7 @@ async function createWindow() {
         }
     }
     win = new BrowserWindow(windowConfig)
-    win.once('focus', () => {if(win)win.flashFrame(false)})
+    win.once('focus', () => { if (win) win.flashFrame(false) })
     mainWindowState.manage(win)     // 窗口状态管理器
     logger.info('创建窗体完成')
     // 注册 IPC 事务
@@ -107,6 +114,26 @@ async function createWindow() {
         win.webContents.openDevTools()
     } else {
         win.loadURL('app://./index.html')
+    }
+
+    if (process.platform === 'darwin' &&
+        parseInt(process.getSystemVersion().split('.')[0]) >= 26
+    ) {
+        win.webContents.once('did-finish-load', () => {
+            if(win) {
+                try {
+                    viewId = liquidGlass.addView(win.getNativeWindowHandle(), {
+                        cornerRadius: 24,
+                    })
+                    win.setWindowButtonVisibility(true)
+                    liquidGlass.unstable_setVariant(viewId!, 9)
+                    win.webContents.send('sys:liquidGlassReady', {})
+                    logger.info('liquidGlass 装载成功:', viewId)
+                } catch (err) {
+                    logger.error('liquidGlass 装载失败:', err);
+                }
+            }
+        })
     }
 
     win.on('close', (e) => {
@@ -130,12 +157,12 @@ async function createWindow() {
                 'http://localhost:8081',
                 'http://127.0.0.1:8081'
             ]
-            if(imageAddress.some((address) =>
+            if (imageAddress.some((address) =>
                 details.url.startsWith(address))) {
                 // 不缓存图片
                 details.responseHeaders['cache-control'] = ['max-age=300']
                 const contentType = details.responseHeaders['content-type']
-                if(contentType && contentType[0]) {
+                if (contentType && contentType[0]) {
                     const typeName = contentType[0].split('/')[1]
                     // 添加文件名方便下载
                     details.responseHeaders['content-disposition'] = ['inline; filename="image.' + typeName + '"']
@@ -146,7 +173,7 @@ async function createWindow() {
                 details.responseHeaders['content-security-policy'] = ['*']
                 delete details.responseHeaders['x-frame-options']
                 // 修改缓存时间
-                if(details.url.indexOf('qlogo.cn') !== -1) {
+                if (details.url.indexOf('qlogo.cn') !== -1) {
                     // QQ 头像 URL 默认有 2592000（30 天）的缓存时间，这里修改为 3 天
                     details.responseHeaders['cache-control'] = ['max-age=259200']
                 }
@@ -164,8 +191,7 @@ app.on('second-instance', (_, cmd, workingDirectory) => {
 })
 
 app.on('window-all-closed', () => {
-    if (process.platform === 'win32')
-    {
+    if (process.platform === 'win32') {
         app.removeAsDefaultProtocolClient('stapx-qq-lite')   // 取消默认协议
     }
     if (process.platform !== 'darwin') {
@@ -179,8 +205,7 @@ app.on('ready', async () => {
         app.quit()
         return
     }
-    if (process.platform === 'win32')
-    {
+    if (process.platform === 'win32') {
         app.setAppUserModelId('Stapx QQ Lite')              // 设置应用 ID
         app.setAsDefaultProtocolClient('stapx-qq-lite')     // 设置为默认协议
     }
@@ -208,7 +233,7 @@ app.on('ready', async () => {
         const tray = new Tray(icon)
         tray.setContextMenu(Menu.buildFromTemplate([
             { label: '显示窗口', click: () => win?.show() },
-            { label: '退出', type: 'normal', click: () => { app.quit() }}
+            { label: '退出', type: 'normal', click: () => { app.quit() } }
         ]))
         tray.on('click', () => {
             win?.show()
@@ -229,14 +254,14 @@ app.on('activate', () => {
 
 app.on('before-quit', () => {
     logger.info('正在退出程序 ……')
-    if(win) {
+    if (win) {
         win.destroy()
     }
 })
 
 // ================================
 
-function sendUrlToWindow(url: string ,args: string[] = []) {
+function sendUrlToWindow(url: string, args: string[] = []) {
     win?.webContents.send('sys:handleUri', {
         url: url,
         args: args

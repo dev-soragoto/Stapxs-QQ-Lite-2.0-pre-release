@@ -35,6 +35,7 @@
     "@tauri-apps/plugin-clipboard-manager": "^2.3.0",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-shell": "~2",
+    "electron-liquid-glass": "^1.1.1",
     "electron-store": "^10.0.0",
     "electron-window-state": "^5.0.3",
     "jsonpath": "^1.1.1",

@@ -318,6 +318,15 @@ export default defineComponent({
             document.body.style.setProperty('--safe-area-top', '0')
             document.body.style.setProperty('--safe-area-left', '0')
             document.body.style.setProperty('--safe-area-right', '0')
+            // macOS 下如果开启了透明模式的特殊处理
+            if (backend.platform == 'darwin' && Option.get('chat_more_blur') &&
+                Number(backend.release.split(' ')[1].split('.')[0]) >= 26) {
+                const app = document.getElementById('app')
+                if(app) {
+                    app.style.background = 'rgba(var(--color-bg-rgb), 0.3) !important'
+                    app.style.borderRadius = '25px'
+                }
+            }
             // Capacitor：移动端初始化安全区域
             if (backend.isMobile()) {
                 // 我把 viewer 挂在 body 上，所以css也得改到 body 上
