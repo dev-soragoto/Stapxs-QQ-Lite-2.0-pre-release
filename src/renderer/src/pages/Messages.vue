@@ -46,13 +46,18 @@
                                     Object.keys(runtimeData.systemNoticesList).length > 0"
                         key="inMessage--10000"
                         :select="chat.show.id === -10000"
+                        :menu="menu.select && menu.select.user_id === -10000"
                         :data="{
                             user_id: -10000,
                             always_top: true,
                             nickname: $t('系统通知'),
                             remark: $t('系统通知'),
                         }"
-                        @click="systemNoticeClick" />
+                        @click="systemNoticeClick"
+                        @contextmenu.prevent="systemNoticeMenuShow($event)"
+                        @touchstart="systemNoticeMenuStart($event)"
+                        @touchmove="showMenuMove"
+                        @touchend="showMenuEnd" />
                     <!--- 群组消息 -->
                     <FriendBody
                         v-if="runtimeData.groupAssistList && runtimeData.groupAssistList.length > 0"
@@ -157,6 +162,9 @@
                 <li id="notice_close" icon="fa-solid fa-volume-xmark">
                     {{ $t('关闭通知') }}
                 </li>
+                <li id="clear_system_notice" icon="fa-solid fa-broom">
+                    {{ $t('清空通知') }}
+                </li>
             </ul>
         </BcMenu>
         <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
@@ -199,6 +207,7 @@
         faTrashCan,
         faCheckToSlot,
         faGripLines,
+        faBroom,
     } from '@fortawesome/free-solid-svg-icons'
     import { Notify } from '@renderer/function/notify'
     import { refreshFavicon } from '@renderer/function/favicon'
@@ -224,7 +233,7 @@
             }
         },
         mounted() {
-            library.add(faCheckToSlot, faThumbTack, faTrashCan, faGripLines)
+            library.add(faCheckToSlot, faThumbTack, faTrashCan, faGripLines, faBroom)
         },
         methods: {
             /**
@@ -276,6 +285,36 @@
                         new Notify().closeAll((item.group_id ?? item.user_id).toString())
                     }
                 }
+            },
+
+            /**
+             * 显示系统通知菜单
+             * @param event 鼠标事件
+             */
+            systemNoticeMenuShow(event: Event) {
+                const info = this.menu.set('messages-menu', event as MouseEvent)
+                this.showMenu = false
+                info.list = ['clear_system_notice']
+                this.listMenu = info
+                this.menu.select = { user_id: -10000 }
+            },
+
+            /**
+             * 系统通知菜单长按开始
+             */
+            systemNoticeMenuStart(event: TouchEvent) {
+                this.showMenuStart(event, { user_id: -10000 } as any)
+            },
+
+            /**
+             * 清空系统通知
+             */
+            clearSystemNotices() {
+                runtimeData.systemNoticesList = []
+                new PopInfo().add(
+                    PopType.INFO,
+                    app.config.globalProperties.$t('已清空系统通知'),
+                )
             },
 
             /**
@@ -400,6 +439,10 @@
                         }
                         case 'notice_close': {
                             changeGroupNotice(item.group_id, false)
+                            break
+                        }
+                        case 'clear_system_notice': {
+                            this.clearSystemNotices()
                             break
                         }
                     }
