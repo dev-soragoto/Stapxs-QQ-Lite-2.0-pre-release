@@ -59,6 +59,7 @@ export function configFactory(outPath: string): UserConfigFnObject {
         return {
             root: './src/renderer',
             envDir: '../../',
+            cacheDir: '../../.vite',
             base: process.env.BUILD_ENV == 'github-actions' ? '/Stapxs-QQ-Lite-2.0/' : './',
             server: {
                 port: 8080,

@@ -26,10 +26,13 @@ jobs:
               with:
                   submodules: recursive
                   persist-credentials: false
+            - name: 启用 Corepack
+              run: corepack enable
             - name: 设置 Nodejs
               uses: actions/setup-node@v4
               with:
                   node-version: 20.x
+                  cache: 'yarn'
             - name: 更新依赖
               run: yarn
             # 代码检查

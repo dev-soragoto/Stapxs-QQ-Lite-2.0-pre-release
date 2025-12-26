@@ -1,2 +1,5 @@
+/.yarn/releases/** binary
+/.yarn/plugins/** binary
+
 src/tauri/crates/user-notify/** linguist-vendored -diff
 *.svg linguist-generated
