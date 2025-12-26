@@ -1,16 +1,16 @@
 PODS:
   - Capacitor (6.2.1):
     - CapacitorCordova
-  - CapacitorApp (6.0.2):
+  - CapacitorApp (6.0.3):
     - Capacitor
   - CapacitorCordova (6.2.1)
-  - CapacitorKeyboard (6.0.3):
+  - CapacitorKeyboard (6.0.4):
     - Capacitor
-  - CapacitorLocalNotifications (6.1.2):
+  - CapacitorLocalNotifications (6.1.3):
     - Capacitor
   - CapacitorOnebotConnctor (0.0.1):
     - Capacitor
-  - CapacitorStatusBar (6.0.2):
+  - CapacitorStatusBar (6.0.3):
     - Capacitor
   - HugotomaziCapacitorNavigationBar (4.0.1):
     - Capacitor
@@ -23,7 +23,7 @@ DEPENDENCIES:
   - "CapacitorCordova (from `../../../../node_modules/@capacitor/ios`)"
   - "CapacitorKeyboard (from `../../../../node_modules/@capacitor/keyboard`)"
   - "CapacitorLocalNotifications (from `../../../../node_modules/@capacitor/local-notifications`)"
-  - CapacitorOnebotConnctor (from `../../../../node_modules/capacitor-onebot-connctor`)
+  - CapacitorOnebotConnctor (from `../../../../ssqq.capacitor-onebot-connector`)
   - "CapacitorStatusBar (from `../../../../node_modules/@capacitor/status-bar`)"
   - "HugotomaziCapacitorNavigationBar (from `../../../../node_modules/@hugotomazi/capacitor-navigation-bar`)"
   - "UntinyCapacitorSafeArea (from `../../../../node_modules/@untiny/capacitor-safe-area`)"
@@ -40,7 +40,7 @@ EXTERNAL SOURCES:
   CapacitorLocalNotifications:
     :path: "../../../../node_modules/@capacitor/local-notifications"
   CapacitorOnebotConnctor:
-    :path: "../../../../node_modules/capacitor-onebot-connctor"
+    :path: "../../../../ssqq.capacitor-onebot-connector"
   CapacitorStatusBar:
     :path: "../../../../node_modules/@capacitor/status-bar"
   HugotomaziCapacitorNavigationBar:
@@ -50,15 +50,15 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Capacitor: c95400d761e376be9da6be5a05f226c0e865cebf
-  CapacitorApp: e1e6b7d05e444d593ca16fd6d76f2b7c48b5aea7
+  CapacitorApp: a19ccb4f5f32d2534be5c6f524d5a9b614a1e8a7
   CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
-  CapacitorKeyboard: e89189ad398b815b6ff7e52271f0fb4f911a0a0a
-  CapacitorLocalNotifications: 65d718c32cbcb753697627bea76dd4336ef85dc2
+  CapacitorKeyboard: e8cd50fd5cbdd023a5947a5c0f5cca6e5aa5a253
+  CapacitorLocalNotifications: 801867e687c42dd2b33c1e22e08f48e6738d2f72
   CapacitorOnebotConnctor: 6f9f82cae00c8fe1f1838456d079802613d5732b
-  CapacitorStatusBar: b16799a26320ffa52f6c8b01737d5a95bbb8f3eb
+  CapacitorStatusBar: 149cde8f1328ec3aa6cbdd872a55137ae3f98b16
   HugotomaziCapacitorNavigationBar: d56bded81461cc38cd071727126e7298002ff2b5
   UntinyCapacitorSafeArea: bbfa1040710d042e8da47a45f3105f2364ac8681
 
-PODFILE CHECKSUM: c65146071ed43150d5e23368cffe06dd48ed84df
+PODFILE CHECKSUM: 6cc9c9ad5e6ce927dc858ee733090e1f60d350aa
 
 COCOAPODS: 1.16.2

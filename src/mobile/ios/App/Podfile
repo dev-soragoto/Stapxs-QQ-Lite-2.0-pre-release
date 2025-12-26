@@ -17,7 +17,7 @@ def capacitor_pods
   pod 'CapacitorStatusBar', :path => '../../../../node_modules/@capacitor/status-bar'
   pod 'HugotomaziCapacitorNavigationBar', :path => '../../../../node_modules/@hugotomazi/capacitor-navigation-bar'
   pod 'UntinyCapacitorSafeArea', :path => '../../../../node_modules/@untiny/capacitor-safe-area'
-  pod 'CapacitorOnebotConnctor', :path => '../../../../node_modules/capacitor-onebot-connctor'
+  pod 'CapacitorOnebotConnctor', :path => '../../../../ssqq.capacitor-onebot-connector'
 end
 
 target 'App' do
