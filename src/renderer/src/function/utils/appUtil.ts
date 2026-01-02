@@ -2040,11 +2040,11 @@ function resolveBinding<T extends Component>(binding: VTooltipBinding<T>, eventD
             ? (binding as () => T | VueCompData<T>)()
             : (binding as (eventData: {x: number, y: number}) => T | VueCompData<T>)(eventData)
         if ('comp' in result) return result
-        return { component: result } as unknown as VueCompData<T>
+        return { comp: result } as VueCompData<T>
     } else if ('comp' in binding) {
         return binding
     } else {
-        return { component: binding, props: {} } as unknown as VueCompData<T>
+        return { comp: binding, props: {} } as VueCompData<T>
     }
 }
 
