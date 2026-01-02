@@ -362,21 +362,30 @@ function resetModify() {
 function autoFit() {
     const info = currentImgInfo.value
     if (!info) return
-    modify.scale = 1
-    modify.x = 0
-    modify.y = 0
-    let scale: number
-    if (modify.rotate % 180 === 0) {
-        const scaleX = vw.value * 100 / (info.width * 1.2)
-        const scaleY = vh.value * 100 / (info.height * 1.2)
-        scale = Math.min(scaleX, scaleY)
-    }else {
-        const scaleX = vw.value * 100 / (info.height * 1.2)
-        const scaleY = vh.value * 100 / (info.width * 1.2)
-        scale = Math.min(scaleX, scaleY)
+    // 长图
+    if (info.height / info.width >= 3) {
+        modify.scale = Math.min(vh.value * 100 / 2, info.width, vw.value * 90) / info.width
+        modify.x = 0
+        modify.y = info.height * modify.scale / 2 - vh.value * 50
     }
-    if (scale < 1)
-        modify.scale = scale
+    // 正常图片
+    else {
+        modify.scale = 1
+        modify.x = 0
+        modify.y = 0
+        let scale: number
+        if (modify.rotate % 180 === 0) {
+            const scaleX = vw.value * 100 / (info.width * 1.2)
+            const scaleY = vh.value * 100 / (info.height * 1.2)
+            scale = Math.min(scaleX, scaleY)
+        }else {
+            const scaleX = vw.value * 100 / (info.height * 1.2)
+            const scaleY = vh.value * 100 / (info.width * 1.2)
+            scale = Math.min(scaleX, scaleY)
+        }
+        if (scale < 1)
+            modify.scale = scale
+    }
 }
 /**
  * 初始化参数
