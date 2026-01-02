@@ -363,7 +363,7 @@ function autoFit() {
     const info = currentImgInfo.value
     if (!info) return
     // 长图
-    if (info.height / info.width >= 3) {
+    if (info.height / info.width > 2.5) {
         modify.scale = Math.min(vh.value * 100 / 2, info.width, vw.value * 90) / info.width
         modify.x = 0
         modify.y = info.height * modify.scale / 2 - vh.value * 50
