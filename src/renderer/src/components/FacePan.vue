@@ -58,17 +58,22 @@
                 </div>
                 <div class="face-stickers"
                     @scroll="stickersScroll">
-                    <img v-for="(url, index) in runtimeData.stickerCache"
-                        v-show="url != 'end'"
-                        :key="'stickers-' + index"
-                        loading="lazy"
-                        :src="url"
-                        @click="addImgFace(url)">
-                    <div v-show="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
+                    <div v-if="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
                         class="ss-card">
                         <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                         <span>{{ $t('一无所有') }}</span>
                     </div>
+                    <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                        <span v-for="(url, index) in runtimeData.stickerCache" :key="'stickers-' + index">
+                            <img
+                                v-show="url != 'end'"
+                                loading="lazy"
+                                :src="url"
+                                :alt="'[' + $t('动画表情') + ']'"
+                                :title="'[' + $t('动画表情') + ']'"
+                                @click="addImgFace(url)">
+                        </span>
+                    </template>
                 </div>
             </div>
             <div v-if="backend.isDesktop()" icon="fa-solid fa-folder-open">
@@ -85,22 +90,26 @@
                         @click="reloadLocalEmojis" />
                 </div>
                 <div class="face-stickers">
-                    <img v-for="(emoji, index) in localEmojis"
-                        :key="'local-emoji-' + index"
-                        loading="lazy"
-                        :src="emoji.url"
-                        :title="emoji.name"
-                        @click="addLocalEmoji(emoji)">
-                    <div v-show="!runtimeData.sysConfig.local_emoji_folder"
+                    <div v-if="!runtimeData.sysConfig.local_emoji_folder"
                         class="ss-card">
                         <font-awesome-icon :icon="['fas', 'folder-open']" />
                         <span>{{ $t('选择文件夹') }}</span>
                     </div>
-                    <div v-show="runtimeData.sysConfig.local_emoji_folder && localEmojis.length <= 0"
+                    <div v-else-if="runtimeData.sysConfig.local_emoji_folder && localEmojis.length <= 0"
                         class="ss-card">
                         <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                         <span>{{ $t('暂无图片') }}</span>
                     </div>
+                    <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                        <span v-for="(emoji, index) in localEmojis" :key="'local-emoji-' + index">
+                            <img
+                                loading="lazy"
+                                :src="emoji.url"
+                                :title="emoji.name"
+                                :alt="'[' + $t('动画表情') + ']'"
+                                @click="addLocalEmoji(emoji)">
+                        </span>
+                    </template>
                 </div>
             </div>
         </BcTab>

@@ -1294,22 +1294,31 @@ input {
     width: 20px;
 }
 .face-stickers {
-    height: calc(300px - 145px);
+    height: calc(300px - 160px);
     justify-content: center;
     align-items: center;
     flex-direction: row;
     overflow-y: scroll;
     flex-wrap: wrap;
-    display: flex;
+    display: grid;
+    padding: 0 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-.face-stickers > img {
-    border: 2px var(--color-card-2) solid;
-    background: var(--color-card-2);
-    border-radius: 7px;
+.face-stickers > span {
     cursor: pointer;
-    height: 50px;
-    width: 50px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2px;
+}
+.face-stickers > span > img {
+    background: var(--color-card-2);
+    max-height: 100%;
+    max-width: 100%;
     margin: 5px;
+    border-radius: 7px;
 }
 .face-stickers > div {
     background: var(--color-card-2);
