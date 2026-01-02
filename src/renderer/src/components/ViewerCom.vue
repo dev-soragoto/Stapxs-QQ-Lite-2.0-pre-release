@@ -253,7 +253,7 @@ const currentImgInfo = shallowRef<{
     dom: HTMLImageElement,                  // 图片原始dom
     editMode: true,                         // 是否为编辑模式
     editPromise: (data: string) => void,    // 编辑完成回调
-} | undefined>(undefined)
+        } | undefined>(undefined)
 const mouseMoveInfo = shallowRef<{
     x: number,
     y: number,
@@ -370,22 +370,30 @@ function autoFit() {
     }
     // 正常图片
     else {
-        modify.scale = 1
-        modify.x = 0
-        modify.y = 0
-        let scale: number
-        if (modify.rotate % 180 === 0) {
-            const scaleX = vw.value * 100 / (info.width * 1.2)
-            const scaleY = vh.value * 100 / (info.height * 1.2)
-            scale = Math.min(scaleX, scaleY)
-        }else {
-            const scaleX = vw.value * 100 / (info.height * 1.2)
-            const scaleY = vh.value * 100 / (info.width * 1.2)
-            scale = Math.min(scaleX, scaleY)
-        }
-        if (scale < 1)
-            modify.scale = scale
+        stdFit()
     }
+}
+/**
+ * 标准化大小
+ */
+function stdFit() {
+    const info = currentImgInfo.value
+    if (!info) return
+    modify.scale = 1
+    modify.x = 0
+    modify.y = 0
+    let scale: number
+    if (modify.rotate % 180 === 0) {
+        const scaleX = vw.value * 100 / (info.width * 1.2)
+        const scaleY = vh.value * 100 / (info.height * 1.2)
+        scale = Math.min(scaleX, scaleY)
+    }else {
+        const scaleX = vw.value * 100 / (info.height * 1.2)
+        const scaleY = vh.value * 100 / (info.width * 1.2)
+        scale = Math.min(scaleX, scaleY)
+    }
+    if (scale < 1)
+        modify.scale = scale
 }
 /**
  * 初始化参数
@@ -489,7 +497,7 @@ async function copy() {
 function rotate(deg: number) {
     const oldRotate = modify.rotate
     modify.rotate = oldRotate + deg
-    autoFit()
+    stdFit()
 }
 
 /**
@@ -1299,11 +1307,11 @@ function getPos(x: number, y: number): {x: number, y: number} {
 function saveEditHistory() {
     const ctx = canvas.value?.getContext('2d')
     if (!ctx) return
-	let data: ImageData | undefined
-	try {
-		data = ctx.getImageData(0, 0, canvas.value!.width, canvas.value!.height)
-	}catch {/**/}
-	if (!data) return
+    let data: ImageData | undefined
+    try {
+        data = ctx.getImageData(0, 0, canvas.value!.width, canvas.value!.height)
+    }catch {/**/}
+    if (!data) return
     editHistory.push(data)
     if (editHistory.length > 20) editHistory.shift() // 限制历史长度
 }
