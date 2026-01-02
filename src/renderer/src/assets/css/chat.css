@@ -495,6 +495,7 @@ input {
     display: flex;
 }
 
+.custom-face-tooltip,
 .member-info {
     width: fit-content;
     pointer-events: none;
@@ -570,6 +571,21 @@ input {
 .member-info > div:nth-child(2).member > :nth-child(2) {
     margin-left: 20px;
 }
+
+
+.custom-face-tooltip {
+    padding: 0;
+    border: 2px solid var(--color-main);
+    max-width: 90vw;
+    max-height: 35vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transform: translate(-50%, calc(-100% - 0.8rem)) scale(0.5);
+    transform-origin: bottom;
+    border-radius: 7px;
+}
+
 
 .chat-info-pan {
     pointer-events: all;

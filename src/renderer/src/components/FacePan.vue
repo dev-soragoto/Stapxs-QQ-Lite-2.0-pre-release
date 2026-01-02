@@ -66,11 +66,11 @@
                     <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
                         <span v-for="(url, index) in runtimeData.stickerCache" :key="'stickers-' + index">
                             <img
+                                v-tooltip="customFaceTooltip(url)"
                                 v-show="url != 'end'"
                                 loading="lazy"
                                 :src="url"
                                 :alt="'[' + $t('动画表情') + ']'"
-                                :title="'[' + $t('动画表情') + ']'"
                                 @click="addImgFace(url)">
                         </span>
                     </template>
@@ -103,9 +103,9 @@
                     <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
                         <span v-for="(emoji, index) in localEmojis" :key="'local-emoji-' + index">
                             <img
+                                v-tooltip="customFaceTooltip(emoji.url)"
                                 loading="lazy"
                                 :src="emoji.url"
-                                :title="emoji.name"
                                 :alt="'[' + $t('动画表情') + ']'"
                                 @click="addLocalEmoji(emoji)">
                         </span>
@@ -116,21 +116,33 @@
     </div>
 </template>
 
-<script lang="ts">
-    import {
-        MsgItemElem,
-        SQCodeElem,
-    } from '@renderer/function/elements/information'
-    import { defineComponent } from 'vue'
-    import { runtimeData } from '@renderer/function/msg'
-    import { Connector } from '@renderer/function/connect'
-    import { backend } from '@renderer/runtime/backend'
-    import Option from '@renderer/function/option'
-    import { PopInfo, PopType } from '@renderer/function/base'
-    import BcTab from 'vue3-bcui/packages/bc-tab'
-    import Emoji from '@renderer/function/model/emoji'
-    import EmojiFace from './EmojiFace.vue'
+<script setup lang="ts">
+import {
+    MsgItemElem,
+    SQCodeElem,
+} from '@renderer/function/elements/information'
+import { defineComponent } from 'vue'
+import { runtimeData } from '@renderer/function/msg'
+import { Connector } from '@renderer/function/connect'
+import { backend } from '@renderer/runtime/backend'
+import Option from '@renderer/function/option'
+import { PopInfo, PopType } from '@renderer/function/base'
+import BcTab from 'vue3-bcui/packages/bc-tab'
+import Emoji from '@renderer/function/model/emoji'
+import EmojiFace from './EmojiFace.vue'
+import { VueCompData } from '@renderer/function/elements/vueComp'
+import CustomFaceTooltip from './tooltip/CustomFaceTooltip.vue'
+import { vTooltip } from '@renderer/function/utils/appUtil'
 
+function customFaceTooltip(url: string): VueCompData<typeof CustomFaceTooltip> {
+    return {
+        comp: CustomFaceTooltip,
+        props: { url }
+    }
+}
+</script>
+
+<script lang="ts">
     interface LocalEmoji {
         name: string
         path: string
