@@ -253,7 +253,7 @@ const currentImgInfo = shallowRef<{
     dom: HTMLImageElement,                  // 图片原始dom
     editMode: true,                         // 是否为编辑模式
     editPromise: (data: string) => void,    // 编辑完成回调
-} | undefined>(undefined)
+        } | undefined>(undefined)
 const mouseMoveInfo = shallowRef<{
     x: number,
     y: number,
@@ -360,6 +360,23 @@ function resetModify() {
  * 自动匹配大小
  */
 function autoFit() {
+    const info = currentImgInfo.value
+    if (!info) return
+    // 长图
+    if (info.height / info.width > 2.5) {
+        modify.scale = Math.min(vh.value * 100 / 2, info.width, vw.value * 90) / info.width
+        modify.x = 0
+        modify.y = info.height * modify.scale / 2 - vh.value * 50
+    }
+    // 正常图片
+    else {
+        stdFit()
+    }
+}
+/**
+ * 标准化大小
+ */
+function stdFit() {
     const info = currentImgInfo.value
     if (!info) return
     modify.scale = 1
@@ -480,7 +497,7 @@ async function copy() {
 function rotate(deg: number) {
     const oldRotate = modify.rotate
     modify.rotate = oldRotate + deg
-    autoFit()
+    stdFit()
 }
 
 /**
@@ -1290,11 +1307,11 @@ function getPos(x: number, y: number): {x: number, y: number} {
 function saveEditHistory() {
     const ctx = canvas.value?.getContext('2d')
     if (!ctx) return
-	let data: ImageData | undefined
-	try {
-		data = ctx.getImageData(0, 0, canvas.value!.width, canvas.value!.height)
-	}catch {/**/}
-	if (!data) return
+    let data: ImageData | undefined
+    try {
+        data = ctx.getImageData(0, 0, canvas.value!.width, canvas.value!.height)
+    }catch {/**/}
+    if (!data) return
     editHistory.push(data)
     if (editHistory.length > 20) editHistory.shift() // 限制历史长度
 }
