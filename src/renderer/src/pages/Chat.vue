@@ -83,7 +83,7 @@
                 <template v-for="(msgIndex, index) in list">
                     <!-- 时间戳 -->
                     <NoticeBody
-                        v-if="isShowTime(list[index - 1] ? list[index - 1].time : undefined, msgIndex.time)"
+                        v-if="isShowTime(list[Number(index) - 1] ? list[Number(index) - 1].time : undefined, msgIndex.time)"
                         :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
                     <!-- [已删除]消息 -->
@@ -123,7 +123,7 @@
                 <template v-for="(msgIndex, index) in tags.search.list">
                     <!-- 时间戳 -->
                     <NoticeBody
-                        v-if="isShowTime(list[index - 1] ? list[index - 1].time : undefined, msgIndex.time)"
+                        v-if="isShowTime(list[Number(index) - 1] ? list[Number(index) - 1].time : undefined, msgIndex.time)"
                         :key="'notice-time-' + index"
                         :data="{ sub_type: 'time', time: msgIndex.time }" />
                     <!-- 消息体 -->

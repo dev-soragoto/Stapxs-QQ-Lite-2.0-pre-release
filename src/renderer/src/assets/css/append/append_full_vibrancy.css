@@ -37,7 +37,7 @@
 .chat-pan {
     background: transparent;
     box-shadow: unset !important;
-    border-left: 1px solid rgba(var(--color-bg-rgb), 0.1);
+    border-left: 1px solid var(--color-shader);
 }
 .chat-pan > div.bg {
     background: unset;
@@ -102,6 +102,10 @@
 }
 .message.selected {
     background: #00000014;
+}
+
+.msg-replay {
+    background: #0000000f;
 }
 
 .face-pan,

@@ -244,7 +244,7 @@ class WebSocketClient: NSObject, URLSessionDelegate {
             // 仅在前台时主动重连
             if retryAttempts < maxRetryAttempts {
                 retryAttempts += 1
-                logger.info("重试连接 (\(retryAttempts)/\(maxRetryAttempts))...")
+                logger.info("重试连接 (\(self.retryAttempts)/\(self.maxRetryAttempts))...")
                 DispatchQueue.global().asyncAfter(deadline: .now() + retryDelay) { [weak self] in
                     self?.connect()
                 }
