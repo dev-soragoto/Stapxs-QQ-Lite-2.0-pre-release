@@ -24,12 +24,10 @@
         :data-time="data.time"
         @mouseleave="hiddenUserInfo">
         <img v-menu.prevent="event => $emit('showMenu', event, data)"
+            v-user-tooltip="() => getUserById(data.sender.user_id)"
             name="avatar"
             :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
             :alt="data.sender.card ? data.sender.card : data.sender.nickname"
-            @mouseenter="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
-            @mousemove="userInfoHoverHandle($event, getUserById(data.sender.user_id))"
-            @mouseleave="userInfoHoverEnd($event)"
             @dblclick="sendPoke">
         <div v-if="data.fake_msg == true"
             :class="'sending left' + (isMe ? ' me' : '')">
@@ -119,10 +117,8 @@
                         <div v-else-if="item.type == 'at'"
                             :class="getAtClass(item.qq)">
                             <a :data-id="item.qq"
-                                :data-group="data.group_id"
-                                @mouseenter="userInfoHoverHandle($event, getAtMember(item.qq))"
-                                @mousemove="userInfoHoverHandle($event, getAtMember(item.qq))"
-                                @mouseleave="userInfoHoverEnd($event)">
+                                v-user-tooltip="() => getAtMember(item.qq)"
+                                :data-group="data.group_id">
                                 {{ getAtName(item) }}
                             </a>
                         </div>
@@ -381,11 +377,11 @@ import {
     isRobot,
     openLink,
     sendStatEvent,
-    useStayEvent,
 	vMenu,
 	vMove,
 	VMoveOptions,
 } from '@renderer/function/utils/appUtil'
+import { vUserTooltip } from '@renderer/function/tooltip'
 import {
     getSizeFromBytes,
     getTrueLang,
@@ -396,7 +392,6 @@ import { backend } from '@renderer/runtime/backend'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
-import { UserInfoPan } from './UserInfoPan.vue'
 import { Img } from '@renderer/function/model/img'
 
 type Msg = any
@@ -406,12 +401,10 @@ const {
     data,
     selected,
     type,
-    userInfoPan,
 } = defineProps<{
     data: any
     selected?: boolean
     type?: string
-    userInfoPan?: UserInfoPan
     imageListHeader?: Img | undefined
 }>()
 
@@ -455,26 +448,6 @@ const moveOptions: VMoveOptions<HTMLDivElement> = {
     }
 }
 
-//#endregion
-
-//#region == 长按/覆盖监视器 =========================================================
-const {
-    handle: userInfoHoverHandle,
-    handleEnd: userInfoHoverEnd,
-} = useStayEvent(
-    (event: MouseEvent) => {
-        return {
-            x: event.clientX,
-            y: event.clientY,
-        }
-    },
-    {onFit: (eventData, ctx: number | IUser) => {
-        userInfoPan?.open(ctx, eventData.x, eventData.y)
-    },
-    onLeave: () => {
-        userInfoPan?.close()
-    }}, 495
-)
 //#endregion
 
 //#region == 工具函数 ================================================================

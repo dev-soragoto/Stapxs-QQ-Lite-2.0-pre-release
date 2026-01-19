@@ -98,7 +98,6 @@
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
-                        :user-info-pan="userInfoPanFunc"
                         :image-list-header="chatImg"
                         @click="msgClick($event, msgIndex)"
                         @show-menu="showMsgMeun"
@@ -133,7 +132,6 @@
                         :key="msgIndex.fake_message_id ?? msgIndex.message_id"
                         :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
                         :data="msgIndex"
-                        :user-info-pan="userInfoPanFunc"
                         @scroll-to-msg="scrollToMsg"
                         @show-menu="showMsgMeun"
                         @image-loaded="imgLoadedScroll"
@@ -402,8 +400,6 @@
         </div>
         <!-- 合并转发消息预览器 -->
         <MergePan ref="mergePan" />
-        <!-- At 信息悬浮窗 -->
-        <UserInfoPanComponent :data="userInfoPanData" />
         <!-- 消息右击菜单 -->
         <Teleport to="body">
             <div :class="'msg-menu' + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
@@ -548,7 +544,6 @@ import {
     defineComponent,
     markRaw,
     reactive,
-    shallowReactive
 } from 'vue'
 import { v4 as uuid } from 'uuid'
 import {
@@ -587,35 +582,10 @@ import {
     UserGroupElem,
     MenuEventData,
 } from '@renderer/function/elements/information'
-import UserInfoPanComponent, { UserInfoPan } from '@renderer/components/UserInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
-
-type IUser = any
-
-const userInfoPanData = shallowReactive<{
-    user: undefined | IUser | number,
-    x: number,
-    y: number,
-}>({
-    user: undefined,
-    x: 0,
-    y: 0,
-})
-const userInfoPanFunc: UserInfoPan = {
-    open: (user: IUser | number, x: number, y: number) => {
-        if(user.level != undefined) {
-            userInfoPanData.user = user
-            userInfoPanData.x = x
-            userInfoPanData.y = y
-        }
-    },
-    close: () => {
-        userInfoPanData.user = undefined
-    },
-}
 </script>
 
 <script lang="ts">

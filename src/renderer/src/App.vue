@@ -194,6 +194,8 @@
         <!-- 全局搜索栏 -->
         <GlobalSessionSearchBar />
         <NtViewer ref="nt-viewer" />
+        <!-- 提示工具 -->
+        <Tooltips />
         <div id="mobile-css" />
     </div>
 </template>
@@ -223,6 +225,7 @@ import Messages from '@renderer/pages/Messages.vue'
 import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
+import Tooltips from './components/tooltip/Tooltips.vue'
 
 // 注册组件实例
 const ntViewer = useTemplateRef<InstanceType<typeof NtViewer>>('nt-viewer')
