@@ -757,7 +757,7 @@ export function checkUpdate() {
     const repoName = import.meta.env.VITE_APP_REPO_NAME
     // 获取最新的 release 信息
     const packageUrl =
-        `https://api.github.com/repos/${repoName}/releases/latest`
+        `https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest`
     fetch(packageUrl).then((response) => {
         if (response.ok) {
             response.json().then((data) => {
