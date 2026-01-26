@@ -180,7 +180,7 @@ import {
     MsgItemElem,
     SQCodeElem,
 } from '@renderer/function/elements/information'
-import { computed, ComputedRef, ShallowRef, shallowRef } from 'vue'
+import { computed, ComputedRef, Ref, ShallowRef, shallowRef } from 'vue'
 import { runtimeData } from '@renderer/function/msg'
 import { Connector } from '@renderer/function/connect'
 import { backend } from '@renderer/runtime/backend'
@@ -409,7 +409,7 @@ async function addLocalEmoji(emoji: LocalEmoji) {
 
 //#region == 最近表情相关函数 ===========
 function getRecentEmojiRecord<T>(storeId: string): {
-    recordList: ShallowRef<T[]>
+    recordList: Ref<T[]>
     showList: ComputedRef<T[]>
 } {
     const recordList = useLocalStorage<T[]>(storeId, [])
@@ -464,7 +464,6 @@ function recordRecentEmoji<T>(recordList: ShallowRef<T[]>, id: T) {
         list.pop()
     }
     recordList.value = list
-    console.log(recordList)
 }
 //#endregion
 
