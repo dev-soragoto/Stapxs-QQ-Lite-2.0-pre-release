@@ -10,106 +10,165 @@
         <BcTab>
             <div icon="fa-solid fa-face-laugh-squint">
                 <div class="system-face-bar">
+                    <template v-if="recentEmojisList.length > 0">
+                        <div class="title">
+                            <span>{{ $t('最近使用') }}</span>
+                        </div>
+                        <div class="face">
+                            <template
+                                v-for="num in recentEmojisList"
+                                :key="num"
+                            >
+                                <div>
+                                    <EmojiFace
+                                        :emoji="Emoji.get(num)"
+                                        @click="addBaseFace(num)"
+                                    />
+                                </div>
+                            </template>
+                        </div>
+                    </template>
                     <div class="title">
                         <span>{{ $t('超级表情') }}</span>
                     </div>
-                    <div class="base-face">
-                        <template v-for="num in Emoji.superList" :key="'base-face-wrapper-' + num">
+                    <div class="face">
+                        <template v-for="num in Emoji.superList" :key="num">
                             <div>
                                 <EmojiFace
-                                    :key="'base-face-' + num"
-                                    :emoji="Emoji.get(num)!"
-                                    @click="addBaseFace(num)" />
+                                    :emoji="Emoji.get(num)"
+                                    @click="addBaseFace(num)"
+                                />
                             </div>
                         </template>
                     </div>
                     <div class="title">
                         <span>{{ $t('小黄脸表情') }}</span>
                     </div>
-                    <div class="base-face">
-                        <template v-for="num in Emoji.normalList" :key="'base-face-wrapper-' + num">
+                    <div class="face">
+                        <template v-for="num in Emoji.normalList" :key="num">
                             <div>
                                 <EmojiFace
-                                    :key="'base-face-' + num"
-                                    :emoji="Emoji.get(num)!"
-                                    @click="addBaseFace(num)" />
+                                    :emoji="Emoji.get(num)"
+                                    @click="addBaseFace(num)"
+                                />
                             </div>
                         </template>
                     </div>
                     <div class="title">
                         <span>{{ $t('emoji 表情') }}</span>
                     </div>
-                    <div class="base-face">
-                        <div v-for="num in Emoji.emojiList" :key="'base-face-wrapper-' + num">
+                    <div class="face">
+                        <div
+                            v-for="num in Emoji.emojiList"
+                            :key="num"
+                        >
                             <EmojiFace
-                                :key="'base-face-' + num"
-                                :emoji="Emoji.get(num)!"
-                                @click="addBaseFace(num)" />
+                                :emoji="Emoji.get(num)"
+                                @click="addBaseFace(num)"
+                            />
                         </div>
                     </div>
                 </div>
             </div>
             <div icon="fa-solid fa-heart">
-                <div class="title">
-                    <span>{{ $t('收藏的表情') }}</span>
-                    <font-awesome-icon
-                        :icon="['fas', 'fa-rotate-right']"
-                        @click="reloadRoamingStamp" />
-                </div>
-                <div class="face-stickers"
-                    @scroll="stickersScroll">
-                    <div v-if="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
-                        class="ss-card">
-                        <font-awesome-icon :icon="['fas', 'face-dizzy']" />
-                        <span>{{ $t('一无所有') }}</span>
-                    </div>
-                    <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
-                        <span v-for="(url, index) in runtimeData.stickerCache" :key="'stickers-' + index">
-                            <img
+                <div class="system-face-bar custom-face-bar" @scroll="stickersScroll">
+                    <template v-if="recentCustomFacesList.length > 0">
+                        <div class="title">
+                            <span>{{ $t('最近使用') }}</span>
+                        </div>
+                        <div class="face">
+                            <span
+                                v-for="(url, num) in recentCustomFacesList"
+                                :key="num"
                                 v-tooltip="customFaceTooltip(url)"
-                                v-show="url != 'end'"
-                                loading="lazy"
-                                :src="url"
-                                :alt="'[' + $t('动画表情') + ']'"
-                                @click="addImgFace(url)">
-                        </span>
+                            >
+                                <img
+                                    loading="lazy"
+                                    :src="url"
+                                    :alt="'[' + $t('动画表情') + ']'"
+                                    @click="addImgFace(url)"
+                                />
+                            </span>
+                        </div>
                     </template>
+                    <div class="title">
+                        <span>{{ $t('收藏的表情') }}</span>
+                        <font-awesome-icon
+                            :icon="['fas', 'fa-rotate-right']"
+                            @click="reloadRoamingStamp"
+                        />
+                    </div>
+                    <div class="face">
+                        <div v-if="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
+                            class="ss-card">
+                            <font-awesome-icon :icon="['fas', 'face-dizzy']" />
+                            <span>{{ $t('一无所有') }}</span>
+                        </div>
+                        <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                            <span v-for="(url, index) in runtimeData.stickerCache" :key="'stickers-' + index">
+                                <img
+                                    v-tooltip="customFaceTooltip(url)"
+                                    v-show="url != 'end'"
+                                    loading="lazy"
+                                    :src="url"
+                                    :alt="'[' + $t('动画表情') + ']'"
+                                    @click="addImgFace(url)">
+                            </span>
+                        </template>
+                    </div>
                 </div>
             </div>
             <div v-if="backend.isDesktop()" icon="fa-solid fa-folder-open">
-                <div class="title">
-                    <span>{{ $t('本地表情') }}</span>
-                    <font-awesome-icon
-                        :icon="['fas', 'fa-folder-plus']"
-                        :title="$t('选择文件夹')"
-                        @click="selectLocalEmojiFolder" />
-                    <font-awesome-icon
-                        v-if="runtimeData.sysConfig.local_emoji_folder"
-                        :icon="['fas', 'fa-rotate-right']"
-                        :title="$t('重新加载')"
-                        @click="reloadLocalEmojis" />
-                </div>
-                <div class="face-stickers">
-                    <div v-if="!runtimeData.sysConfig.local_emoji_folder"
-                        class="ss-card">
-                        <font-awesome-icon :icon="['fas', 'folder-open']" />
-                        <span>{{ $t('选择文件夹') }}</span>
-                    </div>
-                    <div v-else-if="runtimeData.sysConfig.local_emoji_folder && localEmojis.length <= 0"
-                        class="ss-card">
-                        <font-awesome-icon :icon="['fas', 'face-dizzy']" />
-                        <span>{{ $t('暂无图片') }}</span>
-                    </div>
-                    <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
-                        <span v-for="(emoji, index) in localEmojis" :key="'local-emoji-' + index">
-                            <img
-                                v-tooltip="customFaceTooltip(emoji.url)"
-                                loading="lazy"
-                                :src="emoji.url"
-                                :alt="'[' + $t('动画表情') + ']'"
-                                @click="addLocalEmoji(emoji)">
-                        </span>
+                <div class="system-face-bar custom-face-bar">
+                    <template v-if="recentLocalFacesList.length > 0">
+                        <div class="title">
+                            <span>{{ $t('最近使用') }}</span>
+                        </div>
+                        <div class="face">
+                            <span v-for="(emoji, index) in recentLocalFacesList" :key="index">
+                                <img
+                                    v-tooltip="customFaceTooltip(emoji.url)"
+                                    loading="lazy"
+                                    :src="emoji.url"
+                                    :alt="'[' + $t('动画表情') + ']'"
+                                    @click="addLocalEmoji(emoji)">
+                            </span>
+                        </div>
                     </template>
+                    <div class="title">
+                        <span>{{ $t('本地表情') }}</span>
+                        <font-awesome-icon
+                            :icon="['fas', 'fa-folder-plus']"
+                            :title="$t('选择文件夹')"
+                            @click="selectLocalEmojiFolder" />
+                        <font-awesome-icon
+                            v-if="runtimeData.sysConfig.local_emoji_folder"
+                            :icon="['fas', 'fa-rotate-right']"
+                            :title="$t('重新加载')"
+                            @click="reloadLocalEmojis" />
+                    </div>
+                    <div class="face">
+                        <div v-if="!runtimeData.sysConfig.local_emoji_folder"
+                            class="ss-card">
+                            <font-awesome-icon :icon="['fas', 'folder-open']" />
+                            <span>{{ $t('选择文件夹') }}</span>
+                        </div>
+                        <div v-else-if="runtimeData.sysConfig.local_emoji_folder && localEmojis.length <= 0"
+                            class="ss-card">
+                            <font-awesome-icon :icon="['fas', 'face-dizzy']" />
+                            <span>{{ $t('暂无图片') }}</span>
+                        </div>
+                        <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                            <span v-for="(emoji, index) in localEmojis" :key="index">
+                                <img
+                                    v-tooltip="customFaceTooltip(emoji.url)"
+                                    loading="lazy"
+                                    :src="emoji.url"
+                                    :alt="'[' + $t('动画表情') + ']'"
+                                    @click="addLocalEmoji(emoji)">
+                            </span>
+                        </template>
+                    </div>
                 </div>
             </div>
         </BcTab>
@@ -121,7 +180,7 @@ import {
     MsgItemElem,
     SQCodeElem,
 } from '@renderer/function/elements/information'
-import { shallowRef } from 'vue'
+import { computed, ComputedRef, ShallowRef, shallowRef } from 'vue'
 import { runtimeData } from '@renderer/function/msg'
 import { Connector } from '@renderer/function/connect'
 import { backend } from '@renderer/runtime/backend'
@@ -132,8 +191,25 @@ import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import { VueCompData } from '@renderer/function/elements/vueComp'
 import CustomFaceTooltip from './tooltip/CustomFaceTooltip.vue'
-import { vTooltip } from '@renderer/function/utils/appUtil'
+import { useLocalStorage, vTooltip } from '@renderer/function/utils/appUtil'
 import app from '@renderer/main'
+
+const { recordList: recentEmojisId, showList: recentEmojisList } =
+    getRecentEmojiRecord<number>('recent-emojis-id')
+const { recordList: recentCustomFacesId, showList: recentCustomFacesList } =
+    getRecentEmojiRecord<string>('recent-custom-faces-id')
+const { recordList: recentLocalFacesId, showList: _recentLocalFacesList } =
+    getRecentEmojiRecord<string>('recent-local-faces-id')
+
+const recentLocalFacesList = computed(()=>{
+    const list: LocalEmoji[] = []
+    for (const path of _recentLocalFacesList.value) {
+        const emoji = localEmojis.value.find(e => e.path === path)
+        if (!emoji) continue
+        list.push(emoji)
+    }
+    return list
+})
 
 interface LocalEmoji {
     name: string
@@ -170,6 +246,7 @@ function addSpecialMsg(json: MsgItemElem, addText: boolean) {
     })
 }
 function addBaseFace(id: number) {
+    recordRecentEmoji(recentEmojisId, id)
     if (id < 5000)
         addSpecialMsg({ type: 'face', id: id }, true)
     else
@@ -218,6 +295,7 @@ function stickersScroll(e: Event) {
     }
 }
 function addImgFace(url: string) {
+    recordRecentEmoji(recentCustomFacesId, url)
     addSpecialMsg(
         { type: 'image', file: url, subType: 1 },
         true,
@@ -311,6 +389,8 @@ async function addLocalEmoji(emoji: LocalEmoji) {
             emoji.path
         )
 
+        recordRecentEmoji(recentLocalFacesId, emoji.path)
+
         // 发送 base64 格式的图片
         addSpecialMsg(
             { type: 'image', file: 'base64://' + base64String, subType: 1 },
@@ -324,6 +404,67 @@ async function addLocalEmoji(emoji: LocalEmoji) {
         const { $t } = app.config.globalProperties
         popInfo.add(PopType.ERR, $t('添加本地表情失败'))
     }
+}
+//#endregion
+
+//#region == 最近表情相关函数 ===========
+function getRecentEmojiRecord<T>(storeId: string): {
+    recordList: ShallowRef<T[]>
+    showList: ComputedRef<T[]>
+} {
+    const recordList = useLocalStorage<T[]>(storeId, [])
+    const showList = computed(() => {
+        if (runtimeData.sysConfig.record_recent_emoji === 'none') {
+            return []
+        } else if (runtimeData.sysConfig.record_recent_emoji === 'order') {
+            return recordList.value.slice(0, 30)
+        } else {
+            const timesMap = new Map<T, number>()
+            for (const id of recordList.value) {
+                timesMap.set(id, (timesMap.get(id) || 0) + 1)
+            }
+            return Array.from(timesMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map((entry) => entry[0])
+                .slice(0, 30)
+        }
+    })
+
+    return {
+        recordList,
+        showList,
+    }
+}
+
+function recordRecentEmoji<T>(recordList: ShallowRef<T[]>, id: T) {
+    if (runtimeData.sysConfig.record_recent_emoji === 'none') return
+    let limit: number
+    switch (runtimeData.sysConfig.record_recent_emoji) {
+        case 'order':
+            limit = 30
+            break
+        case '100times':
+            limit = 100
+            break
+        case '500times':
+            limit = 500
+            break
+        default:
+            throw new Error('Invalid recent emoji record setting')
+    }
+    const list = recordList.value
+    if (runtimeData.sysConfig.record_recent_emoji === 'order') {
+        const index = list.indexOf(id)
+        if (index !== -1) {
+            list.splice(index, 1)
+        }
+    }
+    list.unshift(id)
+    if (list.length > limit) {
+        list.pop()
+    }
+    recordList.value = list
+    console.log(recordList)
 }
 //#endregion
 
