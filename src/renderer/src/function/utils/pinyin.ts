@@ -36,7 +36,7 @@ async function loadPinyinLibrary(): Promise<boolean> {
         // 创建 script 标签动态加载
         await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script')
-            script.src = 'https://lib.stapxs.cn/modules/pinyin.min.js'
+            script.src = 'https://jsdelivr.topthink.com/npm/pinyin@4.0.0/lib/umd/pinyin.min.js'
             script.async = true
 
             // 设置 5 秒超时
