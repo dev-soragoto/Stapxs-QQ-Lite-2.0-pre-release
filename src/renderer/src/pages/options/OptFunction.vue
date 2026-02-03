@@ -171,6 +171,34 @@
                     </select>
                 </div>
             </div>
+            <div class="opt-item">
+                <div :class="checkDefault('record_recent_emoji')" />
+                <font-awesome-icon :icon="['fas', 'clock-rotate-left']" />
+                <div>
+                    <span>{{ $t('缓存最近使用表情') }}</span>
+                    <span>{{ $t('终于不用翻表情了') }}</span>
+                </div>
+                <div class="select-wrapper">
+                    <select
+                        v-model="runtimeData.sysConfig.record_recent_emoji"
+                        name="record_recent_emoji"
+                        title="record_recent_emoji"
+                    >
+                        <option value="none">
+                            {{ $t('不记录') }}
+                        </option>
+                        <option value="order">
+                            {{ $t('使用顺序') }}
+                        </option>
+                        <option value="100times">
+                            {{ $t('100次使用频率（默认）') }}
+                        </option>
+                        <option value="500times">
+                            {{ $t('500次使用频率') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('浏览选项') }}</header>

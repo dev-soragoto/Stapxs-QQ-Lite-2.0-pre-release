@@ -36,6 +36,7 @@ import {
     shallowRef,
     Component,
     DirectiveBinding,
+    Ref,
 } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { parseMsg } from '../sender'
@@ -1495,6 +1496,49 @@ export function useKeyboard(...args: [string, ...string[], () => boolean | undef
     })
 }
 
+
+function localStorageGetItem(key: string): string | null {
+    if (backend.type === 'electron') {
+        return backend.callSync('opt:get', key)
+    } else {
+        // eslint-disable-next-line no-restricted-globals
+        return localStorage.getItem(key)
+    }
+}
+
+function localStorageSetItem(key: string, value: string): void {
+    if (backend.type === 'electron') {
+        backend.callSync('opt:store', { key, value })
+    } else {
+        // eslint-disable-next-line no-restricted-globals
+        localStorage.setItem(key, value)
+    }
+}
+
+/**
+ * 使用 localStorage
+ * @param key 保存的键值
+ * @param defaultValue 默认值
+ * @returns
+ */
+export function useLocalStorage<T>(key: string, defaultValue: T): Ref<T> {
+    const parser = (data: string) => {
+        return JSON.parse(data).value as T
+    }
+    const serializer = (data: T) => {
+        return JSON.stringify({ value: data })
+    }
+    const storageData = localStorageGetItem(key)
+    const data = ref<T>(storageData ? parser(storageData) : defaultValue)
+    watch(
+        data,
+        (newValue) => {
+            localStorageSetItem(key, serializer(newValue))
+        },
+        { deep: true },
+    )
+    return data as Ref<T>
+}
 //#endregion
 
 //#region == v命令封装 ======================================

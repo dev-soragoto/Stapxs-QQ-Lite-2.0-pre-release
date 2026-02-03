@@ -1507,3 +1507,27 @@ msgstr ""
 
 msgid "确认上传"
 msgstr ""
+
+msgid "最近使用"
+msgstr ""
+
+msgid "动画表情"
+msgstr ""
+
+msgid "缓存最近使用表情"
+msgstr ""
+
+msgid "终于不用翻表情了"
+msgstr ""
+
+msgid "不记录"
+msgstr ""
+
+msgid "使用顺序"
+msgstr ""
+
+msgid "100次使用频率（默认）"
+msgstr ""
+
+msgid "500次使用频率"
+msgstr ""

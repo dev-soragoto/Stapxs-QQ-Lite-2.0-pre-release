@@ -1276,14 +1276,16 @@ input {
     width: 100%;
 }
 
-.base-face {
-    justify-content: center;
-    padding: 0 20px;
-    flex-wrap: wrap;
-    display: flex;
-    align-content: flex-start;
+.face {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
 }
-.base-face > div {
+
+.custom-face-bar .face {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.face > div {
     background: var(--color-card-2);
     border-radius: 100%;
     cursor: pointer;
@@ -1294,24 +1296,15 @@ input {
     align-items: center;
     justify-content: center;
 }
-.base-face > div > .emoji-face {
+
+.face > div > .emoji-face {
     display: block;
     margin: 7.5px;
     height: 20px;
     width: 20px;
 }
-.face-stickers {
-    height: calc(300px - 160px);
-    justify-content: center;
-    align-items: center;
-    flex-direction: row;
-    overflow-y: scroll;
-    flex-wrap: wrap;
-    display: grid;
-    padding: 0 10px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.face-stickers > span {
+
+.face > span {
     cursor: pointer;
     width: 60px;
     height: 60px;
@@ -1320,30 +1313,13 @@ input {
     align-items: center;
     margin: 2px;
 }
-.face-stickers > span > img {
+
+.face > span > img {
     background: var(--color-card-2);
     max-height: 100%;
     max-width: 100%;
     margin: 5px;
     border-radius: 7px;
-}
-.face-stickers > div {
-    background: var(--color-card-2);
-    padding: 20px !important;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
-    display: flex;
-    height: 60px;
-    width: 80px;
-}
-.face-stickers > div > span {
-    color: var(--color-font);
-    margin-top: 10px;
-}
-.face-stickers > div > svg {
-    color: var(--color-main);
-    width: 25px;
 }
 
 .jin-pan {
