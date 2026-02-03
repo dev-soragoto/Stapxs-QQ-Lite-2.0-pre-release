@@ -13,6 +13,12 @@ body,
     display: none;
 }
 
+.main-body > ul > li > svg,
+.friend-body,
+.friend-body > svg,
+.friend-body img,
+.chat-pan > div.info > svg,
+.chat-pan > div.info,
 .ss-card {
-    border-radius: 15px !important;
+    border-radius: 14px !important;
 }

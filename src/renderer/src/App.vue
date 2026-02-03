@@ -361,7 +361,7 @@ export default defineComponent({
                 logger.info('Stapxs QQ Lite 处于 Napcat 模式 ……')
                 const token = localStorage.getItem('token')
                 if(token) {
-                    // 携带 token 请求 /api/Debug/create 获取连接配置信息
+                    // api/Debug/create 获取连接配置信息
                     fetch('/api/Debug/create', {
                         method: 'POST',
                         headers: {
@@ -381,6 +381,30 @@ export default defineComponent({
                         }
                     }).catch((error) => {
                         logger.error(null, 'Napcat 快速连接请求失败：' + error)
+                    })
+                    // api/base/Theme 获取主题配置信息
+                    fetch('/api/Base/Theme', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        }
+                    }).then(async (response) => {
+                        if(response.ok) {
+                            const data = await response.json()
+                            let colorHsl = data.data.light['--heroui-primary-200']
+                            const media = window.matchMedia('(prefers-color-scheme: dark)')
+                            if(media.matches) {
+                                colorHsl = data.data.dark['--heroui-primary-200']
+                            }
+                            // 更新 root --color-main、--color-main-0
+                            document.documentElement.style.setProperty('--color-main', `hsl(${colorHsl} / 0.4)`)
+                            document.documentElement.style.setProperty('--color-main-0', `hsl(${colorHsl} / 0.4)`)
+                        } else {
+                            logger.error(null, 'Napcat 主题获取失败，状态码：' + response.status)
+                        }
+                    }).catch((error) => {
+                        logger.error(null, 'Napcat 主题请求失败：' + error)
                     })
                 }
             }
