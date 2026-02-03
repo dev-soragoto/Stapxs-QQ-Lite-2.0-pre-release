@@ -348,8 +348,8 @@ export default defineComponent({
             // 加载密码保存和自动连接
             loginInfo.address = runtimeData.sysConfig.address
             if (
-                runtimeData.sysConfig.save_password &&
-                runtimeData.sysConfig.save_password != true
+                runtimeData.sysConfig.save_password !== undefined &&
+                runtimeData.sysConfig.save_password !== true
             ) {
                 loginInfo.token = runtimeData.sysConfig.save_password
                 this.tags.savePassword = true
