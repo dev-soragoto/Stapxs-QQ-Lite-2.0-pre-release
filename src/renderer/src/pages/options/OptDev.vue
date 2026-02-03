@@ -7,7 +7,7 @@
 
 <template>
     <div class="opt-page">
-        <div class="ss-card">
+        <div v-if="!napcat" class="ss-card">
             <header>{{ $t('兼容选项') }}</header>
             <div class="tip">
                 {{
@@ -101,7 +101,7 @@
                     </div>
                 </label>
             </div>
-            <div class="opt-item">
+            <div v-if="!napcat" class="opt-item">
                 <font-awesome-icon :icon="['fas', 'palette']" />
                 <div>
                     <span>{{ $t('注入自定义样式') }}</span>
@@ -296,6 +296,7 @@
         name: 'ViewOptDev',
         data() {
             return {
+                napcat: import.meta.env.VITE_NAPCAT,
                 backend: backend,
                 jsonMapName: runtimeData.jsonMap?.name ?? '',
 

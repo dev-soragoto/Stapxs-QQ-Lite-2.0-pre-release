@@ -51,7 +51,7 @@
             <div :style="get('fs_adaptation') > 0 ? `height: calc(100% - ${75 + Number(get('fs_adaptation'))}px);` : ''">
                 <div v-if="tags.page == 'Home'" id="homeTab" name="主页">
                     <div class="home-body">
-                        <div class="login-pan-card ss-card">
+                        <div v-if="!napcat" class="login-pan-card ss-card">
                             <font-awesome-icon :icon="['fas', 'circle-nodes']" />
                             <p>{{ $t('连接到 OneBot') }}</p>
                             <form @submit.prevent @submit="connect">
@@ -240,6 +240,7 @@ export default defineComponent({
             repoName: import.meta.env.VITE_APP_REPO_NAME,
             appClient: backend,
             dev: import.meta.env.DEV,
+            napcat: import.meta.env.VITE_NAPCAT,
             sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
             defineAsyncComponent: defineAsyncComponent,
             save: Option.runASWEvent,
@@ -355,6 +356,33 @@ export default defineComponent({
             }
             if (runtimeData.sysConfig.auto_connect == true) {
                 this.connect()
+            }
+            if(import.meta.env.VITE_NAPCAT) {
+                logger.info('Stapxs QQ Lite 处于 Napcat 模式 ……')
+                const token = localStorage.getItem('token')
+                if(token) {
+                    // 携带 token 请求 /api/Debug/create 获取连接配置信息
+                    fetch('/api/Debug/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        }
+                    }).then(async (response) => {
+                        if(response.ok) {
+                            const data = await response.json()
+                            // 获取当前页面的根 URL
+                            const rootUrl = window.location.origin
+                            loginInfo.address = rootUrl.replace('http', 'ws') + '/api/Debug/ws'
+                            loginInfo.token = data.data.token
+                            this.connect()
+                        } else {
+                            logger.error(null, 'Napcat 快速连接失败，状态码：' + response.status)
+                        }
+                    }).catch((error) => {
+                        logger.error(null, 'Napcat 快速连接请求失败：' + error)
+                    })
+                }
             }
             // 服务发现
             backend.call('Onebot', 'sys:findService', false)

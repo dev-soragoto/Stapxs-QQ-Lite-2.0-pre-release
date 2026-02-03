@@ -25,7 +25,7 @@ async function loadPinyinLibrary(): Promise<boolean> {
             setTimeout(() => {
                 clearInterval(checkInterval)
                 resolve(false)
-            }, 5000)
+            }, 3000)
         })
         return pinyinLoaded
     }
@@ -36,15 +36,14 @@ async function loadPinyinLibrary(): Promise<boolean> {
         // 创建 script 标签动态加载
         await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script')
-            script.src = 'https://lib.stapxs.cn/modules/pinyin.min.js'
+            script.src = 'https://cdn.jsdelivr.net/npm/js-pinyin@0.2.7/pinyin.min.js'
             script.async = true
 
-            // 设置 5 秒超时
+            // 设置 3 秒超时
             const timeout = setTimeout(() => {
                 script.remove()
                 reject(new Error('拼音库加载超时'))
-            }, 5000)
-
+            }, 3000)
             script.onload = () => {
                 clearTimeout(timeout)
                 pinyinLoaded = true
