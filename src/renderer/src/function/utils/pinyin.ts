@@ -25,7 +25,7 @@ async function loadPinyinLibrary(): Promise<boolean> {
             setTimeout(() => {
                 clearInterval(checkInterval)
                 resolve(false)
-            }, 5000)
+            }, 3000)
         })
         return pinyinLoaded
     }
@@ -39,12 +39,11 @@ async function loadPinyinLibrary(): Promise<boolean> {
             script.src = 'https://jsdelivr.topthink.com/npm/pinyin@4.0.0/lib/umd/pinyin.min.js'
             script.async = true
 
-            // 设置 5 秒超时
+            // 设置 3 秒超时
             const timeout = setTimeout(() => {
                 script.remove()
                 reject(new Error('拼音库加载超时'))
-            }, 5000)
-
+            }, 3000)
             script.onload = () => {
                 clearTimeout(timeout)
                 pinyinLoaded = true

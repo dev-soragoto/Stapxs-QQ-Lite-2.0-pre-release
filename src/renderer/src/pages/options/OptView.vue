@@ -82,7 +82,7 @@
                         </div>
                     </label>
                 </div>
-                <template v-if="runtimeData.sysConfig.opt_auto_win_color != true">
+                <template v-if="runtimeData.sysConfig.opt_auto_win_color != true && !napcat">
                     <div class="opt-item">
                         <div :class="checkDefault('theme_color')" />
                         <font-awesome-icon :icon="['fas', 'palette']" />
@@ -132,7 +132,7 @@
                     </label>
                 </div>
             </template>
-            <div class="opt-item">
+            <div v-if="!napcat" class="opt-item">
                 <div :class="checkDefault('chat_more_blur')" />
                 <font-awesome-icon :icon="['fas', 'expand']" />
                 <div>
@@ -162,7 +162,7 @@
                     </div>
                 </label>
             </div>
-            <template v-if="!runtimeData.sysConfig.chat_more_blur">
+            <template v-if="!runtimeData.sysConfig.chat_more_blur && !napcat">
                 <div class="opt-item">
                     <div :class="checkDefault('chat_background')" />
                     <font-awesome-icon :icon="['fas', 'image']" />
@@ -334,7 +334,7 @@
                     </span>
                 </div>
             </div>
-            <div v-if="backend.type == 'web'" class="opt-item">
+            <div v-if="backend.type == 'web' && !napcat" class="opt-item">
                 <div :class="checkDefault('use_favicon_notice')" />
                 <font-awesome-icon :icon="['fas', 'bell']" />
                 <div>
@@ -382,6 +382,7 @@
         name: 'ViewOptTheme',
         data() {
             return {
+                napcat: import.meta.env.VITE_NAPCAT,
                 backend: backend,
                 get: get,
                 runtimeData: runtimeData,

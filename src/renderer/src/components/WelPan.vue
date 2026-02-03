@@ -78,7 +78,7 @@
             <div>
                 <span>{{ $t('外观') }}</span>
                 <a>{{ $t('Stapxs QQ Lite 拥有一个主题色，你可以选择一个主题色作为主要风格！如果你喜欢保持深色主题，也可以关闭自动深色模式自行选择。') }}</a>
-                <div class="opt-item wel-opt-item">
+                <div v-if="!napcat" class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('主题色') }}</span>
                         <span>{{ $t('换个心情 🎵 ~') }}</span>
@@ -366,6 +366,7 @@
         props: ['data'],
         data() {
             return {
+                napcat: import.meta.env.VITE_NAPCAT,
                 repoName: import.meta.env.VITE_APP_REPO_NAME,
                 languages: languages,
                 openLink: openLink,

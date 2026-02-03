@@ -23,7 +23,7 @@
                             ? runtimeData.loginInfo.info.lnick : ''
                     }}</span>
                 </div>
-                <font-awesome-icon v-if="!sse" :icon="['fas', 'right-from-bracket']" @click="exitConnect" />
+                <font-awesome-icon v-if="!sse && !napcat" :icon="['fas', 'right-from-bracket']" @click="exitConnect" />
             </div>
             <div class="ss-card">
                 <header>{{ $t('账号设置') }}</header>
@@ -63,7 +63,7 @@
                 </button>
             </div>
         </template>
-        <div v-if="Object.keys(runtimeData.botInfo).length > 0"
+        <div v-if="Object.keys(runtimeData.botInfo).length > 0 && !napcat"
             class="ss-card">
             <header>{{ $t('后端信息') }}</header>
             <div class="l10n-info">
@@ -129,7 +129,8 @@
                 runtimeData: runtimeData,
                 save: saveR,
                 login: login,
-                sse: import.meta.env.VITE_APP_SSE_MODE == 'true'
+                sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
+                napcat: import.meta.env.VITE_NAPCAT,
             }
         },
         methods: {
