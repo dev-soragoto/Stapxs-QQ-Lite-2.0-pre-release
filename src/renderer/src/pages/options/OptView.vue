@@ -49,7 +49,7 @@
                 </div>
             </div>
         </div>
-        <div class="ss-card">
+        <div v-if=" !napcat" class="ss-card">
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
                 <div id="opt_view_dark" class="opt-item">
@@ -82,7 +82,7 @@
                         </div>
                     </label>
                 </div>
-                <template v-if="runtimeData.sysConfig.opt_auto_win_color != true && !napcat">
+                <template v-if="runtimeData.sysConfig.opt_auto_win_color != true">
                     <div class="opt-item">
                         <div :class="checkDefault('theme_color')" />
                         <font-awesome-icon :icon="['fas', 'palette']" />
@@ -132,7 +132,7 @@
                     </label>
                 </div>
             </template>
-            <div v-if="!napcat" class="opt-item">
+            <div class="opt-item">
                 <div :class="checkDefault('chat_more_blur')" />
                 <font-awesome-icon :icon="['fas', 'expand']" />
                 <div>
@@ -162,7 +162,7 @@
                     </div>
                 </label>
             </div>
-            <template v-if="!runtimeData.sysConfig.chat_more_blur && !napcat">
+            <template v-if="!runtimeData.sysConfig.chat_more_blur">
                 <div class="opt-item">
                     <div :class="checkDefault('chat_background')" />
                     <font-awesome-icon :icon="['fas', 'image']" />

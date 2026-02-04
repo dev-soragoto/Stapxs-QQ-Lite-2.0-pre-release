@@ -19,6 +19,17 @@ body,
 .friend-body img,
 .chat-pan > div.info > svg,
 .chat-pan > div.info,
-.ss-card {
+.ss-card,
+.chat-pan > div.info > img,
+.chat-pan > div.more > div:nth-child(2) > div,
+.more-detail > div {
     border-radius: 14px !important;
+}
+
+.chat-pan {
+    border-left: none !important;
+}
+
+.logo-card {
+    background: rgba(var(--color-card-rgb),.3);
 }
