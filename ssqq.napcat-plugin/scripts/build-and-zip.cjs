@@ -1,17 +1,18 @@
 #!/usr/bin/env node
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-function run(cmd) {
-  console.log('> ' + cmd);
-  execSync(cmd, { stdio: 'inherit', cwd: root, shell: true });
+function run(cmd, args) {
+  const printable = [cmd].concat(args || []).join(' ');
+  console.log('> ' + printable);
+  execFileSync(cmd, args || [], { stdio: 'inherit', cwd: root });
 }
 
 try {
   // 1. build
-  run('npm run build');
+  run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'build']);
 
   // 2. collect files
   const files = [];
@@ -45,10 +46,7 @@ try {
   // Remove existing zip
   try { if (fs.existsSync(out)) fs.unlinkSync(out); } catch (e) {}
 
-  // Build zip command with quoted paths
-  const quoted = files.map(p => `"${p}"`).join(' ');
-  const cmd = `zip -r "${out}" ${quoted}`;
-  run(cmd);
+  run('zip', ['-r', out].concat(files));
 
   // cleanup temporary index.mjs if we created it
   if (tempCopied) {

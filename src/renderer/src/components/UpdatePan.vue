@@ -197,11 +197,10 @@
 
     .release-item {
         margin-bottom: 20px;
-        padding-bottom: 20px;
         border-bottom: 1px solid var(--color-card-2);
         background: var(--color-card);
         border-radius: 7px;
-        padding: 10px;
+        padding: 10px 10px 20px 10px;
     }
 
     .release-item hr {

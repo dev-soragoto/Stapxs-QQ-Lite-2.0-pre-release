@@ -46,6 +46,10 @@ try {
   execSync('yarn build:zip', {
     cwd: path.resolve(__dirname, '../ssqq.napcat-plugin'),
     stdio: 'inherit',
+    env: {
+      ...process.env,
+      PATH: '/usr/bin:/bin:/usr/sbin:/sbin'
+    }
   });
   console.log('ssqq.napcat-plugin build:zip 执行完成');
 } catch (e) {
