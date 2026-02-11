@@ -182,8 +182,7 @@
                     <select
                         v-model="runtimeData.sysConfig.record_recent_emoji"
                         name="record_recent_emoji"
-                        title="record_recent_emoji"
-                    >
+                        title="record_recent_emoji">
                         <option value="none">
                             {{ $t('不记录') }}
                         </option>

@@ -68,5 +68,7 @@ module.exports = {
         'vue/require-prop-types': 'off',
         // v-html
         'vue/no-v-html': 'off',
+        // 允许单词组件名
+        'vue/multi-word-component-names': 'off',
     },
 }

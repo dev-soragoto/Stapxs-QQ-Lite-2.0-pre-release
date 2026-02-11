@@ -116,8 +116,8 @@
                         </span>
                         <div v-else-if="item.type == 'at'"
                             :class="getAtClass(item.qq)">
-                            <a :data-id="item.qq"
-                                v-user-tooltip="() => getAtMember(item.qq)"
+                            <a v-user-tooltip="() => getAtMember(item.qq)"
+                                :data-id="item.qq"
                                 :data-group="data.group_id">
                                 {{ getAtName(item) }}
                             </a>

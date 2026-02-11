@@ -17,13 +17,11 @@
                         <div class="face">
                             <template
                                 v-for="num in recentEmojisList"
-                                :key="num"
-                            >
+                                :key="num">
                                 <div>
                                     <EmojiFace
                                         :emoji="Emoji.get(num)"
-                                        @click="addBaseFace(num)"
-                                    />
+                                        @click="addBaseFace(num)" />
                                 </div>
                             </template>
                         </div>
@@ -36,8 +34,7 @@
                             <div>
                                 <EmojiFace
                                     :emoji="Emoji.get(num)"
-                                    @click="addBaseFace(num)"
-                                />
+                                    @click="addBaseFace(num)" />
                             </div>
                         </template>
                     </div>
@@ -49,8 +46,7 @@
                             <div>
                                 <EmojiFace
                                     :emoji="Emoji.get(num)"
-                                    @click="addBaseFace(num)"
-                                />
+                                    @click="addBaseFace(num)" />
                             </div>
                         </template>
                     </div>
@@ -60,12 +56,10 @@
                     <div class="face">
                         <div
                             v-for="num in Emoji.emojiList"
-                            :key="num"
-                        >
+                            :key="num">
                             <EmojiFace
                                 :emoji="Emoji.get(num)"
-                                @click="addBaseFace(num)"
-                            />
+                                @click="addBaseFace(num)" />
                         </div>
                     </div>
                 </div>
@@ -80,14 +74,12 @@
                             <span
                                 v-for="(url, num) in recentCustomFacesList"
                                 :key="num"
-                                v-tooltip="customFaceTooltip(url)"
-                            >
+                                v-tooltip="customFaceTooltip(url)">
                                 <img
                                     loading="lazy"
                                     :src="url"
                                     :alt="'[' + $t('动画表情') + ']'"
-                                    @click="addImgFace(url)"
-                                />
+                                    @click="addImgFace(url)">
                             </span>
                         </div>
                     </template>
@@ -95,8 +87,7 @@
                         <span>{{ $t('收藏的表情') }}</span>
                         <font-awesome-icon
                             :icon="['fas', 'fa-rotate-right']"
-                            @click="reloadRoamingStamp"
-                        />
+                            @click="reloadRoamingStamp" />
                     </div>
                     <div class="face">
                         <div v-if="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
@@ -104,11 +95,11 @@
                             <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                             <span>{{ $t('一无所有') }}</span>
                         </div>
-                        <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                        <template v-else-if="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
                             <span v-for="(url, index) in runtimeData.stickerCache" :key="'stickers-' + index">
                                 <img
-                                    v-tooltip="customFaceTooltip(url)"
                                     v-show="url != 'end'"
+                                    v-tooltip="customFaceTooltip(url)"
                                     loading="lazy"
                                     :src="url"
                                     :alt="'[' + $t('动画表情') + ']'"
@@ -158,7 +149,7 @@
                             <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                             <span>{{ $t('暂无图片') }}</span>
                         </div>
-                        <template v-else="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                        <template v-else-if="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
                             <span v-for="(emoji, index) in localEmojis" :key="index">
                                 <img
                                     v-tooltip="customFaceTooltip(emoji.url)"
