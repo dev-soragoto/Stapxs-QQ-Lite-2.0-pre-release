@@ -211,3 +211,7 @@ set_group_title:
 # 禁言成员
 ban_mumber:
     name: set_group_ban
+
+# 撤回消息
+delete_msg:
+    name: delete_msg

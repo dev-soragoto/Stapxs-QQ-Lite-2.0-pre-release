@@ -12,6 +12,12 @@
             <a>{{ info.name }}</a>
             <span>{{ $t('撤回了一条消息') }}</span>
             <div />
+            <a
+                v-if="data.originMsg"
+                @click="$emit('reedit', data.originMsg)"
+            >
+                {{ $t('重新编辑') }}
+            </a>
         </div>
         <div v-else-if="data.notice_type == 'group_ban'" class="note-ban note-base">
             <template v-if="data.sub_type === 'ban'">
@@ -57,11 +63,12 @@
         getTrueLang,
     } from '@renderer/function/utils/systemUtil'
     import { pokeAnime } from '@renderer/function/utils/msgUtil'
-import { backend } from '@renderer/runtime/backend'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'NoticeBody',
         props: ['data', 'id'],
+        emits: ['reedit'],
         data() {
             return {
                 trueLang: getTrueLang(),

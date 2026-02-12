@@ -109,7 +109,8 @@
                     <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
                         :id="uuid()"
                         :key="'notice-' + index"
-                        :data="msgIndex" />
+                        :data="msgIndex"
+                        @reedit="reedit" />
                 </template>
             </TransitionGroup>
         </div>
@@ -237,6 +238,10 @@
                     <div>
                         <font-awesome-icon :icon="['fas', 'copy']" @click="copyMsgs" />
                         <span>{{ $t('复制') }}</span>
+                    </div>
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'xmark']" @click="recallMsgs" />
+                        <span>{{ $t('撤回') }}</span>
                     </div>
                     <div>
                         <span @click="multipleSelectList = []">{{ multipleSelectList.length }}</span>
@@ -1793,13 +1798,13 @@ import { Img } from '@renderer/function/model/img'
             /**
              * 撤回消息
              */
-            revokeMsg() {
+            async revokeMsg() {
                 const msg = this.selectedMsg
                 if (msg !== null) {
                     const msgId = msg.message_id
-                    Connector.send('delete_msg', { message_id: msgId }, 'deleteMsg')
                     // 关闭消息菜单
                     this.closeMsgMenu()
+                    await Connector.callApi('delete_msg', { message_id: msgId })
                 }
             },
 
@@ -2454,6 +2459,22 @@ import { Img } from '@renderer/function/model/img'
             },
 
             /**
+             * 批量撤回消息
+             */
+            async recallMsgs() {
+                const msgList = this.list.filter((item: any) => this.multipleSelectList.includes(item.message_id))
+
+                const tasks: Promise<true | undefined>[] = []
+                for (const msg of msgList) {
+                    const msgId = msg.message_id
+                    tasks.push(Connector.callApi('delete_msg', { message_id: msgId }))
+                }
+                // 关闭多选菜单
+                this.multipleSelectList = []
+                await Promise.all(tasks)
+            },
+
+            /**
              * 获取显示群精华消息
              */
             showJin() {
@@ -2550,6 +2571,28 @@ import { Img } from '@renderer/function/model/img'
                 }
                 this.tags.showMoreDetail = false
                 this.tags.menuDisplay.poke = false
+            },
+
+            reedit(msg: any) {
+                this.msg = ''
+                this.sendCache = []
+                this.imgCache.clear()
+                this.cancelReply()
+                for (const seg of msg.message) {
+                    if (seg.type === 'text') {
+                        this.msg += seg.text
+                    } else if (seg.type === 'reply') {
+                        const msg = this.list.find((item: any) => item.message_id == seg.id)
+                        if (!msg) continue
+                        this.replyMsg(msg)
+                    } else {
+                        this.addSpecialMsg({
+                            addText: false,
+                            msgObj: seg,
+                        })
+                        this.msg += '[SQ:' + (this.sendCache.length - 1) + ']'
+                    }
+                }
             },
 
             /**
