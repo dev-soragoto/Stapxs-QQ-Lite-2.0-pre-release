@@ -210,7 +210,8 @@
                                             <EmojiFace v-if="context.type === 'face'"
                                                 :emoji="Emoji.get(Number(context.data.id))" />
                                             <img v-if="context.type === 'image'"
-                                                :src="context.data.url">
+                                                :src="context.data.url"
+                                                @click="viewerEssImg(context.data.url)">
                                         </template>
                                     </div>
                                 </div>
@@ -457,6 +458,10 @@
                         <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
                         <a>{{ $t('撤回') }}</a>
                     </div>
+                    <div v-show="tags.menuDisplay.reedit" @click="reeditMsg">
+                        <div><font-awesome-icon :icon="['fas', 'pencil']" /></div>
+                        <a>{{ $t('重新编辑') }}</a>
+                    </div>
                     <div v-show="tags.menuDisplay.at"
                         @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: Number(selectedMsg.sender.user_id) }, addText: true, }): '';
                                 toMainInput();
@@ -688,6 +693,7 @@ import { Img } from '@renderer/function/model/img'
                         copyImg: false,
                         downloadImg: false as string | false,
                         revoke: false,
+                        reedit: false,
                         at: true,
                         poke: false,
                         remove: false,
@@ -1313,6 +1319,8 @@ import { Img } from '@renderer/function/model/img'
                             // 自己的消息、管理员和群主会显示撤回
                             this.tags.menuDisplay.revoke = true
                         }
+                        // 重新编辑判定
+                        this.tags.menuDisplay.reedit = this.tags.menuDisplay.revoke && data.sender.user_id === runtimeData.loginInfo.uin
                         if (data.revoke === true) {
                             // 已被撤回的自己的消息只显示复制
                             this.tags.menuDisplay.relpy = false
@@ -1429,6 +1437,7 @@ import { Img } from '@renderer/function/model/img'
                     downloadImg: false,
                     copyImg: false,
                     revoke: false,
+                    reedit: false,
                     at: false,
                     poke: false,
                     remove: false,
@@ -1800,12 +1809,37 @@ import { Img } from '@renderer/function/model/img'
              */
             async revokeMsg() {
                 const msg = this.selectedMsg
-                if (msg !== null) {
-                    const msgId = msg.message_id
-                    // 关闭消息菜单
-                    this.closeMsgMenu()
-                    await Connector.callApi('delete_msg', { message_id: msgId })
+
+                // 关闭消息菜单
+                this.closeMsgMenu()
+
+                if (!msg) {
+                    new PopInfo().add(PopType.ERR, this.$t('获取选中消息失败'))
+                    return
                 }
+
+                const msgId = msg.message_id
+                await Connector.callApi('delete_msg', { message_id: msgId })
+            },
+
+            /**
+             * 重新编辑消息
+             */
+            async reeditMsg() {
+                const msg = this.selectedMsg
+
+                // 关闭消息菜单
+                this.closeMsgMenu()
+
+                if (!msg) {
+                    new PopInfo().add(PopType.ERR, this.$t('获取选中消息失败'))
+                    return
+                }
+
+                const msgId = msg.message_id
+                await Connector.callApi('delete_msg', { message_id: msgId })
+
+                this.reedit(msg)
             },
 
             /**
@@ -2573,6 +2607,9 @@ import { Img } from '@renderer/function/model/img'
                 this.tags.menuDisplay.poke = false
             },
 
+            /**
+             * 重新编辑消息
+             */
             reedit(msg: any) {
                 this.msg = ''
                 this.sendCache = []
@@ -2620,6 +2657,14 @@ import { Img } from '@renderer/function/model/img'
                         )
                     }
                 }
+            },
+
+            /**
+             * 预览精华消息图片
+             */
+            viewerEssImg(url: string) {
+                if (!this.viewer) return
+                (this.viewer as any).open(new Img(url))
             },
 
             /**
