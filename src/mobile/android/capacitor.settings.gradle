@@ -21,4 +21,4 @@ include ':untiny-capacitor-safe-area'
 project(':untiny-capacitor-safe-area').projectDir = new File('../../../node_modules/@untiny/capacitor-safe-area/android')
 
 include ':capacitor-onebot-connctor'
-project(':capacitor-onebot-connctor').projectDir = new File('../../../node_modules/capacitor-onebot-connctor/android')
+project(':capacitor-onebot-connctor').projectDir = new File('../../../ssqq.capacitor-onebot-connector/android')

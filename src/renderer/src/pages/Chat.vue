@@ -2222,9 +2222,10 @@ import { Img } from '@renderer/function/model/img'
              * PS：我实在懒得再做一次回车发送了。所以当点击图片发送框的输入框后，焦点会被移动到主输入框上以方便回车发送
              */
             toMainInput() {
-                const mainInput = document.getElementById('main-input')
-                if (mainInput !== null) {
-                    mainInput.focus()
+                const input = (document.getElementById( 'main-input') as HTMLTextAreaElement | HTMLInputElement) ??
+                    (document.getElementById( 'main-input-ex') as HTMLTextAreaElement | HTMLInputElement)
+                if (input !== null) {
+                    input.focus()
                 }
             },
 

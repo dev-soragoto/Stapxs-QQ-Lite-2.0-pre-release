@@ -14,8 +14,7 @@
             <div />
             <a
                 v-if="data.originMsg"
-                @click="$emit('reedit', data.originMsg)"
-            >
+                @click="$emit('reedit', data.originMsg)">
                 {{ $t('重新编辑') }}
             </a>
         </div>

@@ -17,6 +17,10 @@ dirs=(
     # tauri
     # "src/tauri/target"
     "dist_tauri"
+    # ssqq.napcat-plugin
+    "ssqq.napcat-plugin/dist"
+    "ssqq.napcat-plugin/webui/dist"
+    "ssqq.napcat-plugin/napcat-plugin-ssqq.zip"
 )
 
 for dir in ${dirs[@]}; do
