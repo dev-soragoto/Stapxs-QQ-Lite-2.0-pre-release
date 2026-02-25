@@ -43,7 +43,7 @@ import {
 } from '@renderer/function/utils/appUtil'
 import { reactive, markRaw, defineAsyncComponent, nextTick } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
-import { Connector, login } from './connect'
+import { Connector, login, saveConnectionToHistory } from './connect'
 import {
     GroupFileElem,
     GroupFileFolderElem,
@@ -434,6 +434,10 @@ const msgFunctions = {
             // 完成登陆初始化
             runtimeData.loginInfo = data
             login.status = true
+
+            // 保存用户信息到连接历史
+            saveConnectionToHistory(login.address, login.token, data.uin, data.nickname)
+
             // 显示账户菜单
             updateMenu({
                 parent: 'account',

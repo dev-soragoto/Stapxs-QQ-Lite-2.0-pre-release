@@ -56,11 +56,43 @@
                             <p>{{ $t('连接到 OneBot') }}</p>
                             <form @submit.prevent @submit="connect">
                                 <template v-if="loginInfo.quickLogin == null || loginInfo.quickLogin.length == 0">
-                                    <label v-if="!sse">
-                                        <font-awesome-icon :icon="['fas', 'link']" />
-                                        <input id="sev_address" v-model="loginInfo.address" :placeholder="$t('连接地址')"
-                                            class="ss-input" autocomplete="off">
-                                    </label>
+                                    <!-- 地址输入区域 -->
+                                    <div v-if="!sse" class="address-input-container">
+                                        <label class="address-input-wrapper">
+                                            <font-awesome-icon :icon="['fas', 'link']" />
+                                            <input id="sev_address" v-model="loginInfo.address" :placeholder="$t('连接地址')"
+                                                class="ss-input" autocomplete="off" @input="onAddressInput">
+                                            <!-- 历史选择按钮 -->
+                                            <div v-if="(loginInfo.connectionHistory || []).length > 0"
+                                                class="history-dropdown-trigger"
+                                                @click="toggleHistoryDropdown($event)">
+                                                <font-awesome-icon :icon="['fas', 'caret-down']" />
+                                            </div>
+                                        </label>
+                                        <!-- 历史下拉列表 -->
+                                        <div v-show="tags.showHistoryDropdown" class="history-dropdown-menu ss-card">
+                                            <div v-for="(item, index) in (loginInfo.connectionHistory || [])"
+                                                :key="index"
+                                                class="history-dropdown-item"
+                                                :class="{ 'selected': tags.selectedHistoryIndex === index }"
+                                                @click="selectHistoryItem(index)">
+                                                <div v-if="item.uin" class="history-item-avatar">
+                                                    <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.uin}`" :alt="item.nickname || '未知用户'">
+                                                </div>
+                                                <div class="history-item-content">
+                                                    <span class="history-item-name">
+                                                        {{ item.nickname ? `${item.nickname}` : $t('未知用户') }}
+                                                    </span>
+                                                    <span class="history-item-detail">
+                                                        {{ item.uin }}
+                                                    </span>
+                                                </div>
+                                                <div class="history-item-delete" @click.stop="deleteHistoryConnection(index, $event)">
+                                                    <font-awesome-icon :icon="['fas', 'trash']" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </template>
                                 <div v-else class="ss-card quick-login">
                                     <div class="title">
@@ -210,7 +242,7 @@ import anime from 'animejs'
 import packageInfo from '../../../package.json'
 
 import { defineComponent, defineAsyncComponent, useTemplateRef, provide } from 'vue'
-import { Connector, login as loginInfo } from '@renderer/function/connect'
+import { Connector, login as loginInfo, loadConnectionHistory, loadConnectionFromHistory, deleteConnectionHistory } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
@@ -253,7 +285,9 @@ export default defineComponent({
                 showChat: false,
                 isSavePwdClick: false,
                 savePassword: false,
-                quickLoginSelect: ''
+                quickLoginSelect: '',
+                selectedHistoryIndex: -1,
+                showHistoryDropdown: false
             },
             fps: {
                 last: Date.now(),
@@ -265,6 +299,10 @@ export default defineComponent({
     mounted() {
         const logger = new Logger()
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
+
+        // 添加全局点击事件监听，用于关闭下拉菜单
+        document.addEventListener('click', this.handleClickOutside)
+
         // 页面加载完成后
         window.onload = async () => {
             await backend.init() // Desktop：初始化客户端功能
@@ -347,6 +385,8 @@ export default defineComponent({
             }
             // 加载密码保存和自动连接
             loginInfo.address = runtimeData.sysConfig.address
+            // 加载连接历史
+            loginInfo.connectionHistory = loadConnectionHistory()
             if (
                 runtimeData.sysConfig.save_password !== undefined &&
                 runtimeData.sysConfig.save_password !== true
@@ -503,6 +543,10 @@ export default defineComponent({
             }
         }
     },
+    unmounted() {
+        // 移除全局点击事件监听器
+        document.removeEventListener('click', this.handleClickOutside)
+    },
     methods: {
         updateNapcatColor(token: string) {
             const logger = new Logger()
@@ -573,6 +617,72 @@ export default defineComponent({
         },
         cancelQUickLogin() {
             loginInfo.quickLogin = null
+        },
+
+        /**
+         * 地址输入框变化时
+         */
+        onAddressInput() {
+            // 用户手动修改地址时，取消历史选择
+            if (this.tags.selectedHistoryIndex >= 0) {
+                this.tags.selectedHistoryIndex = -1
+            }
+        },
+
+        /**
+         * 切换历史下拉显示
+         */
+        toggleHistoryDropdown(event: Event) {
+            event.stopPropagation()
+            event.preventDefault()
+            this.tags.showHistoryDropdown = !this.tags.showHistoryDropdown
+        },
+
+        /**
+         * 点击外部关闭下拉菜单
+         */
+        handleClickOutside(event: Event) {
+            if (!this.tags.showHistoryDropdown) return
+
+            const target = event.target as HTMLElement
+            const container = document.querySelector('.address-input-container')
+
+            if (container && !container.contains(target)) {
+                this.tags.showHistoryDropdown = false
+            }
+        },
+
+        /**
+         * 选择历史连接
+         */
+        selectHistoryItem(index: number) {
+            this.tags.selectedHistoryIndex = index
+
+            // 选中了历史连接
+            if (loginInfo.connectionHistory && loginInfo.connectionHistory[index]) {
+                const item = loginInfo.connectionHistory[index]
+                loadConnectionFromHistory(item)
+            }
+
+            this.tags.showHistoryDropdown = false
+        },
+
+        /**
+         * 删除历史连接
+         */
+        deleteHistoryConnection(index: number, event?: Event) {
+            if (event) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            deleteConnectionHistory(index)
+            // 如果删除的是当前选中的，取消选择
+            if (this.tags.selectedHistoryIndex === index) {
+                this.tags.selectedHistoryIndex = -1
+            } else if (this.tags.selectedHistoryIndex > index) {
+                // 如果删除的在当前选中之前，索引需要减1
+                this.tags.selectedHistoryIndex--
+            }
         },
 
         /**

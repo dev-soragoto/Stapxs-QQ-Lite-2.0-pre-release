@@ -41,6 +41,7 @@ export const optDefault: { [key: string]: any } = {
     notice_group: {},
     auto_connect: false,
     local_emoji_folder: null,
+    connection_history: [],
     // View
     language: 'zh-CN',
     opt_dark: false,

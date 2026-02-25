@@ -1,4 +1,15 @@
 /**
+ * 连接历史记录项
+ */
+export interface ConnectionHistoryItem {
+    address: string
+    token: string
+    uin?: string
+    nickname?: string
+    lastConnected: number
+}
+
+/**
  * 登录状态记录（地址、密钥、状态等）
  */
 export interface LoginCacheElem {
@@ -7,6 +18,7 @@ export interface LoginCacheElem {
     token: string
     status: boolean,
     creating: boolean
+    connectionHistory: ConnectionHistoryItem[]
 }
 
 export interface PopInfoElem {
