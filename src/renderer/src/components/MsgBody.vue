@@ -248,14 +248,15 @@
                 <template v-else>
                     <template v-for="(item, index) in data.message"
                         :key="data.message_id + '-m-' + index">
-                        <CardMessage v-if="item.type == 'xml' || item.type == 'json'"
+                        <span v-if="isDebugMsg && (item.type == 'xml' || item.type == 'json')" class="msg-text">{{ item }}</span>
+                        <CardMessage v-else-if="item.type == 'xml' || item.type == 'json'"
                             :id="data.message_id"
                             :item="item"
                             @page-view="loadLinkPreview" />
                     </template>
                 </template>
                 <!-- 链接预览框 -->
-                <div v-if="pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"
+                <div v-if="!isDebugMsg && pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"
                     :class="'msg-link-view ' + linkViewStyle">
                     <template v-if="pageViewInfo.type == undefined">
                         <div :class="'bar' + (isMe ? ' me' : '')" />
@@ -731,7 +732,7 @@ function getUserById(id: number): IUser | undefined {
                 const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
                 text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
                 const linkList = text.match(reg)
-                if (linkList !== null && !this.gotLink) {
+                if (linkList !== null && !this.gotLink && !this.isDebugMsg) {
                     queueMicrotask(async() => {
                         this.gotLink = true
                         const fistLink = linkList[0]
