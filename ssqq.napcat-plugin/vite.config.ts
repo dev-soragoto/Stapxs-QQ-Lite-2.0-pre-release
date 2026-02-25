@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import { builtinModules } from 'module';
 
@@ -13,5 +13,5 @@ export default defineConfig({
     lib: { entry: 'index.ts', formats: ['es'], fileName: () => 'index.mjs' },
     rollupOptions: { external: [...nodeModules] }
   },
-  plugins: [nodeResolve()]
+  plugins: [nodeResolve() as PluginOption]
 });

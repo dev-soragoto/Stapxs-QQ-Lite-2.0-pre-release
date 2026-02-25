@@ -64,81 +64,80 @@
             <span>{{ $t('加载中') }}</span>
         </div>
         <!-- 消息显示区 -->
-        <div v-if="!details[3].open"
-            id="msgPan" class="chat"
+        <div id="msgPan" class="chat"
             style="scroll-behavior: smooth"
-            @scroll="chatScroll">
-            <div v-if="!runtimeData.tags.canLoadHistory" class="note note-nomsg">
-                <hr>
-                <a>{{ $t('没有更多消息了') }}</a>
-            </div>
-            <div v-if="runtimeData.tags.loadHistoryFail" class="note note-nomsg">
-                <hr>
-                <a>{{ $t('获取历史记录失败') }}</a>
-            </div>
-            <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
-            <NoticeBody v-if="tags.nowGetHistroy && list.length > 0"
-                :data="{ sub_type: 'time', time: list[0].time }" />
-            <TransitionGroup :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
-                <template v-for="(msgIndex, index) in list">
-                    <!-- 时间戳 -->
-                    <NoticeBody
-                        v-if="isShowTime(list[Number(index) - 1] ? list[Number(index) - 1].time : undefined, msgIndex.time)"
-                        :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
-                        :data="{ sub_type: 'time', time: msgIndex.time }" />
-                    <!-- [已删除]消息 -->
-                    <NoticeBody
-                        v-if="isDeleteMsg(msgIndex)"
-                        :key="'delete-' + msgIndex.message_id"
-                        :data="{ sub_type: 'delete' }" />
-                    <!-- 消息体 -->
-                    <MsgBody v-else-if="(msgIndex.post_type === 'message' ||
-                                 msgIndex.post_type === 'message_sent') &&
-                                 msgIndex.message.length > 0"
-                        :key="msgIndex.fake_message_id ?? msgIndex.message_id"
-                        :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
-                        :data="msgIndex"
-                        :image-list-header="chatImg"
-                        @click="msgClick($event, msgIndex)"
-                        @show-menu="showMsgMeun"
-                        @scroll-to-msg="scrollToMsg"
-                        @image-loaded="imgLoadedScroll"
-                        @left-move="replyMsg"
-                        @send-poke="sendPoke" />
-                    <!-- 其他通知消息 -->
-                    <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
-                        :id="uuid()"
-                        :key="'notice-' + index"
-                        :data="msgIndex"
-                        @reedit="reedit" />
-                </template>
-            </TransitionGroup>
-        </div>
-        <div v-else id="msgPan"
-            class="chat" style="scroll-behavior: smooth">
-            <!-- 搜索消息结果显示 -->
-            <TransitionGroup
-                :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
-                tag="div">
-                <template v-for="(msgIndex, index) in tags.search.list">
-                    <!-- 时间戳 -->
-                    <NoticeBody
-                        v-if="isShowTime(list[Number(index) - 1] ? list[Number(index) - 1].time : undefined, msgIndex.time)"
-                        :key="'notice-time-' + index"
-                        :data="{ sub_type: 'time', time: msgIndex.time }" />
-                    <!-- 消息体 -->
-                    <MsgBody v-if=" (msgIndex.post_type === 'message' ||
-                                 msgIndex.post_type === 'message_sent') &&
-                                 msgIndex.message.length > 0"
-                        :key="msgIndex.fake_message_id ?? msgIndex.message_id"
-                        :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
-                        :data="msgIndex"
-                        @scroll-to-msg="scrollToMsg"
-                        @show-menu="showMsgMeun"
-                        @image-loaded="imgLoadedScroll"
-                        @left-move="replyMsg" />
-                </template>
-            </TransitionGroup>
+            @scroll="chatScroll($event, details[3].open)">
+            <template v-if="!details[3].open">
+                <div v-if="!runtimeData.tags.canLoadHistory" class="note note-nomsg">
+                    <hr>
+                    <a>{{ $t('没有更多消息了') }}</a>
+                </div>
+                <div v-if="runtimeData.tags.loadHistoryFail" class="note note-nomsg">
+                    <hr>
+                    <a>{{ $t('获取历史记录失败') }}</a>
+                </div>
+                <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
+                <NoticeBody v-if="tags.nowGetHistroy && list.length > 0"
+                    :data="{ sub_type: 'time', time: list[0].time }" />
+                <TransitionGroup :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
+                    <template v-for="(msgIndex, index) in list">
+                        <!-- 时间戳 -->
+                        <NoticeBody
+                            v-if="isShowTime(list[Number(index) - 1] ? list[Number(index) - 1].time : undefined, msgIndex.time)"
+                            :key="'notice-time-' + (msgIndex.time / ( 4 * 60 )).toFixed(0)"
+                            :data="{ sub_type: 'time', time: msgIndex.time }" />
+                        <!-- [已删除]消息 -->
+                        <NoticeBody
+                            v-if="isDeleteMsg(msgIndex)"
+                            :key="'delete-' + msgIndex.message_id"
+                            :data="{ sub_type: 'delete' }" />
+                        <!-- 消息体 -->
+                        <MsgBody v-else-if="(msgIndex.post_type === 'message' ||
+                                     msgIndex.post_type === 'message_sent') &&
+                                     msgIndex.message.length > 0"
+                            :key="msgIndex.fake_message_id ?? msgIndex.message_id"
+                            :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
+                            :data="msgIndex"
+                            :image-list-header="chatImg"
+                            @click="msgClick($event, msgIndex)"
+                            @show-menu="showMsgMeun"
+                            @scroll-to-msg="scrollToMsg"
+                            @image-loaded="imgLoadedScroll"
+                            @left-move="replyMsg"
+                            @send-poke="sendPoke" />
+                        <!-- 其他通知消息 -->
+                        <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
+                            :id="uuid()"
+                            :key="'notice-' + index"
+                            :data="msgIndex" />
+                    </template>
+                </TransitionGroup>
+            </template>
+            <template v-else>
+                <!-- 搜索消息结果显示 -->
+                <TransitionGroup
+                    :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
+                    tag="div">
+                    <template v-for="(msgIndex, index) in tags.search.list">
+                        <!-- 时间戳 -->
+                        <NoticeBody
+                            v-if="isShowTime(list[Number(index) - 1] ? list[Number(index) - 1].time : undefined, msgIndex.time)"
+                            :key="'notice-time-' + index"
+                            :data="{ sub_type: 'time', time: msgIndex.time }" />
+                        <!-- 消息体 -->
+                        <MsgBody v-if=" (msgIndex.post_type === 'message' ||
+                                     msgIndex.post_type === 'message_sent') &&
+                                     msgIndex.message.length > 0"
+                            :key="msgIndex.fake_message_id ?? msgIndex.message_id"
+                            :selected="multipleSelectList.includes(msgIndex.message_id) || tags.menuDisplay.menuSelectedMsgId == msgIndex.message_id"
+                            :data="msgIndex"
+                            @scroll-to-msg="scrollToMsg"
+                            @show-menu="showMsgMeun"
+                            @image-loaded="imgLoadedScroll"
+                            @left-move="replyMsg" />
+                    </template>
+                </TransitionGroup>
+            </template>
         </div>
         <!-- 滚动到底部悬浮标志 -->
         <div v-show="tags.showBottomButton"
@@ -383,7 +382,7 @@
                             @keyup="mainKeyUp"
                             @click="selectSQIn"
                             @input="handleInput">
-                        <textarea v-else id="main-input"
+                        <textarea v-else id="main-input-ex"
                             v-model="msg"
                             type="text"
                             :disabled="runtimeData.tags.openSideBar"
@@ -791,7 +790,8 @@ import { Img } from '@renderer/function/model/img'
         },
         methods: {
             resizeMainInput(target?: HTMLTextAreaElement | HTMLInputElement | null) {
-                const input = target ?? (document.getElementById('main-input') as HTMLTextAreaElement | HTMLInputElement | null)
+                let input = target ?? (document.getElementById('main-input') as HTMLTextAreaElement | HTMLInputElement | null)
+                input = input ?? (document.getElementById('main-input-ex') as HTMLTextAreaElement | HTMLInputElement | null)
                 if (!input) return
                 if (!this.Option.get('use_breakline')) {
                     input.style.height = ''
@@ -833,7 +833,9 @@ import { Img } from '@renderer/function/model/img'
              * 消息区滚动
              * @param event 滚动事件
              */
-            chatScroll(event: Event) {
+            chatScroll(event: Event, pass: boolean) {
+                if(pass) return
+
                 const body = event.target as HTMLDivElement
                 const bar = document.getElementById('send-more')
                 // 顶部
@@ -1203,9 +1205,8 @@ import { Img } from '@renderer/function/model/img'
              * 选中光标在其内部的那个 SQLCode
              */
             selectSQIn() {
-                const input = document.getElementById(
-                    'main-input',
-                ) as HTMLInputElement
+                const input = (document.getElementById( 'main-input') as HTMLTextAreaElement | HTMLInputElement | null) ??
+                    (document.getElementById( 'main-input-ex') as HTMLTextAreaElement | HTMLInputElement | null)
                 // 如果文本框里本来就选中着什么东西就不触发了
                 if (
                     input !== null &&
@@ -1995,9 +1996,8 @@ import { Img } from '@renderer/function/model/img'
              * @param data obj
              */
             addSpecialMsg(data: SQCodeElem) {
-                const input = document.getElementById(
-                    'main-input',
-                ) as HTMLInputElement
+                const input = (document.getElementById( 'main-input') as HTMLTextAreaElement | HTMLInputElement) ??
+                    (document.getElementById( 'main-input-ex') as HTMLTextAreaElement | HTMLInputElement)
                 if (data !== undefined) {
                     const index = this.sendCache.length
                     this.sendCache.push(data.msgObj)

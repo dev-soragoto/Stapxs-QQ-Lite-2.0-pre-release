@@ -657,7 +657,6 @@ span.user-title.robot {
     z-index: 1;
 }
 .note-nomsg > hr {
-    border-style: inset !important;
     border: 0 !important;
     border-bottom: 1px solid var(--color-main) !important;
     opacity: 0.5;

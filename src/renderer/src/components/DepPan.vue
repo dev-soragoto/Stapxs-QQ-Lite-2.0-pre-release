@@ -48,7 +48,7 @@
             <div :name="$t('许可版权声明')" class="dept-list-body">
                 <div class="ss-card info">
                     <font-awesome-icon :icon="['fas', 'circle-info']" />
-                    <span id="deptLink">{{
+                    <span>{{
                         $t('你可以在项目仓库的依赖关系图中找到大部分依赖，而这里列出了一些不由包管理管理的依赖。')
                     }}</span>
                 </div>
@@ -105,7 +105,7 @@
             <div :name="$t('三方服务声明')" class="dept-list-body">
                 <div class="ss-card info">
                     <font-awesome-icon :icon="['fas', 'circle-info']" />
-                    <span id="deptLink">{{
+                    <span>{{
                         $t('Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。')
                     }}</span>
                 </div>

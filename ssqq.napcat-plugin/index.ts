@@ -1,7 +1,8 @@
 import type {
     PluginModule,
     PluginLogger,
-    PluginConfigSchema
+    PluginConfigSchema,
+    NapCatPluginContext
 } from 'napcat-types/napcat-onebot/network/plugin-manger'
 
 let logger: PluginLogger | null = null
@@ -9,7 +10,7 @@ const startTime = Date.now()
 
 export let plugin_config_ui: PluginConfigSchema = []
 
-export const plugin_init: PluginModule['plugin_init'] = (ctx) => {
+export const plugin_init: PluginModule['plugin_init'] = (ctx: NapCatPluginContext) => {
     logger = ctx.logger
 
     plugin_config_ui = ctx.NapCatConfig.combine(

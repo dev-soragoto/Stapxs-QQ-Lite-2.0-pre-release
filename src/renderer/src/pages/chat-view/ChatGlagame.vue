@@ -162,15 +162,12 @@ export default defineComponent({
             this.onLoading = false
             this.dataList = []
 
-            const input = document.getElementById('main-input')
+            const input = (document.getElementById( 'main-input') as HTMLTextAreaElement | HTMLInputElement) ??
+                    (document.getElementById( 'main-input-ex') as HTMLTextAreaElement | HTMLInputElement)
             if (input) {
-                if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
-                    input.value = item
-                    input.dispatchEvent(new Event('input', { bubbles: true }))
-                    input.focus()
-                } else {
-                    input.textContent = String(item)
-                }
+                input.value = item
+                input.dispatchEvent(new Event('input', { bubbles: true }))
+                input.focus()
             }
         },
     },
