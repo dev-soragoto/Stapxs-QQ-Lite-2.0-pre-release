@@ -164,3 +164,10 @@ set_group_title:
 # 设置消息回应
 send_respond:
     name: set_group_reaction
+
+
+
+# 我的lgr啊，你怎么似了？？？呜呜呜～～～祈祷有天可以复活吧
+# 撤回消息
+delete_msg:
+    name: delete_msg

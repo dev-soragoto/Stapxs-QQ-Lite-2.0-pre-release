@@ -109,7 +109,8 @@
                     <NoticeBody v-else-if="msgIndex.post_type === 'notice'"
                         :id="uuid()"
                         :key="'notice-' + index"
-                        :data="msgIndex" />
+                        :data="msgIndex"
+                        @reedit="reedit" />
                 </template>
             </TransitionGroup>
         </div>
@@ -209,7 +210,8 @@
                                             <EmojiFace v-if="context.type === 'face'"
                                                 :emoji="Emoji.get(Number(context.data.id))" />
                                             <img v-if="context.type === 'image'"
-                                                :src="context.data.url">
+                                                :src="context.data.url"
+                                                @click="viewerEssImg(context.data.url)">
                                         </template>
                                     </div>
                                 </div>
@@ -237,6 +239,10 @@
                     <div>
                         <font-awesome-icon :icon="['fas', 'copy']" @click="copyMsgs" />
                         <span>{{ $t('复制') }}</span>
+                    </div>
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'xmark']" @click="recallMsgs" />
+                        <span>{{ $t('撤回') }}</span>
                     </div>
                     <div>
                         <span @click="multipleSelectList = []">{{ multipleSelectList.length }}</span>
@@ -451,6 +457,10 @@
                     <div v-show="tags.menuDisplay.revoke" @click="revokeMsg">
                         <div><font-awesome-icon :icon="['fas', 'xmark']" /></div>
                         <a>{{ $t('撤回') }}</a>
+                    </div>
+                    <div v-show="tags.menuDisplay.reedit" @click="reeditMsg">
+                        <div><font-awesome-icon :icon="['fas', 'pencil']" /></div>
+                        <a>{{ $t('重新编辑') }}</a>
                     </div>
                     <div v-show="tags.menuDisplay.at"
                         @click="selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: Number(selectedMsg.sender.user_id) }, addText: true, }): '';
@@ -683,6 +693,7 @@ import { Img } from '@renderer/function/model/img'
                         copyImg: false,
                         downloadImg: false as string | false,
                         revoke: false,
+                        reedit: false,
                         at: true,
                         poke: false,
                         remove: false,
@@ -1308,6 +1319,8 @@ import { Img } from '@renderer/function/model/img'
                             // 自己的消息、管理员和群主会显示撤回
                             this.tags.menuDisplay.revoke = true
                         }
+                        // 重新编辑判定
+                        this.tags.menuDisplay.reedit = this.tags.menuDisplay.revoke && data.sender.user_id === runtimeData.loginInfo.uin
                         if (data.revoke === true) {
                             // 已被撤回的自己的消息只显示复制
                             this.tags.menuDisplay.relpy = false
@@ -1424,6 +1437,7 @@ import { Img } from '@renderer/function/model/img'
                     downloadImg: false,
                     copyImg: false,
                     revoke: false,
+                    reedit: false,
                     at: false,
                     poke: false,
                     remove: false,
@@ -1793,14 +1807,39 @@ import { Img } from '@renderer/function/model/img'
             /**
              * 撤回消息
              */
-            revokeMsg() {
+            async revokeMsg() {
                 const msg = this.selectedMsg
-                if (msg !== null) {
-                    const msgId = msg.message_id
-                    Connector.send('delete_msg', { message_id: msgId }, 'deleteMsg')
-                    // 关闭消息菜单
-                    this.closeMsgMenu()
+
+                // 关闭消息菜单
+                this.closeMsgMenu()
+
+                if (!msg) {
+                    new PopInfo().add(PopType.ERR, this.$t('获取选中消息失败'))
+                    return
                 }
+
+                const msgId = msg.message_id
+                await Connector.callApi('delete_msg', { message_id: msgId })
+            },
+
+            /**
+             * 重新编辑消息
+             */
+            async reeditMsg() {
+                const msg = this.selectedMsg
+
+                // 关闭消息菜单
+                this.closeMsgMenu()
+
+                if (!msg) {
+                    new PopInfo().add(PopType.ERR, this.$t('获取选中消息失败'))
+                    return
+                }
+
+                const msgId = msg.message_id
+                await Connector.callApi('delete_msg', { message_id: msgId })
+
+                this.reedit(msg)
             },
 
             /**
@@ -2454,6 +2493,22 @@ import { Img } from '@renderer/function/model/img'
             },
 
             /**
+             * 批量撤回消息
+             */
+            async recallMsgs() {
+                const msgList = this.list.filter((item: any) => this.multipleSelectList.includes(item.message_id))
+
+                const tasks: Promise<true | undefined>[] = []
+                for (const msg of msgList) {
+                    const msgId = msg.message_id
+                    tasks.push(Connector.callApi('delete_msg', { message_id: msgId }))
+                }
+                // 关闭多选菜单
+                this.multipleSelectList = []
+                await Promise.all(tasks)
+            },
+
+            /**
              * 获取显示群精华消息
              */
             showJin() {
@@ -2553,6 +2608,31 @@ import { Img } from '@renderer/function/model/img'
             },
 
             /**
+             * 重新编辑消息
+             */
+            reedit(msg: any) {
+                this.msg = ''
+                this.sendCache = []
+                this.imgCache.clear()
+                this.cancelReply()
+                for (const seg of msg.message) {
+                    if (seg.type === 'text') {
+                        this.msg += seg.text
+                    } else if (seg.type === 'reply') {
+                        const msg = this.list.find((item: any) => item.message_id == seg.id)
+                        if (!msg) continue
+                        this.replyMsg(msg)
+                    } else {
+                        this.addSpecialMsg({
+                            addText: false,
+                            msgObj: seg,
+                        })
+                        this.msg += '[SQ:' + (this.sendCache.length - 1) + ']'
+                    }
+                }
+            },
+
+            /**
              * 精华消息滚动事件
              */
             jinScroll(event: Event) {
@@ -2577,6 +2657,14 @@ import { Img } from '@renderer/function/model/img'
                         )
                     }
                 }
+            },
+
+            /**
+             * 预览精华消息图片
+             */
+            viewerEssImg(url: string) {
+                if (!this.viewer) return
+                (this.viewer as any).open(new Img(url))
             },
 
             /**

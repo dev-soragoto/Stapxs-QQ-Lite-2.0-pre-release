@@ -167,7 +167,7 @@ export function parseMsgList(
                         map,
                     )
                     // 如果 data 里有 type 字段，改成 type_item
-                    if(data[0] && data[0]['type'] != undefined) {
+                    if (data[0] && data[0]['type'] != undefined) {
                         data[0]['type_item'] = data[0]['type']
                         delete data[0]['type']
                     }
@@ -244,7 +244,7 @@ export function getMsgRawTxt(data: any): string {
                             if (user) {
                                 back +=
                                     '@' +
-                                    (user.card && user.card != ''? user.card: user.nickname)
+                                    (user.card && user.card != '' ? user.card : user.nickname)
                                 break
                             }
                         }
@@ -408,7 +408,7 @@ export function sendMsgRaw(
     echo = 'sendMsgBack',
 ) {
     // 如果消息为空则不发送
-    if(msg == undefined || msg == '' || (Array.isArray(msg) && msg.length == 0)) {
+    if (msg == undefined || msg == '' || (Array.isArray(msg) && msg.length == 0)) {
         return
     }
     // 预发送消息
@@ -419,7 +419,7 @@ export function sendMsgRaw(
         preShowMsg.forEach((item: any) => {
             // 对 base64 图片做特殊处理
             if (item.type == 'image') {
-                if(!item.file.startsWith('http')) {
+                if (item.file.startsWith('base64://')) {
                     const b64Str = (item.file as string).substring(9)
                     item.url = 'data:image/png;base64,' + b64Str
                 } else {
@@ -470,7 +470,7 @@ export function sendMsgRaw(
         }
     }
     if (msg !== undefined && msg.length > 0) {
-        if (runtimeData.jsonMap.name === 'Lagrange.OneBot'){
+        if (runtimeData.jsonMap.name === 'Lagrange.OneBot') {
             lgrSendMsg(id, msg, type, echo + '_uuid_' + msgUUID)
             sendStatEvent('send_msg', { type: type })
             return
@@ -479,7 +479,7 @@ export function sendMsgRaw(
             case 'group':
                 Connector.send(
                     runtimeData.jsonMap.message_list.name_group_send ??
-                        'send_msg',
+                    'send_msg',
                     { group_id: id, message: msg },
                     echo + '_uuid_' + msgUUID,
                 )
@@ -488,7 +488,7 @@ export function sendMsgRaw(
                 if (String(id).indexOf('/') > 1) {
                     Connector.send(
                         runtimeData.jsonMap.message_list.name_temp_send ??
-                            'send_temp_msg',
+                        'send_temp_msg',
                         {
                             user_id: id.split('/')[0],
                             group_id: id.split('/')[1],
@@ -499,7 +499,7 @@ export function sendMsgRaw(
                 } else {
                     Connector.send(
                         runtimeData.jsonMap.message_list.name_user_send ??
-                            'send_msg',
+                        'send_msg',
                         { user_id: id, message: msg },
                         echo + '_uuid_' + msgUUID,
                     )
@@ -563,7 +563,7 @@ export function updateBaseOnMsgList() {
 
     let onMsgList = [] as any[]
     let groupAssistList = [] as any[]
-    if(runtimeData.sysConfig.bubble_sort_user) {
+    if (runtimeData.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
         onMsgList = topList.concat(normalList.filter((item) => {
             return item.group_id && canGroupNotice(item.group_id) ||
@@ -600,11 +600,11 @@ export function canGroupNotice(id: number) {
  * @param windowInfo 窗口信息，在 electron 中使用
  */
 export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
-            x: number
-            y: number
-            width: number
-            height: number
-        } | null) {
+    x: number
+    y: number
+    width: number
+    height: number
+} | null) {
     if (animeBody) {
         const timeLine = anime.timeline({ targets: animeBody })
         // 如果窗口小于 500px 播放完整的动画（手机端样式）
@@ -623,7 +623,7 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
         timeLine.add({ translateX: [-10, 10, -5, 5, 0], duration: 500, easing: 'cubicBezier(.44,.09,.53,1)' })
         timeLine.change = async () => {
             if (animeBody) {
-                animeBody.parentElement?.parentElement?.classList.add( 'poking')
+                animeBody.parentElement?.parentElement?.classList.add('poking')
                 const teansformX = animeBody.style.transform
                 // teansformX 的数字可能是科学计数法，需要转换为普通数字
                 let num = Number((teansformX.match(/-?\d+\.?\d*/g) ?? [0])[0])
@@ -632,9 +632,9 @@ export function pokeAnime(animeBody: HTMLElement | null, windowInfo = null as {
                 // 输出 translateX
                 if (backend.isDesktop() && windowInfo) {
                     await backend.call(undefined, 'win:move', false, {
-                            x: windowInfo.x + num,
-                            y: windowInfo.y,
-                        })
+                        x: windowInfo.x + num,
+                        y: windowInfo.y,
+                    })
                 }
             }
         }
@@ -718,7 +718,7 @@ export function qqLevelIcons(level) {
  */
 export function qqLevelToEmoji(level) {
     const rawLevel = level
-    if(level <= 0) return level
+    if (level <= 0) return level
 
     const crown = Math.floor(level / 64);
     level %= 64;
@@ -740,60 +740,60 @@ export function qqLevelToEmoji(level) {
  * @param imageUrl 图片 URL
  */
 export async function getImageUrlData(imageUrl: string): Promise<{ buffer: Uint8Array, blob: Blob }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
+    return new Promise((resolve, reject) => {
+        const img = new Image()
 
-    img.onload = () => {
-      try {
-        // 创建 canvas 并设置尺寸
-        const canvas = document.createElement('canvas')
-        canvas.width = img.width
-        canvas.height = img.height
+        img.onload = () => {
+            try {
+                // 创建 canvas 并设置尺寸
+                const canvas = document.createElement('canvas')
+                canvas.width = img.width
+                canvas.height = img.height
 
-        // 获取 2D 上下文并绘制图片
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
-          reject(new Error('无法获取 Canvas 上下文'))
-          return
+                // 获取 2D 上下文并绘制图片
+                const ctx = canvas.getContext('2d')
+                if (!ctx) {
+                    reject(new Error('无法获取 Canvas 上下文'))
+                    return
+                }
+
+                ctx.drawImage(img, 0, 0)
+
+                // 将 canvas 转换为 PNG 格式的 blob
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        reject(new Error('图片转换失败'))
+                        return
+                    }
+
+                    // 读取 blob 为 ArrayBuffer，然后转换为 Uint8Array
+                    const reader = new FileReader()
+                    reader.onload = () => {
+                        const arrayBuffer = reader.result as ArrayBuffer
+                        resolve({
+                            buffer: new Uint8Array(arrayBuffer),
+                            blob: blob
+                        }
+                        )
+                    }
+                    reader.onerror = () => {
+                        reject(new Error('读取图片数据失败'))
+                    }
+                    reader.readAsArrayBuffer(blob)
+                }, 'image/png') // 强制转换为 PNG 格式
+            } catch (error) {
+                reject(error)
+            }
         }
 
-        ctx.drawImage(img, 0, 0)
+        img.onerror = () => {
+            reject(new Error('图片加载失败'))
+        }
 
-        // 将 canvas 转换为 PNG 格式的 blob
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            reject(new Error('图片转换失败'))
-            return
-          }
-
-          // 读取 blob 为 ArrayBuffer，然后转换为 Uint8Array
-          const reader = new FileReader()
-          reader.onload = () => {
-            const arrayBuffer = reader.result as ArrayBuffer
-            resolve({
-                buffer: new Uint8Array(arrayBuffer),
-                blob: blob
-            }
-            )
-          }
-          reader.onerror = () => {
-            reject(new Error('读取图片数据失败'))
-          }
-          reader.readAsArrayBuffer(blob)
-        }, 'image/png') // 强制转换为 PNG 格式
-      } catch (error) {
-        reject(error)
-      }
-    }
-
-    img.onerror = () => {
-      reject(new Error('图片加载失败'))
-    }
-
-    // 处理跨域问题
-    img.crossOrigin = 'anonymous'
-    img.src = imageUrl
-  })
+        // 处理跨域问题
+        img.crossOrigin = 'anonymous'
+        img.src = imageUrl
+    })
 }
 
 /**
@@ -801,9 +801,9 @@ export async function getImageUrlData(imageUrl: string): Promise<{ buffer: Uint8
  * @param msg
  */
 export function isDeleteMsg(msg: any): boolean {
-    if(!['message', 'message_sent'].includes(msg.post_type)) return false
-    if(msg.sender.user_id !== runtimeData.loginInfo.uin)return false
-    if(msg.raw_message !== '&#91;已删除&#93;')return false
+    if (!['message', 'message_sent'].includes(msg.post_type)) return false
+    if (msg.sender.user_id !== runtimeData.loginInfo.uin) return false
+    if (msg.raw_message !== '&#91;已删除&#93;') return false
     return true
 }
 
@@ -857,7 +857,7 @@ export function getDifferencesWithRanges(a: string, b: string) {
  * lgr专用发送消息，懒得写了，不做通用适配，胡乱应付下吧
  * @param msg 消息内容
  */
-function lgrSendMsg(id: string, msg: any, type: string, cb: string){
+function lgrSendMsg(id: string, msg: any, type: string, cb: string) {
     if (msg[0].type === 'node') {
         const sendMsgs = [] as any[]
         msg.forEach((item) => {
@@ -866,12 +866,12 @@ function lgrSendMsg(id: string, msg: any, type: string, cb: string){
                 data: {
                     user_id: item.data.user_id.toString(),
                     nickname: item.data.nickname,
-                    content: item.data.content.map((item)=>{
-                        const copy = {...item}
+                    content: item.data.content.map((item) => {
+                        const copy = { ...item }
                         delete copy.type
                         return {
                             type: item.type,
-                            data: {...copy}
+                            data: { ...copy }
                         }
                     }),
                 },
@@ -884,29 +884,29 @@ function lgrSendMsg(id: string, msg: any, type: string, cb: string){
                 { group_id: id, messages: sendMsgs },
                 cb,
             )
-        }else if (type === 'user') {
+        } else if (type === 'user') {
             Connector.send(
                 'send_private_forward_msg',
                 { user_id: id, messages: sendMsgs },
                 cb,
             )
-        }else {
+        } else {
             new PopInfo().add(PopType.ERR, 'lgr不支持匿名聊天')
         }
-    }else {
-        if (type === 'group'){
+    } else {
+        if (type === 'group') {
             Connector.send(
                 'send_group_msg',
                 { group_id: id, message: msg },
                 cb,
             )
-        }else if (type === 'user'){
+        } else if (type === 'user') {
             Connector.send(
                 'send_private_msg',
                 { user_id: id, message: msg },
                 cb,
             )
-        }else{
+        } else {
             new PopInfo().add(PopType.ERR, 'lgr不支持匿名聊天')
         }
     }
