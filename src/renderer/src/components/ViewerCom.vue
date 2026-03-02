@@ -731,9 +731,18 @@ function onScrollbarDrag(axis: 'x' | 'y', event: MouseEvent) {
     }
     mousemoveMask((event: MouseEvent) => {
         const move = getDeltaAndUpdate(event)
+        let imgWidth = 0
+        let imgHeight = 0
+        if (modify.rotate % 180 === 0) {
+            imgWidth = currentImgInfo.value?.width || 0
+            imgHeight = currentImgInfo.value?.height || 0
+        } else {
+            imgWidth = currentImgInfo.value?.height || 0
+            imgHeight = currentImgInfo.value?.width || 0
+        }
         if (axis === 'x') {
             // 横向滚动
-            modify.x -= move * (currentImgInfo.value?.width || 0) / (vw.value * 100)
+            modify.x -= move * imgWidth * modify.scale / (vw.value * 100)
             // 限制范围
             const info = currentImgInfo.value
             if (!info) return true
@@ -747,7 +756,7 @@ function onScrollbarDrag(axis: 'x' | 'y', event: MouseEvent) {
             }
         } else {
             // 纵向滚动
-            modify.y -= move * (currentImgInfo.value?.height || 0) / (vh.value * 100)
+            modify.y -= move * imgHeight * modify.scale / (vh.value * 100)
             const info = currentImgInfo.value
             if (!info) return true
             if (modify.rotate % 180 === 0) {
