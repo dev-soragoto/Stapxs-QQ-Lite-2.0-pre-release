@@ -798,16 +798,16 @@ import { Img } from '@renderer/function/model/img'
                     return
                 }
                 const computed = getComputedStyle(input)
-                const lineHeight = parseFloat(computed.lineHeight)
-                const fontSize = parseFloat(computed.fontSize)
+                const lineHeight = Number.parseFloat(computed.lineHeight)
+                const fontSize = Number.parseFloat(computed.fontSize)
                 const baseLineHeight = Number.isFinite(lineHeight) ? lineHeight : fontSize
-                const paddingTop = parseFloat(computed.paddingTop) || 0
-                const paddingBottom = parseFloat(computed.paddingBottom) || 0
-                const borderTop = parseFloat(computed.borderTopWidth) || 0
-                const borderBottom = parseFloat(computed.borderBottomWidth) || 0
+                const paddingTop = Number.parseFloat(computed.paddingTop) || 0
+                const paddingBottom = Number.parseFloat(computed.paddingBottom) || 0
+                const borderTop = Number.parseFloat(computed.borderTopWidth) || 0
+                const borderBottom = Number.parseFloat(computed.borderBottomWidth) || 0
                 let minHeight = (Number.isFinite(baseLineHeight) ? baseLineHeight : 0) + paddingTop + paddingBottom + borderTop + borderBottom
                 if (minHeight <= 0) {
-                    const fallback = input.offsetHeight || parseFloat(computed.height) || fontSize
+                    const fallback = input.offsetHeight || Number.parseFloat(computed.height) || fontSize
                     if (fallback && Number.isFinite(fallback)) {
                         minHeight = fallback
                     }
@@ -815,9 +815,9 @@ import { Img } from '@renderer/function/model/img'
                 if (!input.dataset.baseHeight) {
                     input.dataset.baseHeight = String(minHeight)
                 }
-                input.style.height = 'auto'
-                const baseHeight = parseFloat(input.dataset.baseHeight) || minHeight
-                const targetHeight = input.scrollHeight > baseHeight * 2 ? Math.max(input.scrollHeight, baseHeight): baseHeight
+                input.style.height = '0'
+                const baseHeight = Number.parseFloat(input.dataset.baseHeight) || minHeight
+                const targetHeight = Math.max(input.scrollHeight, baseHeight)
                 input.style.height = targetHeight + 'px'
             },
             jumpSearchMsg() {
