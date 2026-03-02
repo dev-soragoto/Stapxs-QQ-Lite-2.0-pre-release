@@ -10,7 +10,8 @@
                 @mousemove="mouseMoveCheck">
                 <!-- 工具扩展设置 -->
                 <TransitionGroup class="viewer-bar viewer-tool-config-bar"
-                    name="viewer-tool-config" tag="div">
+                    name="viewer-tool-config" tag="div"
+                    :class="{ dragging: dragging }">
                     <!-- 颜色 -->
                     <template v-if="currentTool !== 'hand'">
                         <div v-for="(color, key) in colorMap"
@@ -48,7 +49,8 @@
                             key="1"
                             class="viewer-bar viewer-button-bar"
                             :class="{
-                                'force-show': forceShowButton || moveTimeout
+                                'force-show': forceShowButton || moveTimeout,
+                                dragging: dragging,
                             }">
                             <font-awesome-icon v-hide="!prev"
                                 :icon="['fas', 'angle-left']"
@@ -74,6 +76,7 @@
                         <!-- 编辑栏 -->
                         <div v-else
                             key="2"
+                            :class="{dragging: dragging}"
                             class="viewer-bar viewer-button-bar force-show">
                             <font-awesome-icon :icon="['fas', 'hand']"
                                 :class="{ active: currentTool === 'hand' }"
@@ -242,6 +245,7 @@ const currentColor = computed(() => toolConfig[currentTool.value].color)
 const currentLineWidth = computed(() => toolConfig[currentTool.value].width)
 const loading = shallowRef(true)
 const edit = shallowRef(false)
+const dragging = shallowRef(false)
 const currentImgInfo = shallowRef<{
     width: number,                          // 图片实际宽度
     height: number,                         // 图片实际高度
@@ -811,6 +815,7 @@ let mouseDownTime = 0
 function onMouseDown(event: MouseEvent) {
     handleEvent(event)
     mouseDownTime = Date.now()
+    dragging.value = true
 
     switch (currentTool.value) {
         case 'hand':
@@ -843,6 +848,7 @@ function onMouseMove(event: MouseEvent) {
 }
 function onMouseUp(event: MouseEvent) {
     handleEvent(event)
+    dragging.value = false
 
     switch (currentTool.value) {
         case 'hand':
@@ -869,6 +875,7 @@ function onMouseout(event: MouseEvent) {
 let onImgTouchFlag = false
 function onImgTouchStart(event: TouchEvent) {
     if (event.touches.length !== 1) return
+    dragging.value = true
 
     mouseDownTime = Date.now()
 
@@ -907,6 +914,7 @@ function onImgTouchEnd(event: TouchEvent) {
     if (!onImgTouchFlag) return
     handleEvent(event)
     onImgTouchFlag = false
+    dragging.value = false
 
     // 点击判定
     onClick(event)
