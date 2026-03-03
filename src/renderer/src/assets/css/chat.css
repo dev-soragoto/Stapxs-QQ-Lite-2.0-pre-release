@@ -189,7 +189,12 @@ input {
     width: 20px;
 }
 .chat-pan > div.more > div:nth-child(2) > div:nth-child(2) {
-    align-items: end;
+    align-items: center;
+    display: flex;
+    flex: 1;
+}
+.chat-pan > div.more > div:nth-child(2) > div:nth-child(2) > form {
+    align-items: center;
     display: flex;
     flex: 1;
 }
