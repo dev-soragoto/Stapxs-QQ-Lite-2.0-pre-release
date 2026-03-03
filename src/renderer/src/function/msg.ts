@@ -57,6 +57,7 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
+import { dbSaveMessages, dbRevokeMessage } from './utils/localHistoryUtil'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { getPinyin } from './utils/pinyin'
@@ -1393,6 +1394,8 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         list = list.filter((item: any) => {
             return item.message.length > 0
         })
+        // 保存到本地历史
+        dbSaveMessages(runtimeData.loginInfo.uin, list)
         // 如果分页不是增量的，就不使用追加
         if (
             append == 'top' &&
@@ -1535,8 +1538,11 @@ function revokeMsg(_: string, msg: any) {
     const chatId = msg.notice_type.includes('group') ? msg.group_id : msg.user_id
     new Notify().closeAll(chatId)
 
-    // 寻找消息
+    // 在本地 DB 中标记撤回
     const msgId = msg.message_id
+    dbRevokeMessage(runtimeData.loginInfo.uin, String(msgId))
+
+    // 寻找消息
     let msgGet = null as { [key: string]: any } | null
     let msgIndex!: number
     for (const [index, msg] of runtimeData.messageList.entries()) {
@@ -1620,6 +1626,28 @@ function newMsg(_: string, data: any) {
         // 刷新 favicon
         refreshFavicon()
 
+
+
+        // 对消息进行一次格式化处理
+        let list = getMsgData(
+            'message_list',
+            buildMsgList([data]),
+            msgPath.message_list,
+        )
+
+        if (list != undefined) {
+            list = parseMsgList(
+                list,
+                msgPath.message_list.type,
+                msgPath.message_value,
+            )
+
+            // 保存到本地历史
+            dbSaveMessages(runtimeData.loginInfo.uin, list)
+
+            data = list[0]
+        }
+
         // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
             // 如果有正在输入的提示，清除它
@@ -1652,21 +1680,6 @@ function newMsg(_: string, data: any) {
                 Umami.trackEvent('show_qed', { times: qed_try_times })
             }
             qed_try_times++
-        }
-
-        // 对消息进行一次格式化处理
-        let list = getMsgData(
-            'message_list',
-            buildMsgList([data]),
-            msgPath.message_list,
-        )
-        if (list != undefined) {
-            list = parseMsgList(
-                list,
-                msgPath.message_list.type,
-                msgPath.message_value,
-            )
-            data = list[0]
         }
 
         // 通知判定预处理 ============================================

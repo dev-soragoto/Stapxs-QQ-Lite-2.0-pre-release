@@ -271,6 +271,29 @@
             </div>
         </div>
         <div class="ss-card">
+            <header>{{ $t('消息存储') }}</header>
+            <div class="tip">
+                {{
+                    $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
+                }}
+            </div>
+            <div class="opt-item">
+                <div :class="checkDefault('enable_local_history')" />
+                <font-awesome-icon :icon="['fas', 'database']" />
+                <div>
+                    <span>{{ $t('启用消息存储') }}</span>
+                    <span>{{ $t('保存消息记录何尝不是一种囤囤鼠') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.enable_local_history"
+                        type="checkbox" name="enable_local_history" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="ss-card">
             <header>{{ $t('分析信息') }}</header>
             <div
                 class="opt-item"
