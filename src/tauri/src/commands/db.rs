@@ -47,6 +47,13 @@ fn get_db_key() -> String {
             Err(e) => log::warn!("钥匙串读取失败，回退到默认密钥：{}", e),
         }
     }
+    #[cfg(target_os = "windows")]
+    {
+        match crate::commands::keychain::get_or_create_db_key() {
+            Ok(key) => return key,
+            Err(e) => log::warn!("Windows 凭据管理器读取失败，回退到默认密钥：{}", e),
+        }
+    }
     DB_KEY_FALLBACK.to_string()
 }
 
