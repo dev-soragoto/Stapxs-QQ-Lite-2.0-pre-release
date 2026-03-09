@@ -2631,6 +2631,7 @@ import { Img } from '@renderer/function/model/img'
                         this.msg += '[SQ:' + (this.sendCache.length - 1) + ']'
                     }
                 }
+                this.toMainInput()
             },
 
             /**
