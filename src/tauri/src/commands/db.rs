@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use log::{debug, error, info};
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{Manager, State};
 
 // ── 全局状态 ────────────────────────────────────────────────
 
@@ -294,6 +294,39 @@ pub fn db_get_after(
     Ok(list)
 }
 
+/// 在指定会话中按关键词全文搜索消息（在 raw_message 中匹配）
+///
+/// 返回匹配的消息列表，正序（旧→新）。
+#[tauri::command]
+pub fn db_search_messages(
+    state: State<DbState>,
+    self_id: String,
+    chat_id: i64,
+    query: String,
+) -> Result<Vec<MsgRecord>, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let pattern = format!("%{}%", query);
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                    time, message, raw_message, revoked
+             FROM messages
+             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+               AND raw_message LIKE ?3
+             ORDER BY time ASC, id ASC",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let list: Vec<MsgRecord> = stmt
+        .query_map(params![self_id, chat_id, pattern], row_to_record)
+        .map_err(|e| e.to_string())?
+        .filter_map(|r| r.ok())
+        .collect();
+
+    Ok(list)
+}
+
 /// 将某条消息标记为已撤回
 ///
 /// 返回是否命中（true = 找到并更新了该消息）。
@@ -312,6 +345,46 @@ pub fn db_revoke_message(
         )
         .map_err(|e| e.to_string())?;
     Ok(n > 0)
+}
+
+/// 存储统计结果
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DbStats {
+    /// 当前账号已保存的有效消息条数（不含已撤回）
+    pub total_messages: i64,
+    /// 数据库文件大小（字节）
+    pub db_size_bytes: u64,
+}
+
+/// 获取当前账号的消息存储统计信息
+#[tauri::command]
+pub fn db_get_stats(
+    state: State<DbState>,
+    app_handle: tauri::AppHandle,
+    self_id: String,
+) -> Result<DbStats, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let total: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM messages WHERE self_id = ?1 AND revoked = 0",
+            params![self_id],
+            |r| r.get(0),
+        )
+        .unwrap_or(0);
+
+    let data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let db_size = std::fs::metadata(data_dir.join("messages.db"))
+        .map(|m| m.len())
+        .unwrap_or(0);
+
+    Ok(DbStats {
+        total_messages: total,
+        db_size_bytes: db_size,
+    })
 }
 
 // ── 内部工具 ─────────────────────────────────────────────────

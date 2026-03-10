@@ -279,7 +279,7 @@
                 <!-- 搜索指示器 -->
                 <div :class="details[3].open ? 'search-tag show' : 'search-tag'">
                     <font-awesome-icon :icon="['fas', 'search']" />
-                    <span>{{ $t('搜索已加载的消息') }}</span>
+                    <span>{{ runtimeData.sysConfig.enable_local_history ? $t('搜索已保存的消息') : $t('搜索已加载的消息') }}</span>
                     <div @click="closeSearch">
                         <font-awesome-icon :icon="['fas', 'xmark']" />
                     </div>
@@ -592,6 +592,7 @@ import {
     MenuEventData,
 } from '@renderer/function/elements/information'
 import { backend } from '@renderer/runtime/backend'
+import { dbGetBefore, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
@@ -875,7 +876,7 @@ import { Img } from '@renderer/function/model/img'
             /**
              * 加载更多历史消息
              */
-            loadMoreHistory() {
+            async loadMoreHistory() {
                 if (
                     !this.tags.nowGetHistroy &&
                     runtimeData.tags.canLoadHistory !== false
@@ -886,6 +887,26 @@ import { Img } from '@renderer/function/model/img'
                     this.tags.nowGetHistroy = true
 					// 移除加载失败标志
 					runtimeData.tags.loadHistoryFail = false
+
+                    // 优先从本地数据库加载
+                    if (
+                        runtimeData.sysConfig.enable_local_history &&
+                        runtimeData.sysConfig.local_history_first
+                    ) {
+                        const localMsgs = await dbGetBefore(
+                            runtimeData.loginInfo.uin,
+                            runtimeData.chatInfo.show.id,
+                            firstMsgId,
+                            20,
+                        )
+                        if (localMsgs.length > 0) {
+                            runtimeData.messageList = localMsgs.concat(runtimeData.messageList)
+                            this.tags.nowGetHistroy = false
+                            return
+                        }
+                        // 本地为空，回落到网络请求
+                    }
+
                     // 发起获取历史消息请求
                     const fullPage =
                         runtimeData.jsonMap.message_list?.pagerType == 'full'
@@ -2531,7 +2552,7 @@ import { Img } from '@renderer/function/model/img'
                 this.tags.showMoreDetail = !this.tags.showMoreDetail
             },
 
-            handleInput(event: Event) {
+            async handleInput(event: Event) {
                 const input = event.target as HTMLInputElement
                 this.resizeMainInput(input)
 
@@ -2560,7 +2581,15 @@ import { Img } from '@renderer/function/model/img'
                     const value = input.value
                     if (value.length == 0) {
                         this.tags.search.list = reactive(this.list)
-                    } else if (value.length > 0) {
+                    } else if (runtimeData.sysConfig.enable_local_history) {
+                        // 搜索已保存的消息：从本地 DB 全文搜索
+                        const results = await dbSearchMessages(
+                            runtimeData.loginInfo.uin,
+                            runtimeData.chatInfo.show.id,
+                            value,
+                        )
+                        this.tags.search.list = results
+                    } else {
                         this.tags.search.list = this.list.filter(
                             (item: any) => {
                                 const rawMessage = getMsgRawTxt(item)

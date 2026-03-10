@@ -246,7 +246,9 @@ pub fn run() {
             commands::db::db_get_latest,
             commands::db::db_get_before,
             commands::db::db_get_after,
+            commands::db::db_search_messages,
             commands::db::db_revoke_message,
+            commands::db::db_get_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

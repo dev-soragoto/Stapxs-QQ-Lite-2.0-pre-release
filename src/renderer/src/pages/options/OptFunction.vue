@@ -270,12 +270,16 @@
                 </label>
             </div>
         </div>
-        <div class="ss-card">
+        <div v-if="backend.type === 'tauri'" class="ss-card">
             <header>{{ $t('消息存储') }}</header>
             <div class="tip">
                 {{
                     $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
                 }}
+            </div>
+            <div v-if="dbStats != null" class="db-stats-bar">
+                <font-awesome-icon :icon="['fas', 'circle-info']" />
+                <span>{{ $t('已保存 {count} 条消息', { count: dbStats.totalMessages.toLocaleString() }) }} · {{ formatDbSize(dbStats.dbSizeBytes) }}</span>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('enable_local_history')" />
@@ -287,6 +291,23 @@
                 <label class="ss-switch">
                     <input v-model="runtimeData.sysConfig.enable_local_history"
                         type="checkbox" name="enable_local_history" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
+                <div :class="checkDefault('local_history_first')" />
+                <font-awesome-icon :icon="['fas', 'bolt']" />
+                <div>
+                    <span>{{ $t('优先加载本地历史') }}</span>
+                    <span>{{ $t('不会吧不会吧，存了真的不用吗.png') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.local_history_first"
+                        type="checkbox" name="local_history_first"
+                        :disabled="!runtimeData.sysConfig.enable_local_history"
+                        @change="save">
                     <div>
                         <div />
                     </div>
@@ -358,6 +379,7 @@
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
+import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
 
     export default defineComponent({
         name: 'ViewOptFunction',
@@ -366,12 +388,34 @@ import { backend } from '@renderer/runtime/backend'
                 backend,
                 checkDefault: checkDefault,
                 runtimeData: runtimeData,
+                dbStats: null as { totalMessages: number; dbSizeBytes: number } | null,
                 save: save,
                 ndt: 0,
                 ndv: false,
             }
         },
+        watch: {
+            'runtimeData.loginInfo.uin': {
+                immediate: true,
+                handler(uin: string | number) {
+                    if (uin && runtimeData.sysConfig.enable_local_history) {
+                        this.loadDbStats()
+                    }
+                },
+            },
+        },
         methods: {
+            async loadDbStats() {
+                if (runtimeData.loginInfo?.uin) {
+                    this.dbStats = await dbGetStats(runtimeData.loginInfo.uin)
+                }
+            },
+            formatDbSize(bytes: number): string {
+                if (bytes < 1024) return `${bytes} B`
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+                if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+                return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+            },
             showUmamiInfo() {
                 const popInfo = {
                     title: '',
@@ -435,5 +479,23 @@ import { backend } from '@renderer/runtime/backend'
         text-decoration: underline;
         color: var(--color-font-1);
         font-size: 0.8rem;
+    }
+
+    .db-stats-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 4px 0 2px;
+        padding: 10px 20px;
+        background: var(--color-card-2);
+        border-radius: 5px;
+        font-size: 0.78rem;
+        color: var(--color-font-1);
+    }
+
+    .db-stats-bar > svg {
+        width: 12px;
+        flex-shrink: 0;
+        opacity: 0.7;
     }
 </style>

@@ -220,6 +220,47 @@ export async function dbRevokeMessage(
     }
 }
 
+/**
+ * 在指定会话的本地 DB 中按关键词搜索消息（对 raw_message 做 LIKE 匹配）。
+ *
+ * @returns 匹配消息列表（正序），出错或非 Tauri 返回空数组
+ */
+export async function dbSearchMessages(
+    selfId: string | number,
+    chatId: number,
+    query: string,
+): Promise<any[]> {
+    if (!query) return []
+    try {
+        const records: LocalMsgRecord[] = await backend.call(
+            undefined,
+            'db:searchMessages',
+            true,
+            { selfId: String(selfId), chatId, query },
+        )
+        return (records ?? []).map(deserializeRecord)
+    } catch (e) {
+        new Logger().error(e as unknown as Error, '[LocalHistory] dbSearchMessages 失败')
+        return []
+    }
+}
+
+export async function dbGetStats(
+    selfId: string | number,
+): Promise<{ totalMessages: number; dbSizeBytes: number } | null> {
+    try {
+        return await backend.call(
+            undefined,
+            'db:getStats',
+            true,
+            { selfId: String(selfId) },
+        )
+    } catch (e) {
+        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetStats 失败')
+        return null
+    }
+}
+
 // ── 内部工具 ──────────────────────────────────────────────────────
 
 /**
@@ -232,15 +273,24 @@ function deserializeRecord(record: LocalMsgRecord): any {
     } catch {
         message = []
     }
+
+    // 判断是否为自己发送的消息，还原 post_type
+    const isSelf = record.sender_id === Number(runtimeData.loginInfo.uin)
+    const postType = isSelf ? 'message_sent' : 'message'
+
+    // 群消息：sender_name 来自 card，私聊来自 nickname
+    const isGroup = record.chat_type === 'group'
+    const sender = isGroup
+        ? { user_id: record.sender_id, card: record.sender_name ?? '', nickname: record.sender_name ?? '' }
+        : { user_id: record.sender_id, card: '', nickname: record.sender_name ?? '' }
+
     return {
+        post_type: postType,
         message_id: record.message_id,
-        // 根据 chat_type 恢复对应的 id 字段
-        ...(record.chat_type === 'group' ? { group_id: record.chat_id } : { user_id: record.chat_id }),
         message_type: record.chat_type,
-        sender: {
-            user_id: record.sender_id,
-            nickname: record.sender_name ?? '',
-        },
+        // 根据 chat_type 恢复对应的 id 字段
+        ...(isGroup ? { group_id: record.chat_id } : { user_id: record.chat_id }),
+        sender,
         time: record.time,
         message,
         raw_message: record.raw_message ?? '',

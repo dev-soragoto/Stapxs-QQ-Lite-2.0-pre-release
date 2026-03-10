@@ -870,6 +870,12 @@ msgstr ""
 msgid "搜索已加载的消息"
 msgstr ""
 
+msgid "搜索已保存的消息"
+msgstr ""
+
+msgid "已保存 {count} 条消息"
+msgstr ""
+
 msgid "关于"
 msgstr ""
 

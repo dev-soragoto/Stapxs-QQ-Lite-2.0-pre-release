@@ -870,6 +870,12 @@ msgstr "搜尋訊息"
 msgid "搜索已加载的消息"
 msgstr "搜尋已載入的訊息"
 
+msgid "搜索已保存的消息"
+msgstr "搜尋已儲存的訊息"
+
+msgid "已保存 {count} 条消息"
+msgstr "已儲存 {count} 條訊息"
+
 msgid "关于"
 msgstr "關於"
 

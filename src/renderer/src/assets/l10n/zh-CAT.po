@@ -290,6 +290,12 @@ msgstr "搜索喵喵"
 msgid "搜索已加载的消息"
 msgstr "搜索已加载的喵喵"
 
+msgid "搜索已保存的消息"
+msgstr "搜索已保存的喵喵"
+
+msgid "已保存 {count} 条消息"
+msgstr "已保存 {count} 条喵喵消息"
+
 msgid "账户"
 msgstr "喵号"
 

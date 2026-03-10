@@ -39,6 +39,7 @@ import {
     Ref,
 } from 'vue'
 import { sendMsgRaw } from './msgUtil'
+import { dbGetLatest } from './localHistoryUtil'
 import { parseMsg } from '../sender'
 import { Notify } from '../notify'
 
@@ -137,8 +138,24 @@ export function openLink(url: string, external = false) {
  * 加载历史消息
  * @param info 聊天基本信息
  */
-export function loadHistory(info: BaseChatInfoElem) {
+export async function loadHistory(info: BaseChatInfoElem) {
     runtimeData.messageList = []
+    // 优先加载本地历史消息：本地有数据则直接显示，不再发网络请求
+    if (
+        runtimeData.sysConfig.enable_local_history &&
+        runtimeData.sysConfig.local_history_first
+    ) {
+        const localMsgs = await dbGetLatest(
+            runtimeData.loginInfo.uin,
+            info.id,
+            20,
+        )
+        if (localMsgs.length > 0) {
+            runtimeData.messageList = localMsgs
+            return
+        }
+        // 本地为空，回落到网络请求
+    }
     if (!loadHistoryMessage(info.id, info.type)) {
         new PopInfo().add(
             PopType.ERR,

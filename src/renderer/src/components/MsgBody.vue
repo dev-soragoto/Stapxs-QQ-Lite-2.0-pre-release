@@ -47,6 +47,9 @@
                 <a v-else>
                     {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
                 </a>
+                <span v-if="isDev && data._from_local_db" class="dev-local-tag">
+                    {{ $t('本地') }}
+                </span>
                 <a v-if="selected" class="time">
                     {{ Intl.DateTimeFormat(trueLang, {
                         year: 'numeric',
@@ -482,6 +485,7 @@ function getUserById(id: number): IUser | undefined {
                 backend,
                 md: markdownit({ breaks: true }),
                 isMe: false,
+                isDev: import.meta.env.DEV,
                 msgBodyClass: 'message-body',
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
@@ -1221,6 +1225,12 @@ function getUserById(id: number): IUser | undefined {
     })
 </script>
 <style>
+    .dev-local-tag {
+        display: inline-block;
+        padding: 1px 7px !important;
+        background: var(--color-card) !important;
+        color: var(--color-font-2) !important;
+    }
     .emoji-like {
         flex-direction: row;
         display: flex;
