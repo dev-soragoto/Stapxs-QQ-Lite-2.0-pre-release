@@ -16,56 +16,14 @@ pub use macos::get_or_create_db_key;
 #[cfg(target_os = "windows")]
 pub use windows_cred::get_or_create_db_key;
 
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(target_os = "linux")]
+pub use linux_secret::get_or_create_db_key;
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 /// 其他平台占位：永远不会被调用，db.rs 会在编译期跳过
 #[allow(dead_code)]
 pub fn get_or_create_db_key() -> Result<String, String> {
-    unreachable!("keychain/credential store is only available on macOS and Windows")
-}
-
-// ── macOS 实现 ────────────────────────────────────────────────
-
-#[cfg(target_os = "macos")]
-mod macos {
-    use security_framework::passwords::{get_generic_password, set_generic_password};
-
-    /// 应用标识符，与 tauri.conf.json identifier 保持一致
-    const SERVICE: &str = "cn.stapxs.qqweb";
-    /// 钥匙串条目的账户名称
-    const ACCOUNT: &str = "db_encryption_key";
-
-    /// 从钥匙串读取数据库密钥；若不存在则生成并写入后返回。
-    pub fn get_or_create_db_key() -> Result<String, String> {
-        match get_generic_password(SERVICE, ACCOUNT) {
-            Ok(bytes) => {
-                let key = String::from_utf8(bytes)
-                    .map_err(|e| format!("钥匙串密钥编码无效：{}", e))?;
-                log::info!("从钥匙串读取数据库密钥成功");
-                return Ok(key);
-            }
-            Err(e) => {
-                // errSecItemNotFound = -25300：条目不存在，需要新建
-                if e.code() != -25300 {
-                    return Err(format!("钥匙串读取失败（code {}）：{}", e.code(), e));
-                }
-            }
-        }
-
-        let key = generate_key();
-        log::info!("首次运行，生成新的数据库密钥并写入钥匙串");
-
-        set_generic_password(SERVICE, ACCOUNT, key.as_bytes())
-            .map_err(|e| format!("写入钥匙串失败（code {}）：{}", e.code(), e))?;
-
-        Ok(key)
-    }
-
-    fn generate_key() -> String {
-        use rand::RngCore;
-        let mut buf = [0u8; 32];
-        rand::rng().fill_bytes(&mut buf);
-        buf.iter().map(|b| format!("{:02x}", b)).collect()
-    }
+    unreachable!("平台不支持安全存储密钥方案")
 }
 
 // ── Windows 凭据管理器实现 ────────────────────────────────────
@@ -220,6 +178,118 @@ mod macos {
     }
 
     /// 生成加密安全的 32 字节随机密钥（hex 编码，64 个字符）
+    fn generate_key() -> String {
+        use rand::RngCore;
+        let mut buf = [0u8; 32];
+        rand::rng().fill_bytes(&mut buf);
+        buf.iter().map(|b| format!("{:02x}", b)).collect()
+    }
+}
+
+// ── Linux Secret Service 实现 ─────────────────────────────────
+//
+// 使用 freedesktop Secret Service API（GNOME Keyring / KWallet 等均实现了此协议）。
+// secret-service v3 是纯 async 的；open_db 是同步调用点，所以需要在调用处
+// 手动处理 runtime：若已在 tokio context 中则用 block_in_place，否则新建 runtime。
+
+#[cfg(target_os = "linux")]
+mod linux_secret {
+    use secret_service::{EncryptionType, SecretService};
+    use std::collections::HashMap;
+
+    /// 条目显示标签
+    const LABEL: &str = "Stapxs QQ Lite 数据库密钥";
+    /// 搜索属性：应用标识
+    const ATTR_APP: &str = "application";
+    const ATTR_APP_VAL: &str = "cn.stapxs.qqweb";
+    /// 搜索属性：密钥类型
+    const ATTR_KEY: &str = "key_type";
+    const ATTR_KEY_VAL: &str = "db_encryption_key";
+
+    pub fn get_or_create_db_key() -> Result<String, String> {
+        // setup 回调在主线程调用，通常不在 tokio context 内；
+        // 但为了健壮性两种情况都处理。
+        match tokio::runtime::Handle::try_current() {
+            Ok(handle) => {
+                // 已在 tokio context 内，用 block_in_place 避免嵌套 block_on
+                tokio::task::block_in_place(|| handle.block_on(inner()))
+            }
+            Err(_) => {
+                // 不在 tokio context，建临时单线程 runtime
+                let rt = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .map_err(|e| format!("创建临时 runtime 失败：{}", e))?;
+                rt.block_on(inner())
+            }
+        }
+    }
+
+    async fn inner() -> Result<String, String> {
+        let ss = SecretService::connect(EncryptionType::Dh)
+            .await
+            .map_err(|e| format!("连接 Secret Service 失败：{}", e))?;
+
+        let collection = ss
+            .get_default_collection()
+            .await
+            .map_err(|e| format!("获取默认密钥集合失败：{}", e))?;
+
+        // 若集合被锁，尝试解锁（会弹出系统授权对话框）
+        if collection
+            .is_locked()
+            .await
+            .map_err(|e| format!("检查锁定状态失败：{}", e))?
+        {
+            collection
+                .unlock()
+                .await
+                .map_err(|e| format!("解锁密钥集合失败：{}", e))?;
+        }
+
+        let attrs: HashMap<&str, &str> = [
+            (ATTR_APP, ATTR_APP_VAL),
+            (ATTR_KEY, ATTR_KEY_VAL),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        // ── 尝试读取已存在的密钥 ─────────────────────────────
+        let items = collection
+            .search_items(attrs.clone())
+            .await
+            .map_err(|e| format!("搜索密钥条目失败：{}", e))?;
+
+        if let Some(item) = items.first() {
+            let secret = item
+                .get_secret()
+                .await
+                .map_err(|e| format!("读取密钥内容失败：{}", e))?;
+            let key = String::from_utf8(secret)
+                .map_err(|e| format!("密钥编码无效：{}", e))?;
+            log::info!("从 Secret Service 读取数据库密钥成功");
+            return Ok(key);
+        }
+
+        // ── 首次运行：生成随机密钥并写入 ─────────────────────
+        let key = generate_key();
+        log::info!("首次运行，生成新的数据库密钥并写入 Secret Service");
+
+        collection
+            .create_item(
+                LABEL,
+                attrs,
+                key.as_bytes(),
+                true,         // replace = true：若同名条目意外存在则覆盖
+                "text/plain",
+            )
+            .await
+            .map_err(|e| format!("写入 Secret Service 失败：{}", e))?;
+
+        Ok(key)
+    }
+
     fn generate_key() -> String {
         use rand::RngCore;
         let mut buf = [0u8; 32];
