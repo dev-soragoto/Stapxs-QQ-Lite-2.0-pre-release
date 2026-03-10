@@ -873,7 +873,13 @@ msgstr ""
 msgid "搜索已保存的消息"
 msgstr ""
 
-msgid "已保存 {count} 条消息"
+msgid "已存消息"
+msgstr ""
+
+msgid "数据库大小"
+msgstr ""
+
+msgid "图片缓存"
 msgstr ""
 
 msgid "关于"

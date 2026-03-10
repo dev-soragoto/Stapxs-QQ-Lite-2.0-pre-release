@@ -119,6 +119,8 @@ export async function dbSaveMessages(selfId: string | number, msgs: any[]): Prom
             selfId: String(selfId),
             messages: records,
         })
+        // 保存成功后，异步缓存消息中的图片（不阻塞主流程）
+        cacheImagesFromMsgs(selfId, msgs).catch(() => {})
     } catch (e) {
         new Logger().error(e as unknown as Error, '[LocalHistory] dbSaveMessages 失败')
     }
@@ -247,7 +249,7 @@ export async function dbSearchMessages(
 
 export async function dbGetStats(
     selfId: string | number,
-): Promise<{ totalMessages: number; dbSizeBytes: number } | null> {
+): Promise<{ totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null> {
     try {
         return await backend.call(
             undefined,
@@ -261,7 +263,89 @@ export async function dbGetStats(
     }
 }
 
+/**
+ * 计算 URL 的 SHA-256 十六进制摘要，用作图片缓存的唯一键。
+ */
+export async function hashUrl(url: string): Promise<string> {
+    const data = new TextEncoder().encode(url)
+    const buf = await crypto.subtle.digest('SHA-256', data)
+    return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+}
+
+/**
+ * 将图片缓存到本地加密数据库。
+ * `data` 为 base64 编码的原始图片字节。
+ */
+export async function dbCacheImage(
+    selfId: string | number,
+    urlHash: string,
+    mimeType: string,
+    data: string,
+): Promise<void> {
+    try {
+        await backend.call(undefined, 'db:cacheImage', true, {
+            selfId: String(selfId),
+            urlHash,
+            mimeType,
+            data,
+        })
+    } catch (e) {
+        new Logger().error(e as unknown as Error, '[LocalHistory] dbCacheImage 失败')
+    }
+}
+
+/**
+ * 从本地数据库读取已缓存的图片。
+ * 返回 `{ mimeType, data }` （data 为 base64），未缓存则返回 `null`。
+ */
+export async function dbGetImage(
+    selfId: string | number,
+    urlHash: string,
+): Promise<{ mimeType: string; data: string } | null> {
+    try {
+        return await backend.call(undefined, 'db:getImage', true, {
+            selfId: String(selfId),
+            urlHash,
+        })
+    } catch (e) {
+        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetImage 失败')
+        return null
+    }
+}
+
 // ── 内部工具 ──────────────────────────────────────────────────────
+
+/**
+ * 遍历消息列表，将所有图片段下载并缓存到本地数据库。
+ * 已缓存的图片（url_hash 命中）不会重复下载。
+ */
+async function cacheImagesFromMsgs(selfId: string | number, msgs: any[]): Promise<void> {
+    if (!runtimeData.sysConfig.enable_local_history) return
+    for (const msg of msgs) {
+        if (!Array.isArray(msg.message)) continue
+        for (const seg of msg.message) {
+            if (seg.type !== 'image' || !seg.url || !seg.url.startsWith('http')) continue
+            try {
+                const urlHash = await hashUrl(seg.url)
+                // 已缓存则跳过，避免重复下载
+                const existing = await dbGetImage(selfId, urlHash)
+                if (existing) continue
+                const fetchUrl = backend.proxy ? `http://localhost:${backend.proxy}/proxy?url=${encodeURIComponent(seg.url)}` : seg.url
+                const resp = await fetch(fetchUrl)
+                if (!resp.ok) continue
+                const mimeType = resp.headers.get('Content-Type')?.split(';')[0]?.trim() ?? 'image/jpeg'
+                const buffer = await resp.arrayBuffer()
+                const bytes = new Uint8Array(buffer)
+                // ArrayBuffer → base64
+                let binary = ''
+                for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+                await dbCacheImage(selfId, urlHash, mimeType, btoa(binary))
+            } catch { /* 单张图片失败不影响其余图片 */ }
+        }
+    }
+}
 
 /**
  * 将 DB 返回的 LocalMsgRecord 还原为与 runtimeData.messageList 兼容的消息对象。

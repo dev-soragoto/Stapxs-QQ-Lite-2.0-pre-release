@@ -249,6 +249,8 @@ pub fn run() {
             commands::db::db_search_messages,
             commands::db::db_revoke_message,
             commands::db::db_get_stats,
+            commands::db::db_cache_image,
+            commands::db::db_get_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

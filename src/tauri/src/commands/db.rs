@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose, Engine as _};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use log::{debug, error, info};
@@ -129,6 +130,16 @@ fn try_open_encrypted(db_path: &std::path::Path) -> rusqlite::Result<Connection>
 
         CREATE INDEX IF NOT EXISTS idx_messages_chat
             ON messages(self_id, chat_id, time, id);
+
+        CREATE TABLE IF NOT EXISTS images (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            self_id    TEXT    NOT NULL,
+            url_hash   TEXT    NOT NULL,
+            mime_type  TEXT    NOT NULL DEFAULT 'image/jpeg',
+            data       BLOB    NOT NULL,
+            created_at INTEGER NOT NULL,
+            UNIQUE(self_id, url_hash)
+        );
         ",
     )?;
 
@@ -353,6 +364,10 @@ pub fn db_revoke_message(
 pub struct DbStats {
     /// 当前账号已保存的有效消息条数（不含已撤回）
     pub total_messages: i64,
+    /// 已缓存的图片张数
+    pub image_count: i64,
+    /// 图片缓存占用的原始字节总量（BLOB 合计）
+    pub image_cache_bytes: i64,
     /// 数据库文件大小（字节）
     pub db_size_bytes: u64,
 }
@@ -373,6 +388,14 @@ pub fn db_get_stats(
         )
         .unwrap_or(0);
 
+    let (image_count, image_cache_bytes): (i64, i64) = conn
+        .query_row(
+            "SELECT COUNT(*), COALESCE(SUM(LENGTH(data)), 0) FROM images WHERE self_id = ?1",
+            params![self_id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap_or((0, 0));
+
     let data_dir = app_handle
         .path()
         .app_data_dir()
@@ -383,8 +406,72 @@ pub fn db_get_stats(
 
     Ok(DbStats {
         total_messages: total,
+        image_count,
+        image_cache_bytes,
         db_size_bytes: db_size,
     })
+}
+
+/// 已缓存图片（返回给前端用于展示）
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CachedImage {
+    pub mime_type: String,
+    /// base64 编码的原始图片字节
+    pub data: String,
+}
+
+/// 将图片缓存到本地数据库
+///
+/// `data` 为 base64 编码的原始图片字节，后端将解码后以 BLOB 形式加密存储。
+#[tauri::command]
+pub fn db_cache_image(
+    state: State<DbState>,
+    self_id: String,
+    url_hash: String,
+    mime_type: String,
+    data: String,
+) -> Result<(), String> {
+    let bytes = general_purpose::STANDARD
+        .decode(&data)
+        .map_err(|e| e.to_string())?;
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64;
+    conn.execute(
+        "INSERT OR IGNORE INTO images (self_id, url_hash, mime_type, data, created_at) \
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![self_id, url_hash, mime_type, bytes, now],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// 从本地数据库获取已缓存的图片
+///
+/// 返回 `CachedImage`（含 MIME 类型和 base64 编码数据），若未缓存则返回 `None`。
+#[tauri::command]
+pub fn db_get_image(
+    state: State<DbState>,
+    self_id: String,
+    url_hash: String,
+) -> Result<Option<CachedImage>, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let result: rusqlite::Result<(String, Vec<u8>)> = conn.query_row(
+        "SELECT mime_type, data FROM images WHERE self_id = ?1 AND url_hash = ?2",
+        params![self_id, url_hash],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    );
+    match result {
+        Ok((mime_type, bytes)) => Ok(Some(CachedImage {
+            mime_type,
+            data: general_purpose::STANDARD.encode(&bytes),
+        })),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 // ── 内部工具 ─────────────────────────────────────────────────

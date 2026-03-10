@@ -272,16 +272,10 @@
         </div>
         <div v-if="backend.type === 'tauri'" class="ss-card">
             <header>{{ $t('消息存储') }}</header>
-            <div class="tip">
-                {{
-                    $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
-                }}
-            </div>
-            <div v-if="dbStats != null" class="db-stats-bar">
-                <font-awesome-icon :icon="['fas', 'circle-info']" />
-                <span>{{ $t('已保存 {count} 条消息', { count: dbStats.totalMessages.toLocaleString() }) }} · {{ formatDbSize(dbStats.dbSizeBytes) }}</span>
-            </div>
-            <div class="opt-item">
+            <div
+                class="opt-item"
+                :style="runtimeData.sysConfig.enable_local_history ?
+                    'background: var(--color-card-1);' : ''">
                 <div :class="checkDefault('enable_local_history')" />
                 <font-awesome-icon :icon="['fas', 'database']" />
                 <div>
@@ -295,6 +289,28 @@
                         <div />
                     </div>
                 </label>
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history" class="tip">
+                {{
+                    $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
+                }}
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history && dbStats != null" class="db-stats-cards">
+                <div class="db-stat-card">
+                    <font-awesome-icon :icon="['fas', 'message']" />
+                    <span class="db-stat-value">{{ dbStats.totalMessages.toLocaleString() }}</span>
+                    <span class="db-stat-label">{{ $t('已存消息') }}</span>
+                </div>
+                <div class="db-stat-card">
+                    <font-awesome-icon :icon="['fas', 'database']" />
+                    <span class="db-stat-value">{{ formatDbSize(dbStats.dbSizeBytes) }}</span>
+                    <span class="db-stat-label">{{ $t('数据库大小') }}</span>
+                </div>
+                <div class="db-stat-card">
+                    <font-awesome-icon :icon="['fas', 'image']" />
+                    <span class="db-stat-value">{{ dbStats.imageCount > 0 ? formatDbSize(dbStats.imageCacheBytes) : '-' }}</span>
+                    <span class="db-stat-label">{{ $t('图片缓存') }}{{ dbStats.imageCount > 0 ? '\u00a0(' + dbStats.imageCount.toLocaleString() + ')' : '' }}</span>
+                </div>
             </div>
             <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
                 <div :class="checkDefault('local_history_first')" />
@@ -388,7 +404,7 @@ import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
                 backend,
                 checkDefault: checkDefault,
                 runtimeData: runtimeData,
-                dbStats: null as { totalMessages: number; dbSizeBytes: number } | null,
+                dbStats: null as { totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null,
                 save: save,
                 ndt: 0,
                 ndv: false,
@@ -481,21 +497,47 @@ import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
         font-size: 0.8rem;
     }
 
-    .db-stats-bar {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin: 4px 0 2px;
-        padding: 10px 20px;
-        background: var(--color-card-2);
-        border-radius: 5px;
-        font-size: 0.78rem;
-        color: var(--color-font-1);
+    .db-stats-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 4px 0 8px;
     }
 
-    .db-stats-bar > svg {
-        width: 12px;
+    .db-stat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 12px 8px;
+        border-radius: 7px;
+        min-width: 0;
+    }
+
+    .db-stat-card > svg {
+        width: 16px;
+        height: 16px;
+        opacity: 0.5;
         flex-shrink: 0;
-        opacity: 0.7;
+    }
+
+    .db-stat-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-font);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .db-stat-label {
+        font-size: 0.72rem;
+        color: var(--color-font-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 </style>
