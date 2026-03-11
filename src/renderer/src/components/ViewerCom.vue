@@ -10,7 +10,8 @@
                 @mousemove="mouseMoveCheck">
                 <!-- 工具扩展设置 -->
                 <TransitionGroup class="viewer-bar viewer-tool-config-bar"
-                    name="viewer-tool-config" tag="div">
+                    name="viewer-tool-config" tag="div"
+                    :class="{ dragging: dragging }">
                     <!-- 颜色 -->
                     <template v-if="currentTool !== 'hand'">
                         <div v-for="(color, key) in colorMap"
@@ -48,7 +49,8 @@
                             key="1"
                             class="viewer-bar viewer-button-bar"
                             :class="{
-                                'force-show': forceShowButton || moveTimeout
+                                'force-show': forceShowButton || moveTimeout,
+                                dragging: dragging,
                             }">
                             <font-awesome-icon v-hide="!prev"
                                 :icon="['fas', 'angle-left']"
@@ -74,6 +76,7 @@
                         <!-- 编辑栏 -->
                         <div v-else
                             key="2"
+                            :class="{dragging: dragging}"
                             class="viewer-bar viewer-button-bar force-show">
                             <font-awesome-icon :icon="['fas', 'hand']"
                                 :class="{ active: currentTool === 'hand' }"
@@ -242,6 +245,7 @@ const currentColor = computed(() => toolConfig[currentTool.value].color)
 const currentLineWidth = computed(() => toolConfig[currentTool.value].width)
 const loading = shallowRef(true)
 const edit = shallowRef(false)
+const dragging = shallowRef(false)
 const currentImgInfo = shallowRef<{
     width: number,                          // 图片实际宽度
     height: number,                         // 图片实际高度
@@ -731,9 +735,18 @@ function onScrollbarDrag(axis: 'x' | 'y', event: MouseEvent) {
     }
     mousemoveMask((event: MouseEvent) => {
         const move = getDeltaAndUpdate(event)
+        let imgWidth = 0
+        let imgHeight = 0
+        if (modify.rotate % 180 === 0) {
+            imgWidth = currentImgInfo.value?.width || 0
+            imgHeight = currentImgInfo.value?.height || 0
+        } else {
+            imgWidth = currentImgInfo.value?.height || 0
+            imgHeight = currentImgInfo.value?.width || 0
+        }
         if (axis === 'x') {
             // 横向滚动
-            modify.x -= move * (currentImgInfo.value?.width || 0) / (vw.value * 100)
+            modify.x -= move * imgWidth * modify.scale / (vw.value * 100)
             // 限制范围
             const info = currentImgInfo.value
             if (!info) return true
@@ -747,7 +760,7 @@ function onScrollbarDrag(axis: 'x' | 'y', event: MouseEvent) {
             }
         } else {
             // 纵向滚动
-            modify.y -= move * (currentImgInfo.value?.height || 0) / (vh.value * 100)
+            modify.y -= move * imgHeight * modify.scale / (vh.value * 100)
             const info = currentImgInfo.value
             if (!info) return true
             if (modify.rotate % 180 === 0) {
@@ -802,6 +815,7 @@ let mouseDownTime = 0
 function onMouseDown(event: MouseEvent) {
     handleEvent(event)
     mouseDownTime = Date.now()
+    dragging.value = true
 
     switch (currentTool.value) {
         case 'hand':
@@ -834,6 +848,7 @@ function onMouseMove(event: MouseEvent) {
 }
 function onMouseUp(event: MouseEvent) {
     handleEvent(event)
+    dragging.value = false
 
     switch (currentTool.value) {
         case 'hand':
@@ -860,6 +875,7 @@ function onMouseout(event: MouseEvent) {
 let onImgTouchFlag = false
 function onImgTouchStart(event: TouchEvent) {
     if (event.touches.length !== 1) return
+    dragging.value = true
 
     mouseDownTime = Date.now()
 
@@ -898,6 +914,7 @@ function onImgTouchEnd(event: TouchEvent) {
     if (!onImgTouchFlag) return
     handleEvent(event)
     onImgTouchFlag = false
+    dragging.value = false
 
     // 点击判定
     onClick(event)
@@ -984,7 +1001,19 @@ function penMouseMove(x: number, y: number) {
     ctx.fill()
     penLastPoint = point
 }
-function penMouseUp(_x: number, _y: number) {
+function penMouseUp(x: number, y: number) {
+    if (!penLastPoint) return
+    const ctx = canvas.value?.getContext('2d')
+    if (!ctx) return
+    const point = getPos(x, y)
+    ctx.beginPath()
+    ctx.moveTo(penLastPoint.x, penLastPoint.y)
+    ctx.lineTo(point.x, point.y)
+    ctx.stroke()
+    // 末端整个圆，防止连接处出现裂缝
+    ctx.beginPath()
+    ctx.arc(point.x, point.y, currentLineWidth.value / 2, 0, Math.PI * 2)
+    ctx.fill()
     penLastPoint = undefined
 }
 
@@ -1015,6 +1044,9 @@ function rectMouseUp(x: number, y: number) {
     if (!rectStartPoint) return
     const ctx = canvas.value?.getContext('2d')
     if (!ctx) return
+    const lastImg = editHistory.at(-1)
+    if (!lastImg) return
+    ctx.putImageData(lastImg, 0, 0)
     const point = getPos(x, y)
     ctx.beginPath()
     ctx.rect(rectStartPoint.x, rectStartPoint.y, point.x - rectStartPoint.x, point.y - rectStartPoint.y)

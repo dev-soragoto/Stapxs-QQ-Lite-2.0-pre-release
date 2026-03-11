@@ -1355,7 +1355,6 @@ textarea:focus {
     opacity: 0.0;
 }
 
-
 .viewer-bar {
     position: absolute;
     z-index: 31;
@@ -1496,6 +1495,11 @@ textarea:focus {
     margin-top: auto !important;
     margin-bottom: auto !important;
     opacity: 0;
+}
+
+.viewer-bar.dragging {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .viewer-img {
