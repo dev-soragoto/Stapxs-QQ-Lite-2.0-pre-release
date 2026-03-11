@@ -58,6 +58,12 @@ export class Connector {
 
         logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
 
+        // 确保 address 包含路径部分，避免部分服务器因 HTTP 请求路径为空而返回 400
+        const withoutProtocol = address.replace(/^(wss?|https?):(\/\/)/, '')
+        if (!withoutProtocol.includes('/')) {
+            address = address + '/'
+        }
+
         // Electron 默认使用后端连接模式
         if (!backend.isWeb()) {
             logger.add(LogType.WS, '使用后端连接模式')

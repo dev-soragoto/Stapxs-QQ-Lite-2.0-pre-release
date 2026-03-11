@@ -32,6 +32,11 @@ export class Connector {
         if (url.indexOf('ws://') < 0 && url.indexOf('wss://') < 0) {
             url = 'wss://' + url
         }
+        // 确保 URL 包含路径部分，避免部分服务器因 HTTP 请求路径为空而返回 400
+        const withoutProtocol = url.replace(/^wss?:\/\//, '')
+        if (!withoutProtocol.includes('/')) {
+            url = url + '/'
+        }
 
         if (!this.websocket) {
             this.logger.info('正在连接到：', url)
