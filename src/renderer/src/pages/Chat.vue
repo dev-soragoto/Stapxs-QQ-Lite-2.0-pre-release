@@ -552,6 +552,7 @@ import imageCompression from 'browser-image-compression'
 import {
     defineComponent,
     markRaw,
+    nextTick,
     reactive,
 } from 'vue'
 import { v4 as uuid } from 'uuid'
@@ -2001,19 +2002,26 @@ import { Img } from '@renderer/function/model/img'
                 if (data !== undefined) {
                     const index = this.sendCache.length
                     this.sendCache.push(data.msgObj)
-                    if (data.addText === true) {
-                        if (data.addTop === true) {
-                            this.msg = '[SQ:' + index + ']' + this.msg
+                    if (!data.addText) return index
+
+                    const sqCode = `[SQ:${index}]`
+
+                    if (data.addTop === true) {
+                        this.msg = sqCode + this.msg
+                    } else {
+                        const selectionStart = input?.selectionStart
+                        const selectionEnd = input?.selectionEnd ?? selectionStart
+                        if(selectionStart != null) {
+                            // 插到光标位置
+                            const first = this.msg.substring(0, selectionStart)
+                            const last = this.msg.substring(selectionEnd!, this.msg.length)
+                            this.msg = first + sqCode + last
+                            nextTick(()=>{
+                                input.selectionStart = selectionStart + sqCode.length
+                                input.selectionEnd = selectionStart + sqCode.length
+                            })
                         } else {
-                            const selectStart = input.selectionStart
-                            if(selectStart != null) {
-                                // 插到光标位置
-                                const first = this.msg.substring(0, selectStart)
-                                const last = this.msg.substring(selectStart, this.msg.length)
-                                this.msg = first + '[SQ:' + index + ']' + last
-                            } else {
-                                this.msg += '[SQ:' + index + ']'
-                            }
+                            this.msg += sqCode
                         }
                     }
                     return index
@@ -2631,6 +2639,7 @@ import { Img } from '@renderer/function/model/img'
                         this.msg += '[SQ:' + (this.sendCache.length - 1) + ']'
                     }
                 }
+                this.toMainInput()
             },
 
             /**
