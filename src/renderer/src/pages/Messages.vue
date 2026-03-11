@@ -461,7 +461,7 @@
                 let topInfo = runtimeData.sysConfig.top_info as {
                     [key: string]: number[]
                 }
-                if (topInfo == null) {
+                if (topInfo == null || typeof topInfo !== 'object') {
                     topInfo = {}
                 }
                 // 本人的置顶信息
