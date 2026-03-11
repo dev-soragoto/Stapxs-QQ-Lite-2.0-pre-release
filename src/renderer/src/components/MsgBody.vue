@@ -41,6 +41,9 @@
                     <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
                     <span v-if="senderInfo?.title && senderInfo?.title != ''">{{ senderInfo?.title.replace(/[\u202A-\u202E\u2066-\u2069]/g, '') }}</span>
                 </template>
+                <span v-if="isDev && data._from_local_db" class="dev-local-tag">
+                    {{ $t('本地') }}
+                </span>
                 <a v-if="data.sender.card || data.sender.nickname">
                     {{ data.sender.card ? data.sender.card : data.sender.nickname }}
                 </a>
@@ -88,13 +91,13 @@
                             :id="getMdHTML(item.content, 'msg-md-' + data.message_id)"
                             class="msg-md" />
                         <img v-else-if="item.type == 'image' && item.file == 'marketface'"
-                            :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
+                            :class=" imgStyle(data.message.length, Number(index), true) + ' msg-mface'"
                             :src="item.url"
                             :alt="item.summary"
                             @load="imageLoaded"
                             @error="imgLoadFail">
                         <img v-else-if="item.type == 'mface'"
-                            :class=" imgStyle(data.message.length, index, true) + ' msg-mface'"
+                            :class=" imgStyle(data.message.length, Number(index), true) + ' msg-mface'"
                             :src="item.url"
                             :alt="item.summary"
                             @load="imageLoaded"
@@ -102,8 +105,8 @@
                         <img v-else-if="item.type == 'image'"
                             :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                             :alt="$t('图片')"
-                            :class=" imgStyle(data.message.length, index, isFace(item))"
-                            :src="backend.proxyUrl(item.url)"
+                            :class=" imgStyle(data.message.length, Number(index), isFace(item))"
+                            :src="getImgSrc(item.url)"
                             @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(item.url)">
@@ -394,6 +397,7 @@ import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
 import { Img } from '@renderer/function/model/img'
+import { dbGetImage, hashUrl } from '@renderer/function/utils/localHistoryUtil'
 
 type Msg = any
 type IUser = any
@@ -482,6 +486,7 @@ function getUserById(id: number): IUser | undefined {
                 backend,
                 md: markdownit({ breaks: true }),
                 isMe: false,
+                isDev: import.meta.env.DEV,
                 msgBodyClass: 'message-body',
                 isDebugMsg: Option.get('debug_msg'),
                 linkViewStyle: '',
@@ -493,6 +498,7 @@ function getUserById(id: number): IUser | undefined {
                 senderInfo: null as any,
                 trueLang: getTrueLang(),
                 textIndex: {} as { [key: string]: number },
+                resolvedImages: {} as Record<string, string>,
                 // 互动相关
                 msgMove: {
                     move: 0,
@@ -530,6 +536,10 @@ function getUserById(id: number): IUser | undefined {
                     this.parseText(i)
                 }
             }
+            // 本地 DB 消息：异步加载已缓存的图片
+            if (this.data._from_local_db) {
+                this.loadCachedImages()
+            }
             // 初始化消息状态（msgBody class）
             if(this.isMe && this.type != 'merge') {
                 this.msgBodyClass += ' me'
@@ -548,6 +558,30 @@ function getUserById(id: number): IUser | undefined {
              */
             getMsgRawTxt(message: any) {
                 return getMsgRawTxt(message)
+            },
+
+            /**
+             * 对本地 DB 消息，尝试从图片缓存中加载各图片段，填充 resolvedImages。
+             */
+            async loadCachedImages() {
+                const selfId = runtimeData.loginInfo?.uin
+                if (!selfId) return
+                for (const seg of this.data.message) {
+                    if (seg.type !== 'image' || !seg.url) continue
+                    const urlHash = await hashUrl(seg.url)
+                    const cached = await dbGetImage(selfId, urlHash)
+                    if (cached) {
+                        this.resolvedImages[seg.url] =
+                            `data:${cached.mimeType};base64,${cached.data}`
+                    }
+                }
+            },
+
+            /**
+             * 获取图片的显示 src：本地 DB 消息优先使用缓存 data URL，否则走代理。
+             */
+            getImgSrc(url: string): string {
+                return this.resolvedImages[url] ?? backend.proxyUrl(url)
             },
 
             /**
@@ -1221,6 +1255,12 @@ function getUserById(id: number): IUser | undefined {
     })
 </script>
 <style>
+    .dev-local-tag {
+        display: inline-block;
+        padding: 1px 7px !important;
+        background: var(--color-card) !important;
+        color: var(--color-font-2) !important;
+    }
     .emoji-like {
         flex-direction: row;
         display: flex;

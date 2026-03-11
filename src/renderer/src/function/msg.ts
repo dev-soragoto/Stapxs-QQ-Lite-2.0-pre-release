@@ -57,6 +57,7 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
+import { dbSaveMessages, dbRevokeMessage } from './utils/localHistoryUtil'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { getPinyin } from './utils/pinyin'
@@ -593,7 +594,44 @@ const msgFunctions = {
             runtimeData.tags.loadHistoryFail = true
             return
         }
-        saveMsg(msg, 'top')
+        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
+        saveMsg(msg)
+    },
+    getChatHistoryGapFill: (
+        _: string,
+        msg: { [key: string]: any },
+        metaArgs?: string[],
+    ) => {
+        // echo 格式：getChatHistoryGapFill_<anchorMsgId>
+        // anchorMsgId 是 gap 之后第一条消息的 message_id（插入点）
+        const anchorMsgId = metaArgs?.[1]
+        if (!anchorMsgId || msg.data === null) return
+        const rawList = getMsgData('message_list', msg, msgPath.message_list)
+        getMessageList(rawList)
+            .then((list) => {
+                if (!list || list.length === 0) return
+                const insertIdx = runtimeData.messageList.findIndex(
+                    (m) => m.message_id === anchorMsgId,
+                )
+                if (insertIdx === -1) return  // 用户已切换聊天，放弃
+                // 去重：过滤掉列表中已存在的消息
+                const existingIds = new Set(
+                    runtimeData.messageList.map((m) => m.message_id),
+                )
+                const newMsgs = list.filter(
+                    (m) => !existingIds.has(m.message_id),
+                )
+                if (newMsgs.length === 0) return
+                // 在锚点位置前插入补全的消息
+                runtimeData.messageList = [
+                    ...runtimeData.messageList.slice(0, insertIdx),
+                    ...newMsgs,
+                    ...runtimeData.messageList.slice(insertIdx),
+                ]
+                // 同步存入本地 DB，以便下次直接从本地加载
+                dbSaveMessages(runtimeData.loginInfo.uin, newMsgs)
+            })
+            .catch(() => {})
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
         if (msg.data === null) {
@@ -1393,6 +1431,8 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         list = list.filter((item: any) => {
             return item.message.length > 0
         })
+        // 保存到本地历史
+        dbSaveMessages(runtimeData.loginInfo.uin, list)
         // 如果分页不是增量的，就不使用追加
         if (
             append == 'top' &&
@@ -1535,8 +1575,11 @@ function revokeMsg(_: string, msg: any) {
     const chatId = msg.notice_type.includes('group') ? msg.group_id : msg.user_id
     new Notify().closeAll(chatId)
 
-    // 寻找消息
+    // 在本地 DB 中标记撤回
     const msgId = msg.message_id
+    dbRevokeMessage(runtimeData.loginInfo.uin, String(msgId))
+
+    // 寻找消息
     let msgGet = null as { [key: string]: any } | null
     let msgIndex!: number
     for (const [index, msg] of runtimeData.messageList.entries()) {
@@ -1620,6 +1663,28 @@ function newMsg(_: string, data: any) {
         // 刷新 favicon
         refreshFavicon()
 
+
+
+        // 对消息进行一次格式化处理
+        let list = getMsgData(
+            'message_list',
+            buildMsgList([data]),
+            msgPath.message_list,
+        )
+
+        if (list != undefined) {
+            list = parseMsgList(
+                list,
+                msgPath.message_list.type,
+                msgPath.message_value,
+            )
+
+            // 保存到本地历史
+            dbSaveMessages(runtimeData.loginInfo.uin, list)
+
+            data = list[0]
+        }
+
         // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
             // 如果有正在输入的提示，清除它
@@ -1652,21 +1717,6 @@ function newMsg(_: string, data: any) {
                 Umami.trackEvent('show_qed', { times: qed_try_times })
             }
             qed_try_times++
-        }
-
-        // 对消息进行一次格式化处理
-        let list = getMsgData(
-            'message_list',
-            buildMsgList([data]),
-            msgPath.message_list,
-        )
-        if (list != undefined) {
-            list = parseMsgList(
-                list,
-                msgPath.message_list.type,
-                msgPath.message_value,
-            )
-            data = list[0]
         }
 
         // 通知判定预处理 ============================================

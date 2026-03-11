@@ -270,6 +270,49 @@
                 </label>
             </div>
         </div>
+        <div v-if="backend.type === 'tauri'" class="ss-card">
+            <header>{{ $t('消息存储') }}</header>
+            <div
+                class="opt-item"
+                :style="runtimeData.sysConfig.enable_local_history ?
+                    'background: var(--color-card-1);' : ''">
+                <div :class="checkDefault('enable_local_history')" />
+                <font-awesome-icon :icon="['fas', 'database']" />
+                <div>
+                    <span>{{ $t('启用消息存储') }}</span>
+                    <span>{{ $t('保存消息记录何尝不是一种囤囤鼠') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.enable_local_history"
+                        type="checkbox" name="enable_local_history" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history" class="tip">
+                {{
+                    $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
+                }}
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history && dbStats != null" class="db-stats-cards">
+                <div class="db-stat-card">
+                    <font-awesome-icon :icon="['fas', 'message']" />
+                    <span class="db-stat-value">{{ dbStats.totalMessages.toLocaleString() }}</span>
+                    <span class="db-stat-label">{{ $t('已存消息') }}</span>
+                </div>
+                <div class="db-stat-card">
+                    <font-awesome-icon :icon="['fas', 'database']" />
+                    <span class="db-stat-value">{{ formatDbSize(dbStats.dbSizeBytes) }}</span>
+                    <span class="db-stat-label">{{ $t('数据库大小') }}</span>
+                </div>
+                <div class="db-stat-card">
+                    <font-awesome-icon :icon="['fas', 'image']" />
+                    <span class="db-stat-value">{{ dbStats.imageCount > 0 ? formatDbSize(dbStats.imageCacheBytes) : '-' }}</span>
+                    <span class="db-stat-label">{{ $t('图片缓存') }}{{ dbStats.imageCount > 0 ? '\u00a0(' + dbStats.imageCount.toLocaleString() + ')' : '' }}</span>
+                </div>
+            </div>
+        </div>
         <div class="ss-card">
             <header>{{ $t('分析信息') }}</header>
             <div
@@ -335,6 +378,7 @@
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
 import { backend } from '@renderer/runtime/backend'
+import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
 
     export default defineComponent({
         name: 'ViewOptFunction',
@@ -343,12 +387,34 @@ import { backend } from '@renderer/runtime/backend'
                 backend,
                 checkDefault: checkDefault,
                 runtimeData: runtimeData,
+                dbStats: null as { totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null,
                 save: save,
                 ndt: 0,
                 ndv: false,
             }
         },
+        watch: {
+            'runtimeData.loginInfo.uin': {
+                immediate: true,
+                handler(uin: string | number) {
+                    if (uin && runtimeData.sysConfig.enable_local_history) {
+                        this.loadDbStats()
+                    }
+                },
+            },
+        },
         methods: {
+            async loadDbStats() {
+                if (runtimeData.loginInfo?.uin) {
+                    this.dbStats = await dbGetStats(runtimeData.loginInfo.uin)
+                }
+            },
+            formatDbSize(bytes: number): string {
+                if (bytes < 1024) return `${bytes} B`
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+                if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+                return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+            },
             showUmamiInfo() {
                 const popInfo = {
                     title: '',
@@ -412,5 +478,49 @@ import { backend } from '@renderer/runtime/backend'
         text-decoration: underline;
         color: var(--color-font-1);
         font-size: 0.8rem;
+    }
+
+    .db-stats-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 4px 0 8px;
+    }
+
+    .db-stat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 12px 8px;
+        border-radius: 7px;
+        min-width: 0;
+    }
+
+    .db-stat-card > svg {
+        width: 16px;
+        height: 16px;
+        opacity: 0.5;
+        flex-shrink: 0;
+    }
+
+    .db-stat-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-font);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .db-stat-label {
+        font-size: 0.72rem;
+        color: var(--color-font-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 </style>

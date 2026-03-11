@@ -62,13 +62,14 @@ message_list:
     name: get_group_msg_history
     private_name: get_friend_msg_history
     source: $.data.messages[*]
-    pagerType: full # 分页类型：全量 full / 增量 incremental / 无分页 none
+    pagerType: incremental # 分页类型：全量 full / 增量 incremental / 无分页 none
     type: $.data
     message_type:
         user: private
         group: group
     list:
         message_id: /message_id
+        seq_id: /real_seq
         target_id: /target_id
         message_type: /message_type
         time: /time

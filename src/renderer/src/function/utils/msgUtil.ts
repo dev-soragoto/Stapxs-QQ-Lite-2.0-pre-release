@@ -210,6 +210,11 @@ export function parseMsgList(
                     }
                 })
             })
+            // 补充 infoList
+            const infoList = getMsgData('message_info', list[i], runtimeData.jsonMap.message_info)
+            if (infoList != undefined) {
+                list[i].infoList = infoList[0]
+            }
         }
     }
     return list

@@ -1,9 +1,10 @@
 mod commands;
 
+use commands::db::{open_db, DbState};
 use std::collections::HashMap;
 
 use commands::utils::http_proxy::ProxyServer;
-use log::{info, error};
+use log::{info, error, debug};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
 
 #[cfg(target_os = "macos")]
@@ -56,6 +57,7 @@ pub fn run() {
                 .logger(Logger::builder().build("hyper_util", log::LevelFilter::Info))
                 .logger(Logger::builder().build("reqwest", log::LevelFilter::Info))
                 .logger(Logger::builder().build("warp", log::LevelFilter::Info))
+                .logger(Logger::builder().build("user_notify", log::LevelFilter::Off))
                 .build(Root::builder().appender("stdout").build(final_log_level))
                 .unwrap();
 
@@ -72,6 +74,15 @@ pub fn run() {
             if PROXY_PORT.get().is_some() {
                 info!("代理服务器已启动，端口：{}", PROXY_PORT.get().unwrap());
             }
+
+            let data_dir = app.path().app_data_dir()
+                .expect("无法获取 app data 目录");
+            info!("应用数据目录: {:?}", data_dir);
+
+            // 初始化 SQLite 数据库 ============
+            let conn = open_db(data_dir).expect("无法打开 SQLite 数据库");
+            app.manage(DbState(std::sync::Mutex::new(conn)));
+            info!("SQLite 数据库初始化完成");
 
             // 初始化全局通知管理器 ============
             let app_id = app.config().identifier.clone();
@@ -235,6 +246,15 @@ pub fn run() {
             commands::opt::opt_get_all,
             commands::opt::opt_get,
             commands::opt::opt_clear_all,
+            commands::db::db_save_messages,
+            commands::db::db_get_latest,
+            commands::db::db_get_before,
+            commands::db::db_get_after,
+            commands::db::db_search_messages,
+            commands::db::db_revoke_message,
+            commands::db::db_get_stats,
+            commands::db::db_cache_image,
+            commands::db::db_get_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -290,6 +290,18 @@ msgstr "搜索喵喵"
 msgid "搜索已加载的消息"
 msgstr "搜索已加载的喵喵"
 
+msgid "搜索已保存的消息"
+msgstr "搜索已保存的喵喵"
+
+msgid "已存消息"
+msgstr "已存喵喵"
+
+msgid "数据库大小"
+msgstr "鱼框大小"
+
+msgid "图片缓存"
+msgstr "鱼片缓存"
+
 msgid "账户"
 msgstr "喵号"
 

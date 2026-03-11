@@ -870,6 +870,18 @@ msgstr "搜尋訊息"
 msgid "搜索已加载的消息"
 msgstr "搜尋已載入的訊息"
 
+msgid "搜索已保存的消息"
+msgstr "搜尋已儲存的訊息"
+
+msgid "已存消息"
+msgstr "已儲訊息"
+
+msgid "数据库大小"
+msgstr "資料庫大小"
+
+msgid "图片缓存"
+msgstr "圖片快取"
+
 msgid "关于"
 msgstr "關於"
 
