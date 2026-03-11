@@ -155,7 +155,6 @@ mod macos {
             Ok(bytes) => {
                 let key = String::from_utf8(bytes)
                     .map_err(|e| format!("钥匙串密钥编码无效：{}", e))?;
-                log::info!("从钥匙串读取数据库密钥成功");
                 return Ok(key);
             }
             Err(e) => {
@@ -169,7 +168,6 @@ mod macos {
 
         // ── 首次运行：生成随机密钥 ──────────────────────────
         let key = generate_key();
-        log::info!("首次运行，生成新的数据库密钥并写入钥匙串");
 
         set_generic_password(SERVICE, ACCOUNT, key.as_bytes())
             .map_err(|e| format!("写入钥匙串失败（code {}）：{}", e.code(), e))?;

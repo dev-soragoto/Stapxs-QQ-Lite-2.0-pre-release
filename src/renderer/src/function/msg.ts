@@ -594,7 +594,44 @@ const msgFunctions = {
             runtimeData.tags.loadHistoryFail = true
             return
         }
-        saveMsg(msg, 'top')
+        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
+        saveMsg(msg)
+    },
+    getChatHistoryGapFill: (
+        _: string,
+        msg: { [key: string]: any },
+        metaArgs?: string[],
+    ) => {
+        // echo 格式：getChatHistoryGapFill_<anchorMsgId>
+        // anchorMsgId 是 gap 之后第一条消息的 message_id（插入点）
+        const anchorMsgId = metaArgs?.[1]
+        if (!anchorMsgId || msg.data === null) return
+        const rawList = getMsgData('message_list', msg, msgPath.message_list)
+        getMessageList(rawList)
+            .then((list) => {
+                if (!list || list.length === 0) return
+                const insertIdx = runtimeData.messageList.findIndex(
+                    (m) => m.message_id === anchorMsgId,
+                )
+                if (insertIdx === -1) return  // 用户已切换聊天，放弃
+                // 去重：过滤掉列表中已存在的消息
+                const existingIds = new Set(
+                    runtimeData.messageList.map((m) => m.message_id),
+                )
+                const newMsgs = list.filter(
+                    (m) => !existingIds.has(m.message_id),
+                )
+                if (newMsgs.length === 0) return
+                // 在锚点位置前插入补全的消息
+                runtimeData.messageList = [
+                    ...runtimeData.messageList.slice(0, insertIdx),
+                    ...newMsgs,
+                    ...runtimeData.messageList.slice(insertIdx),
+                ]
+                // 同步存入本地 DB，以便下次直接从本地加载
+                dbSaveMessages(runtimeData.loginInfo.uin, newMsgs)
+            })
+            .catch(() => {})
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
         if (msg.data === null) {

@@ -42,6 +42,7 @@ message_list:
         group: group
     list:
         message_id: /message_id
+        seq_id: null
         target_id: /target_id
         message_type: /message_type
         time: /time

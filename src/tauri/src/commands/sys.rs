@@ -503,7 +503,7 @@ pub fn sys_create_menu(app: tauri::AppHandle, data: HashMap<String, String>) -> 
 #[command]
 pub fn sys_update_menu(app: tauri::AppHandle, parent: String, id: String, action: String, value: String) -> Result<(), String> {
     #[cfg(target_os = "macos")] {
-        debug!("菜单更新: id={}.{}, action={}, value={}", parent, id, action, value);
+        debug!("菜单更新: {}.{}::{} -> {}", parent, id, action, value);
         // let menu = app.get_webview_window("main").unwrap().menu().unwrap();
         let menu = app.menu().unwrap();
         let submenu = menu.get(&parent);

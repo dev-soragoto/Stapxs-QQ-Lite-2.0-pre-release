@@ -312,23 +312,6 @@
                     <span class="db-stat-label">{{ $t('图片缓存') }}{{ dbStats.imageCount > 0 ? '\u00a0(' + dbStats.imageCount.toLocaleString() + ')' : '' }}</span>
                 </div>
             </div>
-            <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
-                <div :class="checkDefault('local_history_first')" />
-                <font-awesome-icon :icon="['fas', 'bolt']" />
-                <div>
-                    <span>{{ $t('优先加载本地历史') }}</span>
-                    <span>{{ $t('不会吧不会吧，存了真的不用吗.png') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.local_history_first"
-                        type="checkbox" name="local_history_first"
-                        :disabled="!runtimeData.sysConfig.enable_local_history"
-                        @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
-            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('分析信息') }}</header>

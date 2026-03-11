@@ -889,10 +889,7 @@ import { Img } from '@renderer/function/model/img'
 					runtimeData.tags.loadHistoryFail = false
 
                     // 优先从本地数据库加载
-                    if (
-                        runtimeData.sysConfig.enable_local_history &&
-                        runtimeData.sysConfig.local_history_first
-                    ) {
+                    if (runtimeData.sysConfig.enable_local_history) {
                         const localMsgs = await dbGetBefore(
                             runtimeData.loginInfo.uin,
                             runtimeData.chatInfo.show.id,
@@ -901,6 +898,13 @@ import { Img } from '@renderer/function/model/img'
                         )
                         if (localMsgs.length > 0) {
                             runtimeData.messageList = localMsgs.concat(runtimeData.messageList)
+                            // 检测 seq 缺口并发起补全请求
+                            // 将边界消息（原列表第一条）加入检测范围
+                            const boundary = this.list[localMsgs.length] ?? this.list[localMsgs.length - 1]
+                            const seqGapAnchors = this.detectSeqGaps([...localMsgs, boundary])
+                            if (seqGapAnchors.length > 0) {
+                                this.fillSeqGaps(seqGapAnchors)
+                            }
                             this.tags.nowGetHistroy = false
                             return
                         }
@@ -927,6 +931,52 @@ import { Img } from '@renderer/function/model/img'
                             count: fullPage? runtimeData.messageList.length + 20: 20,
                         },
                         'getChatHistory',
+                    )
+                }
+            },
+
+            /**
+             * 检测消息列表中的 seq 缺口。
+             * 若任意消息缺少 seq 则返回空数组（缺口检测功能不可用）。
+             * @returns 每个缺口之后第一条消息的 message_id（作为网络请求锚点）
+             */
+            detectSeqGaps(msgs: any[]): string[] {
+                const gaps: string[] = []
+                for (let i = 0; i < msgs.length - 1; i++) {
+                    const seqA: number | null = msgs[i].message_seq ?? msgs[i].seq ?? null
+                    const seqB: number | null = msgs[i + 1].message_seq ?? msgs[i + 1].seq ?? null
+                    // 任意消息没有 seq，停止检测
+                    if (seqA == null || seqB == null) return []
+                    if (seqB - seqA > 1) {
+                        gaps.push(msgs[i + 1].message_id)
+                    }
+                }
+                return gaps
+            },
+
+            /**
+             * 向网络请求补全缺失的消息段。
+             * @param anchorMsgIds 每个缺口之后第一条消息的 message_id
+             */
+            fillSeqGaps(anchorMsgIds: string[]) {
+                const type = runtimeData.chatInfo.show.type
+                const id = runtimeData.chatInfo.show.id
+                let name: string
+                if (runtimeData.jsonMap.message_list && type != 'group') {
+                    name = runtimeData.jsonMap.message_list.private_name
+                } else {
+                    name = runtimeData.jsonMap.message_list?.name
+                }
+                for (const anchorMsgId of anchorMsgIds) {
+                    Connector.send(
+                        name ?? 'get_chat_history',
+                        {
+                            group_id: type == 'group' ? id : undefined,
+                            user_id: type != 'group' ? id : undefined,
+                            message_id: anchorMsgId,
+                            count: 20,
+                        },
+                        'getChatHistoryGapFill_' + anchorMsgId,
                     )
                 }
             },

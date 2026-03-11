@@ -39,8 +39,6 @@ impl WebSocketClient {
         });
         let timeout_duration = Duration::from_secs(5);
 
-        println!("{}", url.to_string());
-
         let on_open = Arc::new(Mutex::new(on_open));
         let on_message = Arc::new(Mutex::new(on_message));
         let on_close = Arc::new(Mutex::new(on_close));

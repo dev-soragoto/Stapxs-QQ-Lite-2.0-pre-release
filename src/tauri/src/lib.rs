@@ -4,7 +4,7 @@ use commands::db::{open_db, DbState};
 use std::collections::HashMap;
 
 use commands::utils::http_proxy::ProxyServer;
-use log::{info, error};
+use log::{info, error, debug};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
 
 #[cfg(target_os = "macos")]
@@ -34,12 +34,6 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // 初始化 SQLite 数据库 ============
-            let data_dir = app.path().app_data_dir()
-                .expect("无法获取 app data 目录");
-            let conn = open_db(data_dir).expect("无法打开 SQLite 数据库");
-            app.manage(DbState(std::sync::Mutex::new(conn)));
-            info!("SQLite 数据库初始化完成");
             let store =
                 StoreBuilder::new(app, ".settings.dat").build().map_err(|e| e.to_string())?;
             let log_level = store.get("log_level").unwrap_or_default();
@@ -63,6 +57,7 @@ pub fn run() {
                 .logger(Logger::builder().build("hyper_util", log::LevelFilter::Info))
                 .logger(Logger::builder().build("reqwest", log::LevelFilter::Info))
                 .logger(Logger::builder().build("warp", log::LevelFilter::Info))
+                .logger(Logger::builder().build("user_notify", log::LevelFilter::Off))
                 .build(Root::builder().appender("stdout").build(final_log_level))
                 .unwrap();
 
@@ -79,6 +74,15 @@ pub fn run() {
             if PROXY_PORT.get().is_some() {
                 info!("代理服务器已启动，端口：{}", PROXY_PORT.get().unwrap());
             }
+
+            let data_dir = app.path().app_data_dir()
+                .expect("无法获取 app data 目录");
+            info!("应用数据目录: {:?}", data_dir);
+
+            // 初始化 SQLite 数据库 ============
+            let conn = open_db(data_dir).expect("无法打开 SQLite 数据库");
+            app.manage(DbState(std::sync::Mutex::new(conn)));
+            info!("SQLite 数据库初始化完成");
 
             // 初始化全局通知管理器 ============
             let app_id = app.config().identifier.clone();

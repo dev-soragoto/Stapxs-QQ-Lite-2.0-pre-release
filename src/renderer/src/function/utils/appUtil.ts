@@ -140,11 +140,8 @@ export function openLink(url: string, external = false) {
  */
 export async function loadHistory(info: BaseChatInfoElem) {
     runtimeData.messageList = []
-    // 优先加载本地历史消息：本地有数据则直接显示，不再发网络请求
-    if (
-        runtimeData.sysConfig.enable_local_history &&
-        runtimeData.sysConfig.local_history_first
-    ) {
+    // 本地有数据时立即显示，同时仍发网络请求以获取最新消息（避免遗漏）
+    if (runtimeData.sysConfig.enable_local_history) {
         const localMsgs = await dbGetLatest(
             runtimeData.loginInfo.uin,
             info.id,
@@ -152,9 +149,7 @@ export async function loadHistory(info: BaseChatInfoElem) {
         )
         if (localMsgs.length > 0) {
             runtimeData.messageList = localMsgs
-            return
         }
-        // 本地为空，回落到网络请求
     }
     if (!loadHistoryMessage(info.id, info.type)) {
         new PopInfo().add(

@@ -23,6 +23,8 @@ export interface LocalMsgRecord {
     sender_id: number
     /** 发送者昵称（card 优先，fallback nickname） */
     sender_name: string | null
+    /** 消息序号（并非所有 Bot 都提供，可能为 null） */
+    seq: number | null
     /** 消息时间戳（秒，Bot 原始值） */
     time: number
     /** JSON 序列化的 MsgItemElem[] 消息段数组 */
@@ -74,6 +76,7 @@ export function msgToRecord(msg: any): LocalMsgRecord | null {
         chat_type: chatType,
         sender_id: Number(senderId),
         sender_name: senderName,
+        seq: msg.seq_id != null ? Number(msg.seq_id) : null,
         time: Number(msg.time),
         message: messageSerialized,
         raw_message: rawMessage,
@@ -364,9 +367,7 @@ function deserializeRecord(record: LocalMsgRecord): any {
 
     // 群消息：sender_name 来自 card，私聊来自 nickname
     const isGroup = record.chat_type === 'group'
-    const sender = isGroup
-        ? { user_id: record.sender_id, card: record.sender_name ?? '', nickname: record.sender_name ?? '' }
-        : { user_id: record.sender_id, card: '', nickname: record.sender_name ?? '' }
+    const sender = isGroup ? { user_id: record.sender_id, card: record.sender_name ?? '', nickname: record.sender_name ?? '' } : { user_id: record.sender_id, card: '', nickname: record.sender_name ?? '' }
 
     return {
         post_type: postType,
@@ -379,6 +380,8 @@ function deserializeRecord(record: LocalMsgRecord): any {
         message,
         raw_message: record.raw_message ?? '',
         revoked: record.revoked,
+        // 消息序列号（并非所有 Bot 都提供，可为 null）
+        ...(record.seq != null ? { message_seq: record.seq } : {}),
         // 标记来源为本地缓存，业务层可按需用此字段区分
         _from_local_db: true,
     }

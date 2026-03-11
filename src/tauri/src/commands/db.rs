@@ -26,6 +26,8 @@ pub struct MsgRecord {
     pub sender_id: i64,
     /// 发送者昵称（card 优先，fallback nickname）
     pub sender_name: Option<String>,
+    /// 消息序号（并非所有 Bot 都提供，可为 null）
+    pub seq: Option<i64>,
     /// 消息时间戳（秒，Bot 原始值）
     pub time: i64,
     /// JSON 序列化的 MsgItemElem[] 消息段数组
@@ -36,8 +38,8 @@ pub struct MsgRecord {
     pub revoked: bool,
 }
 
-/// 加密密钥回退值（仅在非 macOS 平台或钥匙串读取失败时使用）
-const DB_KEY_FALLBACK: &str = "12345";
+/// 加密密钥回退值
+const DB_KEY_FALLBACK: &str = "711211e3-df54-40ce-99bc-3f42e0ff546a";
 
 /// 获取当前平台的数据库加密密钥
 fn get_db_key() -> String {
@@ -120,6 +122,7 @@ fn try_open_encrypted(db_path: &std::path::Path) -> rusqlite::Result<Connection>
             chat_type   TEXT    NOT NULL,
             sender_id   INTEGER NOT NULL,
             sender_name TEXT,
+            seq         INTEGER,
             time        INTEGER NOT NULL,
             message     TEXT    NOT NULL,
             raw_message TEXT,
@@ -130,8 +133,14 @@ fn try_open_encrypted(db_path: &std::path::Path) -> rusqlite::Result<Connection>
 
         CREATE INDEX IF NOT EXISTS idx_messages_chat
             ON messages(self_id, chat_id, time, id);
+        ",
+    )?;
 
-        CREATE TABLE IF NOT EXISTS images (
+    // 迁移：为旧数据库添加 seq 列（若列已存在则静默忽略）
+    let _ = conn.execute_batch("ALTER TABLE messages ADD COLUMN seq INTEGER;");
+
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS images (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             self_id    TEXT    NOT NULL,
             url_hash   TEXT    NOT NULL,
@@ -168,9 +177,9 @@ pub fn db_save_messages(
             .execute(
                 "INSERT OR IGNORE INTO messages
                     (self_id, message_id, chat_id, chat_type,
-                     sender_id, sender_name, time, message,
+                     sender_id, sender_name, seq, time, message,
                      raw_message, revoked, created_at)
-                 VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+                 VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
                 params![
                     self_id,
                     msg.message_id,
@@ -178,6 +187,7 @@ pub fn db_save_messages(
                     msg.chat_type,
                     msg.sender_id,
                     msg.sender_name,
+                    msg.seq,
                     msg.time,
                     msg.message,
                     msg.raw_message,
@@ -188,6 +198,8 @@ pub fn db_save_messages(
             .map_err(|e| e.to_string())?;
         inserted += n;
     }
+
+    debug!("成功保存 {} 条消息", inserted);
 
     Ok(inserted)
 }
@@ -205,7 +217,7 @@ pub fn db_get_latest(
     let mut stmt = conn
         .prepare(
             "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    time, message, raw_message, revoked
+                    seq, time, message, raw_message, revoked
              FROM messages
              WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
              ORDER BY time DESC, id DESC
@@ -243,7 +255,7 @@ pub fn db_get_before(
     let mut stmt = conn
         .prepare(
             "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    time, message, raw_message, revoked
+                    seq, time, message, raw_message, revoked
              FROM messages
              WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
                AND (time < ?3 OR (time = ?3 AND id < ?4))
@@ -284,7 +296,7 @@ pub fn db_get_after(
     let mut stmt = conn
         .prepare(
             "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    time, message, raw_message, revoked
+                    seq, time, message, raw_message, revoked
              FROM messages
              WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
                AND (time > ?3 OR (time = ?3 AND id > ?4))
@@ -321,7 +333,7 @@ pub fn db_search_messages(
     let mut stmt = conn
         .prepare(
             "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    time, message, raw_message, revoked
+                    seq, time, message, raw_message, revoked
              FROM messages
              WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
                AND raw_message LIKE ?3
@@ -494,9 +506,10 @@ fn row_to_record(row: &rusqlite::Row) -> rusqlite::Result<MsgRecord> {
         chat_type: row.get(2)?,
         sender_id: row.get(3)?,
         sender_name: row.get(4)?,
-        time: row.get(5)?,
-        message: row.get(6)?,
-        raw_message: row.get(7)?,
-        revoked: row.get::<_, i32>(8)? != 0,
+        seq: row.get(5)?,
+        time: row.get(6)?,
+        message: row.get(7)?,
+        raw_message: row.get(8)?,
+        revoked: row.get::<_, i32>(9)? != 0,
     })
 }
