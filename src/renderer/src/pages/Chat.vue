@@ -733,6 +733,8 @@ import { Img } from '@renderer/function/model/img'
                 atSelectedIndex: 0,
                 atScrollTimer: null as NodeJS.Timeout | null,
                 atScrollInterval: null as NodeJS.Timeout | null,
+                searchDebounceTimer: null as NodeJS.Timeout | null,
+                searchRequestId: 0,
                 isShowTime,
                 isDeleteMsg,
                 isDev: import.meta.env.DEV,
@@ -2636,18 +2638,27 @@ import { Img } from '@renderer/function/model/img'
                 }
 
                 if (this.details[3].open) {
+                    if (this.searchDebounceTimer) {
+                        clearTimeout(this.searchDebounceTimer)
+                        this.searchDebounceTimer = null
+                    }
                     const value = input.value
                     if (value.length == 0) {
+                        this.searchRequestId++
                         this.tags.search.list = reactive(this.list)
                     } else if (runtimeData.sysConfig.enable_local_history) {
-                        // 搜索已保存的消息：从本地 DB 全文搜索
-                        const results = await dbSearchMessages(
-                            runtimeData.loginInfo.uin,
-                            runtimeData.chatInfo.show.id,
-                            value,
-                        )
-                        this.tags.search.list = results
+                        const requestId = ++this.searchRequestId
+                        this.searchDebounceTimer = setTimeout(async () => {
+                            const results = await dbSearchMessages(
+                                runtimeData.loginInfo.uin,
+                                runtimeData.chatInfo.show.id,
+                                value,
+                            )
+                            if (requestId !== this.searchRequestId || !this.details[3].open) return
+                            this.tags.search.list = results
+                        }, 180)
                     } else {
+                        this.searchRequestId++
                         this.tags.search.list = this.list.filter(
                             (item: any) => {
                                 const rawMessage = getMsgRawTxt(item)
@@ -2662,6 +2673,11 @@ import { Img } from '@renderer/function/model/img'
                 this.tags.showMoreDetail = !this.tags.showMoreDetail
             },
             closeSearch() {
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer)
+                    this.searchDebounceTimer = null
+                }
+                this.searchRequestId++
                 this.details[3].open = !this.details[3].open
                 this.msg = ''
                 this.tags.search.list = reactive(this.list)

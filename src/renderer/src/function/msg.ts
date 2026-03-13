@@ -57,7 +57,7 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
-import { dbSaveMessages, dbRevokeMessage } from './utils/localHistoryUtil'
+import { dbRevokeMessage, saveMessagesWithSideEffects } from './utils/localHistoryUtil'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { getPinyin } from './utils/pinyin'
@@ -610,26 +610,15 @@ const msgFunctions = {
         getMessageList(rawList)
             .then((list) => {
                 if (!list || list.length === 0) return
-                const insertIdx = runtimeData.messageList.findIndex(
-                    (m) => m.message_id === anchorMsgId,
+                const inserted = insertHistorySegmentAtAnchor(
+                    runtimeData.messageList,
+                    anchorMsgId,
+                    list,
                 )
-                if (insertIdx === -1) return  // 用户已切换聊天，放弃
-                // 去重：过滤掉列表中已存在的消息
-                const existingIds = new Set(
-                    runtimeData.messageList.map((m) => m.message_id),
-                )
-                const newMsgs = list.filter(
-                    (m) => !existingIds.has(m.message_id),
-                )
-                if (newMsgs.length === 0) return
-                // 在锚点位置前插入补全的消息
-                runtimeData.messageList = [
-                    ...runtimeData.messageList.slice(0, insertIdx),
-                    ...newMsgs,
-                    ...runtimeData.messageList.slice(insertIdx),
-                ]
+                if (inserted.length === runtimeData.messageList.length) return
+                runtimeData.messageList = inserted
                 // 同步存入本地 DB，以便下次直接从本地加载
-                dbSaveMessages(runtimeData.loginInfo.uin, newMsgs)
+                saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
             })
             .catch(() => {})
     },
@@ -1410,8 +1399,7 @@ function saveClassInfo(
 }
 
 async function saveMsg(msg: any, append = undefined as undefined | string) {
-    let list = getMsgData('message_list', msg, msgPath.message_list)
-    list = await getMessageList(list)
+    let list = await normalizeMessagesFromPayload(msg)
     if (list != undefined) {
         // 检查消息是否是当前聊天的消息
         const firstMsg = list[0]
@@ -1432,7 +1420,7 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
             return item.message.length > 0
         })
         // 保存到本地历史
-        dbSaveMessages(runtimeData.loginInfo.uin, list)
+        saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
         // 如果分页不是增量的，就不使用追加
         if (
             append == 'top' &&
@@ -1491,6 +1479,47 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
             }
         }
     }
+}
+
+async function normalizeMessagesFromPayload(payload: any): Promise<any[] | undefined> {
+    const rawList = getMsgData('message_list', payload, msgPath.message_list)
+    return getMessageList(rawList)
+}
+
+function normalizeNewIncomingMessage(data: any): any[] {
+    let list = getMsgData(
+        'message_list',
+        buildMsgList([data]),
+        msgPath.message_list,
+    )
+
+    if (list == undefined) return []
+
+    list = parseMsgList(
+        list,
+        msgPath.message_list.type,
+        msgPath.message_value,
+    )
+    return list
+}
+
+function insertHistorySegmentAtAnchor(
+    current: any[],
+    anchorMsgId: string,
+    segment: any[],
+): any[] {
+    const insertIdx = current.findIndex((m) => m.message_id === anchorMsgId)
+    if (insertIdx === -1) return current
+
+    const existingIds = new Set(current.map((m) => m.message_id))
+    const newMsgs = segment.filter((m) => !existingIds.has(m.message_id))
+    if (newMsgs.length === 0) return current
+
+    return [
+        ...current.slice(0, insertIdx),
+        ...newMsgs,
+        ...current.slice(insertIdx),
+    ]
 }
 
 export async function getMessageList(list: any[] | undefined) {
@@ -1666,22 +1695,11 @@ function newMsg(_: string, data: any) {
 
 
         // 对消息进行一次格式化处理
-        let list = getMsgData(
-            'message_list',
-            buildMsgList([data]),
-            msgPath.message_list,
-        )
+        const list = normalizeNewIncomingMessage(data)
 
-        if (list != undefined) {
-            list = parseMsgList(
-                list,
-                msgPath.message_list.type,
-                msgPath.message_value,
-            )
-
+        if (list.length > 0) {
             // 保存到本地历史
-            dbSaveMessages(runtimeData.loginInfo.uin, list)
-
+            saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
             data = list[0]
         }
 

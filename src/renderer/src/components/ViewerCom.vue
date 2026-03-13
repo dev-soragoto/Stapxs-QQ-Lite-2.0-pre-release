@@ -143,14 +143,7 @@
                                 :key="currentImg?.src"
                                 :class="getImgCursorClassByTool()"
                                 :src="currentImg?.src"
-                                :style="{
-                                    '--x': modify.x + 'px',
-                                    '--y': modify.y + 'px',
-                                    '--rotate': modify.rotate + 'deg',
-                                    '--scale': modify.scale,
-                                    '--width': currentImgInfo?.width + 'px',
-                                    '--height': currentImgInfo?.height + 'px',
-                                }"
+                                :style="viewerTransformStyle"
                                 alt=""
                                 @wheel="onWheel"
                                 @click.stop.prevent="onClick"
@@ -163,14 +156,7 @@
                                 @mouseleave="mouseMoveInfo=undefined">
                             <canvas v-show="edit" ref="canvas"
                                 :class="getImgCursorClassByTool()"
-                                :style="{
-                                    '--x': modify.x + 'px',
-                                    '--y': modify.y + 'px',
-                                    '--rotate': modify.rotate + 'deg',
-                                    '--scale': modify.scale,
-                                    '--width': currentImgInfo?.width + 'px',
-                                    '--height': currentImgInfo?.height + 'px',
-                                }"
+                                :style="viewerTransformStyle"
                                 @wheel="onWheel"
                                 @click.stop="onClick"
                                 @mousedown.stop.prevent="onMouseDown"
@@ -243,6 +229,14 @@ const prev = computed(() => currentImg.value?.prev)
 const next = computed(() => currentImg.value?.next)
 const currentColor = computed(() => toolConfig[currentTool.value].color)
 const currentLineWidth = computed(() => toolConfig[currentTool.value].width)
+const viewerTransformStyle = computed(() => ({
+    '--x': modify.x + 'px',
+    '--y': modify.y + 'px',
+    '--rotate': modify.rotate + 'deg',
+    '--scale': modify.scale,
+    '--width': currentImgInfo.value?.width + 'px',
+    '--height': currentImgInfo.value?.height + 'px',
+}))
 const loading = shallowRef(true)
 const edit = shallowRef(false)
 const dragging = shallowRef(false)

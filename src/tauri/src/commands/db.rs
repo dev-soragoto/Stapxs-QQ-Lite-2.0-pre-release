@@ -2,6 +2,8 @@ use base64::{engine::general_purpose, Engine as _};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use log::{debug, error, info};
+use rand::RngCore;
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{Manager, State};
@@ -38,33 +40,66 @@ pub struct MsgRecord {
     pub revoked: bool,
 }
 
-/// 加密密钥回退值
-const DB_KEY_FALLBACK: &str = "711211e3-df54-40ce-99bc-3f42e0ff546a";
-
-/// 获取当前平台的数据库加密密钥
-fn get_db_key() -> String {
+/// 获取当前平台的数据库加密密钥。
+/// 若系统密码管理器不可用，回退到设备本地随机密钥文件（每台设备唯一）。
+fn get_db_key(db_path: &std::path::Path) -> Result<String, String> {
     #[cfg(target_os = "macos")]
     {
         match crate::commands::keychain::get_or_create_db_key() {
-            Ok(key) => return key,
-            Err(e) => log::warn!("钥匙串读取失败，回退到默认密钥：{}", e),
+            Ok(key) => return Ok(key),
+            Err(e) => log::warn!("钥匙串读取失败，尝试本地回退密钥：{}", e),
         }
     }
     #[cfg(target_os = "windows")]
     {
         match crate::commands::keychain::get_or_create_db_key() {
-            Ok(key) => return key,
-            Err(e) => log::warn!("Windows 凭据管理器读取失败，回退到默认密钥：{}", e),
+            Ok(key) => return Ok(key),
+            Err(e) => log::warn!("Windows 凭据管理器读取失败，尝试本地回退密钥：{}", e),
         }
     }
     #[cfg(target_os = "linux")]
     {
         match crate::commands::keychain::get_or_create_db_key() {
-            Ok(key) => return key,
-            Err(e) => log::warn!("Linux Secret Service 读取失败，回退到默认密钥：{}", e),
+            Ok(key) => return Ok(key),
+            Err(e) => log::warn!("Linux Secret Service 读取失败，尝试本地回退密钥：{}", e),
         }
     }
-    DB_KEY_FALLBACK.to_string()
+
+    let fallback_path = db_path.with_extension("dbkey");
+    get_or_create_fallback_db_key(&fallback_path)
+}
+
+fn get_or_create_fallback_db_key(path: &std::path::Path) -> Result<String, String> {
+    if let Ok(existing) = fs::read_to_string(path) {
+        let key = existing.trim().to_string();
+        if !key.is_empty() {
+            return Ok(key);
+        }
+    }
+
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("创建密钥目录失败：{}", e))?;
+    }
+
+    let mut buf = [0u8; 32];
+    rand::rng().fill_bytes(&mut buf);
+    let key: String = buf.iter().map(|b| format!("{:02x}", b)).collect();
+
+    fs::write(path, &key).map_err(|e| format!("写入回退密钥失败：{}", e))?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
+    }
+
+    log::warn!(
+        "系统密码管理器不可用，已写入本地设备专属回退密钥：{:?}",
+        path
+    );
+
+    Ok(key)
 }
 
 // ── 初始化 ──────────────────────────────────────────────────
@@ -101,10 +136,8 @@ fn try_open_encrypted(db_path: &std::path::Path) -> rusqlite::Result<Connection>
     let conn = Connection::open(db_path)?;
 
     // 从平台密码管理器获取加密密钥（必须在任何其他操作之前执行）
-    let key = get_db_key();
-    if key == DB_KEY_FALLBACK {
-        log::warn!("使用数据库加密密钥回退值，数据安全性较低");
-    }
+    let key = get_db_key(db_path)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(format!("数据库密钥不可用：{}", e)))?;
     conn.execute_batch(&format!("PRAGMA key = '{}';" , key))?;
 
     // 验证密钥是否正确（query sqlite_master 是 SQLCipher 推荐的验证方式）

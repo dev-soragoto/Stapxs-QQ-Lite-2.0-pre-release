@@ -402,6 +402,14 @@ import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
                     }
                 },
             },
+            'runtimeData.sysConfig.enable_local_history': {
+                immediate: true,
+                handler(enabled: boolean) {
+                    if (enabled && runtimeData.loginInfo.uin) {
+                        this.loadDbStats()
+                    }
+                },
+            },
         },
         methods: {
             async loadDbStats() {

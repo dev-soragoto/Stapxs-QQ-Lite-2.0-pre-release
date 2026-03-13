@@ -10,6 +10,8 @@ import { getMsgRawTxt } from './msgUtil'
 import { Logger } from '../base'
 import { runtimeData } from '../msg'
 
+const logger = new Logger()
+
 // ── 类型定义（与 Rust MsgRecord 对应） ───────────────────────────
 
 export interface LocalMsgRecord {
@@ -35,6 +37,109 @@ export interface LocalMsgRecord {
     revoked: boolean
 }
 
+function isTauriHistoryAvailable(): boolean {
+    return backend.type === 'tauri' && runtimeData.sysConfig.enable_local_history === true
+}
+
+async function callDbRecordList(
+    selfId: string | number,
+    command: string,
+    payload: Record<string, any>,
+    errorTag: string,
+): Promise<any[]> {
+    if (!isTauriHistoryAvailable()) return []
+    try {
+        const records: LocalMsgRecord[] = await backend.call(
+            undefined,
+            command,
+            true,
+            { selfId: String(selfId), ...payload },
+        )
+        return (records ?? []).map(deserializeRecord)
+    } catch (e) {
+        logger.error(e as unknown as Error, errorTag)
+        return []
+    }
+}
+
+async function callDb(
+    selfId: string | number,
+    command: string,
+    payload: Record<string, any>,
+    fallback: any,
+    errorTag: string,
+): Promise<any> {
+    if (!isTauriHistoryAvailable()) return fallback
+    try {
+        return await backend.call(
+            undefined,
+            command,
+            true,
+            { selfId: String(selfId), ...payload },
+        )
+    } catch (e) {
+        logger.error(e as unknown as Error, errorTag)
+        return fallback
+    }
+}
+
+function serializeMsgSegments(segments: any[] | undefined): string {
+    try {
+        return JSON.stringify(segments ?? [])
+    } catch {
+        return '[]'
+    }
+}
+
+function deserializeMsgSegments(serialized: string): any[] {
+    try {
+        return JSON.parse(serialized)
+    } catch {
+        return []
+    }
+}
+
+function computeRawMessage(msg: any): string | null {
+    try {
+        return getMsgRawTxt(msg) || msg.raw_message || null
+    } catch {
+        return msg.raw_message ?? null
+    }
+}
+
+function deriveChatId(selfId: string | number, msgs: any[]): number | undefined {
+    const firstMsg = msgs[0]
+    let chatId: number | undefined = firstMsg?.infoList?.group_id ?? firstMsg?.infoList?.target_id
+    if (chatId != null) return Number(chatId)
+
+    for (const item of msgs) {
+        if (item?.infoList?.sender != null && String(item.infoList.sender) !== String(selfId)) {
+            chatId = Number(item.infoList.sender)
+            break
+        }
+    }
+    return chatId
+}
+
+export function ensureChatIdOnMsgs(selfId: string | number, msgs: any[]): any[] {
+    const chatId = deriveChatId(selfId, msgs)
+    if (chatId == null) return msgs
+
+    return msgs.map((item: any) => {
+        if (!item?.infoList) return item
+        if (item.infoList.group_id != null || item.infoList.target_id != null) {
+            return item
+        }
+        return {
+            ...item,
+            infoList: {
+                ...item.infoList,
+                target_id: chatId,
+            },
+        }
+    })
+}
+
 // ── 辅助：将运行时消息对象转换为 LocalMsgRecord ──────────────────
 
 /**
@@ -56,19 +161,8 @@ export function msgToRecord(msg: any): LocalMsgRecord | null {
     const senderName: string | null =
         (msg.sender?.card && msg.sender.card !== '') ? msg.sender.card : (msg.sender?.nickname ?? null)
 
-    let rawMessage: string | null = null
-    try {
-        rawMessage = getMsgRawTxt(msg) || msg.raw_message || null
-    } catch {
-        rawMessage = msg.raw_message ?? null
-    }
-
-    let messageSerialized: string
-    try {
-        messageSerialized = JSON.stringify(msg.message ?? [])
-    } catch {
-        messageSerialized = '[]'
-    }
+    const rawMessage = computeRawMessage(msg)
+    const messageSerialized = serializeMsgSegments(msg.message)
 
     return {
         message_id: String(messageId),
@@ -93,28 +187,16 @@ export function msgToRecord(msg: any): LocalMsgRecord | null {
  * @param msgs    已完成预处理的消息对象数组（来自 runtimeData.messageList 或 newMsg）
  */
 export async function dbSaveMessages(selfId: string | number, msgs: any[]): Promise<void> {
-    if(!runtimeData.sysConfig.enable_local_history) return
+    if (!isTauriHistoryAvailable()) return
 
-    const fistMsg = msgs[0]
-    let chatId: number = fistMsg.infoList.group_id ?? fistMsg.infoList.target_id
-    if(chatId == undefined) {
-        msgs.forEach((item: any) => {
-            // chatId 取第一个不是自己的 infoList.sender
-            // PS：这边用来给某些获取历史消息没有 target_id 的消息补充 chatId 兜底
-            if(item.infoList.sender != selfId) {
-                chatId = item.infoList.sender
-            }
-        })
-        msgs.forEach((item: any) => {
-            item.infoList.target_id = chatId
-         })
-    }
-    const records: LocalMsgRecord[] = msgs
+    const persistableMsgs = ensureChatIdOnMsgs(selfId, msgs)
+    const records: LocalMsgRecord[] = persistableMsgs
         .map(msgToRecord)
         .filter((r): r is LocalMsgRecord => r !== null)
 
     if (records.length === 0) {
-        new Logger().error(null, '[LocalHistory] dbSaveMessages: 没有有效消息可保存')
+        logger.error(null, '[LocalHistory] dbSaveMessages: 没有有效消息可保存')
+        return
     }
 
     try {
@@ -122,11 +204,15 @@ export async function dbSaveMessages(selfId: string | number, msgs: any[]): Prom
             selfId: String(selfId),
             messages: records,
         })
-        // 保存成功后，异步缓存消息中的图片（不阻塞主流程）
-        cacheImagesFromMsgs(selfId, msgs).catch(() => {})
     } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbSaveMessages 失败')
+        logger.error(e as unknown as Error, '[LocalHistory] dbSaveMessages 失败')
     }
+}
+
+export async function saveMessagesWithSideEffects(selfId: string | number, msgs: any[]): Promise<void> {
+    const persistableMsgs = ensureChatIdOnMsgs(selfId, msgs)
+    await dbSaveMessages(selfId, persistableMsgs)
+    cacheImagesFromMsgs(selfId, persistableMsgs).catch(() => {})
 }
 
 /**
@@ -139,18 +225,7 @@ export async function dbGetLatest(
     chatId: number,
     n: number,
 ): Promise<any[]> {
-    try {
-        const records: LocalMsgRecord[] = await backend.call(
-            undefined,
-            'db:getLatest',
-            true,
-            { selfId: String(selfId), chatId, n },
-        )
-        return records.map(deserializeRecord)
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetLatest 失败')
-        return []
-    }
+    return callDbRecordList(selfId, 'db:getLatest', { chatId, n }, '[LocalHistory] dbGetLatest 失败')
 }
 
 /**
@@ -164,18 +239,7 @@ export async function dbGetBefore(
     messageId: string,
     n: number,
 ): Promise<any[]> {
-    try {
-        const records: LocalMsgRecord[] = await backend.call(
-            undefined,
-            'db:getBefore',
-            true,
-            { selfId: String(selfId), chatId, messageId, n },
-        )
-        return records.map(deserializeRecord)
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetBefore 失败')
-        return []
-    }
+    return callDbRecordList(selfId, 'db:getBefore', { chatId, messageId, n }, '[LocalHistory] dbGetBefore 失败')
 }
 
 /**
@@ -189,18 +253,7 @@ export async function dbGetAfter(
     messageId: string,
     n: number,
 ): Promise<any[]> {
-    try {
-        const records: LocalMsgRecord[] = await backend.call(
-            undefined,
-            'db:getAfter',
-            true,
-            { selfId: String(selfId), chatId, messageId, n },
-        )
-        return records.map(deserializeRecord)
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetAfter 失败')
-        return []
-    }
+    return callDbRecordList(selfId, 'db:getAfter', { chatId, messageId, n }, '[LocalHistory] dbGetAfter 失败')
 }
 
 /**
@@ -212,17 +265,7 @@ export async function dbRevokeMessage(
     selfId: string | number,
     messageId: string,
 ): Promise<boolean> {
-    if(!runtimeData.sysConfig.enable_local_history) return false
-
-    try {
-        return await backend.call(undefined, 'db:revokeMessage', true, {
-            selfId: String(selfId),
-            messageId,
-        })
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbRevokeMessage 失败')
-        return false
-    }
+    return callDb(selfId, 'db:revokeMessage', { messageId }, false, '[LocalHistory] dbRevokeMessage 失败')
 }
 
 /**
@@ -235,35 +278,14 @@ export async function dbSearchMessages(
     chatId: number,
     query: string,
 ): Promise<any[]> {
-    if (!query) return []
-    try {
-        const records: LocalMsgRecord[] = await backend.call(
-            undefined,
-            'db:searchMessages',
-            true,
-            { selfId: String(selfId), chatId, query },
-        )
-        return (records ?? []).map(deserializeRecord)
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbSearchMessages 失败')
-        return []
-    }
+    if (!isTauriHistoryAvailable() || !query) return []
+    return callDbRecordList(selfId, 'db:searchMessages', { chatId, query }, '[LocalHistory] dbSearchMessages 失败')
 }
 
 export async function dbGetStats(
     selfId: string | number,
 ): Promise<{ totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null> {
-    try {
-        return await backend.call(
-            undefined,
-            'db:getStats',
-            true,
-            { selfId: String(selfId) },
-        )
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetStats 失败')
-        return null
-    }
+    return callDb(selfId, 'db:getStats', {}, null, '[LocalHistory] dbGetStats 失败')
 }
 
 /**
@@ -287,6 +309,8 @@ export async function dbCacheImage(
     mimeType: string,
     data: string,
 ): Promise<void> {
+    if (!isTauriHistoryAvailable()) return
+
     try {
         await backend.call(undefined, 'db:cacheImage', true, {
             selfId: String(selfId),
@@ -295,7 +319,7 @@ export async function dbCacheImage(
             data,
         })
     } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbCacheImage 失败')
+        logger.error(e as unknown as Error, '[LocalHistory] dbCacheImage 失败')
     }
 }
 
@@ -307,15 +331,7 @@ export async function dbGetImage(
     selfId: string | number,
     urlHash: string,
 ): Promise<{ mimeType: string; data: string } | null> {
-    try {
-        return await backend.call(undefined, 'db:getImage', true, {
-            selfId: String(selfId),
-            urlHash,
-        })
-    } catch (e) {
-        new Logger().error(e as unknown as Error, '[LocalHistory] dbGetImage 失败')
-        return null
-    }
+    return callDb(selfId, 'db:getImage', { urlHash }, null, '[LocalHistory] dbGetImage 失败')
 }
 
 // ── 内部工具 ──────────────────────────────────────────────────────
@@ -325,41 +341,63 @@ export async function dbGetImage(
  * 已缓存的图片（url_hash 命中）不会重复下载。
  */
 async function cacheImagesFromMsgs(selfId: string | number, msgs: any[]): Promise<void> {
-    if (!runtimeData.sysConfig.enable_local_history) return
+    if (!isTauriHistoryAvailable()) return
+    const urls = extractImageUrlsFromMsgs(msgs)
+    for (const url of urls) {
+        try {
+            await cacheSingleImage(selfId, url)
+        } catch {
+            // 单张图片失败不影响其余图片
+        }
+    }
+}
+
+function extractImageUrlsFromMsgs(msgs: any[]): string[] {
+    const urls: string[] = []
     for (const msg of msgs) {
         if (!Array.isArray(msg.message)) continue
         for (const seg of msg.message) {
-            if (seg.type !== 'image' || !seg.url || !seg.url.startsWith('http')) continue
-            try {
-                const urlHash = await hashUrl(seg.url)
-                // 已缓存则跳过，避免重复下载
-                const existing = await dbGetImage(selfId, urlHash)
-                if (existing) continue
-                const fetchUrl = backend.proxy ? `http://localhost:${backend.proxy}/proxy?url=${encodeURIComponent(seg.url)}` : seg.url
-                const resp = await fetch(fetchUrl)
-                if (!resp.ok) continue
-                const mimeType = resp.headers.get('Content-Type')?.split(';')[0]?.trim() ?? 'image/jpeg'
-                const buffer = await resp.arrayBuffer()
-                const bytes = new Uint8Array(buffer)
-                // ArrayBuffer → base64
-                let binary = ''
-                for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
-                await dbCacheImage(selfId, urlHash, mimeType, btoa(binary))
-            } catch { /* 单张图片失败不影响其余图片 */ }
+            if (seg.type === 'image' && seg.url && seg.url.startsWith('http')) {
+                urls.push(seg.url)
+            }
         }
     }
+    return urls
+}
+
+async function downloadImageViaProxy(url: string): Promise<{ mimeType: string; base64: string } | null> {
+    const fetchUrl = backend.proxy
+        ? `http://localhost:${backend.proxy}/proxy?url=${encodeURIComponent(url)}`
+        : url
+
+    const resp = await fetch(fetchUrl)
+    if (!resp.ok) return null
+
+    const mimeType = resp.headers.get('Content-Type')?.split(';')[0]?.trim() ?? 'image/jpeg'
+    const buffer = await resp.arrayBuffer()
+    const bytes = new Uint8Array(buffer)
+    let binary = ''
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+    const base64 = btoa(binary)
+    return { mimeType, base64 }
+}
+
+async function cacheSingleImage(selfId: string | number, url: string): Promise<void> {
+    const urlHash = await hashUrl(url)
+    const existing = await dbGetImage(selfId, urlHash)
+    if (existing) return
+
+    const downloaded = await downloadImageViaProxy(url)
+    if (!downloaded) return
+
+    await dbCacheImage(selfId, urlHash, downloaded.mimeType, downloaded.base64)
 }
 
 /**
  * 将 DB 返回的 LocalMsgRecord 还原为与 runtimeData.messageList 兼容的消息对象。
  */
 function deserializeRecord(record: LocalMsgRecord): any {
-    let message: any[]
-    try {
-        message = JSON.parse(record.message)
-    } catch {
-        message = []
-    }
+    const message = deserializeMsgSegments(record.message)
 
     // 判断是否为自己发送的消息，还原 post_type
     const isSelf = record.sender_id === Number(runtimeData.loginInfo.uin)
@@ -368,6 +406,13 @@ function deserializeRecord(record: LocalMsgRecord): any {
     // 群消息：sender_name 来自 card，私聊来自 nickname
     const isGroup = record.chat_type === 'group'
     const sender = isGroup ? { user_id: record.sender_id, card: record.sender_name ?? '', nickname: record.sender_name ?? '' } : { user_id: record.sender_id, card: '', nickname: record.sender_name ?? '' }
+    const infoList = {
+        message_id: record.message_id,
+        private_id: isGroup ? undefined : record.chat_id,
+        group_id: isGroup ? record.chat_id : undefined,
+        target_id: isGroup ? undefined : record.chat_id,
+        sender: record.sender_id,
+    }
 
     return {
         post_type: postType,
@@ -378,10 +423,11 @@ function deserializeRecord(record: LocalMsgRecord): any {
         sender,
         time: record.time,
         message,
+        infoList,
         raw_message: record.raw_message ?? '',
         revoked: record.revoked,
         // 消息序列号（并非所有 Bot 都提供，可为 null）
-        ...(record.seq != null ? { message_seq: record.seq } : {}),
+        ...(record.seq != null ? { message_seq: record.seq, seq_id: record.seq } : {}),
         // 标记来源为本地缓存，业务层可按需用此字段区分
         _from_local_db: true,
     }
