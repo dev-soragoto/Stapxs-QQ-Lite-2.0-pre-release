@@ -366,9 +366,7 @@ function extractImageUrlsFromMsgs(msgs: any[]): string[] {
 }
 
 async function downloadImageViaProxy(url: string): Promise<{ mimeType: string; base64: string } | null> {
-    const fetchUrl = backend.proxy
-        ? `http://localhost:${backend.proxy}/proxy?url=${encodeURIComponent(url)}`
-        : url
+    const fetchUrl = backend.proxy? `http://localhost:${backend.proxy}/proxy?url=${encodeURIComponent(url)}`: url
 
     const resp = await fetch(fetchUrl)
     if (!resp.ok) return null
