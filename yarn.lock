@@ -1173,6 +1173,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.12.0":
+  version: 7.29.2
+  resolution: "@babel/runtime@npm:7.29.2"
+  checksum: 10c0/30b80a0140d16467792e1bbeb06f655b0dab70407da38dfac7fedae9c859f9ae9d846ef14ad77bd3814c064295fe9b1bc551f1541ea14646ae9f22b71a8bc17a
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.27.1, @babel/template@npm:^7.27.2":
   version: 7.27.2
   resolution: "@babel/template@npm:7.27.2"
@@ -2275,6 +2282,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@math.gl/core@npm:3.6.3":
+  version: 3.6.3
+  resolution: "@math.gl/core@npm:3.6.3"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.0"
+    "@math.gl/types": "npm:3.6.3"
+    gl-matrix: "npm:^3.4.0"
+  checksum: 10c0/f26b1f5b6f65061190ef087d0c418c020ba6b8391ebe4ac5ba830b900d4a531d84e2099b05583e44893b45dcfc7faae3e3966c6d1629801d013643cddc42120e
+  languageName: node
+  linkType: hard
+
+"@math.gl/types@npm:3.6.3":
+  version: 3.6.3
+  resolution: "@math.gl/types@npm:3.6.3"
+  checksum: 10c0/93beb933ba9a1671c03f728e829ba3653be5ad362d8648aeba7422043bfd323839f08374d85dd7cd03758e0487a84ce0c9f80379eeb19c02d92e0b669a14d294
+  languageName: node
+  linkType: hard
+
 "@modyfi/vite-plugin-yaml@npm:^1.1.0":
   version: 1.1.1
   resolution: "@modyfi/vite-plugin-yaml@npm:1.1.1"
@@ -2948,6 +2973,33 @@ __metadata:
   version: 1.0.4
   resolution: "@tsconfig/node16@npm:1.0.4"
   checksum: 10c0/05f8f2734e266fb1839eb1d57290df1664fe2aa3b0fdd685a9035806daa635f7519bf6d5d9b33f6e69dd545b8c46bd6e2b5c79acb2b1f146e885f7f11a42a5bb
+  languageName: node
+  linkType: hard
+
+"@turf/helpers@npm:^6.5.0":
+  version: 6.5.0
+  resolution: "@turf/helpers@npm:6.5.0"
+  checksum: 10c0/786cbe0c0027f85db286fb3a0b7be04bb29bd63ec07760a49735ef32e9c5b4a7c059a8f691fafa31c7e0e9be34c281e014dc24077438bae01a09b492a680fb6f
+  languageName: node
+  linkType: hard
+
+"@turf/intersect@npm:^6.5.0":
+  version: 6.5.0
+  resolution: "@turf/intersect@npm:6.5.0"
+  dependencies:
+    "@turf/helpers": "npm:^6.5.0"
+    "@turf/invariant": "npm:^6.5.0"
+    polygon-clipping: "npm:^0.15.3"
+  checksum: 10c0/e2b95ab2f8b874c17fa788f3256147c8963be8b8689f21b7b692fb0112c3f06ab6d33a568e943c2c87f383ac8dba127ea67c3e7e7e4fd75b5331a8d4e7cf84d8
+  languageName: node
+  linkType: hard
+
+"@turf/invariant@npm:^6.5.0":
+  version: 6.5.0
+  resolution: "@turf/invariant@npm:6.5.0"
+  dependencies:
+    "@turf/helpers": "npm:^6.5.0"
+  checksum: 10c0/5ff9f2043d629cc5f6d3df78452632b2213f17931caa34698d9e8c651640508814b3522d4ab747f36a4b9dfaf6ff64eedc3a04ba62c39ddeb6706f052b621dc6
   languageName: node
   linkType: hard
 
@@ -3688,6 +3740,65 @@ __metadata:
   version: 3.5.26
   resolution: "@vue/shared@npm:3.5.26"
   checksum: 10c0/176edf41858cdd3019fc063fda28a0a6f5c5299a350e09aebb19fbe352d5ca4f7fc18993bf749f07d06baa803030d31a9b8538eef852feb1ce5b3b5a99d5ef3c
+  languageName: node
+  linkType: hard
+
+"@vuemap/amap-jsapi-loader@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@vuemap/amap-jsapi-loader@npm:1.0.4"
+  checksum: 10c0/7ddd44833c821dcf513da681a67956d2f27a892931be149ad4291f40b86e139e94fd1a11c47ccc6bee0ebec413f869da0da6994bba0c13b153e21e2318b09171
+  languageName: node
+  linkType: hard
+
+"@vuemap/amap-jsapi-types@npm:^0.0.16":
+  version: 0.0.16
+  resolution: "@vuemap/amap-jsapi-types@npm:0.0.16"
+  checksum: 10c0/51d26c89bd53bd6c6e44b39b7ffc50185c589807025405a43fbe10ea3df1b76c394561db5f5d17ca01d33640a49fabec4c5123b9cbde4204f522ccc0a6fc86ac
+  languageName: node
+  linkType: hard
+
+"@vuemap/amap-jsapi-types@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@vuemap/amap-jsapi-types@npm:0.0.17"
+  checksum: 10c0/270c8909292ea4d68f3535987e7c8ec76feae4102f66d339e670059ca549cc21103b3aa8cf2920250e517652d6804f685e368ded27c8b3da4cc718f8481ca803
+  languageName: node
+  linkType: hard
+
+"@vuemap/amap-xyz-layer@npm:0.0.15":
+  version: 0.0.15
+  resolution: "@vuemap/amap-xyz-layer@npm:0.0.15"
+  dependencies:
+    "@math.gl/core": "npm:3.6.3"
+    earcut: "npm:2.2.4"
+    gl-matrix: "npm:3.4.3"
+  checksum: 10c0/0916a7ec9ae0f5c9f6fe969e315a0fcbfe3d406a28780f46fb0af182c836547686d7feb8f8e79adf33a99d393b8aea830be9913f6b2c449df4fd928293400cf5
+  languageName: node
+  linkType: hard
+
+"@vuemap/district-cluster@npm:0.0.12":
+  version: 0.0.12
+  resolution: "@vuemap/district-cluster@npm:0.0.12"
+  dependencies:
+    "@turf/helpers": "npm:^6.5.0"
+    "@turf/intersect": "npm:^6.5.0"
+    "@vuemap/amap-jsapi-types": "npm:^0.0.16"
+    topojson-client: "npm:3.1.0"
+  checksum: 10c0/ce02c858de9722790567e0430d1481e9fe9b9d374e05c4bc8b2e835f9d4c89394d54b6200e824ff806e9f1648d3b12d11dfe2b7c7b884ddc1056a6affe095a9f
+  languageName: node
+  linkType: hard
+
+"@vuemap/vue-amap@npm:^2.1.17":
+  version: 2.1.17
+  resolution: "@vuemap/vue-amap@npm:2.1.17"
+  dependencies:
+    "@vuemap/amap-jsapi-loader": "npm:1.0.4"
+    "@vuemap/amap-jsapi-types": "npm:^0.0.17"
+    "@vuemap/amap-xyz-layer": "npm:0.0.15"
+    "@vuemap/district-cluster": "npm:0.0.12"
+    lodash-es: "npm:^4.17.21"
+  peerDependencies:
+    vue: 3
+  checksum: 10c0/3a123c2f572c3d7f2199657dd6b36034035a5f6eebe6b2c52dd086a30def81c1edf93287132748bd4e0a0cf26a35449dd48ab6430b48b00a545ccb6e4443b9cf
   languageName: node
   linkType: hard
 
@@ -4903,17 +5014,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:2, commander@npm:^2.20.0, commander@npm:^2.20.3":
+  version: 2.20.3
+  resolution: "commander@npm:2.20.3"
+  checksum: 10c0/74c781a5248c2402a0a3e966a0a2bba3c054aad144f5c023364be83265e796b20565aa9feff624132ff629aa64e16999fa40a743c10c12f7c61e96a794b99288
+  languageName: node
+  linkType: hard
+
 "commander@npm:8.3.0, commander@npm:^8.0.0":
   version: 8.3.0
   resolution: "commander@npm:8.3.0"
   checksum: 10c0/8b043bb8322ea1c39664a1598a95e0495bfe4ca2fad0d84a92d7d1d8d213e2a155b441d2470c8e08de7c4a28cf2bc6e169211c49e1b21d9f7edc6ae4d9356060
-  languageName: node
-  linkType: hard
-
-"commander@npm:^2.20.0, commander@npm:^2.20.3":
-  version: 2.20.3
-  resolution: "commander@npm:2.20.3"
-  checksum: 10c0/74c781a5248c2402a0a3e966a0a2bba3c054aad144f5c023364be83265e796b20565aa9feff624132ff629aa64e16999fa40a743c10c12f7c61e96a794b99288
   languageName: node
   linkType: hard
 
@@ -5763,6 +5874,13 @@ __metadata:
     es-errors: "npm:^1.3.0"
     gopd: "npm:^1.2.0"
   checksum: 10c0/199f2a0c1c16593ca0a145dbf76a962f8033ce3129f01284d48c45ed4e14fea9bbacd7b3610b6cdc33486cef20385ac054948fefc6272fcce645c09468f93031
+  languageName: node
+  linkType: hard
+
+"earcut@npm:2.2.4":
+  version: 2.2.4
+  resolution: "earcut@npm:2.2.4"
+  checksum: 10c0/01ca51830edd2787819f904ae580087d37351f6048b4565e7add4b3da8a86b7bc19262ab2aa7fdc64129ab03af2d9cec8cccee4d230c82275f97ef285c79aafb
   languageName: node
   linkType: hard
 
@@ -7069,6 +7187,20 @@ __metadata:
   version: 1.5.0
   resolution: "github-slugger@npm:1.5.0"
   checksum: 10c0/116f99732925f939cbfd6f2e57db1aa7e111a460db0d103e3b3f2fce6909d44311663d4542350706cad806345b9892358cc3b153674f88eeae77f43380b3bfca
+  languageName: node
+  linkType: hard
+
+"gl-matrix@npm:3.4.3":
+  version: 3.4.3
+  resolution: "gl-matrix@npm:3.4.3"
+  checksum: 10c0/c8ee6e2ce2d089b4ba4ae13ec9d4cb99bf2abe5f68f0cb08d94bbd8bafbec13aacc7230b86539ce5ca01b79226ea8c3194f971f5ca0c81838bc5e4e619dc398e
+  languageName: node
+  linkType: hard
+
+"gl-matrix@npm:^3.4.0":
+  version: 3.4.4
+  resolution: "gl-matrix@npm:3.4.4"
+  checksum: 10c0/9aa022ffac0d158212ad0cd29939864ad919ac31cd5dc5a5d35e9d66bb62679ddf152ff7b2173ded20131045e40572b87f31b26a920be2a7583a1516b13b5b4b
   languageName: node
   linkType: hard
 
@@ -9642,6 +9774,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"polygon-clipping@npm:^0.15.3":
+  version: 0.15.7
+  resolution: "polygon-clipping@npm:0.15.7"
+  dependencies:
+    robust-predicates: "npm:^3.0.2"
+    splaytree: "npm:^3.1.0"
+  checksum: 10c0/9515283509f1793f22fd87e68662838a6ebbd33cca4fc4bccd9f1b4f366383a4590e9a1cd48287e6897ad018803aeb97ed9ebe38bada5cffa7b4551539a9ab10
+  languageName: node
+  linkType: hard
+
 "possible-typed-array-names@npm:^1.0.0":
   version: 1.1.0
   resolution: "possible-typed-array-names@npm:1.1.0"
@@ -10228,6 +10370,13 @@ __metadata:
     semver-compare: "npm:^1.0.0"
     sprintf-js: "npm:^1.1.2"
   checksum: 10c0/7d01d4c14513c461778dd673a8f9e53255221f8d04173aafeb8e11b23d8b659bb83f1c90cfe81af7f9c213b8084b404b918108fd792bda76678f555340cc64ec
+  languageName: node
+  linkType: hard
+
+"robust-predicates@npm:^3.0.2":
+  version: 3.0.3
+  resolution: "robust-predicates@npm:3.0.3"
+  checksum: 10c0/ae23a0318be809545f091a076818747848f144495491e24e6df5d767f2bad0a1501bbeac34e78b74681d1437ecff0585f593ebfe6c8d49a50e79c5053b962693
   languageName: node
   linkType: hard
 
@@ -10893,6 +11042,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"splaytree@npm:^3.1.0":
+  version: 3.2.3
+  resolution: "splaytree@npm:3.2.3"
+  checksum: 10c0/b37e0dc4555b018142e0142e5cf576fd2eec7ababb5149947b731f7137728fe799da2fad60b110709aec44f3a7986451d9a9e451c9559601b8ce1d1195dace1a
+  languageName: node
+  linkType: hard
+
 "split2@npm:^3.0.0":
   version: 3.2.2
   resolution: "split2@npm:3.2.2"
@@ -10972,6 +11128,7 @@ __metadata:
     "@untiny/capacitor-safe-area": "npm:^1.0.3"
     "@vitejs/plugin-vue": "npm:^5.0.5"
     "@vue/eslint-config-typescript": "npm:^13.0.0"
+    "@vuemap/vue-amap": "npm:^2.1.17"
     animejs: "npm:^3.2.2"
     browser-image-compression: "npm:^2.0.2"
     capacitor-onebot-connctor: "workspace:*"
@@ -11014,6 +11171,7 @@ __metadata:
     vue3-lottie: "npm:^3.3.1"
     ws: "npm:^8.18.0"
     xss: "npm:^1.0.15"
+    zod: "npm:^4.3.6"
   dependenciesMeta:
     electron-liquid-glass:
       optional: true
@@ -11550,6 +11708,19 @@ __metadata:
   dependencies:
     is-number: "npm:^7.0.0"
   checksum: 10c0/487988b0a19c654ff3e1961b87f471702e708fa8a8dd02a298ef16da7206692e8552a0250e8b3e8759270f62e9d8314616f6da274734d3b558b1fc7b7724e892
+  languageName: node
+  linkType: hard
+
+"topojson-client@npm:3.1.0":
+  version: 3.1.0
+  resolution: "topojson-client@npm:3.1.0"
+  dependencies:
+    commander: "npm:2"
+  bin:
+    topo2geo: bin/topo2geo
+    topomerge: bin/topomerge
+    topoquantize: bin/topoquantize
+  checksum: 10c0/da2acba268cbf4d002483d5d81452e0d797b2fff6041fafb1d420e58973fa780a6f42041ce4c2677376ab977e5e1732b89c42a2db3c334a34f6c47f4d94b3eaa
   languageName: node
   linkType: hard
 
@@ -13089,6 +13260,13 @@ __metadata:
   version: 2.1.2
   resolution: "yoctocolors@npm:2.1.2"
   checksum: 10c0/b220f30f53ebc2167330c3adc86a3c7f158bcba0236f6c67e25644c3188e2571a6014ffc1321943bb619460259d3d27eb4c9cc58c2d884c1b195805883ec7066
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.3.6":
+  version: 4.3.6
+  resolution: "zod@npm:4.3.6"
+  checksum: 10c0/860d25a81ab41d33aa25f8d0d07b091a04acb426e605f396227a796e9e800c44723ed96d0f53a512b57be3d1520f45bf69c0cb3b378a232a00787a2609625307
   languageName: node
   linkType: hard
 
