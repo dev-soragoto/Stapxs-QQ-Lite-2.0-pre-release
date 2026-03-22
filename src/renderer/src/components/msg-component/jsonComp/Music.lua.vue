@@ -53,6 +53,6 @@ const parsedData = music.safeParse(json)
 const success = parsedData.success
 const data = parsedData.data!
 if (!success) {
-    new Logger().error(parsedData.error, 'Map Card Parse Error')
+    new Logger().error(parsedData.error, 'Card Parse Error')
 }
 </script>
