@@ -249,14 +249,10 @@
                     </div>
                 </template>
                 <template v-else>
-                    <template v-for="(item, index) in data.message"
-                        :key="data.message_id + '-m-' + index">
-                        <span v-if="isDebugMsg && (item.type == 'xml' || item.type == 'json')" class="msg-text">{{ item }}</span>
-                        <CardMessage v-else-if="item.type == 'xml' || item.type == 'json'"
-                            :id="data.message_id"
-                            :item="item"
-                            @page-view="loadLinkPreview" />
-                    </template>
+                    <JsonSegComp v-if="data.message.at(0)!.type === 'json'"
+                        :data = "data.message.at(0)!.data"
+                    />
+                    <XmlSegComp v-else :item="data.message.at(0)!.data" :id="data.message_id" />
                 </template>
                 <!-- 链接预览框 -->
                 <div v-if="!isDebugMsg && pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"
@@ -367,11 +363,10 @@
 
 <script setup lang="ts">
 import Option from '@renderer/function/option'
-import CardMessage from './msg-component/CardMessage.vue'
 import markdownit from 'markdown-it'
 
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-import { defineComponent, useTemplateRef } from 'vue'
+import { defineComponent, provide, useTemplateRef } from 'vue'
 import { Connector } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -398,6 +393,8 @@ import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
 import { Img } from '@renderer/function/model/img'
 import { dbGetImage, hashUrl } from '@renderer/function/utils/localHistoryUtil'
+import JsonSegComp from './msg-component/JsonSegComp.vue'
+import XmlSegComp from './msg-component/XmlSegComp.vue'
 
 type Msg = any
 type IUser = any
@@ -412,6 +409,8 @@ const {
     type?: string
     imageListHeader?: Img | undefined
 }>()
+
+provide('message-content', data)
 
 // 半 setup 半 旧的 api是这样的...旧的emit定义类型太麻烦了...
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
