@@ -481,6 +481,8 @@ export default defineComponent({
                 // 给页面添加一个来源域名方便在非 web 端
                 if(!backend.isWeb()) {
                     config.hostName = backend.type + '.stapxs.cn'
+                } else if(this.napcat) {
+                    config.hostName = 'napcat.stapxs.cn'
                 }
                 Umami.initialize(config)
                 // 上报一些应用基础信息
