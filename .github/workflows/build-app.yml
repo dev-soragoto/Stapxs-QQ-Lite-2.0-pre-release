@@ -69,7 +69,7 @@ jobs:
           cache: 'yarn'
       # yarn install
       - name: Install
-        run: yarn
+        run: yarn install --no-immutable
       # build
       - name: Build
         run: yarn build
@@ -106,7 +106,7 @@ jobs:
           cache: 'yarn'
       # yarn install
       - name: Install
-        run: yarn
+        run: yarn install --no-immutable
       # build
       - name: Build
         run: yarn build
@@ -148,7 +148,7 @@ jobs:
           cache: 'yarn'
       # yarn install
       - name: Install
-        run: yarn
+        run: yarn install --no-immutable
 
       # 临时修复：在 ARM64 runner 上 electron-builder 没有原生 arm64 的 app-builder-bin
       # 用 x64 版本替代（Windows on ARM 支持 x64 模拟执行）
