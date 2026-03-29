@@ -6,7 +6,7 @@
             <font-awesome-icon icon="message" /> {{ data.comment }}
             <font-awesome-icon icon="thumbs-up" /> {{ data.prefer }}
         </span>
-        <img :src="data.img" alt="" />
+        <img :src="data.img" alt="" class="forum-img" />
         <div class="bottom-bar">
             <img :src="data.icon" alt="" />
             <span>{{ data.name }} ({{ $t('频道') }})</span>
@@ -45,7 +45,7 @@ const music = z
                             width: z.number(),
                         }),
                     ),
-                    prefer_count: z.number(),
+                    prefer_count: z.number().optional(),
                     view_count: z.number(),
                 }),
                 jump_url: z.string(),
@@ -57,7 +57,7 @@ const music = z
         title: o.prompt.replace('[频道帖子]', ''),
         view: o.meta.detail.feed.view_count,
         comment: o.meta.detail.feed.comment_count,
-        prefer: o.meta.detail.feed.prefer_count,
+        prefer: o.meta.detail.feed.prefer_count ?? 0,
         jumpUrl: o.meta.detail.jump_url,
         img: o.meta.detail.feed.images[0]?.pic_url,
         icon: o.meta.detail.channel_info.guild_icon,
@@ -71,3 +71,11 @@ if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }
 </script>
+
+<style lang="css" scoped>
+.forum-img {
+    max-width: 30vw;
+    min-width: 240px;
+    object-fit: cover;
+}
+</style>
