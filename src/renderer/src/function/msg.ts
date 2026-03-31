@@ -1968,7 +1968,7 @@ const baseRuntime = {
     plantform: {} as any,
     tags: {
         firstLoad: false,
-        nowGetHistroy: false,
+        nowGetHistory: false,
         canLoadHistory: true,
         loadHistoryFail: false,
         openSideBar: true,

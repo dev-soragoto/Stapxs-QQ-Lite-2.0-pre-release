@@ -260,7 +260,7 @@
                         // 更新聊天框
                         this.$emit('userClick', back)
                         // 获取历史消息
-                        if(!runtimeData.tags.nowGetHistroy) {
+                        if(!runtimeData.tags.nowGetHistory) {
                             this.$emit('loadHistory', back)
                         }
                         // 重置消息面板

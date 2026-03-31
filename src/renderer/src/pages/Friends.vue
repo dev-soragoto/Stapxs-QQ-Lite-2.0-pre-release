@@ -216,7 +216,7 @@
                 this.$emit('userClick', back)
                 runtimeData.baseOnMsgList.set(back.id, data)
                 // 获取历史消息
-                if(!runtimeData.tags.nowGetHistroy) {
+                if(!runtimeData.tags.nowGetHistory) {
                     this.$emit('loadHistory', back)
                 }
                 // 切换标签卡

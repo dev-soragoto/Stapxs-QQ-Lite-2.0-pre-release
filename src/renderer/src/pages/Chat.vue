@@ -59,7 +59,7 @@
             </div>
         </div>
         <!-- 加载中指示器 -->
-        <div :class=" 'loading' + (runtimeData.tags.nowGetHistroy && runtimeData.tags.canLoadHistory ? ' show' : '')">
+        <div :class=" 'loading' + (runtimeData.tags.nowGetHistory && runtimeData.tags.canLoadHistory ? ' show' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
             <span>{{ $t('加载中') }}</span>
         </div>
@@ -77,7 +77,7 @@
                     <a>{{ $t('获取历史记录失败') }}</a>
                 </div>
                 <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
-                <NoticeBody v-if="runtimeData.tags.nowGetHistroy && list.length > 0"
+                <NoticeBody v-if="runtimeData.tags.nowGetHistory && list.length > 0"
                     :data="{ sub_type: 'time', time: list[0].time }" />
                 <TransitionGroup :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
                     <template v-for="(msgIndex, index) in list">
@@ -880,13 +880,13 @@ import { Img } from '@renderer/function/model/img'
              */
             async loadMoreHistory() {
                 if (
-                    !runtimeData.tags.nowGetHistroy &&
+                    !runtimeData.tags.nowGetHistory &&
                     runtimeData.tags.canLoadHistory !== false
                 ) {
                     // 获取列表第一条消息 ID
                     const firstMsgId = this.list[0].message_id
                     // 锁定加载防止反复触发
-                    runtimeData.tags.nowGetHistroy = true
+                    runtimeData.tags.nowGetHistory = true
 					// 移除加载失败标志
 					runtimeData.tags.loadHistoryFail = false
 
@@ -907,7 +907,7 @@ import { Img } from '@renderer/function/model/img'
                             if (seqGapAnchors.length > 0) {
                                 this.fillSeqGaps(seqGapAnchors)
                             }
-                            runtimeData.tags.nowGetHistroy = false
+                            runtimeData.tags.nowGetHistory = false
                             return
                         }
                         // 本地为空，回落到网络请求
@@ -2415,7 +2415,7 @@ import { Img } from '@renderer/function/model/img'
                 // 判断新消息数量（回到底部按钮显示、不在加载历史消息、不是首次加载消息）
                 if (
                     this.tags.showBottomButton &&
-                    !runtimeData.tags.nowGetHistroy &&
+                    !runtimeData.tags.nowGetHistory &&
                     oldLength > 0
                 ) {
                     if (this.NewMsgNum !== 0) {
@@ -2429,7 +2429,7 @@ import { Img } from '@renderer/function/model/img'
                 // PS：也就是说只在消息底部时才会触发，以防止你是在看历史消息攒满了刷掉
                 if (
                     this.list.length > 200 &&
-                    !runtimeData.tags.nowGetHistroy &&
+                    !runtimeData.tags.nowGetHistory &&
                     !this.tags.showBottomButton
                 ) {
                     runtimeData.messageList = []
@@ -2441,7 +2441,7 @@ import { Img } from '@renderer/function/model/img'
                         jump: this.chat.show.jump,
                     } as BaseChatInfoElem
                     loadHistoryFirst(info)
-                    runtimeData.tags.nowGetHistroy = true
+                    runtimeData.tags.nowGetHistory = true
                 }
 
                 // =================== 渲染监听操作 ===================
@@ -2456,14 +2456,14 @@ import { Img } from '@renderer/function/model/img'
                         const newPan = document.getElementById('msgPan')
                         if (newPan !== null) {
                             // 加载历史记录锁定滚动条位置
-                            if (runtimeData.tags.nowGetHistroy) {
+                            if (runtimeData.tags.nowGetHistory) {
                                 this.scrollTo(
                                     newPan.scrollHeight - height,
                                     false,
                                 )
                             }
                             // 新消息自动下滚（只要回到底部按钮没显示就算是在最底部、首次加载（不需要滚动动画））
-                            if (!runtimeData.tags.nowGetHistroy) {
+                            if (!runtimeData.tags.nowGetHistory) {
                                 if (!this.tags.showBottomButton) {
                                     this.scrollTo(newPan.scrollHeight)
                                 }
@@ -2472,7 +2472,7 @@ import { Img } from '@renderer/function/model/img'
                                 }
                             }
                             // 解除锁定加载
-                            runtimeData.tags.nowGetHistroy = false
+                            runtimeData.tags.nowGetHistory = false
                         }
                         // 刷新图片列表
                         // TODO: 需要优化性能

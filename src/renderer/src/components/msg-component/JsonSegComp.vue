@@ -37,8 +37,18 @@ const { data } = defineProps<{
     data: string,
 }>()
 
-const json = JSON.parse(data)
-const id = json.app as string
+let json: unknown
+let id = ''
+
+try {
+    json = JSON.parse(data)
+    if (json && typeof (json as any).app === 'string') {
+        id = (json as any).app
+    }
+} catch {
+    json = null
+    id = ''
+}
 
 const comp = cardComponentMap[id]
 </script>
