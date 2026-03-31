@@ -62,7 +62,7 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
             }
             pan.scrollTop = msg.offsetTop - msg.offsetHeight + 10
             pan.style.scrollBehavior = 'smooth'
-            if(showHighlight) {
+            if (showHighlight) {
                 msg.style.transition = 'background 1s'
                 msg.style.background = 'rgba(0, 0, 0, 0.06)'
                 setTimeout(() => {
@@ -326,24 +326,24 @@ export function updateWinColor(color: string, type: string) {
             (autodark == true && media.matches) ||
             (autodark != true && dark == true)
         ) {
-            min += ( max - min ) / 2
+            min += (max - min) / 2
         } else {
             min = 0.35
-            max -= ( max - min ) / 2
+            max -= (max - min) / 2
         }
         hsl[2] = min + hsl[2] * (max - min)
         const finalColor = hslToRgb(hsl[0], hsl[1], hsl[2])
         document.documentElement.style.setProperty(
             '--color-main',
             'rgb(' +
-                finalColor[0] +
-                ',' +
-                finalColor[1] +
-                ',' +
-                finalColor[2] +
-                ')',
+            finalColor[0] +
+            ',' +
+            finalColor[1] +
+            ',' +
+            finalColor[2] +
+            ')',
         )
-    } else if(type == 'macos') {
+    } else if (type == 'macos') {
         document.documentElement.style.setProperty(
             '--color-main',
             '#' + color.substring(0, 6) + 'CF',
@@ -410,7 +410,7 @@ export function createMenu() {
         menuTitles.license = $t('许可协议')
 
         backend.call(undefined, 'sys:createMenu', false,
-            backend.type == 'tauri' ? { data: menuTitles} : menuTitles)
+            backend.type == 'tauri' ? { data: menuTitles } : menuTitles)
     }
 }
 export function updateMenu(config: { parent: string, id: string; action: string; value: string }) {
@@ -442,8 +442,8 @@ export function createIpc() {
             parseMsg(info.content, [{ type: 'reply', id: String(info.msg) }], []), true)
         // 去消息列表内寻找，去除新消息标记
         const item = runtimeData.baseOnMsgList.get(info.id)
-        if(item) {
-            if(item.new_msg) {
+        if (item) {
+            if (item.new_msg) {
                 item.new_msg = false
                 runtimeData.newMsgCount--
             }
@@ -453,14 +453,14 @@ export function createIpc() {
     })
     // 应用功能
     backend.addListener(undefined, 'app:about', () => {
-            const popInfo = {
-                title: app.config.globalProperties.$t('关于') + ' ' +
-                        app.config.globalProperties.$t('Stapxs QQ Lite'),
-                template: markRaw(AboutPan),
-                allowQuickClose: false,
-            }
-            runtimeData.popBoxList.push(popInfo)
-        })
+        const popInfo = {
+            title: app.config.globalProperties.$t('关于') + ' ' +
+                app.config.globalProperties.$t('Stapxs QQ Lite'),
+            template: markRaw(AboutPan),
+            allowQuickClose: false,
+        }
+        runtimeData.popBoxList.push(popInfo)
+    })
     backend.addListener(undefined, 'sys:handleUri', (event, data) => {
         logger.info(JSON.stringify(data ?? event.payload))
     })
@@ -499,11 +499,11 @@ export function createIpc() {
 export async function loadMobile() {
     const { $t } = app.config.globalProperties
     // Capacitor：相关初始化
-    if(backend.isMobile()) {
+    if (backend.isMobile()) {
         // 注册回调监听
         backend.addListener('Onebot', 'onebot:event', (data) => {
             const msg = JSON.parse(data.data)
-            switch(data.type) {
+            switch (data.type) {
                 case 'onopen': {
                     login.creating = false
                     Connector.onopen(login.address, login.token)
@@ -533,16 +533,16 @@ export async function loadMobile() {
         // 通知
         const permission = await backend.call('LocalNotifications', 'checkPermissions', true)
         const permissionStr = permission || permission.display
-        if(permissionStr.indexOf('prompt') != -1) {
+        if (permissionStr.indexOf('prompt') != -1) {
             await backend.call('LocalNotifications', 'requestPermissions', false)
-        } else if(permissionStr.indexOf('denied') != -1) {
+        } else if (permissionStr.indexOf('denied') != -1) {
             logger.error(null, '通知权限已被拒绝')
             logger.system('开发者阁下为什么要拒绝通知权限的请求呢？')
         } else {
             logger.debug('通知权限已开启')
             // 注册通知类型
-            backend.call('LocalNotifications', 'registerActionTypes', false,{
-                types:[{
+            backend.call('LocalNotifications', 'registerActionTypes', false, {
+                types: [{
                     id: 'msgQuickReply',
                     actions: [{
                         id: 'REPLY_ACTION',
@@ -558,22 +558,22 @@ export async function loadMobile() {
             backend.addListener('LocalNotifications', 'localNotificationActionPerformed', (info) => {
                 const notification =
                     info.notification as LocalNotificationSchema
-                if(info.actionId == 'tap') {
+                if (info.actionId == 'tap') {
                     // PS：通知被点击后会自动被关闭，所以这里不需要处理
                     jumpToChat(notification.extra.userId,
                         notification.extra.msgId)
-                } else if(info.actionId == 'REPLY_ACTION') {
+                } else if (info.actionId == 'REPLY_ACTION') {
                     // 快速回复
                     sendMsgRaw(
                         notification.extra.userId,
                         notification.extra.chatType,
-                        parseMsg( info.inputValue ?? '', [{ type: 'reply', id: String(notification.extra.msgId) }], []),
+                        parseMsg(info.inputValue ?? '', [{ type: 'reply', id: String(notification.extra.msgId) }], []),
                         true
                     )
                     // 去消息列表内寻找，去除新消息标记
                     const item = runtimeData.baseOnMsgList.get(Number(notification.extra.userId))
-                    if(item) {
-                        if(item.new_msg) {
+                    if (item) {
+                        if (item.new_msg) {
                             item.new_msg = false
                             runtimeData.newMsgCount--
                         }
@@ -591,7 +591,7 @@ export async function loadMobile() {
 
             // 调整输入框高度
             const sendMore = document.getElementById('send-more')
-            if(sendMore && keyboardHeight > window.innerHeight / 3) {
+            if (sendMore && keyboardHeight > window.innerHeight / 3) {
                 sendMore.style.paddingBottom = '10px'
             }
 
@@ -599,13 +599,13 @@ export async function loadMobile() {
             const tabBar = document.getElementsByTagName('ul')[0]
             // iOS 26 后键盘背景是半透明的，不能让 webview 调整高度，会漏出背景的黑色
             // 干脆把所有的 iOS 版本处理方法都改为内部避让
-            if(backend.platform == 'ios') {
+            if (backend.platform == 'ios') {
                 const baseApp = document.getElementById('base-app')
                 if (safeArea && baseApp) {
                     baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 100) + 'px')
                 }
                 // 调整菜单高度
-                if(safeArea && tabBar) {
+                if (safeArea && tabBar) {
                     tabBar.style.setProperty('padding-bottom', (keyboardHeight - safeArea.bottom + 100) + 'px', 'important')
                 }
             }
@@ -613,16 +613,16 @@ export async function loadMobile() {
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
             const html = document.getElementsByTagName('html')[0]
-            if(html && backend.platform == 'android') {
+            if (html && backend.platform == 'android') {
                 html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
             }
         })
         backend.addListener('Keyboard', 'keyboardWillHide', async () => {
             const sendMore = document.getElementById('send-more')
-            if(sendMore) {
+            if (sendMore) {
                 sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
             }
-            if(backend.platform == 'ios') {
+            if (backend.platform == 'ios') {
                 const baseApp = document.getElementById('base-app')
                 const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
                 if (safeArea && baseApp) {
@@ -630,14 +630,14 @@ export async function loadMobile() {
                 }
 
                 const tabBar = document.getElementsByTagName('ul')[0]
-                if(tabBar) {
+                if (tabBar) {
                     tabBar.style.paddingBottom = ''
                 }
             }
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
             const html = document.getElementsByTagName('html')[0]
-            if(html && backend.platform == 'android') {
+            if (html && backend.platform == 'android') {
                 html.style.height = 'calc(100%)'
             }
         })
@@ -663,7 +663,7 @@ import { VueCompData } from '../elements/vueComp'
 export async function loadAppendStyle() {
     const platform = backend.platform
     logger.info('正在装载补充样式……')
-    if(platform != undefined) {
+    if (platform != undefined) {
         import(`@renderer/assets/css/append/append_${platform}.css`)
             .then(() => {
                 logger.info(`${platform} 平台附加样式加载完成`)
@@ -679,23 +679,23 @@ export async function loadAppendStyle() {
 
         const width = window.innerWidth
         const height = window.innerHeight
-        if(cssStype) {
-            if(width > 600) {
+        if (cssStype) {
+            if (width > 600) {
                 cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
             } else {
                 cssStype.innerHTML = horizontalCss + verticalCss + appendCss
             }
         }
 
-        if(backend.isDesktop()) {
+        if (backend.isDesktop()) {
             backend.call(undefined, 'win:maximize', false)
             const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
-            if(topBar) {
+            if (topBar) {
                 topBar.style.display = 'none'
             }
         }
     }
-    if(backend.isMobile()) {
+    if (backend.isMobile()) {
         const styleTag = document.createElement('style')
         styleTag.id = 'mobile-css'
         document.head.appendChild(styleTag)
@@ -713,20 +713,20 @@ export async function loadAppendStyle() {
         })
     }
 
-    if(option.get('chat_more_blur')) {
+    if (option.get('chat_more_blur')) {
         import('@renderer/assets/css/append/append_full_vibrancy.css').then(() => {
-                logger.info('完全透明 UI 附加样式加载完成')
-            })
+            logger.info('完全透明 UI 附加样式加载完成')
+        })
     }
 
     // napcat 插件模式附加样式
-    if(import.meta.env.VITE_NAPCAT) {
+    if (import.meta.env.VITE_NAPCAT) {
         import('@renderer/assets/css/append/append_full_vibrancy.css').then(() => {
-                logger.info('完全透明 UI 附加样式加载完成')
-            })
+            logger.info('完全透明 UI 附加样式加载完成')
+        })
         import('@renderer/assets/css/append/append_napcat.css').then(() => {
-                logger.info('napcat 插件模式附加样式加载完成')
-            })
+            logger.info('napcat 插件模式附加样式加载完成')
+        })
     }
 
     // 透明 UI 附加样式
@@ -769,7 +769,7 @@ export async function loadAppendStyle() {
 * @param port 端口
 */
 function setQuickLogin(address: string, port: number) {
-    if(login.quickLogin != null)
+    if (login.quickLogin != null)
         login.quickLogin.push({ address: address, port: port })
 }
 
@@ -803,14 +803,14 @@ function showUpadteLog(data: any) {
     //    如果缓存版本小于获取到的版本但是当前版本等于获取到的版本就是更新完成首次启动
     const latestVersion = data.tag_name.substring(1)
 
-    if (semver.lt(appVersion,latestVersion)) {
+    if (semver.lt(appVersion, latestVersion)) {
         // 有更新
         showReleaseLog(data, false)
     }
     if (
         cacheVersion &&
-        semver.eq(appVersion,latestVersion) &&
-        semver.lt(cacheVersion,latestVersion)
+        semver.eq(appVersion, latestVersion) &&
+        semver.lt(cacheVersion, latestVersion)
     ) {
         // 更新完成首次启动
         showReleaseLog(data, true)
@@ -845,42 +845,42 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         updated: isUpdated,
     }
     const buttonGoUpdate = (!backend.isWeb()) ? [
-              {
-                  text: $t('知道了'),
-                  fun: () => runtimeData.popBoxList.shift(),
-              },
-              {
-                  text: $t('下载更新…'),
-                  master: true,
-                  fun: () => openLink(data.html_url, true),
-              },
-          ]: [
-              {
-                  text: $t('查看…'),
-                  fun: () => openLink(data.html_url),
-              },
-              {
-                  text: $t('刷新页面'),
-                  master: true,
-                  fun: () => location.reload(),
-              },
-          ]
+        {
+            text: $t('知道了'),
+            fun: () => runtimeData.popBoxList.shift(),
+        },
+        {
+            text: $t('下载更新…'),
+            master: true,
+            fun: () => openLink(data.html_url, true),
+        },
+    ] : [
+        {
+            text: $t('查看…'),
+            fun: () => openLink(data.html_url),
+        },
+        {
+            text: $t('刷新页面'),
+            master: true,
+            fun: () => location.reload(),
+        },
+    ]
     const popInfo = {
         template: markRaw(UpdatePan),
         templateValue: toRaw(info),
-        button: isUpdated? [
-                  {
-                      text: $t('查看…'),
-                      fun: () => openLink(data.html_url, true),
-                  },
-                  {
-                      text: $t('知道了'),
-                      master: true,
-                      fun: () => {
-                          runtimeData.popBoxList.shift()
-                      },
-                  },
-              ]: buttonGoUpdate,
+        button: isUpdated ? [
+            {
+                text: $t('查看…'),
+                fun: () => openLink(data.html_url, true),
+            },
+            {
+                text: $t('知道了'),
+                master: true,
+                fun: () => {
+                    runtimeData.popBoxList.shift()
+                },
+            },
+        ] : buttonGoUpdate,
     }
     runtimeData.popBoxList.push(popInfo)
 }
@@ -1048,7 +1048,7 @@ export function checkOpenTimes() {
 */
 export function checkNotice() {
     let url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
-    if(import.meta.env.DEV) {
+    if (import.meta.env.DEV) {
         url = 'notice_local.json'
     }
     const version = 3
@@ -1066,14 +1066,14 @@ export function checkNotice() {
             }
             // 解析公告列表
             data.forEach((notice: any) => {
-                if(notice.version == version && (notice.client == import.meta.env.VITE_APP_CLIENT_TAG || notice.client == 'all')) {
+                if (notice.version == version && (notice.client == import.meta.env.VITE_APP_CLIENT_TAG || notice.client == 'all')) {
                     const noticeBody = notice as NoticeBodyV3
                     // 当前时间戳（毫秒）
                     const now = new Date().getTime()
                     noticeBody.show_date.forEach((dateInterval: number[]) => {
-                        if(dateInterval.length == 2) {
+                        if (dateInterval.length == 2) {
                             // 判断是否在时间区间内
-                            if(now >= dateInterval[0] && now <= dateInterval[1]) {
+                            if (now >= dateInterval[0] && now <= dateInterval[1]) {
                                 noticeBody.is_show = true
                             }
                         }
@@ -1091,7 +1091,7 @@ export function checkNotice() {
                                         noticeBody.pops.length > 1 && i != noticeBody.pops.length - 1 ?
                                             app.config.globalProperties.$t('继续') :
                                             (info.button_text ? info.button_text : app.config.globalProperties.$t('确定')),
-                                        /* eslint-enable */
+                                    /* eslint-enable */
                                     master: true,
                                     fun: () => {
                                         // 添加已读记录
@@ -1107,12 +1107,12 @@ export function checkNotice() {
                                     },
                                 },
                             ]
-                            if(info.link_url) {
+                            if (info.link_url) {
                                 button.unshift({
                                     text: app.config.globalProperties.$t('打开…'),
                                     master: false,
                                     fun: () => {
-                                        if(info.link_url) {
+                                        if (info.link_url) {
                                             openLink(info.link_url)
                                         }
                                     }
@@ -1124,7 +1124,7 @@ export function checkNotice() {
                                     html: info.html,
                                     button: button
                                 }
-                            } else if(info.template) {
+                            } else if (info.template) {
                                 popInfo = {
                                     title: info.title,
                                     template: markRaw(defineAsyncComponent(
@@ -1154,7 +1154,7 @@ export function checkNotice() {
 * @param data 数据
 */
 export function BackendRequest(type: 'GET' | 'POST', url: string,
-        cookies: string[], data: any = undefined) {
+    cookies: string[], data: any = undefined) {
     backend.call(undefined, 'sys:requestHttp', false, {
         type: type,
         url: url,
@@ -1180,7 +1180,7 @@ export function loadJsonMap(name: string) {
             if (msgPathKey) {
                 msgPath = (msgPathList[msgPathKey] as any).default
             }
-            if(msgPath) {
+            if (msgPath) {
                 logger.system('开发者，请稍等一下（翻找），正在为阁下加载 ' + msgPath.name + ' 的服务映射表。')
                 if (msgPath.redirect) {
                     // eslint-disable-next-line
@@ -1188,14 +1188,14 @@ export function loadJsonMap(name: string) {
                         return key.includes(msgPath?.redirect)
                     })
                     let newMsgPath = undefined as
-                            { [key: string]: any } | undefined
-                    if(newMsgPathKey) {
+                        { [key: string]: any } | undefined
+                    if (newMsgPathKey) {
                         newMsgPath = (msgPathList[newMsgPathKey] as any).default
                     }
                     // 合并映射表
                     Object.keys(msgPath).forEach((key) => {
                         if (newMsgPath && key != 'name' && newMsgPath[key]) {
-                            if(msgPath)
+                            if (msgPath)
                                 newMsgPath[key] = msgPath[key]
                         }
                     })
@@ -1240,7 +1240,7 @@ export function sendIdentifyData(data: { [key: string]: any }) {
 export function changeGroupNotice(group_id: number, open: boolean) {
     const noticeInfo = option.get('notice_group') ?? {}
     const list = noticeInfo[runtimeData.loginInfo.uin]
-    if(open) {
+    if (open) {
         if (list) {
             list.push(group_id)
         } else {
@@ -1309,17 +1309,17 @@ export function isRobot(id: number | string): boolean {
  *   acceptEndEvent: (event: T) => void // 接受结束事件
  * }
  */
-export function useStayEvent<T extends Event,C>(
-    getPos: (event: T)=>{x: number, y: number} | void,
+export function useStayEvent<T extends Event, C>(
+    getPos: (event: T) => { x: number, y: number } | void,
     hooks: {
-        onFit?: ((eventData: MenuEventData, ctx: C)=>void)
-              | ((eventData: MenuEventData)=>void)
-              | ((ctx: C)=>void)
-              | (()=>void)
-        onLeave?: ((ctx: C)=>void)
-                | (()=>void)
-        onFail?: ((ctx: C)=>void)
-               | (()=>void)
+        onFit?: ((eventData: MenuEventData, ctx: C) => void)
+        | ((eventData: MenuEventData) => void)
+        | ((ctx: C) => void)
+        | (() => void)
+        onLeave?: ((ctx: C) => void)
+        | (() => void)
+        onFail?: ((ctx: C) => void)
+        | (() => void)
     },
     continueTime: number,
 ): {
@@ -1331,14 +1331,14 @@ export function useStayEvent<T extends Event,C>(
     // 表示是否符合条件
     let fit: boolean = false
     // 记录开始位置
-    let startPos: {x: number, y: number} | undefined = undefined
+    let startPos: { x: number, y: number } | undefined = undefined
     // settiemout
     let timeout: number
     // 开始时事件数据
     let startEventData: MenuEventData
     // 额外参数
     let ctx: C | undefined
-    const handle = (event: T, _ctx?: C|undefined) => {
+    const handle = (event: T, _ctx?: C | undefined) => {
         if (end) _acceptStartEvent(event, _ctx)
         else _acceptUpdateEvent(event)
     }
@@ -1346,11 +1346,11 @@ export function useStayEvent<T extends Event,C>(
         if (end) return
         _acceptEndEvent(event)
     }
-    const _acceptStartEvent = (event: T, _ctx?: C|undefined) => {
+    const _acceptStartEvent = (event: T, _ctx?: C | undefined) => {
         fit = false
         end = false
         ctx = _ctx
-        startPos = getPos(event) as {x: number, y: number}
+        startPos = getPos(event) as { x: number, y: number }
         if (!startPos) return
         startEventData = {
             x: startPos.x,
@@ -1370,8 +1370,8 @@ export function useStayEvent<T extends Event,C>(
         // 位置改变
         if (Math.abs(pos.x - startPos.x) > 10 ||
             Math.abs(pos.y - startPos.y) > 10) {
-                _setEnd()
-            }
+            _setEnd()
+        }
     }
     const _acceptEndEvent = (event: T) => {
         if (end) return
@@ -1394,7 +1394,7 @@ export function useStayEvent<T extends Event,C>(
             if (ctx) arg = ctx
             else arg = startEventData;
 
-            (hooks.onFit as (arg: MenuEventData|C) => void)(arg)
+            (hooks.onFit as (arg: MenuEventData | C) => void)(arg)
         } else if (hooks.onFit?.length === 2) {
             (hooks.onFit as (eventData: MenuEventData, ctx?: C) => void)(startEventData, ctx)
         }
@@ -1559,9 +1559,11 @@ export function useLocalStorage<T>(key: string, defaultValue: T): Ref<T> {
  * 用于闭包公用停留事件控制器
  * @returns
  */
-function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
+function createVMenu(): Directive<HTMLElement, (event: MenuEventData) => void> {
     // 右键菜单事件数据类型
-    type Binding = DirectiveBinding<(event: MenuEventData)=>void> & { modifiers: {prevent?: boolean, stop?: boolean} }
+    type Binding = DirectiveBinding<(event: MenuEventData) => void> & { modifiers: { prevent?: boolean, stop?: boolean } }
+
+    let activeMenu = false
 
     // 右键菜单事件数据类型
     const {
@@ -1579,6 +1581,7 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
             onFit: (data: MenuEventData, binding: Binding) => {
                 // 触发右键菜单事件
                 binding.value(data)
+                activeMenu = true
             }
         },
         400,
@@ -1586,12 +1589,12 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
 
     // 创建指令
     return {
-        mounted( el: HTMLElement, binding: Binding, ) {
+        mounted(el: HTMLElement, binding: Binding,) {
             // 创建变量
             const prevent = binding.modifiers.prevent || false
             const stop = binding.modifiers.stop || false
             const controller = new AbortController()
-            const options = {signal: controller.signal}
+            const options = { signal: controller.signal }
 
             // 修复由于 touch 阻断 click 事件冒泡的问题
             let touchStartTime = 0
@@ -1608,27 +1611,26 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
                 binding.value(data)
             }, options)
             el.addEventListener('touchstart', (event) => {
-                if (prevent) event.preventDefault()
-                if (stop) event.stopPropagation()
                 menuTouchHandle(event, binding)
                 touchStartTime = Date.now()
             }, options)
             el.addEventListener('touchmove', (event) => {
-                if (prevent) event.preventDefault()
-                if (stop) event.stopPropagation()
+                if (prevent && activeMenu) event.preventDefault()
+                if (stop && activeMenu) event.stopPropagation()
                 menuTouchHandle(event, binding)
             }, options)
             el.addEventListener('touchend', (event) => {
-                if (prevent) event.preventDefault()
-                if (stop) event.stopPropagation()
+                if (prevent && activeMenu) event.preventDefault()
+                if (stop && activeMenu) event.stopPropagation()
                 menuTouchEnd(event)
+                activeMenu = false
                 // 快速点击则触发点击事件
                 if (Date.now() - touchStartTime < 200)
                     event.target?.['click']?.()
             }, options)
 
-            // 绑定控制器
-            ;(el as any)._vMenuController = controller
+                // 绑定控制器
+                ; (el as any)._vMenuController = controller
         },
         unmounted(el: HTMLElement) {
             const controller = (el as any)._vMenuController
@@ -1643,12 +1645,12 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData)=>void> {
  * 创建一个右键菜单指令
  * @example v-menu="(data: MenuEventData) =>  打开菜单函数(data, 其他参数)"
  */
-export const vMenu: Directive<HTMLElement, (event: MenuEventData)=>void, 'prevent' | 'stop'> = createVMenu()
+export const vMenu: Directive<HTMLElement, (event: MenuEventData) => void, 'prevent' | 'stop'> = createVMenu()
 /**
  * 挂在时如果设备支持,自动聚焦输入框
  */
-export const vAutoFocus: Directive<HTMLInputElement|HTMLTextAreaElement, undefined> = {
-    mounted(el: HTMLInputElement|HTMLTextAreaElement) {
+export const vAutoFocus: Directive<HTMLInputElement | HTMLTextAreaElement, undefined> = {
+    mounted(el: HTMLInputElement | HTMLTextAreaElement) {
         // 判断是否支持聚焦
         if (!shouldAutoFocus()) return
 
@@ -1656,8 +1658,8 @@ export const vAutoFocus: Directive<HTMLInputElement|HTMLTextAreaElement, undefin
         const isVisible = () => {
             const style = window.getComputedStyle(el)
             return style.display !== 'none' &&
-                   style.visibility !== 'hidden' &&
-                   style.opacity !== '0'
+                style.visibility !== 'hidden' &&
+                style.opacity !== '0'
         }
 
         if (!isVisible()) return
@@ -1703,8 +1705,8 @@ export function createVSearch<T extends object>(): Directive<HTMLInputElement, S
                     binding.value.query = []
                 }
             })
-            ;(el as any)._vSearchController = controller
-            ;(el as any)._vStopWatch = { stopWatch, stopWatchEffect }
+                ; (el as any)._vSearchController = controller
+                ; (el as any)._vStopWatch = { stopWatch, stopWatchEffect }
         },
         unmounted(el) {
             const controller = (el as any)._vSearchController
@@ -1715,7 +1717,7 @@ export function createVSearch<T extends object>(): Directive<HTMLInputElement, S
             }
             if (stopWatch) {
                 (stopWatch.stopWatch as WatchHandle).stop()
-                ;(stopWatch.stopWatchEffect as WatchHandle).stop()
+                    ; (stopWatch.stopWatchEffect as WatchHandle).stop()
                 delete (el as any)._vStopWatch
             }
         }
@@ -1773,7 +1775,7 @@ export const vEsc: Directive<HTMLElement, () => void> = {
             }
         }
         document.addEventListener('keydown', keydownHandler, options)
-        ;(el as any)._vEscController = controller
+            ; (el as any)._vEscController = controller
     },
     unmounted(el: HTMLElement) {
         const controller = (el as any)._vEscController
@@ -1815,223 +1817,224 @@ export interface VMoveOptions<T extends HTMLElement> {
     }
 }
 
-function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>>{
+function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>> {
     return {
-    mounted(el: T, binding: DirectiveBinding<VMoveOptions<T>>) {
-        const options = binding.value
+        mounted(el: T, binding: DirectiveBinding<VMoveOptions<T>>) {
+            const options = binding.value
 
-        const moveFlag = {
-            _move: 0,
-            get move() {
-                return this._move
-            },
-            set move(value: number) {
-                if (value < -getLimit('left')) value = -getLimit('left')
-                if (value > getLimit('right')) value = getLimit('right')
-                this._move = value
-            },
-            onScroll: 'none' as 'none' | 'touch' | 'wheel',
-            lastTime: null as null | number,
-            speedList: [] as number[],
-            touchLast: null as null | TouchEvent,
-        }
-
-        const getPxValue = (option: { type: 'px' | '%', value: number }) => {
-            if (option.type === 'px') return option.value
-            return el.getBoundingClientRect().width * option.value / 100
-        }
-        const getLimit = (type: 'left' | 'right') => {
-            const option: {type: 'px' | '%', value: number} = options?.[type + 'Limit']
-            if (!option) return 0
-            return getPxValue(option)
-        }
-
-        // 滚轮滑动
-        const chatWheelEvent = (event: WheelEvent) => {
-            const process = (event: WheelEvent) => {
-                // 正在触屏,不处理
-                if (moveFlag.onScroll === 'touch') return false
-                const x = event.deltaX
-                const y = event.deltaY
-                const absX = Math.abs(x)
-                const absY = Math.abs(y)
-                // 斜度过大
-                if (absY !== 0 && absX / absY < 2) return false
-                dispenseMove('wheel', -x / 3)
-                return true
+            const moveFlag = {
+                _move: 0,
+                get move() {
+                    return this._move
+                },
+                set move(value: number) {
+                    if (value < -getLimit('left')) value = -getLimit('left')
+                    if (value > getLimit('right')) value = getLimit('right')
+                    this._move = value
+                },
+                onScroll: 'none' as 'none' | 'touch' | 'wheel',
+                lastTime: null as null | number,
+                speedList: [] as number[],
+                touchLast: null as null | TouchEvent,
             }
-            if (!process(event)) return
-            event.stopPropagation()
-            event.preventDefault()
-            // 创建遮罩
-            // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
-            // 所以要创建一个不会动的全局遮罩来处理
-            wheelMask(process,()=>{
-                dispenseMove('wheel', 0, true)
-            })
-        }
 
-        // 触屏开始
-        const chatMoveStartEvent = (event: TouchEvent) => {
-            if (moveFlag.onScroll === 'wheel') return
-            // 触屏开始时，记录触摸点
-            moveFlag.touchLast = event
-        }
+            const getPxValue = (option: { type: 'px' | '%', value: number }) => {
+                if (option.type === 'px') return option.value
+                return el.getBoundingClientRect().width * option.value / 100
+            }
+            const getLimit = (type: 'left' | 'right') => {
+                const option: { type: 'px' | '%', value: number } = options?.[type + 'Limit']
+                if (!option) return 0
+                return getPxValue(option)
+            }
 
-        // 触屏滑动
-        const chatMoveEvent = (event: TouchEvent) => {
-            if (moveFlag.onScroll === 'wheel') return
-            if (!moveFlag.touchLast) return
-            const touch = event.changedTouches[0]
-            const lastTouch = moveFlag.touchLast.changedTouches[0]
-            const deltaX = touch.clientX - lastTouch.clientX
-            const deltaY = touch.clientY - lastTouch.clientY
-            const absX = Math.abs(deltaX)
-            const absY = Math.abs(deltaY)
-            // 斜度过大
-            if (absY !== 0 && absX / absY < 2) return
-            event.stopPropagation()
-            event.preventDefault()
-            // 触屏移动
-            moveFlag.touchLast = event
-            dispenseMove('touch', deltaX)
-        }
+            // 滚轮滑动
+            const chatWheelEvent = (event: WheelEvent) => {
+                const process = (event: WheelEvent) => {
+                    // 正在触屏,不处理
+                    if (moveFlag.onScroll === 'touch') return false
+                    const x = event.deltaX
+                    const y = event.deltaY
+                    const absX = Math.abs(x)
+                    const absY = Math.abs(y)
+                    // 斜度过大
+                    if (absY !== 0 && absX / absY < 2) return false
+                    dispenseMove('wheel', -x / 3)
+                    return true
+                }
+                if (!process(event)) return
+                event.stopPropagation()
+                event.preventDefault()
+                // 创建遮罩
+                // 由于在窗口移动中,窗口判定箱也在移动,当指针不再窗口外,事件就断了
+                // 所以要创建一个不会动的全局遮罩来处理
+                wheelMask(process, () => {
+                    dispenseMove('wheel', 0, true)
+                })
+            }
 
-        // 触屏滑动结束
-        const chatMoveEndEvent = (event: TouchEvent) => {
-            if (moveFlag.onScroll === 'wheel') return
-            const touch = event.changedTouches[0]
-            const lastTouch = moveFlag.touchLast?.changedTouches[0]
-            if (lastTouch) {
+            // 触屏开始
+            const chatMoveStartEvent = (event: TouchEvent) => {
+                if (moveFlag.onScroll === 'wheel') return
+                // 触屏开始时，记录触摸点
+                moveFlag.touchLast = event
+            }
+
+            // 触屏滑动
+            const chatMoveEvent = (event: TouchEvent) => {
+                if (moveFlag.onScroll === 'wheel') return
+                if (!moveFlag.touchLast) return
+                const touch = event.changedTouches[0]
+                const lastTouch = moveFlag.touchLast.changedTouches[0]
                 const deltaX = touch.clientX - lastTouch.clientX
                 const deltaY = touch.clientY - lastTouch.clientY
                 const absX = Math.abs(deltaX)
                 const absY = Math.abs(deltaY)
                 // 斜度过大
-                if (absY === 0 || absX / absY > 2) {
-                    dispenseMove('touch', deltaX)
-                }
+                if (absY !== 0 && absX / absY < 2) return
+                event.stopPropagation()
+                event.preventDefault()
+                // 触屏移动
+                moveFlag.touchLast = event
+                dispenseMove('touch', deltaX)
             }
-            dispenseMove('touch', 0, true)
-            moveFlag.touchLast = null
-        }
-        /**
-         * 分发触屏/滚轮情况
-         */
-        const dispenseMove = (type: 'touch' | 'wheel', value: number, end: boolean = false) => {
-            if (!end && moveFlag.onScroll === 'none') startMove(type, value)
-            if (moveFlag.onScroll === 'none') return
-            if (end) endMove()
-            else keepMove(value)
-        }
 
-        /**
-         * 开始窗口移动
-         */
-        const startMove = (type: 'touch' | 'wheel', value: number) => {
-            // 记录 flag
-            moveFlag.onScroll = type
-            moveFlag.move = value
-            moveFlag.lastTime = Date.now()
-
-            // 执行前置钩子
-            options?.beforeHook?.(el)
-            // 执行移动钩子
-            options?.moveHook?.(el, moveFlag.move)
-        }
-        /**
-         * 保持窗口移动
-         */
-        const keepMove = (value: number) => {
-            // 增加移动值
-            moveFlag.move += value
-            // 计算速度
-            const nowDate = Date.now()
-            if (!moveFlag.lastTime) return
-            const deltaTime = nowDate - moveFlag.lastTime
-            moveFlag.lastTime = nowDate
-            moveFlag.speedList.push(value / deltaTime)
-
-            // 执行移动钩子
-            options?.moveHook?.(el, moveFlag.move)
-        }
-        /**
-         * 结束窗口移动
-         */
-        const endMove = () => {
-            // 保留自己要的数据
-            const move = moveFlag.move
-            const speedList = moveFlag.speedList
-
-            // 移动距离判定
-            if (
-                options?.moveCondition &&
-                Math.abs(move) >= getPxValue(options.moveCondition.minMove)
-            ) {
-                if (move > 0)
-                    el.dispatchEvent(new CustomEvent('v-move-right', { detail: move }))
-                else
-                    el.dispatchEvent(new CustomEvent('v-move-left', { detail: move }))
-            } else
-            // 速度判定
-            if (
-                options?.speedCondition &&
-                Math.abs(move) >= getPxValue(options.speedCondition.minMove)
-            ) {
-                const endSpeedList = speedList.toReversed().slice(0, 10)
-                let endSpeed = 0
-                for (const speed of endSpeedList) {
-                    endSpeed += speed
+            // 触屏滑动结束
+            const chatMoveEndEvent = (event: TouchEvent) => {
+                if (moveFlag.onScroll === 'wheel') return
+                const touch = event.changedTouches[0]
+                const lastTouch = moveFlag.touchLast?.changedTouches[0]
+                if (lastTouch) {
+                    const deltaX = touch.clientX - lastTouch.clientX
+                    const deltaY = touch.clientY - lastTouch.clientY
+                    const absX = Math.abs(deltaX)
+                    const absY = Math.abs(deltaY)
+                    // 斜度过大
+                    if (absY === 0 || absX / absY > 2) {
+                        dispenseMove('touch', deltaX)
+                    }
                 }
-                endSpeed /= endSpeedList.length
-                if (Math.abs(endSpeed) > options.speedCondition.minSpeed) {
-                    if (endSpeed > 0)
+                dispenseMove('touch', 0, true)
+                moveFlag.touchLast = null
+            }
+            /**
+             * 分发触屏/滚轮情况
+             */
+            const dispenseMove = (type: 'touch' | 'wheel', value: number, end: boolean = false) => {
+                if (!end && moveFlag.onScroll === 'none') startMove(type, value)
+                if (moveFlag.onScroll === 'none') return
+                if (end) endMove()
+                else keepMove(value)
+            }
+
+            /**
+             * 开始窗口移动
+             */
+            const startMove = (type: 'touch' | 'wheel', value: number) => {
+                // 记录 flag
+                moveFlag.onScroll = type
+                moveFlag.move = value
+                moveFlag.lastTime = Date.now()
+
+                // 执行前置钩子
+                options?.beforeHook?.(el)
+                // 执行移动钩子
+                options?.moveHook?.(el, moveFlag.move)
+            }
+            /**
+             * 保持窗口移动
+             */
+            const keepMove = (value: number) => {
+                // 增加移动值
+                moveFlag.move += value
+                // 计算速度
+                const nowDate = Date.now()
+                if (!moveFlag.lastTime) return
+                const deltaTime = nowDate - moveFlag.lastTime
+                moveFlag.lastTime = nowDate
+                moveFlag.speedList.push(value / deltaTime)
+
+                // 执行移动钩子
+                options?.moveHook?.(el, moveFlag.move)
+            }
+            /**
+             * 结束窗口移动
+             */
+            const endMove = () => {
+                // 保留自己要的数据
+                const move = moveFlag.move
+                const speedList = moveFlag.speedList
+
+                // 移动距离判定
+                if (
+                    options?.moveCondition &&
+                    Math.abs(move) >= getPxValue(options.moveCondition.minMove)
+                ) {
+                    if (move > 0)
                         el.dispatchEvent(new CustomEvent('v-move-right', { detail: move }))
                     else
                         el.dispatchEvent(new CustomEvent('v-move-left', { detail: move }))
-                }
+                } else
+                    // 速度判定
+                    if (
+                        options?.speedCondition &&
+                        Math.abs(move) >= getPxValue(options.speedCondition.minMove)
+                    ) {
+                        const endSpeedList = speedList.toReversed().slice(0, 10)
+                        let endSpeed = 0
+                        for (const speed of endSpeedList) {
+                            endSpeed += speed
+                        }
+                        endSpeed /= endSpeedList.length
+                        if (Math.abs(endSpeed) > options.speedCondition.minSpeed) {
+                            if (endSpeed > 0)
+                                el.dispatchEvent(new CustomEvent('v-move-right', { detail: move }))
+                            else
+                                el.dispatchEvent(new CustomEvent('v-move-left', { detail: move }))
+                        }
+                    }
+
+                // 执行结束钩子
+                binding.value?.endHook?.(el)
+
+                // 重置数据
+                moveFlag.onScroll = 'none'
+                moveFlag.lastTime = 0
+                moveFlag.speedList = []
+                moveFlag.move = 0
             }
 
-            // 执行结束钩子
-            binding.value?.endHook?.(el)
+            // 添加监听
+            const controller = new AbortController()
+            const listenerOptions = { signal: controller.signal }
+            el.addEventListener('wheel', chatWheelEvent, { ...listenerOptions, passive: false })
+            el.addEventListener('touchstart', chatMoveStartEvent, listenerOptions)
+            el.addEventListener('touchmove', chatMoveEvent, listenerOptions)
+            el.addEventListener('touchend', chatMoveEndEvent, listenerOptions)
+                ; (el as any)._vMoveController = controller
 
-            // 重置数据
-            moveFlag.onScroll = 'none'
-            moveFlag.lastTime = 0
-            moveFlag.speedList = []
-            moveFlag.move = 0
+        },
+        unmounted(el: T) {
+            const controller = (el as any)._vMoveController
+            if (!controller) return
+
+            controller.abort()
+            delete (el as any)._vMoveController
         }
-
-        // 添加监听
-        const controller = new AbortController()
-        const listenerOptions = { signal: controller.signal }
-        el.addEventListener('wheel', chatWheelEvent, { ...listenerOptions, passive: false })
-        el.addEventListener('touchstart', chatMoveStartEvent, listenerOptions)
-        el.addEventListener('touchmove', chatMoveEvent, listenerOptions)
-        el.addEventListener('touchend', chatMoveEndEvent, listenerOptions)
-        ;(el as any)._vMoveController = controller
-
-    },
-    unmounted(el: T) {
-        const controller = (el as any)._vMoveController
-        if (!controller) return
-
-        controller.abort()
-        delete (el as any)._vMoveController
     }
-}}
+}
 
 function createVLongHover(): Directive<HTMLElement, undefined> {
     const {
         handle: userHoverHandle,
         handleEnd: userHoverEnd,
     } = useStayEvent((event: MouseEvent) => {
-        return {x: event.clientX, y: event.clientY,}
-    },{
-        onFit: (eventData, ctx: HTMLElement)=>{
+        return { x: event.clientX, y: event.clientY, }
+    }, {
+        onFit: (eventData, ctx: HTMLElement) => {
             ctx.dispatchEvent(new CustomEvent('v-long-hover', { detail: eventData }))
         },
-        onLeave: (ctx: HTMLElement)=>{
+        onLeave: (ctx: HTMLElement) => {
             ctx.dispatchEvent(new CustomEvent('v-long-hover-end'))
         }
     }, 495
@@ -2050,7 +2053,7 @@ function createVLongHover(): Directive<HTMLElement, undefined> {
             el.addEventListener('mouseleave', (event) => {
                 userHoverEnd(event)
             }, options)
-            ;(el as any)._vLongHoverController = controller
+                ; (el as any)._vLongHoverController = controller
         },
         unmounted(el: HTMLElement) {
             const controller = (el as any)._vLongHoverController
@@ -2095,16 +2098,16 @@ export const vLongHover = createVLongHover()
 type VTooltipBinding<T extends Component> =
     | T
     | VueCompData<T>
-    | (() => T | VueCompData<T> )
-    | ((eventData: {x: number, y: number}) => T | VueCompData<T> )
+    | (() => T | VueCompData<T>)
+    | ((eventData: { x: number, y: number }) => T | VueCompData<T>)
 
-function resolveBinding<T extends Component>(binding: VTooltipBinding<T>, eventData: {x: number, y: number}): VueCompData<T> {
+function resolveBinding<T extends Component>(binding: VTooltipBinding<T>, eventData: { x: number, y: number }): VueCompData<T> {
     if (typeof binding === 'function') {
         // eslint-disable-next-line multiline-ternary
         const result = binding.length === 0
             // eslint-disable-next-line multiline-ternary
             ? (binding as () => T | VueCompData<T>)()
-            : (binding as (eventData: {x: number, y: number}) => T | VueCompData<T>)(eventData)
+            : (binding as (eventData: { x: number, y: number }) => T | VueCompData<T>)(eventData)
         if ('comp' in result) return result
         return { comp: result } as VueCompData<T>
     } else if ('comp' in binding) {
@@ -2130,8 +2133,8 @@ export const vTooltip = {
     mounted<T extends Component>(el: HTMLElement, binding: DirectiveBinding<VTooltipBinding<T>> & { modifiers: { debug?: boolean } }) {
         const controller = new AbortController()
         const options = { signal: controller.signal }
-        ;(vLongHover as any).mounted(el)
-        ;(el as any)._vTooltipController = controller
+            ; (vLongHover as any).mounted(el)
+            ; (el as any)._vTooltipController = controller
 
         let tooltip: TooltipController | undefined
 
@@ -2143,7 +2146,7 @@ export const vTooltip = {
         }, options)
 
         el.addEventListener('v-long-hover-end', () => {
-            if(binding.modifiers?.debug) return
+            if (binding.modifiers?.debug) return
             tooltip?.close()
             tooltip = undefined
         }, options)
