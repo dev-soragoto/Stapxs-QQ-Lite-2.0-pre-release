@@ -1,15 +1,15 @@
 <template>
-    <div class="msg-json" v-if="success" @click="openLink(data.jumpUrl)">
-        <p>{{ data.title }}</p>
+    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
+        <p>{{ parsedContent.title }}</p>
         <span>
-            <font-awesome-icon icon="eye" /> {{ data.view }}
-            <font-awesome-icon icon="message" /> {{ data.comment }}
-            <font-awesome-icon icon="thumbs-up" /> {{ data.prefer }}
+            <font-awesome-icon icon="eye" /> {{ parsedContent.view }}
+            <font-awesome-icon icon="message" /> {{ parsedContent.comment }}
+            <font-awesome-icon icon="thumbs-up" /> {{ parsedContent.prefer }}
         </span>
-        <img :src="data.img" alt="" class="forum-img" />
+        <img :src="parsedContent.img" alt="" class="forum-img">
         <div class="bottom-bar">
-            <img :src="data.icon" alt="" />
-            <span>{{ data.name }} ({{ $t('频道') }})</span>
+            <img :src="parsedContent.icon" alt="">
+            <span>{{ parsedContent.name }} ({{ $t('频道') }})</span>
         </div>
     </div>
     <span v-else class="msg-unknown">{{
@@ -66,7 +66,7 @@ const music = z
 const json = JSON.parse(jsonData)
 const parsedData = music.safeParse(json)
 const success = parsedData.success
-const data = parsedData.data!
+const parsedContent = parsedData.data!
 if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }

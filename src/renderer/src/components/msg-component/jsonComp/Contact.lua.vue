@@ -1,15 +1,14 @@
 <template>
-    <div class="msg-json" v-if="success">
-        <p>{{ data.title }}</p>
-        <span v-if="data.type === 'group'">{{ data.desc }}</span>
-        <img :src="data.img" alt="" />
+    <div v-if="success" class="msg-json">
+        <p>{{ parsedContent.title }}</p>
+        <span v-if="parsedContent.type === 'group'">{{ parsedContent.desc }}</span>
+        <img :src="parsedContent.img" alt="">
         <div class="bottom-bar">
             <font-awesome-icon
-                v-if="data.type === 'group'"
-                :icon="['fas', 'users']"
-            />
+                v-if="parsedContent.type === 'group'"
+                :icon="['fas', 'users']" />
             <font-awesome-icon v-else :icon="['fas', 'user']" />
-            <span>{{ data.name }}</span>
+            <span>{{ parsedContent.name }}</span>
         </div>
     </div>
     <span v-else class="msg-unknown">{{
@@ -74,7 +73,7 @@ const contact = z.union([friend, group])
 const json = JSON.parse(jsonData)
 const parsedData = contact.safeParse(json)
 const success = parsedData.success
-const data = parsedData.data!
+const parsedContent = parsedData.data!
 if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }

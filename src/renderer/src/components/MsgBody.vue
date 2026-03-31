@@ -250,9 +250,8 @@
                 </template>
                 <template v-else>
                     <JsonSegComp v-if="data.message.at(0)!.type === 'json'"
-                        :data = "data.message.at(0)!.data"
-                    />
-                    <XmlSegComp v-else :item="data.message.at(0)!.data" :id="data.message_id" />
+                        :data="data.message.at(0)!.data" />
+                    <XmlSegComp v-else :id="data.message_id" :item="data.message.at(0)!.data" />
                 </template>
                 <!-- 链接预览框 -->
                 <div v-if="!isDebugMsg && pageViewInfo !== undefined && Object.keys(pageViewInfo).length > 0"

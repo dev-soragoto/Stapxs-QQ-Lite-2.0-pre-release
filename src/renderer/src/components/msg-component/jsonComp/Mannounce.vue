@@ -1,8 +1,9 @@
 <template>
-    <div class="msg-json" v-if="success">
-        <p>{{ data.title }}</p>
-        <span>{{ data.content }}</span>
-        <img v-if="data.img" :src="data.img.url" alt="" @click="viewImg()" />
+    <div v-if="success" class="msg-json">
+        <p>{{ parsedContent.title }}</p>
+        <span>{{ parsedContent.content }}</span>
+        <img v-if="parsedContent.img" :src="parsedContent.img.url" alt=""
+            @click="viewImg()">
         <div class="bottom-bar">
             <font-awesome-icon :icon="['fas', 'bullhorn']" />
             <span>{{ $t('群公告') }}</span>
@@ -79,7 +80,7 @@ const mannounce = z
 const json = JSON.parse(jsonData)
 const parsedData = mannounce.safeParse(json)
 const success = parsedData.success
-const data = parsedData.data!
+const parsedContent = parsedData.data!
 
 if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
@@ -87,6 +88,6 @@ if (!success) {
 
 function viewImg(): void {
     if (!viewer.value) return
-    viewer.value.open(new Img(data.img!.url))
+    viewer.value.open(new Img(parsedContent.img!.url))
 }
 </script>

@@ -9,8 +9,7 @@
     <div
         ref="main"
         @click="cardClick()"
-        v-html="buildXML(item, id, id)"
-    />
+        v-html="buildXML(item, id, id)" />
 </template>
 
 <script setup lang="ts">

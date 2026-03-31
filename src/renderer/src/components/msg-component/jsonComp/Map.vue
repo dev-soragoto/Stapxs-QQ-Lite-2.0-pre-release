@@ -1,12 +1,12 @@
 <template>
-    <div v-once class="msg-json" v-if="success">
-        <p>{{ data.title }}</p>
-        <ElAmap :center="[data.lng, data.lat]" :zoom="15">
-            <ElAmapMarker :position="[data.lng, data.lat]" />
+    <div v-if="success" v-once class="msg-json">
+        <p>{{ parsedContent.title }}</p>
+        <ElAmap :center="[parsedContent.lng, parsedContent.lat]" :zoom="15">
+            <ElAmapMarker :position="[parsedContent.lng, parsedContent.lat]" />
         </ElAmap>
         <div class="bottom-bar">
             <font-awesome-icon :icon="['fas', 'map-marker-alt']" />
-            <span>{{ data.name }}</span>
+            <span>{{ parsedContent.name }}</span>
         </div>
     </div>
     <span v-else class="msg-unknown">{{
@@ -45,7 +45,7 @@ const map = z
 const json = JSON.parse(jsonData)
 const parsedData = map.safeParse(json)
 const success = parsedData.success
-const data = parsedData.data!
+const parsedContent = parsedData.data!
 if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }

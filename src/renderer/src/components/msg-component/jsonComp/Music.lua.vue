@@ -1,11 +1,11 @@
 <template>
-    <div class="msg-json" v-if="success" @click="openLink(data.jumpUrl)">
-        <p>{{ data.title }}</p>
-        <span>{{ data.desc }}</span>
-        <img :src="data.img" alt="" />
+    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
+        <p>{{ parsedContent.title }}</p>
+        <span>{{ parsedContent.desc }}</span>
+        <img :src="parsedContent.img" alt="">
         <div class="bottom-bar">
-            <img :src="data.icon" alt="" />
-            <span>{{ data.name }}</span>
+            <img :src="parsedContent.icon" alt="">
+            <span>{{ parsedContent.name }}</span>
         </div>
     </div>
     <span v-else class="msg-unknown">{{
@@ -51,7 +51,7 @@ const music = z
 const json = JSON.parse(jsonData)
 const parsedData = music.safeParse(json)
 const success = parsedData.success
-const data = parsedData.data!
+const parsedContent = parsedData.data!
 if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }

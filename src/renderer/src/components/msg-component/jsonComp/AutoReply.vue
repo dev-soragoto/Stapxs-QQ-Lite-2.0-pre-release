@@ -1,13 +1,12 @@
 <template>
-    <div class="msg-json self-help" v-if="success">
-        <p>{{ data.title }}</p>
+    <div v-if="success" class="msg-json self-help">
+        <p>{{ parsedContent.title }}</p>
         <span class="reply-buttons">
             <span
-                v-for="(button, index) in data.button"
+                v-for="(button, index) in parsedContent.button"
                 :key="index"
                 class="reply-button"
-                @click="sendNotify(button.action_data)"
-            >
+                @click="sendNotify(button.action_data)">
                 {{ button.name }}
             </span>
         </span>
@@ -61,7 +60,7 @@ const music = z
 const json = JSON.parse(jsonData)
 const parsedData = music.safeParse(json)
 const success = parsedData.success
-const data = parsedData.data!
+const parsedContent = parsedData.data!
 if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }
