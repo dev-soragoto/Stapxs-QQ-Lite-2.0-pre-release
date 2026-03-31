@@ -216,7 +216,9 @@
                 this.$emit('userClick', back)
                 runtimeData.baseOnMsgList.set(back.id, data)
                 // 获取历史消息
-                this.$emit('loadHistory', back)
+                if(!runtimeData.tags.nowGetHistroy) {
+                    this.$emit('loadHistory', back)
+                }
                 // 切换标签卡
                 const barMsg = document.getElementById('bar-msg')
                 if (barMsg !== null) {
