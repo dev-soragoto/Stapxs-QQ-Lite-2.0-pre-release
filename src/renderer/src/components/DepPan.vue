@@ -110,14 +110,6 @@
                     }}</span>
                 </div>
                 <div class="dept">
-                    <div class="ss-card jump-card"
-                        @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
-                        <header>
-                            <div />
-                            <div>高德地图<span>定位消息预览服务</span></div>
-                        </header>
-                        <font-awesome-icon :icon="['fas', 'angle-right']" />
-                    </div>
                     <div v-if="backend.platform == 'web'"
                         class="ss-card jump-card"
                         @click="openLink('https://github.com/Stapxs/Stapxs-Web-API')">
