@@ -35,13 +35,18 @@ pub async fn onebot_connect(
     let app_handle_msg = app_handle.clone();
     let app_handle_close = app_handle.clone();
 
+    let address_open = address.clone();
+    let token_open = token.clone();
+    let address_close = address.clone();
+    let token_close = token.clone();
+
     let ws_client = WebSocketClient::create(
         &url,
         move || {
-            info!("连接成功: {}", &address);
+            info!("连接成功: {}", &address_open);
             let mut payload = HashMap::new();
-            payload.insert("address", address.clone());
-            payload.insert("token", token.clone());
+            payload.insert("address", address_open.clone());
+            payload.insert("token", token_open.clone());
             let _ = app_handle_open.emit("onebot:onopen", payload);
         },
         move |msg| {
@@ -56,6 +61,8 @@ pub async fn onebot_connect(
             let mut payload = HashMap::new();
             payload.insert("code", code.to_string());
             payload.insert("message", reason.to_string());
+            payload.insert("address", address_close.clone());
+            payload.insert("token", token_close.clone());
             let _ = app_handle_close.emit("onebot:onclose", payload);
         },
     )
