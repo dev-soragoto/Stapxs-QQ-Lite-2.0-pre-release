@@ -496,7 +496,10 @@ function loadOptData(data: { [key: string]: any }) {
                 options[key] = value
             }
             try {
-                options[key] = JSON.parse(options[key])
+                const result = JSON.parse(options[key])
+                if (typeof result === 'object' && result !== null) {
+                    options[key] = result
+                }
             } catch (e: unknown) {
                 // ignore
             }

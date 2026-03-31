@@ -153,7 +153,7 @@ export class Connector {
 
     static onopen(address: string, token: string | undefined) {
         logger.add(LogType.WS, '连接成功')
-        // 保存登录信息（保持兼容性）
+        // 保存登录信息
         Option.save('address', address)
         // 保存密钥
         if (
@@ -471,7 +471,8 @@ export function saveConnectionToHistory(address: string, token: string, uin?: st
 
     const newItem: ConnectionHistoryItem = {
         address,
-        token,
+        token: (runtimeData.sysConfig.save_password &&
+            runtimeData.sysConfig.save_password != '') ? token : '',
         uin,
         nickname,
         lastConnected: Date.now()
