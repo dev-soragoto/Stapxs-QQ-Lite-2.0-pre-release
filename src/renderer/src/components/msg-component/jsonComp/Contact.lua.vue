@@ -1,5 +1,5 @@
 <template>
-    <div v-if="success" class="msg-json">
+    <div v-if="success" class="msg-json" @click="open(parsedContent.jumpUrl)">
         <p>{{ parsedContent.title }}</p>
         <span v-if="parsedContent.type === 'group'">{{ parsedContent.desc }}</span>
         <img :src="parsedContent.img" alt="">
@@ -18,12 +18,18 @@
 
 <script setup lang="ts">
 import { Logger } from '@renderer/function/base';
+import { openLink } from '@renderer/function/utils/appUtil'
 import * as z from 'zod'
 
 const { data: jsonData, id } = defineProps<{
     data: string,
     id: string,
 }>()
+
+function open(url: string) {
+    if (!url.startsWith('http')) return
+    openLink(url)
+}
 
 const friend = z
     .object({
@@ -68,7 +74,28 @@ const group = z
         name: o.meta.contact.tag,
     }))
 
-const contact = z.union([friend, group])
+const bot = z
+    .object({
+        app: z.literal('com.tencent.contact.lua'),
+        meta: z.object({
+            contact: z.object({
+                avatar: z.string(),
+                nickname: z.string(),
+                contact: z.string(),
+                jumpUrl: z.string(),
+                tag: z.literal('机器人名片'),
+            }),
+        }),
+    })
+    .transform((o) => ({
+        type: 'bot' as const,
+        img: o.meta.contact.avatar,
+        title: o.meta.contact.nickname,
+        jumpUrl: o.meta.contact.jumpUrl,
+        name: o.meta.contact.tag,
+    }))
+
+const contact = z.union([friend, group, bot])
 
 const json = JSON.parse(jsonData)
 const parsedData = contact.safeParse(json)
