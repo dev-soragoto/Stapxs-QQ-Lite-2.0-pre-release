@@ -1,7 +1,7 @@
 {
     "name": "napcat-plugin-ssqq",
     "plugin": "Stapxs QQ Lite",
-    "version": "3.3.6-3",
+    "version": "3.3.7-3",
     "type": "module",
     "main": "index.mjs",
     "description": "一个兼容 OneBot 协议的第三方 QQ 客户端！",

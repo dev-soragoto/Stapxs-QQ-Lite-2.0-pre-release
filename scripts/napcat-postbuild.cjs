@@ -41,15 +41,12 @@ copyDir(distDir, targetDir);
 console.log('dist 目录已复制到 ssqq.napcat-plugin/webui/dist');
 
 // 3. 触发 ssqq.napcat-plugin 的 build:zip
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 try {
-  execSync('yarn build:zip', {
+  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  execFileSync(npmCmd, ['run', 'build:zip'], {
     cwd: path.resolve(__dirname, '../ssqq.napcat-plugin'),
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      PATH: '/usr/bin:/bin:/usr/sbin:/sbin'
-    }
+    stdio: 'inherit'
   });
   console.log('ssqq.napcat-plugin build:zip 执行完成');
 } catch (e) {
