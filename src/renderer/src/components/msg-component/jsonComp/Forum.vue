@@ -6,7 +6,7 @@
             <font-awesome-icon icon="message" /> {{ parsedContent.comment }}
             <font-awesome-icon icon="thumbs-up" /> {{ parsedContent.prefer }}
         </span>
-        <img :src="parsedContent.img" alt="" class="forum-img">
+        <img v-if="parsedContent.img" :src="parsedContent.img" alt="" class="forum-img">
         <div class="bottom-bar">
             <img :src="parsedContent.icon" alt="">
             <span>{{ parsedContent.name }} ({{ $t('频道') }})</span>
@@ -38,13 +38,15 @@ const music = z
                 }),
                 feed: z.object({
                     comment_count: z.number(),
-                    images: z.array(
-                        z.object({
-                            pic_url: z.string(),
-                            height: z.number(),
-                            width: z.number(),
-                        }),
-                    ),
+                    images: z
+                        .array(
+                            z.object({
+                                pic_url: z.string(),
+                                height: z.number(),
+                                width: z.number(),
+                            }),
+                        )
+                        .optional(),
                     prefer_count: z.number().optional(),
                     view_count: z.number(),
                 }),
@@ -59,7 +61,7 @@ const music = z
         comment: o.meta.detail.feed.comment_count,
         prefer: o.meta.detail.feed.prefer_count ?? 0,
         jumpUrl: o.meta.detail.jump_url,
-        img: o.meta.detail.feed.images[0]?.pic_url,
+        img: o.meta.detail.feed.images?.[0]?.pic_url,
         icon: o.meta.detail.channel_info.guild_icon,
         name: o.meta.detail.channel_info.guild_name,
     }))
