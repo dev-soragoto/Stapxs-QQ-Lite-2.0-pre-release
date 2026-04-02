@@ -27,7 +27,7 @@ const { data: jsonData, id } = defineProps<{
     id: string,
 }>()
 
-const music = z
+const forum = z
     .object({
         app: z.literal('com.tencent.forum'),
         meta: z.object({
@@ -66,7 +66,7 @@ const music = z
         name: o.meta.detail.channel_info.guild_name,
     }))
 const json = JSON.parse(jsonData)
-const parsedData = music.safeParse(json)
+const parsedData = forum.safeParse(json)
 const success = parsedData.success
 const parsedContent = parsedData.data!
 if (!success) {
