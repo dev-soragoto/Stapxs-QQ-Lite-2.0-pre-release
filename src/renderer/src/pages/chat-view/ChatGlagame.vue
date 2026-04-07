@@ -2,7 +2,7 @@
     <div>
         <chat v-bind="$props">
             <template #main-input-button>
-                <div style="cursor: pointer" @click="onRobotClick" @contextmenu.prevent="openAPIConfig">
+                <div style="cursor: pointer" @click="onRobotClick">
                     <font-awesome-icon v-if="!onChating" :icon="['fas', 'robot']" />
                     <font-awesome-icon v-else :icon="['fas', 'spinner']" spin />
                 </div>
@@ -13,7 +13,7 @@
                         <div class="ss-card load">
                             <font-awesome-icon :icon="['fas', 'spinner']" spin />
                         </div>
-                        <div class="ss-card chat-history">
+                        <div v-if="debug" id="chatHistory" class="ss-card chat-history">
                             <span>{{ chatHistory }}</span>
                         </div>
                     </template>
@@ -30,6 +30,9 @@
                                 :icon="['fas', 'rotate']"
                                 @click="dataList = []; onRobotClick()" />
                         </div>
+                        <div v-if="debug" id="chatHistory" class="ss-card chat-history chat-history-ex">
+                            <span>{{ chatHistory }}</span>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -38,8 +41,6 @@
 </template>
 
 <script lang="ts">
-import app from '@renderer/main'
-import xss from 'xss'
 import z from 'zod'
 
 
@@ -47,11 +48,15 @@ import { v4 as uuid } from 'uuid'
 import { streamText, tool } from 'ai'
 import { defineComponent, toRaw } from 'vue'
 import { runtimeData } from '@renderer/function/msg'
-import { get, save, optDefault } from '@renderer/function/option'
+import { get, optDefault } from '@renderer/function/option'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { getViewTime } from '@renderer/function/utils/systemUtil'
 import { getMsgRawTxt } from '@renderer/function/utils/msgUtil'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import {
+  registerExtraOptionCard,
+  registerExtraOptionItem,
+} from '@renderer/function/option'
 
 import Chat from '../Chat.vue'
 
@@ -72,6 +77,76 @@ export default defineComponent({
         }
     },
     async mounted() {
+        registerExtraOptionCard({
+            id: 'ai',
+            title: 'AI 基础设置',
+        })
+        registerExtraOptionCard({
+            id: 'glagame',
+            title: '“Glagame” 聊天辅助',
+        })
+        registerExtraOptionItem('ai', {
+            id: 'openai_api',
+            icon: 'link',
+            label: 'OpenAI API 地址',
+            description: '只需要填写到 v1 即可，例如 https://openrouter.ai/api/v1',
+            type: 'input',
+            optionKey: 'openai_api',
+            defaultValue: '',
+        })
+        registerExtraOptionItem('ai', {
+            id: 'openai_token',
+            icon: 'key',
+            label: 'OpenAI Token',
+            description: '秘钥，明文存储请注意',
+            type: 'password',
+            optionKey: 'openai_token',
+            defaultValue: '',
+        })
+        registerExtraOptionItem('ai', {
+            id: 'openai_model',
+            icon: 'robot',
+            label: 'OpenAI 模型名称',
+            description: '模型名称，需支持工具调用和流式输出',
+            type: 'input',
+            optionKey: 'openai_model',
+            defaultValue: 'gpt-4o',
+        })
+        registerExtraOptionItem('glagame', {
+            id: 'glagame_max_tokens',
+            icon: 'cubes',
+            label: '上下文窗口（token）',
+            description: '超过时会自动进行摘要压缩',
+            type: 'input',
+            optionKey: 'glagame_max_tokens',
+            defaultValue: 2000,
+        })
+        registerExtraOptionItem('glagame', {
+            id: 'glagame_prompt',
+            icon: 'book',
+            label: '基础提示词',
+            description: 'AI 消息分析时的基础提示词',
+            type: 'input',
+            optionKey: 'glagame_prompt',
+            defaultValue: `你是一个对话辅助助手，你将根据历史的对话内容生成可供玩家可以选择用来直接回复的内容。
+
+- 玩家默认是温和、体贴、日常向、有点小俏皮。
+- **不要**为玩家本人的消息生成回复，玩家本人的消息仅供上下文参考。
+- 若对话之间时间相隔较久，可自然应对（如"刚看到消息"）。
+- 避免引入与对话无关的新背景。
+
+对话记录中含有玩家本人的消息，请根据提供的当前账号信息自行区分，可以适当模仿玩家的语言风格。`,
+        })
+        registerExtraOptionItem('glagame', {
+            id: 'glagame_favorability',
+            icon: 'heart',
+            label: '好感度功能',
+            description: '允许 AI 为聊天记录生成好感度数值',
+            type: 'switch',
+            optionKey: 'glagame_favorability',
+            defaultValue: false,
+        })
+
         this.$watch(() => this.list.length, async (newVal, oldVal) => {
             if (newVal - oldVal == 1) {
                 this.getCurrentMessages().push({
@@ -81,6 +156,20 @@ export default defineComponent({
                 })
             } else if(oldVal == 0) {
                 this.initChat()
+                if (this.getCurrentMessages().length != 0) {
+                    if (this.list.length > 0) {
+                        // 获取 20 条历史消息
+                        const historyMessages = this.list.slice(-20)
+                        let msgStrs = ''
+                        historyMessages.forEach((msg: any) => {
+                            msgStrs += this.getMessageDetail(msg) + '\n'
+                        })
+                        this.getCurrentMessages().push({
+                            role: 'system',
+                            content: '当前会话历史消息（仅展示最近 20 条）:\n' + msgStrs,
+                        })
+                    }
+                }
             }
         })
     },
@@ -110,7 +199,7 @@ export default defineComponent({
                 // 获取账号信息
                 this.getCurrentMessages().push({
                     role: 'system',
-                    content: `当前账号信息：QQ ${runtimeData.loginInfo.uin}，昵称 ${runtimeData.loginInfo.nickname}`,
+                    content: `当前账号信息：ID ${runtimeData.loginInfo.uin}，昵称 ${runtimeData.loginInfo.nickname}`,
                 })
                 // 获取会话信息
                 this.getCurrentMessages().push({
@@ -315,8 +404,8 @@ export default defineComponent({
                     messages: this.getCurrentMessages(),
                     tools: {
                         showChoices: tool({
-                            description: '展示回复选项，供用户选择',
-                            title: '展示回复选项',
+                            description: 'Display reply options for interface display',
+                            title: 'Display reply options',
                             inputSchema: z.object({
                                 choices: z.array(z.string()).min(1).max(3).describe('选项列表，3 个'),
                             }),
@@ -324,7 +413,7 @@ export default defineComponent({
                                 const choices = input.choices
                                 this.dataList = choices
                                 this.onLoading = false
-                                new Logger().add(LogType.DEBUG, 'tools callback：showChoices', choices)
+                                new Logger().add(LogType.DEBUG, '工具调用（' + sessionId + '）：showChoices', choices)
                             }
                         })
                     }
@@ -339,6 +428,12 @@ export default defineComponent({
                             case 'reasoning-delta':
                             case 'text-delta':
                                 this.chatHistory += curPart.text
+                                if(this.debug) {
+                                    const chatHistory = document.getElementById('chatHistory')
+                                    if(chatHistory) {
+                                        chatHistory.scrollTop = chatHistory.scrollHeight
+                                    }
+                                }
                                 break
                             case 'finish':
                                 if (curPart.totalUsage?.totalTokens) {
@@ -400,66 +495,6 @@ export default defineComponent({
                 return false
             }
         },
-        openAPIConfig() {
-            const { $t } = app.config.globalProperties
-            const curApi = xss(get('openai_api') ?? '')
-            const curToken = xss(get('openai_token') ?? '')
-            const curModel = xss(get('openai_model') ?? 'gpt-4o')
-            const curPrompt = xss(get('glagame_prompt') ?? optDefault.glagame_prompt)
-            const curMaxMessages = Number(get('glagame_max_tokens')) || optDefault.glagame_max_tokens
-
-            const safePrompt = String(curPrompt)
-                .replaceAll(/&/g, '&amp;')
-                .replaceAll(/</g, '&lt;')
-                .replaceAll(/>/g, '&gt;')
-                .replaceAll(/"/g, '&quot;')
-                .replaceAll(/'/g, '&#39;')
-                .replaceAll(/<\/textarea/gi, '&lt;/textarea')
-
-            const popInfo = {
-                title: 'OpenAPI 设置',
-                html: `<div class="glagame-api-config">
-                    <div style="margin-bottom:8px;"><label>API 地址</label><br /><input id="glagame_api_input" type="text" value="${String(curApi).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div style="margin-bottom:8px;"><label>Token</label><br /><input id="glagame_token_input" type="text" value="${String(curToken).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div style="margin-bottom:8px;"><label>模型名称</label><br /><input id="glagame_model_input" type="text" value="${String(curModel).replaceAll(/"/g, '&quot;')}" /></div>
-                    <div style="margin-bottom:8px;"><label>上下文窗口（token）</label><br /><input id="glagame_max_tokens" type="number" value="${curMaxMessages}" min="1" max="200" /></div>
-                    <div><label>Prompt</label><br /><textarea id="glagame_prompt_input" style="min-height:120px;resize:vertical">${safePrompt}</textarea></div>
-                </div>`,
-                button: [
-                    {
-                        text: $t('取消'),
-                        fun: () => {
-                            runtimeData.popBoxList.shift()
-                        },
-                    },
-                    {
-                        text: $t('保存'),
-                        master: true,
-                        fun: () => {
-                            const apiEl = document.getElementById('glagame_api_input')
-                            const tokenEl = document.getElementById('glagame_token_input')
-                            const modelEl = document.getElementById('glagame_model_input')
-                            const maxTokensEl = document.getElementById('glagame_max_tokens')
-                            const promptEl = document.getElementById('glagame_prompt_input')
-                            const api = apiEl && apiEl instanceof HTMLInputElement ? apiEl.value : ''
-                            const token = tokenEl && tokenEl instanceof HTMLInputElement ? tokenEl.value : ''
-                            const model = modelEl && modelEl instanceof HTMLInputElement ? modelEl.value : ''
-                            const maxTokens = maxTokensEl && maxTokensEl instanceof HTMLInputElement ? Number(maxTokensEl.value) || optDefault.glagame_max_tokens : optDefault.glagame_max_tokens
-                            const prompt = promptEl && promptEl instanceof HTMLTextAreaElement ? promptEl.value : ''
-                            // 保存设置
-                            save('openai_api', api)
-                            save('openai_token', token)
-                            save('openai_model', model)
-                            save('glagame_max_tokens', maxTokens)
-                            save('glagame_prompt', prompt)
-                            runtimeData.popBoxList.shift()
-                        },
-                    },
-                ],
-            }
-
-            runtimeData.popBoxList.push(popInfo)
-        },
         selectChoice(item) {
             this.onLoading = false
             this.dataList = []
@@ -500,9 +535,18 @@ export default defineComponent({
     overflow: scroll;
     width: 60%;
     white-space: pre-line;
-    font-size: 0.75rem;
+    font-size: 0.75rem !important;
     color: var(--color-font-2);
     margin-top: 20px;
+}
+.chat-extra .chat-history::-webkit-scrollbar {
+    display: none;
+}
+.chat-extra .chat-history-ex {
+    margin-top: -130px;
+    max-height: 20vh;
+    text-align: left !important;
+    line-height: unset !important;
 }
 .chat-extra .options {
     flex-direction: column;

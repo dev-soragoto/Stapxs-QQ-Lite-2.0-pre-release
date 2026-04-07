@@ -14,7 +14,7 @@ import app from '@renderer/main'
 import languageConfig from '@renderer/assets/l10n/_l10nconfig.json'
 
 import { i18n } from '@renderer/main'
-import { markRaw, defineAsyncComponent } from 'vue'
+import { markRaw, defineAsyncComponent, reactive } from 'vue'
 import { Logger, LogType, PopInfo, PopType } from './base'
 import { runtimeData } from './msg'
 import {
@@ -31,6 +31,49 @@ import { backend } from '@renderer/runtime/backend'
 import { refreshFavicon } from './favicon'
 
 let cacheConfigs: { [key: string]: any }
+
+// =============== 附加设置结构 ===============
+
+export type ExtraOptionItemType = 'switch' | 'select' | 'input'| 'password' | 'button'
+
+export interface ExtraOptionItem {
+    id: string
+    label: string
+    description?: string
+    type: ExtraOptionItemType
+    /**
+     * 例如：['fas', 'robot'] 或 'fa-robot'。
+     */
+    icon?: string | [string, string]
+    /**
+     * 绑定到配置中的键名；如需持久化并参与 Option.save / load，请提供。
+     */
+    optionKey?: string
+    /**
+     * 默认值：在注册时如果当前没有值会写入 optDefault 和现有配置。
+     */
+    defaultValue?: any
+    /**
+     * 选项列表（仅 type === 'select' 使用）。
+     */
+    options?: { value: string | number | boolean; label: string }[]
+    /**
+     * 值变更时回调，入参为最新值。
+     */
+    callback?: (value: any) => void
+}
+
+export interface ExtraOptionCard {
+    id: string
+    title: string
+    description?: string
+    items: ExtraOptionItem[]
+}
+
+/**
+ * 附加设置卡片列表：供外部模块动态注册并在“附加”标签页中展示。
+ */
+export const extraOptionCards = reactive<ExtraOptionCard[]>([])
 
 // 设置项的初始值，防止下拉菜单选项为空或者首次使用初始错误
 export const optDefault: { [key: string]: any } = {
@@ -86,7 +129,8 @@ export const optDefault: { [key: string]: any } = {
     openai_token: '',
     openai_model: '',
     glagame_max_tokens: 1000000,
-    glagame_prompt: `你是 glagame 游戏内的对话助手。你将根据历史的对话内容生成可供玩家可以选择用来直接回复的内容。
+    glagame_favorability: false,
+    glagame_prompt: `你是一个对话辅助助手，你将根据历史的对话内容生成可供玩家可以选择用来直接回复的内容。
 
 - 玩家默认是温和、体贴、日常向、有点小俏皮。
 - **不要**为玩家本人的消息生成回复，玩家本人的消息仅供上下文参考。
@@ -114,6 +158,76 @@ const configFunction: { [key: string]: (value: any) => void } = {
     use_favicon_notice: setFaviconNotice,
     custom_css: injectCustomCss,
     opt_ind_message: updateChatPan
+}
+
+// =============== 附加设置注册接口 ===============
+
+/**
+ * 注册一个新的附加设置卡片。
+ * 如果 id 已存在，则仅更新标题/描述并返回原有卡片。
+ */
+export function registerExtraOptionCard(card: {
+    id: string
+    title: string
+    description?: string
+}): ExtraOptionCard {
+    const exist = extraOptionCards.find((c) => c.id === card.id)
+    if (exist) {
+        exist.title = card.title
+        exist.description = card.description
+        return exist
+    }
+    const created: ExtraOptionCard = {
+        id: card.id,
+        title: card.title,
+        description: card.description,
+        items: [],
+    }
+    extraOptionCards.push(created)
+    return created
+}
+
+/**
+ * 向指定附加设置卡片中注册一项设置。
+ * 如果目标卡片不存在，将以 id 作为标题自动创建。
+ *
+ * - 提供 optionKey + defaultValue 时，会自动写入 optDefault，
+ *   并在当前配置中缺失时填充与保存，确保后续加载不会被清理。
+ */
+export function registerExtraOptionItem(cardId: string, item: ExtraOptionItem) {
+    if (!cardId || !item || !item.id) return
+
+    let card = extraOptionCards.find((c) => c.id === cardId)
+    if (!card) {
+        card = {
+            id: cardId,
+            title: cardId,
+            items: [],
+        }
+        extraOptionCards.push(card)
+    }
+
+    // 去重：相同 id 直接替换
+    const existIndex = card.items.findIndex((i) => i.id === item.id)
+    if (existIndex >= 0) {
+        card.items.splice(existIndex, 1, item)
+    } else {
+        card.items.push(item)
+    }
+
+    // 如需持久化，补充默认值并保存
+    if (item.optionKey) {
+        const key = item.optionKey
+        if (Object.prototype.hasOwnProperty.call(item, 'defaultValue')) {
+            if (optDefault[key] === undefined) {
+                optDefault[key] = item.defaultValue
+            }
+            if (cacheConfigs && cacheConfigs[key] === undefined) {
+                cacheConfigs[key] = item.defaultValue
+                saveAll()
+            }
+        }
+    }
 }
 
 function updateChatPan() {
@@ -745,4 +859,7 @@ export default {
     runASWEvent,
     remove,
     checkDefault,
+    extraOptionCards,
+    registerExtraOptionCard,
+    registerExtraOptionItem,
 }
