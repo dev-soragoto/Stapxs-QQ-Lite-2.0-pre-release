@@ -32,12 +32,14 @@
     "ssqq.capacitor-onebot-connector"
   ],
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.38",
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.0",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-shell": "~2",
+    "ai": "^6.0.145",
     "electron-store": "^10.0.0",
     "electron-window-state": "^5.0.3",
     "jsonpath": "^1.1.1",
