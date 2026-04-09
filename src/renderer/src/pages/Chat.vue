@@ -593,7 +593,7 @@ import {
     MenuEventData,
 } from '@renderer/function/elements/information'
 import { backend } from '@renderer/runtime/backend'
-import { dbGetBefore, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
+import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
@@ -885,32 +885,53 @@ import { Img } from '@renderer/function/model/img'
                 ) {
                     // 获取列表第一条消息 ID
                     const firstMsgId = this.list[0].message_id
+                    const firstMsgTime = Number(this.list[0]?.time)
                     // 锁定加载防止反复触发
                     runtimeData.tags.nowGetHistory = true
+					// 本次上拉的时间锚点（用于在线回包按时间边界过滤）
+					runtimeData.tags.historyBeforeTime = Number.isFinite(firstMsgTime) ? firstMsgTime : undefined
 					// 移除加载失败标志
 					runtimeData.tags.loadHistoryFail = false
 
                     // 优先从本地数据库加载
-                    if (runtimeData.sysConfig.enable_local_history) {
-                        const localMsgs = await dbGetBefore(
-                            runtimeData.loginInfo.uin,
-                            runtimeData.chatInfo.show.id,
-                            firstMsgId,
-                            20,
-                        )
+                    if (
+                        runtimeData.sysConfig.enable_local_history &&
+                        runtimeData.sysConfig.mixed_load_messages !== false
+                    ) {
+                        let localMsgs = [] as any[]
+                        if (Number.isFinite(firstMsgTime)) {
+                            localMsgs = await dbGetBeforeByTime(
+                                runtimeData.loginInfo.uin,
+                                runtimeData.chatInfo.show.id,
+                                firstMsgTime,
+                                20,
+                            )
+                        } else {
+                            localMsgs = await dbGetBefore(
+                                runtimeData.loginInfo.uin,
+                                runtimeData.chatInfo.show.id,
+                                firstMsgId,
+                                20,
+                            )
+                        }
                         if (localMsgs.length > 0) {
-                            runtimeData.messageList = localMsgs.concat(runtimeData.messageList)
+                            const existingIds = new Set(runtimeData.messageList.map((m) => String(m.message_id ?? '')))
+                            const addList = localMsgs.filter((m) => {
+                                const msgId = String(m?.message_id ?? '')
+                                return msgId.length === 0 || !existingIds.has(msgId)
+                            })
+                            if (addList.length > 0) {
+                                runtimeData.messageList.splice(0, 0, ...addList)
+                            }
                             // 检测 seq 缺口并发起补全请求
                             // 将边界消息（原列表第一条）加入检测范围
-                            const boundary = this.list[localMsgs.length] ?? this.list[localMsgs.length - 1]
-                            const seqGapAnchors = this.detectSeqGaps([...localMsgs, boundary])
+                            const boundary = this.list[addList.length] ?? this.list[addList.length - 1]
+                            const seqGapAnchors = this.detectSeqGaps([...addList, boundary])
                             if (seqGapAnchors.length > 0) {
                                 this.fillSeqGaps(seqGapAnchors)
                             }
-                            runtimeData.tags.nowGetHistory = false
-                            return
                         }
-                        // 本地为空，回落到网络请求
+                        // 本地命中后仍继续请求在线，以确保本地与在线混合加载
                     }
 
                     // 发起获取历史消息请求

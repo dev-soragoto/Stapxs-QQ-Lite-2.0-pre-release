@@ -41,25 +41,16 @@ export interface ExtraOptionItem {
     label: string
     description?: string
     type: ExtraOptionItemType
-    /**
-     * 例如：['fas', 'robot'] 或 'fa-robot'。
-     */
     icon?: string | [string, string]
     /**
      * 绑定到配置中的键名；如需持久化并参与 Option.save / load，请提供。
      */
     optionKey?: string
-    /**
-     * 默认值：在注册时如果当前没有值会写入 optDefault 和现有配置。
-     */
     defaultValue?: any
     /**
-     * 选项列表（仅 type === 'select' 使用）。
+     * 选项列表（仅 select 使用）
      */
     options?: { value: string | number | boolean; label: string }[]
-    /**
-     * 值变更时回调，入参为最新值。
-     */
     callback?: (value: any) => void
 }
 
@@ -119,6 +110,8 @@ export const optDefault: { [key: string]: any } = {
     open_ga_bot: true,
     record_recent_emoji: '100times' as 'none' | 'order' | '100times' | '500times',
     enable_local_history: false,
+    mixed_load_messages: false,
+    disable_local_history_image_cache: false,
     // Dev
     msg_type: 2,
     log_level: 'err',

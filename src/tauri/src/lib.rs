@@ -249,12 +249,14 @@ pub fn run() {
             commands::db::db_save_messages,
             commands::db::db_get_latest,
             commands::db::db_get_before,
+            commands::db::db_get_before_by_time,
             commands::db::db_get_after,
             commands::db::db_search_messages,
             commands::db::db_revoke_message,
             commands::db::db_get_stats,
             commands::db::db_cache_image,
             commands::db::db_get_image,
+            commands::db::db_clear_images,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

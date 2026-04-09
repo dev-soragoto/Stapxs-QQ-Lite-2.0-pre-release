@@ -6,7 +6,7 @@ use rand::RngCore;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 // ── 全局状态 ────────────────────────────────────────────────
 
@@ -112,21 +112,16 @@ pub fn open_db(data_dir: PathBuf) -> rusqlite::Result<Connection> {
     open_or_recreate(db_path)
 }
 
-/// 尝试以加密模式打开数据库；若因旧的明文文件导致失败则删除后重建
+/// 尝试以加密模式打开数据库；失败直接抛出异常结束
 fn open_or_recreate(db_path: std::path::PathBuf) -> rusqlite::Result<Connection> {
     match try_open_encrypted(&db_path) {
         Ok(conn) => Ok(conn),
         Err(e) => {
-            // 旧的明文数据库或文件损坏，删除后重新创建
             log::warn!(
-                "无法以加密模式打开 {:?}（{}），将删除旧文件并重建",
+                "无法以加密模式打开 {:?}（{}）",
                 db_path, e
             );
-            let _ = std::fs::remove_file(&db_path);
-            // 顺带清理 WAL / SHM 临时文件
-            let _ = std::fs::remove_file(db_path.with_extension("db-wal"));
-            let _ = std::fs::remove_file(db_path.with_extension("db-shm"));
-            try_open_encrypted(&db_path)
+            Err(e)
         }
     }
 }
@@ -310,6 +305,45 @@ pub fn db_get_before(
     Ok(list)
 }
 
+/// 获取指定时间戳之前（更旧）的 n 条，不含时间更新于锚点之后的消息，正序返回。
+///
+/// 典型用途：没有 seq/message_id 可用时，按 time 作为上拉历史锚点。
+#[tauri::command]
+pub fn db_get_before_by_time(
+    state: State<DbState>,
+    self_id: String,
+    chat_id: i64,
+    before_time: i64,
+    n: i64,
+) -> Result<Vec<MsgRecord>, String> {
+    if before_time <= 0 || n <= 0 {
+        return Ok(vec![]);
+    }
+
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                    seq, time, message, raw_message, revoked
+             FROM messages
+             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+               AND time <= ?3
+             ORDER BY time DESC, id DESC
+             LIMIT ?4",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let mut list: Vec<MsgRecord> = stmt
+        .query_map(params![self_id, chat_id, before_time, n], row_to_record)
+        .map_err(|e| e.to_string())?
+        .filter_map(|r| r.ok())
+        .collect();
+
+    list.reverse();
+    Ok(list)
+}
+
 /// 获取锚点消息之后（更新）的 n 条，不含锚点本身，正序返回
 ///
 /// 典型用途：跳转到指定消息后加载后续内容。
@@ -466,6 +500,28 @@ pub struct CachedImage {
     pub data: String,
 }
 
+/// 分批清理图片缓存时的进度
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DbClearImagesProgress {
+    pub self_id: String,
+    pub total: i64,
+    pub deleted: i64,
+    pub batch_deleted: i64,
+    /// 0 ~ 100
+    pub progress: f64,
+    pub done: bool,
+}
+
+/// 图片缓存清理结果
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DbClearImagesResult {
+    pub total: i64,
+    pub deleted: i64,
+    pub batches: i64,
+}
+
 /// 将图片缓存到本地数据库
 ///
 /// `data` 为 base64 编码的原始图片字节，后端将解码后以 BLOB 形式加密存储。
@@ -517,6 +573,99 @@ pub fn db_get_image(
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
         Err(e) => Err(e.to_string()),
     }
+}
+
+/// 清理当前账号的图片缓存
+///
+/// 返回实际删除的图片条数。
+#[tauri::command]
+pub fn db_clear_images(
+    state: State<DbState>,
+    app_handle: AppHandle,
+    self_id: String,
+) -> Result<DbClearImagesResult, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let batch_size = 500i64;
+    let total: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM images WHERE self_id = ?1",
+            params![self_id],
+            |r| r.get(0),
+        )
+        .unwrap_or(0);
+
+    let _ = app_handle.emit(
+        "db:clearImagesProgress",
+        DbClearImagesProgress {
+            self_id: self_id.clone(),
+            total,
+            deleted: 0,
+            batch_deleted: 0,
+            progress: if total == 0 { 100.0 } else { 0.0 },
+            done: total == 0,
+        },
+    );
+
+    let mut deleted = 0i64;
+    let mut batches = 0i64;
+
+    while deleted < total {
+        let batch_deleted = conn
+            .execute(
+                "DELETE FROM images
+                 WHERE id IN (
+                    SELECT id FROM images WHERE self_id = ?1 LIMIT ?2
+                 )",
+                params![self_id, batch_size],
+            )
+            .map_err(|e| e.to_string())? as i64;
+
+        if batch_deleted == 0 {
+            break;
+        }
+
+        deleted += batch_deleted;
+        batches += 1;
+        let progress = if total > 0 {
+            ((deleted as f64 / total as f64) * 100.0).min(100.0)
+        } else {
+            100.0
+        };
+
+        let _ = app_handle.emit(
+            "db:clearImagesProgress",
+            DbClearImagesProgress {
+                self_id: self_id.clone(),
+                total,
+                deleted,
+                batch_deleted,
+                progress,
+                done: false,
+            },
+        );
+    }
+
+    let _ = app_handle.emit(
+        "db:clearImagesProgress",
+        DbClearImagesProgress {
+            self_id: self_id.clone(),
+            total,
+            deleted,
+            batch_deleted: 0,
+            progress: 100.0,
+            done: true,
+        },
+    );
+
+    info!(
+        "已分批清理账号 {} 的图片缓存：{} / {} 条，共 {} 批",
+        self_id, deleted, total, batches
+    );
+    Ok(DbClearImagesResult {
+        total,
+        deleted,
+        batches,
+    })
 }
 
 // ── 内部工具 ─────────────────────────────────────────────────

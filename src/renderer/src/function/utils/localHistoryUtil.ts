@@ -212,6 +212,7 @@ export async function dbSaveMessages(selfId: string | number, msgs: any[]): Prom
 export async function saveMessagesWithSideEffects(selfId: string | number, msgs: any[]): Promise<void> {
     const persistableMsgs = ensureChatIdOnMsgs(selfId, msgs)
     await dbSaveMessages(selfId, persistableMsgs)
+    if (runtimeData.sysConfig.disable_local_history_image_cache === true) return
     cacheImagesFromMsgs(selfId, persistableMsgs).catch(() => {})
 }
 
@@ -240,6 +241,18 @@ export async function dbGetBefore(
     n: number,
 ): Promise<any[]> {
     return callDbRecordList(selfId, 'db:getBefore', { chatId, messageId, n }, '[LocalHistory] dbGetBefore 失败')
+}
+
+/**
+ * 获取某个时间戳之前（更旧）的 n 条消息，正序返回。
+ */
+export async function dbGetBeforeByTime(
+    selfId: string | number,
+    chatId: number,
+    beforeTime: number,
+    n: number,
+): Promise<any[]> {
+    return callDbRecordList(selfId, 'db:getBeforeByTime', { chatId, beforeTime, n }, '[LocalHistory] dbGetBeforeByTime 失败')
 }
 
 /**
@@ -332,6 +345,58 @@ export async function dbGetImage(
     urlHash: string,
 ): Promise<{ mimeType: string; data: string } | null> {
     return callDb(selfId, 'db:getImage', { urlHash }, null, '[LocalHistory] dbGetImage 失败')
+}
+
+export interface DbClearImagesProgress {
+    selfId: string
+    total: number
+    deleted: number
+    batchDeleted: number
+    progress: number
+    done: boolean
+}
+
+export interface DbClearImagesResult {
+    total: number
+    deleted: number
+    batches: number
+}
+
+export async function dbClearImages(
+    selfId: string | number,
+    onProgress?: (progress: DbClearImagesProgress) => void,
+): Promise<DbClearImagesResult> {
+    if (!isTauriHistoryAvailable()) {
+        return { total: 0, deleted: 0, batches: 0 }
+    }
+
+    let unlisten: undefined | (() => void | Promise<void>)
+    if (onProgress && backend.type === 'tauri') {
+        const { listen } = await import('@tauri-apps/api/event')
+        unlisten = await listen<DbClearImagesProgress>('db:clearImagesProgress', (event) => {
+            const payload = event.payload
+            if (!payload) return
+            if (String(payload.selfId) !== String(selfId)) return
+            onProgress(payload)
+        })
+    }
+
+    try {
+        const result = await callDb(
+            selfId,
+            'db:clearImages',
+            {},
+            { total: 0, deleted: 0, batches: 0 },
+            '[LocalHistory] dbClearImages 失败',
+        )
+        return {
+            total: Number(result?.total ?? 0),
+            deleted: Number(result?.deleted ?? 0),
+            batches: Number(result?.batches ?? 0),
+        }
+    } finally {
+        if (unlisten) await unlisten()
+    }
 }
 
 // ── 内部工具 ──────────────────────────────────────────────────────

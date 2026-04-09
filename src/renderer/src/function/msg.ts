@@ -616,7 +616,7 @@ const msgFunctions = {
                     list,
                 )
                 if (inserted.length === runtimeData.messageList.length) return
-                runtimeData.messageList = inserted
+                replaceMessageListInPlace(inserted)
                 // 同步存入本地 DB，以便下次直接从本地加载
                 saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
             })
@@ -629,6 +629,8 @@ const msgFunctions = {
                 app.config.globalProperties.$t('获取历史记录失败'),
             )
             runtimeData.tags.loadHistoryFail = true
+            runtimeData.tags.historyBeforeTime = undefined
+            runtimeData.tags.nowGetHistory = false
             return
         }
         const pan = document.getElementById('msgPan')
@@ -1401,6 +1403,9 @@ function saveClassInfo(
 async function saveMsg(msg: any, append = undefined as undefined | string) {
     let list = await normalizeMessagesFromPayload(msg)
     if (list != undefined) {
+        const historyBeforeTime = Number(runtimeData.tags.historyBeforeTime)
+        const hasHistoryBeforeTime = Number.isFinite(historyBeforeTime)
+
         // 检查消息是否是当前聊天的消息
         const firstMsg = list[0]
         const infoList = getMsgData(
@@ -1419,6 +1424,15 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         list = list.filter((item: any) => {
             return item.message.length > 0
         })
+
+        // 上拉历史时按时间戳作为边界（兼容增量/全量两种分页模式）。
+        if (hasHistoryBeforeTime) {
+            list = list.filter((item: any) => {
+                const t = Number(item?.time)
+                return Number.isFinite(t) && t <= historyBeforeTime
+            })
+        }
+
         // 保存到本地历史
         saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
         // 如果分页不是增量的，就不使用追加
@@ -1433,25 +1447,21 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
             // 没有更旧的消息能加载了，禁用允许加载标志
             if (list.length < 1) {
                 runtimeData.tags.canLoadHistory = false
+                runtimeData.tags.historyBeforeTime = undefined
                 return
             }
-            if (append == 'top') {
-                // 判断 list 的最后一条消息是否和 runtimeData.messageList 的第一条消息 id 相同
-                if (runtimeData.messageList.length > 0 && list.length > 0) {
-                    if (
-                        runtimeData.messageList[0].message_id ==
-                        list[list.length - 1].message_id
-                    ) {
-                        list.pop() // 去掉重复的消息
-                    }
-                }
-                runtimeData.messageList = list.concat(runtimeData.messageList)
-            } else if (append == 'bottom') {
-                runtimeData.messageList = runtimeData.messageList.concat(list)
-            }
+            const merged = mergeMessagesByIdAndTime(runtimeData.messageList, list)
+            replaceMessageListInPlace(merged)
         } else {
-            runtimeData.messageList = []
-            runtimeData.messageList = list
+            if (
+                runtimeData.sysConfig.enable_local_history &&
+                runtimeData.sysConfig.mixed_load_messages !== false
+            ) {
+                const merged = mergeMessagesByIdAndTime(runtimeData.messageList, list)
+                replaceMessageListInPlace(merged)
+            } else {
+                replaceMessageListInPlace(list)
+            }
         }
         // 消息后处理
         // PS: 部分消息类型可能需要获取附加内容，在此处进行处理
@@ -1477,6 +1487,10 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
                 }
                 user.time = getViewTime(Number(lastMsg.time))
             }
+        }
+
+        if (hasHistoryBeforeTime) {
+            runtimeData.tags.historyBeforeTime = undefined
         }
     }
 }
@@ -1511,15 +1525,138 @@ function insertHistorySegmentAtAnchor(
     const insertIdx = current.findIndex((m) => m.message_id === anchorMsgId)
     if (insertIdx === -1) return current
 
-    const existingIds = new Set(current.map((m) => m.message_id))
-    const newMsgs = segment.filter((m) => !existingIds.has(m.message_id))
+    const existingIds = new Set(current.map((m) => normalizeMessageId(m.message_id)))
+    const newMsgs = segment.filter((m) => !existingIds.has(normalizeMessageId(m.message_id)))
     if (newMsgs.length === 0) return current
 
-    return [
+    const merged = [
         ...current.slice(0, insertIdx),
         ...newMsgs,
         ...current.slice(insertIdx),
     ]
+    return mergeMessagesByIdAndTime([], merged)
+}
+
+function normalizeMessageId(id: unknown): string {
+    if (id === null || id === undefined) return ''
+    return String(id)
+}
+
+function getMessageTimestamp(msg: any): number {
+    const t = Number(msg?.time)
+    return Number.isFinite(t) ? t : 0
+}
+
+function buildFallbackMessageKey(msg: any): string {
+    const seq = msg?.message_seq ?? msg?.seq_id ?? msg?.seq ?? ''
+    const sender = msg?.sender?.user_id ?? msg?.user_id ?? msg?.sender_id ?? ''
+    const ts = getMessageTimestamp(msg)
+    return `${ts}|${sender}|${seq}`
+}
+
+function compareMessageOrder(a: any, b: any): number {
+    const ta = getMessageTimestamp(a)
+    const tb = getMessageTimestamp(b)
+    if (ta !== tb) return ta - tb
+
+    const sa = Number(a?.message_seq ?? a?.seq_id ?? a?.seq)
+    const sb = Number(b?.message_seq ?? b?.seq_id ?? b?.seq)
+    if (Number.isFinite(sa) && Number.isFinite(sb) && sa !== sb) {
+        return sa - sb
+    }
+
+    const ia = normalizeMessageId(a?.message_id)
+    const ib = normalizeMessageId(b?.message_id)
+    if (ia === ib) return 0
+    return ia.localeCompare(ib)
+}
+
+function getImageSegments(msg: any): any[] {
+    if (!Array.isArray(msg?.message)) return []
+    return msg.message.filter((seg: any) => seg?.type === 'image')
+}
+
+function hasImageMessage(msg: any): boolean {
+    return getImageSegments(msg).length > 0
+}
+
+function hasResolvableImageSource(msg: any): boolean {
+    const imgs = getImageSegments(msg)
+    if (imgs.length === 0) return false
+    return imgs.every((seg: any) => {
+        const url = typeof seg?.url === 'string' ? seg.url : ''
+        const file = typeof seg?.file === 'string' ? seg.file : ''
+        if (url.length > 0) return true
+        if (file.length > 0) return true
+        return false
+    })
+}
+
+function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
+    if (!hasImageMessage(incoming)) return false
+    if (existing?._from_local_db !== true) return false
+
+    // 关闭本地图片缓存时，在线同 id 图片消息应覆盖本地消息。
+    if (runtimeData.sysConfig.disable_local_history_image_cache === true) {
+        return true
+    }
+
+    // 图片缓存开启但本地消息图片字段不完整时，也允许在线覆盖修复。
+    return !hasResolvableImageSource(existing) && hasResolvableImageSource(incoming)
+}
+
+function mergeMessagesByIdAndTime(current: any[], incoming: any[]): any[] {
+    if (incoming.length === 0) return [...current]
+    if (current.length === 0) {
+        const firstPass = [...incoming]
+        firstPass.sort(compareMessageOrder)
+        return firstPass
+    }
+
+    const idSet = new Set<string>()
+    const idIndexMap = new Map<string, number>()
+    const fallbackSet = new Set<string>()
+    const merged = [] as any[]
+
+    for (const msg of current) {
+        merged.push(msg)
+        const id = normalizeMessageId(msg?.message_id)
+        if (id) {
+            idSet.add(id)
+            idIndexMap.set(id, merged.length - 1)
+        } else {
+            fallbackSet.add(buildFallbackMessageKey(msg))
+        }
+    }
+
+    for (const msg of incoming) {
+        const id = normalizeMessageId(msg?.message_id)
+        if (id) {
+            if (idSet.has(id)) {
+                const idx = idIndexMap.get(id)
+                if (idx !== undefined && shouldReplaceDuplicateMessage(merged[idx], msg)) {
+                    merged[idx] = msg
+                }
+                continue
+            }
+            idSet.add(id)
+            merged.push(msg)
+            idIndexMap.set(id, merged.length - 1)
+            continue
+        }
+
+        const fallbackKey = buildFallbackMessageKey(msg)
+        if (fallbackSet.has(fallbackKey)) continue
+        fallbackSet.add(fallbackKey)
+        merged.push(msg)
+    }
+
+    merged.sort(compareMessageOrder)
+    return merged
+}
+
+function replaceMessageListInPlace(next: any[]) {
+    runtimeData.messageList.splice(0, runtimeData.messageList.length, ...next)
 }
 
 export async function getMessageList(list: any[] | undefined) {
@@ -1971,6 +2108,7 @@ const baseRuntime = {
         nowGetHistory: false,
         canLoadHistory: true,
         loadHistoryFail: false,
+        historyBeforeTime: undefined as number | undefined,
         openSideBar: true,
         viewer: { index: 0 },
         msgType: BotMsgType.Array,
