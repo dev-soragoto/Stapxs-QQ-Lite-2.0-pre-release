@@ -151,11 +151,13 @@
 .opt-item input[type='password'],
 .opt-item input[type='text'],
 .opt-item select,
-.ss-range input,
 .opt-item > div.file-choice > div,
 .ss-switch > div,
 .debug-info {
     background: rgba(var(--color-card-1-rgb), 0.5);
+}
+.ss-range input {
+    background-color: rgba(var(--color-card-1-rgb), 0.5);
 }
 
 .dept-list > div:first-child {
