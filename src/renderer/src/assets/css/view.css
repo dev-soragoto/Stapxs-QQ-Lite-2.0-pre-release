@@ -150,6 +150,15 @@ textarea:focus {
     padding-top: 40px;
 }
 
+.main-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -999;
+}
+
 .main-body {
     flex-direction: row;
     margin-top: 0;

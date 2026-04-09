@@ -162,39 +162,39 @@
                     </div>
                 </label>
             </div>
-            <template v-if="!runtimeData.sysConfig.chat_more_blur">
-                <div class="opt-item">
-                    <div :class="checkDefault('chat_background')" />
-                    <font-awesome-icon :icon="['fas', 'image']" />
-                    <div>
-                        <span>{{ $t('背景图片') }}</span>
-                        <span>{{ $t('嘿嘿嘿（痴呆') }}</span>
+            <div class="opt-item">
+                <div :class="checkDefault('chat_background')" />
+                <font-awesome-icon :icon="['fas', 'image']" />
+                <div>
+                    <span>{{ $t('背景图片') }}</span>
+                    <span>{{ $t('嘿嘿嘿（痴呆') }}</span>
+                </div>
+                <div class="file-choice">
+                    <div class="choice-btn"
+                        @click="($refs.choiceImg as any)?.click()">
+                        {{
+                            runtimeData.sysConfig.chat_background
+                                ? $t('更换背景')
+                                : $t('上传背景')
+                        }}
+                        <input ref="choiceImg"
+                            type="file"
+                            style="display: none"
+                            name="chat_background"
+                            accept="image/*"
+                            @change="setBackground($event)">
                     </div>
-                    <div class="file-choice">
-                        <div class="choice-btn"
-                            @click="($refs.choiceImg as any)?.click()">
-                            {{
-                                runtimeData.sysConfig.chat_background
-                                    ? $t('更换背景')
-                                    : $t('上传背景')
-                            }}
-                            <input ref="choiceImg"
-                                type="file"
-                                style="display: none"
-                                name="chat_background"
-                                accept="image/*"
-                                @change="setBackground($event)">
-                        </div>
-                        <div v-if="runtimeData.sysConfig.chat_background !== ''"
-                            class="rm-btn"
-                            @click="removeBackground">
-                            <font-awesome-icon :icon="['fas', 'xmark']" />
-                        </div>
+                    <div v-if="runtimeData.sysConfig.chat_background !== ''"
+                        class="rm-btn"
+                        @click="removeBackground">
+                        <font-awesome-icon :icon="['fas', 'xmark']" />
                     </div>
                 </div>
-                <div class="opt-item">
-                    <div :class="checkDefault('chat_background_blur')" />
-                    <font-awesome-icon :icon="['fas', 'o']" />
+            </div>
+            <div class="opt-item">
+                <div :class="checkDefault('chat_background_blur')" />
+                <font-awesome-icon :icon="['fas', 'o']" />
+                <template v-if="!runtimeData.sysConfig.chat_more_blur">
                     <div>
                         <span>{{ $t('背景模糊') }}</span>
                         <span>{{ $t('什么都看不见了（恼') }}</span>
@@ -207,8 +207,23 @@
                             {{ runtimeData.sysConfig.chat_background_blur }}
                             px</span>
                     </div>
-                </div>
-            </template>
+                </template>
+                <template v-else>
+                    <div>
+                        <span>{{ $t('背景透明度') }}</span>
+                        <span>{{ $t('什么都看不见了（恼') }}</span>
+                    </div>
+                    <div class="ss-range">
+                        <input v-model="runtimeData.sysConfig.chat_background_blur"
+                            :style="`background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
+                            type="range" max="100" name="chat_background_blur"
+                            @input="save">
+                        <span :style="`color: var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
+                            {{ runtimeData.sysConfig.chat_background_blur }}
+                            %</span>
+                    </div>
+                </template>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('页面') }}</header>
@@ -466,14 +481,13 @@
                 if (sender.checked) {
                     const popInfo = {
                         title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与"背景图片"相关功能冲突同时会降低元素可读性。')}<br><br>
+                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与"背景图片"的部分功能冲突同时会降低元素可读性。')}<br><br>
                         ${this.$t('开启后需要重启应用才能生效，确定要开启吗？')}</span>`,
                         button: [
                             {
                                 text: this.$t('确认'),
                                 fun: () => {
                                     runtimeData.popBoxList.shift()
-                                    this.removeBackground()
                                     save(event)
                                     sendIdentifyData({ use_transparent: true })
                                     setTimeout(() => {
