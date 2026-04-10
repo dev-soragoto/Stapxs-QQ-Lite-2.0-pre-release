@@ -138,10 +138,11 @@
                     </template>
                 </TransitionGroup>
             </template>
+            <span class="chat-padding">&nbsp;</span>
         </div>
         <!-- 滚动到底部悬浮标志 -->
-        <div v-show="tags.showBottomButton"
-            class="new-msg"
+        <div class="new-msg"
+            :style="{ 'opacity': tags.showBottomButton ? 1 : 0 }"
             @click="scrollBottom(true)">
             <div class="ss-card">
                 <font-awesome-icon :icon="['fas', 'comment']" />
@@ -841,7 +842,6 @@ import { Img } from '@renderer/function/model/img'
                 if(pass) return
 
                 const body = event.target as HTMLDivElement
-                const bar = document.getElementById('send-more')
                 // 顶部
                 if (body.scrollTop === 0 && this.list.length > 0) {
                     this.loadMoreHistory()
@@ -850,11 +850,6 @@ import { Img } from '@renderer/function/model/img'
                 if ((body.scrollTop + body.clientHeight + 10) >= body.scrollHeight) {
                     this.NewMsgNum = 0
                     this.tags.showBottomButton = false
-                    // 去除阴影
-                    if (bar) {
-                        bar.style.transition = 'background .3s'
-                        bar.classList.add('btn')
-                    }
                 }
                 // 显示回到底部
                 if (
@@ -863,16 +858,6 @@ import { Img } from '@renderer/function/model/img'
                     this.tags.showBottomButton !== true
                 ) {
                     this.tags.showBottomButton = true
-                }
-                // 添加阴影
-                if (
-                    body.scrollTop <
-                    body.scrollHeight - body.clientHeight - 10
-                ) {
-                    if (bar) {
-                        bar.style.transition = 'background 1s'
-                        bar.classList.remove('btn')
-                    }
                 }
             },
 

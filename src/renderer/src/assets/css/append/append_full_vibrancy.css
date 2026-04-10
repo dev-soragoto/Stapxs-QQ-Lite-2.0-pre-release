@@ -89,6 +89,15 @@
 
 .chat-pan > div.more > div:nth-child(2) > div {
     background: rgba(var(--color-card-2-rgb), 0.5);
+    box-shadow: 0 0 3px var(--color-shader);
+    backdrop-filter: blur(20px);
+}
+.more-detail > div {
+    background: rgba(var(--color-card-2-rgb), 0.7);
+    backdrop-filter: blur(20px);
+}
+.more-detail > div.space {
+     backdrop-filter: unset;
 }
 .note-base {
     background: rgba(var(--color-card-rgb), 0.5);
@@ -114,6 +123,7 @@
 .select-tag,
 .replay-tag,
 .at-tag,
+.search-tag,
 .img-pan {
     background-color: rgba(var(--color-card-rgb), 0.5);
     backdrop-filter: blur(15px);

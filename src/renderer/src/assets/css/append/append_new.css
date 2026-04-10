@@ -354,7 +354,7 @@ body {
     font-size: 0.8rem;
 }
 .chat-pan > div.new-msg {
-    margin: -50px 20px 15px auto;
+    margin: 0 20px -17.5px auto;
     height: 35px;
 }
 .chat-pan > div.new-msg > div > svg {
