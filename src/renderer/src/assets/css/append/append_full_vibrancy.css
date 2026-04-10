@@ -101,7 +101,8 @@
     backdrop-filter: blur(10px);
 }
 .message.selected {
-    background: #00000014;
+    background: #00000010;
+    backdrop-filter: blur(5px);
 }
 
 .msg-replay {
@@ -112,6 +113,7 @@
 .jin-pan,
 .select-tag,
 .replay-tag,
+.at-tag,
 .img-pan {
     background-color: rgba(var(--color-card-rgb), 0.5);
     backdrop-filter: blur(15px);
@@ -120,6 +122,10 @@
 .face-stickers > img,
 .jin-pan-body > div {
     background: rgba(var(--color-card-rgb), 0.3);
+}
+.at-tag > div.selected,
+.at-tag > div:hover {
+    background-color: rgba(var(--color-card-2-rgb), 0.5);
 }
 
 .contributors-card {

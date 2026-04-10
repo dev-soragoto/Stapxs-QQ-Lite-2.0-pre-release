@@ -379,6 +379,7 @@
                                         ).format(new Date(chat.info.me_infotimestamp * 1000)),
                                     }) : ''"
                             @paste="addImg"
+                            @keydown="mainAtKey"
                             @keyup="mainKeyUp"
                             @click="selectSQIn"
                             @input="handleInput">
@@ -1049,54 +1050,7 @@ import { Img } from '@renderer/function/model/img'
              * @param event 事件
              */
             mainKey(event: KeyboardEvent) {
-                // At 选择器激活时的键盘事件处理
-                if (this.tags.onAtFind && this.atFindList && this.atFindList.length > 0) {
-                    // 上下箭头键（支持按住快速滚动）
-                    if (event.keyCode === 38 || event.keyCode === 40) {
-                        event.preventDefault()
-
-                        const direction = event.keyCode === 38 ? -1 : 1
-
-                        // 立即执行一次移动
-                        this.moveAtSelection(direction)
-
-                        // 如果定时器已经存在，说明已经在处理按住状态，直接返回
-                        if (this.atScrollTimer !== null) return
-
-                        // 延迟后开始快速滚动
-                        this.atScrollTimer = setTimeout(() => {
-                            this.atScrollInterval = setInterval(() => {
-                                this.moveAtSelection(direction)
-                            }, 50) // 每50ms移动一次
-                        }, 300) // 300ms后开始快速滚动
-
-                        return
-                    }
-
-                    // 回车键选择
-                    if (event.keyCode === 13) {
-                        event.preventDefault()
-                        const selectedMember = this.atFindList[this.atSelectedIndex]
-                        if (selectedMember) {
-                            this.choiceAt(selectedMember.user_id)
-                        }
-                        return
-                    }
-
-                    // ESC 键取消
-                    if (event.keyCode === 27) {
-                        event.preventDefault()
-                        // 删除输入框中从最后一个 @ 开始的所有内容
-                        const lastAtIndex = this.msg.lastIndexOf('@')
-                        if (lastAtIndex >= 0) {
-                            this.msg = this.msg.substring(0, lastAtIndex)
-                        }
-                        this.tags.onAtFind = false
-                        this.atFindList = null
-                        this.atSelectedIndex = 0
-                        return
-                    }
-                }
+                if (this.mainAtKey(event)) return
 
                 if(this.tags.onAtFind) return
                 if (event.key !== 'Enter') return
@@ -1144,6 +1098,57 @@ import { Img } from '@renderer/function/model/img'
                 this.tags.sendTag = 'REFUSE'
             },
 
+            /**
+             * 处理 At 选择器按键（支持单行输入框和多行输入框）
+             * @returns 是否已拦截并处理
+             */
+            mainAtKey(event: KeyboardEvent) {
+                if (!this.tags.onAtFind) return false
+
+                // 上下箭头键（支持按住快速滚动）
+                if (event.keyCode === 38 || event.keyCode === 40) {
+                    event.preventDefault()
+
+                    const direction = event.keyCode === 38 ? -1 : 1
+
+                    // 立即执行一次移动
+                    this.moveAtSelection(direction)
+
+                    // 如果定时器已经存在，说明已经在处理按住状态，直接返回
+                    if (this.atScrollTimer !== null) return true
+
+                    // 延迟后开始快速滚动
+                    this.atScrollTimer = setTimeout(() => {
+                        this.atScrollInterval = setInterval(() => {
+                            this.moveAtSelection(direction)
+                        }, 50) // 每50ms移动一次
+                    }, 300) // 300ms后开始快速滚动
+
+                    return true
+                }
+
+                // 回车键选择
+                if (event.keyCode === 13) {
+                    event.preventDefault()
+                    const selectedMember = this.atFindList?.[this.atSelectedIndex]
+                    if (selectedMember) {
+                        this.choiceAt(selectedMember.user_id)
+                    }
+                    return true
+                }
+
+                // ESC 键关闭 At 列表
+                if (event.keyCode === 27) {
+                    event.preventDefault()
+                    this.tags.onAtFind = false
+                    this.atFindList = null
+                    this.atSelectedIndex = 0
+                    return true
+                }
+
+                return false
+            },
+
             handleCompositionStart() {
                 this.tags.sendTag = 'REFUSE'
             },
@@ -1154,6 +1159,10 @@ import { Img } from '@renderer/function/model/img'
 
             mainKeyUp(event: KeyboardEvent) {
                 const logger = new Logger()
+
+                if (event.keyCode === 27) {
+                    return
+                }
 
                 // 清除箭头键快速滚动定时器
                 if (event.keyCode === 38 || event.keyCode === 40) {
