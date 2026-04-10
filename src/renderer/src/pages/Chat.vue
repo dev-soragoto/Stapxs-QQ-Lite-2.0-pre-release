@@ -887,18 +887,22 @@ import { Img } from '@renderer/function/model/img'
                     // 获取列表第一条消息 ID
                     const firstMsgId = this.list[0].message_id
                     const firstMsgTime = Number(this.list[0]?.time)
+                    const useMixedHistory =
+                        runtimeData.sysConfig.enable_local_history &&
+                        runtimeData.sysConfig.mixed_load_messages !== false
                     // 锁定加载防止反复触发
                     runtimeData.tags.nowGetHistory = true
-					// 本次上拉的时间锚点（用于在线回包按时间边界过滤）
-					runtimeData.tags.historyBeforeTime = Number.isFinite(firstMsgTime) ? firstMsgTime : undefined
+					// 仅在本地+在线混合加载时设置时间锚点，避免纯在线模式被边界过滤清空
+                    if (useMixedHistory && Number.isFinite(firstMsgTime)) {
+                        runtimeData.tags.historyBeforeTime = firstMsgTime
+                    } else {
+                        runtimeData.tags.historyBeforeTime = undefined
+                    }
 					// 移除加载失败标志
 					runtimeData.tags.loadHistoryFail = false
 
                     // 优先从本地数据库加载
-                    if (
-                        runtimeData.sysConfig.enable_local_history &&
-                        runtimeData.sysConfig.mixed_load_messages !== false
-                    ) {
+                    if (useMixedHistory) {
                         let localMsgs = [] as any[]
                         if (Number.isFinite(firstMsgTime)) {
                             localMsgs = await dbGetBeforeByTime(

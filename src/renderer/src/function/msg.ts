@@ -1426,11 +1426,18 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         })
 
         // 上拉历史时按时间戳作为边界（兼容增量/全量两种分页模式）。
-        if (hasHistoryBeforeTime) {
+        if (hasHistoryBeforeTime && append === 'top') {
             list = list.filter((item: any) => {
                 const t = Number(item?.time)
                 return Number.isFinite(t) && t <= historyBeforeTime
             })
+        }
+
+        // 处于上拉边界过滤时，若结果为空则保留当前列表，避免误清空。
+        if (hasHistoryBeforeTime && append === 'top' && list.length < 1) {
+            runtimeData.tags.historyBeforeTime = undefined
+            runtimeData.tags.nowGetHistory = false
+            return
         }
 
         // 保存到本地历史
