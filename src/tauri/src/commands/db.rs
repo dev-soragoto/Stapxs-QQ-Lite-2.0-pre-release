@@ -11,7 +11,47 @@ use tauri::{AppHandle, Emitter, Manager, State};
 // ── 全局状态 ────────────────────────────────────────────────
 
 /// Tauri managed state：用 Mutex 包装 SQLite 连接
-pub struct DbState(pub Mutex<Connection>);
+pub struct DbState(pub Mutex<DbStateInner>);
+
+pub struct DbStateInner {
+    pub data_dir: PathBuf,
+    pub enabled: bool,
+    pub conn: Option<Connection>,
+}
+
+impl DbState {
+    pub fn new(data_dir: PathBuf, enabled: bool) -> Self {
+        Self(Mutex::new(DbStateInner {
+            data_dir,
+            enabled,
+            conn: None,
+        }))
+    }
+
+    fn with_conn<T, F>(&self, f: F) -> Result<T, String>
+    where
+        F: FnOnce(&Connection) -> Result<T, String>,
+    {
+        let mut inner = self.0.lock().map_err(|e| e.to_string())?;
+
+        if !inner.enabled {
+            return Err("本地历史消息存储未启用".to_string());
+        }
+
+        if inner.conn.is_none() {
+            let conn = open_db(inner.data_dir.clone()).map_err(|e| e.to_string())?;
+            inner.conn = Some(conn);
+            info!("SQLite 数据库懒加载初始化完成");
+        }
+
+        let conn = inner
+            .conn
+            .as_ref()
+            .ok_or_else(|| "无法获取数据库连接".to_string())?;
+
+        f(conn)
+    }
+}
 
 // ── 数据结构 ────────────────────────────────────────────────
 
@@ -121,7 +161,8 @@ fn open_or_recreate(db_path: std::path::PathBuf) -> rusqlite::Result<Connection>
                 "无法以加密模式打开 {:?}（{}）",
                 db_path, e
             );
-            Err(e)
+            // 直接退出应用
+            std::process::exit(1);
         }
     }
 }
@@ -194,42 +235,43 @@ pub fn db_save_messages(
     self_id: String,
     messages: Vec<MsgRecord>,
 ) -> Result<usize, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let now = chrono::Utc::now().timestamp_millis();
-    let mut inserted = 0usize;
+    state.with_conn(|conn| {
+        let now = chrono::Utc::now().timestamp_millis();
+        let mut inserted = 0usize;
 
-    debug!("保存 {} 条 {} 的消息 ……", messages.len(), self_id);
+        debug!("保存 {} 条 {} 的消息 ……", messages.len(), self_id);
 
-    for msg in &messages {
-        let n = conn
-            .execute(
-                "INSERT OR IGNORE INTO messages
-                    (self_id, message_id, chat_id, chat_type,
-                     sender_id, sender_name, seq, time, message,
-                     raw_message, revoked, created_at)
-                 VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
-                params![
-                    self_id,
-                    msg.message_id,
-                    msg.chat_id,
-                    msg.chat_type,
-                    msg.sender_id,
-                    msg.sender_name,
-                    msg.seq,
-                    msg.time,
-                    msg.message,
-                    msg.raw_message,
-                    msg.revoked as i32,
-                    now,
-                ],
-            )
-            .map_err(|e| e.to_string())?;
-        inserted += n;
-    }
+        for msg in &messages {
+            let n = conn
+                .execute(
+                    "INSERT OR IGNORE INTO messages
+                        (self_id, message_id, chat_id, chat_type,
+                         sender_id, sender_name, seq, time, message,
+                         raw_message, revoked, created_at)
+                     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
+                    params![
+                        self_id,
+                        msg.message_id,
+                        msg.chat_id,
+                        msg.chat_type,
+                        msg.sender_id,
+                        msg.sender_name,
+                        msg.seq,
+                        msg.time,
+                        msg.message,
+                        msg.raw_message,
+                        msg.revoked as i32,
+                        now,
+                    ],
+                )
+                .map_err(|e| e.to_string())?;
+            inserted += n;
+        }
 
-    debug!("成功保存 {} 条消息", inserted);
+        debug!("成功保存 {} 条消息", inserted);
 
-    Ok(inserted)
+        Ok(inserted)
+    })
 }
 
 /// 获取某会话最新 n 条消息（正序返回，revoked 消息不包含）
@@ -240,28 +282,28 @@ pub fn db_get_latest(
     chat_id: i64,
     n: i64,
 ) -> Result<Vec<MsgRecord>, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    state.with_conn(|conn| {
+        let mut stmt = conn
+            .prepare(
+                "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                        seq, time, message, raw_message, revoked
+                 FROM messages
+                 WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+                 ORDER BY time DESC, id DESC
+                 LIMIT ?3",
+            )
+            .map_err(|e| e.to_string())?;
 
-    let mut stmt = conn
-        .prepare(
-            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    seq, time, message, raw_message, revoked
-             FROM messages
-             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
-             ORDER BY time DESC, id DESC
-             LIMIT ?3",
-        )
-        .map_err(|e| e.to_string())?;
+        let mut list: Vec<MsgRecord> = stmt
+            .query_map(params![self_id, chat_id, n], row_to_record)
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
 
-    let mut list: Vec<MsgRecord> = stmt
-        .query_map(params![self_id, chat_id, n], row_to_record)
-        .map_err(|e| e.to_string())?
-        .filter_map(|r| r.ok())
-        .collect();
-
-    // DESC 查询 → 翻转为正序（旧→新）
-    list.reverse();
-    Ok(list)
+        // DESC 查询 → 翻转为正序（旧→新）
+        list.reverse();
+        Ok(list)
+    })
 }
 
 /// 获取锚点消息之前（更旧）的 n 条，不含锚点本身，正序返回
@@ -275,34 +317,34 @@ pub fn db_get_before(
     message_id: String,
     n: i64,
 ) -> Result<Vec<MsgRecord>, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    state.with_conn(|conn| {
+        let anchor = get_anchor(conn, &self_id, &message_id)
+            .ok_or_else(|| format!("message_id '{}' not found in local db", message_id))?;
 
-    let anchor = get_anchor(&conn, &self_id, &message_id)
-        .ok_or_else(|| format!("message_id '{}' not found in local db", message_id))?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                        seq, time, message, raw_message, revoked
+                 FROM messages
+                 WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+                   AND (time < ?3 OR (time = ?3 AND id < ?4))
+                 ORDER BY time DESC, id DESC
+                 LIMIT ?5",
+            )
+            .map_err(|e| e.to_string())?;
 
-    let mut stmt = conn
-        .prepare(
-            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    seq, time, message, raw_message, revoked
-             FROM messages
-             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
-               AND (time < ?3 OR (time = ?3 AND id < ?4))
-             ORDER BY time DESC, id DESC
-             LIMIT ?5",
-        )
-        .map_err(|e| e.to_string())?;
+        let mut list: Vec<MsgRecord> = stmt
+            .query_map(
+                params![self_id, chat_id, anchor.0, anchor.1, n],
+                row_to_record,
+            )
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
 
-    let mut list: Vec<MsgRecord> = stmt
-        .query_map(
-            params![self_id, chat_id, anchor.0, anchor.1, n],
-            row_to_record,
-        )
-        .map_err(|e| e.to_string())?
-        .filter_map(|r| r.ok())
-        .collect();
-
-    list.reverse();
-    Ok(list)
+        list.reverse();
+        Ok(list)
+    })
 }
 
 /// 获取指定时间戳之前（更旧）的 n 条，不含时间更新于锚点之后的消息，正序返回。
@@ -320,28 +362,28 @@ pub fn db_get_before_by_time(
         return Ok(vec![]);
     }
 
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    state.with_conn(|conn| {
+        let mut stmt = conn
+            .prepare(
+                "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                        seq, time, message, raw_message, revoked
+                 FROM messages
+                 WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+                   AND time <= ?3
+                 ORDER BY time DESC, id DESC
+                 LIMIT ?4",
+            )
+            .map_err(|e| e.to_string())?;
 
-    let mut stmt = conn
-        .prepare(
-            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    seq, time, message, raw_message, revoked
-             FROM messages
-             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
-               AND time <= ?3
-             ORDER BY time DESC, id DESC
-             LIMIT ?4",
-        )
-        .map_err(|e| e.to_string())?;
+        let mut list: Vec<MsgRecord> = stmt
+            .query_map(params![self_id, chat_id, before_time, n], row_to_record)
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
 
-    let mut list: Vec<MsgRecord> = stmt
-        .query_map(params![self_id, chat_id, before_time, n], row_to_record)
-        .map_err(|e| e.to_string())?
-        .filter_map(|r| r.ok())
-        .collect();
-
-    list.reverse();
-    Ok(list)
+        list.reverse();
+        Ok(list)
+    })
 }
 
 /// 获取锚点消息之后（更新）的 n 条，不含锚点本身，正序返回
@@ -355,33 +397,33 @@ pub fn db_get_after(
     message_id: String,
     n: i64,
 ) -> Result<Vec<MsgRecord>, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    state.with_conn(|conn| {
+        let anchor = get_anchor(conn, &self_id, &message_id)
+            .ok_or_else(|| format!("message_id '{}' not found in local db", message_id))?;
 
-    let anchor = get_anchor(&conn, &self_id, &message_id)
-        .ok_or_else(|| format!("message_id '{}' not found in local db", message_id))?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                        seq, time, message, raw_message, revoked
+                 FROM messages
+                 WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+                   AND (time > ?3 OR (time = ?3 AND id > ?4))
+                 ORDER BY time ASC, id ASC
+                 LIMIT ?5",
+            )
+            .map_err(|e| e.to_string())?;
 
-    let mut stmt = conn
-        .prepare(
-            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    seq, time, message, raw_message, revoked
-             FROM messages
-             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
-               AND (time > ?3 OR (time = ?3 AND id > ?4))
-             ORDER BY time ASC, id ASC
-             LIMIT ?5",
-        )
-        .map_err(|e| e.to_string())?;
+        let list: Vec<MsgRecord> = stmt
+            .query_map(
+                params![self_id, chat_id, anchor.0, anchor.1, n],
+                row_to_record,
+            )
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
 
-    let list: Vec<MsgRecord> = stmt
-        .query_map(
-            params![self_id, chat_id, anchor.0, anchor.1, n],
-            row_to_record,
-        )
-        .map_err(|e| e.to_string())?
-        .filter_map(|r| r.ok())
-        .collect();
-
-    Ok(list)
+        Ok(list)
+    })
 }
 
 /// 在指定会话中按关键词全文搜索消息（在 raw_message 中匹配）
@@ -394,27 +436,28 @@ pub fn db_search_messages(
     chat_id: i64,
     query: String,
 ) -> Result<Vec<MsgRecord>, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let pattern = format!("%{}%", query);
+    state.with_conn(|conn| {
+        let pattern = format!("%{}%", query);
 
-    let mut stmt = conn
-        .prepare(
-            "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
-                    seq, time, message, raw_message, revoked
-             FROM messages
-             WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
-               AND raw_message LIKE ?3
-             ORDER BY time ASC, id ASC",
-        )
-        .map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT message_id, chat_id, chat_type, sender_id, sender_name,
+                        seq, time, message, raw_message, revoked
+                 FROM messages
+                 WHERE self_id = ?1 AND chat_id = ?2 AND revoked = 0
+                   AND raw_message LIKE ?3
+                 ORDER BY time ASC, id ASC",
+            )
+            .map_err(|e| e.to_string())?;
 
-    let list: Vec<MsgRecord> = stmt
-        .query_map(params![self_id, chat_id, pattern], row_to_record)
-        .map_err(|e| e.to_string())?
-        .filter_map(|r| r.ok())
-        .collect();
+        let list: Vec<MsgRecord> = stmt
+            .query_map(params![self_id, chat_id, pattern], row_to_record)
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
 
-    Ok(list)
+        Ok(list)
+    })
 }
 
 /// 将某条消息标记为已撤回
@@ -426,15 +469,16 @@ pub fn db_revoke_message(
     self_id: String,
     message_id: String,
 ) -> Result<bool, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let n = conn
-        .execute(
-            "UPDATE messages SET revoked = 1
-             WHERE self_id = ?1 AND message_id = ?2",
-            params![self_id, message_id],
-        )
-        .map_err(|e| e.to_string())?;
-    Ok(n > 0)
+    state.with_conn(|conn| {
+        let n = conn
+            .execute(
+                "UPDATE messages SET revoked = 1
+                 WHERE self_id = ?1 AND message_id = ?2",
+                params![self_id, message_id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(n > 0)
+    })
 }
 
 /// 存储统计结果
@@ -458,36 +502,37 @@ pub fn db_get_stats(
     app_handle: tauri::AppHandle,
     self_id: String,
 ) -> Result<DbStats, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let total: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM messages WHERE self_id = ?1 AND revoked = 0",
-            params![self_id],
-            |r| r.get(0),
-        )
-        .unwrap_or(0);
+    state.with_conn(|conn| {
+        let total: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM messages WHERE self_id = ?1 AND revoked = 0",
+                params![self_id],
+                |r| r.get(0),
+            )
+            .unwrap_or(0);
 
-    let (image_count, image_cache_bytes): (i64, i64) = conn
-        .query_row(
-            "SELECT COUNT(*), COALESCE(SUM(LENGTH(data)), 0) FROM images WHERE self_id = ?1",
-            params![self_id],
-            |r| Ok((r.get(0)?, r.get(1)?)),
-        )
-        .unwrap_or((0, 0));
+        let (image_count, image_cache_bytes): (i64, i64) = conn
+            .query_row(
+                "SELECT COUNT(*), COALESCE(SUM(LENGTH(data)), 0) FROM images WHERE self_id = ?1",
+                params![self_id],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap_or((0, 0));
 
-    let data_dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
-    let db_size = std::fs::metadata(data_dir.join("messages.db"))
-        .map(|m| m.len())
-        .unwrap_or(0);
+        let data_dir = app_handle
+            .path()
+            .app_data_dir()
+            .map_err(|e| e.to_string())?;
+        let db_size = std::fs::metadata(data_dir.join("messages.db"))
+            .map(|m| m.len())
+            .unwrap_or(0);
 
-    Ok(DbStats {
-        total_messages: total,
-        image_count,
-        image_cache_bytes,
-        db_size_bytes: db_size,
+        Ok(DbStats {
+            total_messages: total,
+            image_count,
+            image_cache_bytes,
+            db_size_bytes: db_size,
+        })
     })
 }
 
@@ -533,21 +578,22 @@ pub fn db_cache_image(
     mime_type: String,
     data: String,
 ) -> Result<(), String> {
-    let bytes = general_purpose::STANDARD
-        .decode(&data)
+    state.with_conn(|conn| {
+        let bytes = general_purpose::STANDARD
+            .decode(&data)
+            .map_err(|e| e.to_string())?;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+        conn.execute(
+            "INSERT OR IGNORE INTO images (self_id, url_hash, mime_type, data, created_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![self_id, url_hash, mime_type, bytes, now],
+        )
         .map_err(|e| e.to_string())?;
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs() as i64;
-    conn.execute(
-        "INSERT OR IGNORE INTO images (self_id, url_hash, mime_type, data, created_at) \
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![self_id, url_hash, mime_type, bytes, now],
-    )
-    .map_err(|e| e.to_string())?;
-    Ok(())
+        Ok(())
+    })
 }
 
 /// 从本地数据库获取已缓存的图片
@@ -559,20 +605,21 @@ pub fn db_get_image(
     self_id: String,
     url_hash: String,
 ) -> Result<Option<CachedImage>, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let result: rusqlite::Result<(String, Vec<u8>)> = conn.query_row(
-        "SELECT mime_type, data FROM images WHERE self_id = ?1 AND url_hash = ?2",
-        params![self_id, url_hash],
-        |row| Ok((row.get(0)?, row.get(1)?)),
-    );
-    match result {
-        Ok((mime_type, bytes)) => Ok(Some(CachedImage {
-            mime_type,
-            data: general_purpose::STANDARD.encode(&bytes),
-        })),
-        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-        Err(e) => Err(e.to_string()),
-    }
+    state.with_conn(|conn| {
+        let result: rusqlite::Result<(String, Vec<u8>)> = conn.query_row(
+            "SELECT mime_type, data FROM images WHERE self_id = ?1 AND url_hash = ?2",
+            params![self_id, url_hash],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        );
+        match result {
+            Ok((mime_type, bytes)) => Ok(Some(CachedImage {
+                mime_type,
+                data: general_purpose::STANDARD.encode(&bytes),
+            })),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(e.to_string()),
+        }
+    })
 }
 
 /// 清理当前账号的图片缓存
@@ -584,53 +631,66 @@ pub fn db_clear_images(
     app_handle: AppHandle,
     self_id: String,
 ) -> Result<DbClearImagesResult, String> {
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let batch_size = 500i64;
-    let total: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM images WHERE self_id = ?1",
-            params![self_id],
-            |r| r.get(0),
-        )
-        .unwrap_or(0);
-
-    let _ = app_handle.emit(
-        "db:clearImagesProgress",
-        DbClearImagesProgress {
-            self_id: self_id.clone(),
-            total,
-            deleted: 0,
-            batch_deleted: 0,
-            progress: if total == 0 { 100.0 } else { 0.0 },
-            done: total == 0,
-        },
-    );
-
-    let mut deleted = 0i64;
-    let mut batches = 0i64;
-
-    while deleted < total {
-        let batch_deleted = conn
-            .execute(
-                "DELETE FROM images
-                 WHERE id IN (
-                    SELECT id FROM images WHERE self_id = ?1 LIMIT ?2
-                 )",
-                params![self_id, batch_size],
+    state.with_conn(|conn| {
+        let batch_size = 500i64;
+        let total: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM images WHERE self_id = ?1",
+                params![self_id],
+                |r| r.get(0),
             )
-            .map_err(|e| e.to_string())? as i64;
+            .unwrap_or(0);
 
-        if batch_deleted == 0 {
-            break;
+        let _ = app_handle.emit(
+            "db:clearImagesProgress",
+            DbClearImagesProgress {
+                self_id: self_id.clone(),
+                total,
+                deleted: 0,
+                batch_deleted: 0,
+                progress: if total == 0 { 100.0 } else { 0.0 },
+                done: total == 0,
+            },
+        );
+
+        let mut deleted = 0i64;
+        let mut batches = 0i64;
+
+        while deleted < total {
+            let batch_deleted = conn
+                .execute(
+                    "DELETE FROM images
+                     WHERE id IN (
+                        SELECT id FROM images WHERE self_id = ?1 LIMIT ?2
+                     )",
+                    params![self_id, batch_size],
+                )
+                .map_err(|e| e.to_string())? as i64;
+
+            if batch_deleted == 0 {
+                break;
+            }
+
+            deleted += batch_deleted;
+            batches += 1;
+            let progress = if total > 0 {
+                ((deleted as f64 / total as f64) * 100.0).min(100.0)
+            } else {
+                100.0
+            };
+
+            let _ = app_handle.emit(
+                "db:clearImagesProgress",
+                DbClearImagesProgress {
+                    self_id: self_id.clone(),
+                    total,
+                    deleted,
+                    batch_deleted,
+                    progress,
+                    done: false,
+                },
+            );
         }
-
-        deleted += batch_deleted;
-        batches += 1;
-        let progress = if total > 0 {
-            ((deleted as f64 / total as f64) * 100.0).min(100.0)
-        } else {
-            100.0
-        };
 
         let _ = app_handle.emit(
             "db:clearImagesProgress",
@@ -638,33 +698,21 @@ pub fn db_clear_images(
                 self_id: self_id.clone(),
                 total,
                 deleted,
-                batch_deleted,
-                progress,
-                done: false,
+                batch_deleted: 0,
+                progress: 100.0,
+                done: true,
             },
         );
-    }
 
-    let _ = app_handle.emit(
-        "db:clearImagesProgress",
-        DbClearImagesProgress {
-            self_id: self_id.clone(),
+        info!(
+            "已分批清理账号 {} 的图片缓存：{} / {} 条，共 {} 批",
+            self_id, deleted, total, batches
+        );
+        Ok(DbClearImagesResult {
             total,
             deleted,
-            batch_deleted: 0,
-            progress: 100.0,
-            done: true,
-        },
-    );
-
-    info!(
-        "已分批清理账号 {} 的图片缓存：{} / {} 条，共 {} 批",
-        self_id, deleted, total, batches
-    );
-    Ok(DbClearImagesResult {
-        total,
-        deleted,
-        batches,
+            batches,
+        })
     })
 }
 

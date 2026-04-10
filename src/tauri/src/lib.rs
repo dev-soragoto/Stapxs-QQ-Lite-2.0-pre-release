@@ -1,6 +1,6 @@
 mod commands;
 
-use commands::db::{open_db, DbState};
+use commands::db::DbState;
 use std::collections::HashMap;
 
 use commands::utils::http_proxy::ProxyServer;
@@ -79,10 +79,13 @@ pub fn run() {
                 .expect("无法获取 app data 目录");
             info!("应用数据目录: {:?}", data_dir);
 
-            // 初始化 SQLite 数据库 ============
-            let conn = open_db(data_dir).expect("无法打开 SQLite 数据库");
-            app.manage(DbState(std::sync::Mutex::new(conn)));
-            info!("SQLite 数据库初始化完成");
+            // 按开关初始化 SQLite：关闭本地历史时跳过数据库和密钥初始化
+            let enable_local_history = store
+                .get("enable_local_history")
+                .map(|v| v.as_bool().unwrap_or_else(|| v.as_str() == Some("true")))
+                .unwrap_or(false);
+
+            app.manage(DbState::new(data_dir, enable_local_history));
 
             // 初始化全局通知管理器 ============
             let app_id = app.config().identifier.clone();
