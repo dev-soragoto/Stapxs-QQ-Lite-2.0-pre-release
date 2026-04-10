@@ -25,7 +25,7 @@
         data-tauri-drag-region="true" />
     <div id="base-app">
         <div class="main-body">
-            <ul :style="get('fs_adaptation') > 0 ? `padding-bottom: ${get('fs_adaptation')}px;` : ''">
+            <ul :style="{ 'padding-bottom': get('fs_adaptation') > 0 ? `${get('fs_adaptation')}px` : '0' }">
                 <li id="bar-home" :class="(tags.page == 'Home' ? 'active' : '') +
                     (loginInfo.status ? ' hiden-home' : '')"
                     @click="changeTab('主页', 'Home', false)">
@@ -48,7 +48,7 @@
                     <span>{{ $t('设置') }}</span>
                 </li>
             </ul>
-            <div :style="get('fs_adaptation') > 0 ? `height: calc(100% - ${75 + Number(get('fs_adaptation'))}px);` : ''">
+            <div :style="{ 'height': get('fs_adaptation') > 0 ? `calc(100% - ${75 + Number(get('fs_adaptation'))}px)` : '100%' }">
                 <div v-if="tags.page == 'Home'" id="homeTab" name="主页">
                     <div class="home-body">
                         <div v-if="!napcat" class="login-pan-card ss-card">
@@ -195,7 +195,7 @@
                 <div :class="'pop-box-body ss-card' +
                          (runtimeData.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
-                    :style="(get('fs_adaptation') > 0 ? ` margin-bottom: ${40 + Number(get('fs_adaptation'))}px;` : '')">
+                    :style="{ 'margin-bottom': get('fs_adaptation') > 0 ? `${40 + Number(get('fs_adaptation'))}px` : '0' }">
                     <header v-show="runtimeData.popBoxList[0].title != undefined">
                         <div v-if="runtimeData.popBoxList[0].svg != undefined">
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
@@ -217,7 +217,7 @@
                     <div class="pop-box-more">
                         <div v-for="index in runtimeData.popBoxList.length" :key="'pop-more-' + index" :data-id="index"
                             :class="index > runtimeData.popBoxList.length - 1 ? 'hid' : '' "
-                            :style="'margin:-' + 2 * (index - 1) + 'px ' + (20 * index - 1 - 2 * (index - 1)) + 'px 0 ' + (20 * index - 1 - 2 * (index - 1)) + 'px;'" />
+                            :style="{ 'margin': `-${2 * (index - 1)}px ${(20 * index - 1 - 2 * (index - 1))}px 0 ${(20 * index - 1 - 2 * (index - 1))}px` }" />
                     </div>
                 </div>
                 <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose != false && runtimeData.popBoxList[0].allowClose != false)" />
@@ -231,8 +231,9 @@
         <div id="mobile-css" />
     </div>
     <div class="main-bg"
-        :style="`background-image: url(${runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''});
-            opacity: ${1 - Number(runtimeData.sysConfig.chat_background_blur) / 100}`" />
+        :style="{
+            'background-image': `url(${runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})`,
+            'opacity': 1 - Number(runtimeData.sysConfig.chat_background_blur) / 100 }" />
 </template>
 
 <script setup lang="ts">

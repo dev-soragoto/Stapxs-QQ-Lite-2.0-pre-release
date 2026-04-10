@@ -274,8 +274,7 @@
             <header>{{ $t('消息存储') }}</header>
             <div
                 class="opt-item"
-                :style="runtimeData.sysConfig.enable_local_history ?
-                    'background: var(--color-card-1);' : ''">
+                :style="{ 'background': runtimeData.sysConfig.enable_local_history ? 'var(--color-card-1)' : 'none' }">
                 <div :class="checkDefault('enable_local_history')" />
                 <font-awesome-icon :icon="['fas', 'database']" />
                 <div>
@@ -351,8 +350,7 @@
             <header>{{ $t('分析信息') }}</header>
             <div
                 class="opt-item"
-                :style="runtimeData.sysConfig.close_ga !== true ?
-                    'background: var(--color-card-1);' : ''">
+                :style="{ 'background': runtimeData.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
                 <div :class="checkDefault('close_ga')" />
                 <font-awesome-icon :icon="['fas', 'cloud']" />
                 <div>

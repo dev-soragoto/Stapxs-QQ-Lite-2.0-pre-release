@@ -61,13 +61,15 @@
                             :icon="['fas', 'gauge-high']" />
                         <input
                             v-model="opt.speeds"
-                            :style="`background-size: ${opt.speeds / 8}% 100%;`"
+                            :style="{ 'background-size': `${opt.speeds / 8}% 100%` }"
                             type="range"
                             min="20"
                             max="800"
                             step="20">
                         <span
-                            :style="`color: var(--color-font${opt.speeds / 8 > 50 ? '-r' : ''})`">{{ opt.speeds }} px/s</span>
+                            :style="{ 'color': `var(--color-font${opt.speeds / 8 > 50 ? '-r' : ''})` }">
+                            {{ opt.speeds }} px/s
+                        </span>
                     </div>
                 </div>
                 <div class="controller input">

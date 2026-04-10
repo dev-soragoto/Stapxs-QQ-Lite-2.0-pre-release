@@ -107,7 +107,7 @@
                                         index === 0 : Number(runtimeData.sysConfig.theme_color) === index"
                                     @change="save($event);gaColor($event)">
                                 <div
-                                    :style="'background: var(--color-main-' + index + ')'">
+                                    :style="{ 'background': `var(--color-main-${index})` }">
                                     <div />
                                 </div>
                             </label>
@@ -201,9 +201,9 @@
                     </div>
                     <div class="ss-range">
                         <input v-model="runtimeData.sysConfig.chat_background_blur"
-                            :style="`background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
+                            :style="{ 'background-size': `${runtimeData.sysConfig.chat_background_blur}% 100%` }"
                             type="range" name="chat_background_blur" @input="save">
-                        <span :style="`color: var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
+                        <span :style="{ 'color': `var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})` }">
                             {{ runtimeData.sysConfig.chat_background_blur }}
                             px</span>
                     </div>
@@ -215,10 +215,10 @@
                     </div>
                     <div class="ss-range">
                         <input v-model="runtimeData.sysConfig.chat_background_blur"
-                            :style="`background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`"
+                            :style="{ 'background-size': `${runtimeData.sysConfig.chat_background_blur}% 100%` }"
                             type="range" max="100" name="chat_background_blur"
                             @input="save">
-                        <span :style="`color: var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">
+                        <span :style="{ 'color': `var(--color-font${ runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})` }">
                             {{ runtimeData.sysConfig.chat_background_blur }}
                             %</span>
                     </div>
@@ -313,7 +313,7 @@
                 </div>
                 <div class="ss-range">
                     <input v-model="runtimeData.sysConfig.initial_scale"
-                        :style="`background-size: ${(initialScaleShow - 0.5) / 0.01}% 100%`"
+                        :style="{ 'background-size': `${(initialScaleShow - 0.5) / 0.01}% 100%` }"
                         type="range"
                         min="0.5"
                         max="1.5"
@@ -321,7 +321,7 @@
                         name="initial_scale"
                         @change="scaleSave"
                         @input="setInitialScaleShow">
-                    <span :style="`color: var(--color-font${initialScaleShow / 0.05 })`">
+                    <span :style="{ 'color': `var(--color-font${initialScaleShow / 0.05 })` }">
                         {{ initialScaleShow }}</span>
                 </div>
             </div>
@@ -336,7 +336,7 @@
                 </div>
                 <div class="ss-range">
                     <input v-model="runtimeData.sysConfig.fs_adaptation"
-                        :style="`background-size: ${(fsAdaptationShow / 50) * 100}% 100%;`"
+                        :style="{ 'background-size': `${(fsAdaptationShow / 50) * 100}% 100%` }"
                         type="range"
                         min="0"
                         max="50"
@@ -344,7 +344,7 @@
                         name="fs_adaptation"
                         @change="save"
                         @input="setFsAdaptationShow">
-                    <span :style="`color: var(--color-font${fsAdaptationShow / 50 > 0.5 ? '-r' : ''})`">
+                    <span :style="{ 'color': `var(--color-font${fsAdaptationShow / 50 > 0.5 ? '-r' : ''})` }">
                         {{ fsAdaptationShow }} px
                     </span>
                 </div>
