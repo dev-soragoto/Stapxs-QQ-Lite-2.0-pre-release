@@ -141,7 +141,10 @@ export function openLink(url: string, external = false) {
 export async function loadHistory(info: BaseChatInfoElem) {
     runtimeData.messageList = []
     // 本地有数据时立即显示，同时仍发网络请求以获取最新消息（避免遗漏）
-    if (runtimeData.sysConfig.enable_local_history) {
+    if (
+        runtimeData.sysConfig.enable_local_history &&
+        runtimeData.sysConfig.mixed_load_messages !== false
+    ) {
         const localMsgs = await dbGetLatest(
             runtimeData.loginInfo.uin,
             info.id,

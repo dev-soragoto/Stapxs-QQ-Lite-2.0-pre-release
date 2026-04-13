@@ -15,7 +15,7 @@
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
-        :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
+        :style="{ 'background-image': `url(${!runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})` }"
         @v-move-right.prevent="exitWin()">
         <slot name="chat-extra" />
         <!-- 聊天基本信息 -->
@@ -138,10 +138,11 @@
                     </template>
                 </TransitionGroup>
             </template>
+            <span class="chat-padding">&nbsp;</span>
         </div>
         <!-- 滚动到底部悬浮标志 -->
-        <div v-show="tags.showBottomButton"
-            class="new-msg"
+        <div class="new-msg"
+            :style="{ 'opacity': tags.showBottomButton ? 1 : 0 }"
             @click="scrollBottom(true)">
             <div class="ss-card">
                 <font-awesome-icon :icon="['fas', 'comment']" />
@@ -379,6 +380,7 @@
                                         ).format(new Date(chat.info.me_infotimestamp * 1000)),
                                     }) : ''"
                             @paste="addImg"
+                            @keydown="mainAtKey"
                             @keyup="mainKeyUp"
                             @click="selectSQIn"
                             @input="handleInput">
@@ -533,7 +535,7 @@
             </div>
         </Transition>
         <div class="bg" :style="{
-            'backdrop-filter': `blur(${runtimeData.sysConfig .chat_background_blur}px)`
+            'backdrop-filter': `blur(${!runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig .chat_background_blur : 0}px)`
         }" />
     </div>
 </template>
@@ -593,7 +595,7 @@ import {
     MenuEventData,
 } from '@renderer/function/elements/information'
 import { backend } from '@renderer/runtime/backend'
-import { dbGetBefore, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
+import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
@@ -840,7 +842,6 @@ import { Img } from '@renderer/function/model/img'
                 if(pass) return
 
                 const body = event.target as HTMLDivElement
-                const bar = document.getElementById('send-more')
                 // 顶部
                 if (body.scrollTop === 0 && this.list.length > 0) {
                     this.loadMoreHistory()
@@ -849,11 +850,6 @@ import { Img } from '@renderer/function/model/img'
                 if ((body.scrollTop + body.clientHeight + 10) >= body.scrollHeight) {
                     this.NewMsgNum = 0
                     this.tags.showBottomButton = false
-                    // 去除阴影
-                    if (bar) {
-                        bar.style.transition = 'background .3s'
-                        bar.classList.add('btn')
-                    }
                 }
                 // 显示回到底部
                 if (
@@ -862,16 +858,6 @@ import { Img } from '@renderer/function/model/img'
                     this.tags.showBottomButton !== true
                 ) {
                     this.tags.showBottomButton = true
-                }
-                // 添加阴影
-                if (
-                    body.scrollTop <
-                    body.scrollHeight - body.clientHeight - 10
-                ) {
-                    if (bar) {
-                        bar.style.transition = 'background 1s'
-                        bar.classList.remove('btn')
-                    }
                 }
             },
 
@@ -885,32 +871,57 @@ import { Img } from '@renderer/function/model/img'
                 ) {
                     // 获取列表第一条消息 ID
                     const firstMsgId = this.list[0].message_id
+                    const firstMsgTime = Number(this.list[0]?.time)
+                    const useMixedHistory =
+                        runtimeData.sysConfig.enable_local_history &&
+                        runtimeData.sysConfig.mixed_load_messages !== false
                     // 锁定加载防止反复触发
                     runtimeData.tags.nowGetHistory = true
+					// 仅在本地+在线混合加载时设置时间锚点，避免纯在线模式被边界过滤清空
+                    if (useMixedHistory && Number.isFinite(firstMsgTime)) {
+                        runtimeData.tags.historyBeforeTime = firstMsgTime
+                    } else {
+                        runtimeData.tags.historyBeforeTime = undefined
+                    }
 					// 移除加载失败标志
 					runtimeData.tags.loadHistoryFail = false
 
                     // 优先从本地数据库加载
-                    if (runtimeData.sysConfig.enable_local_history) {
-                        const localMsgs = await dbGetBefore(
-                            runtimeData.loginInfo.uin,
-                            runtimeData.chatInfo.show.id,
-                            firstMsgId,
-                            20,
-                        )
+                    if (useMixedHistory) {
+                        let localMsgs = [] as any[]
+                        if (Number.isFinite(firstMsgTime)) {
+                            localMsgs = await dbGetBeforeByTime(
+                                runtimeData.loginInfo.uin,
+                                runtimeData.chatInfo.show.id,
+                                firstMsgTime,
+                                20,
+                            )
+                        } else {
+                            localMsgs = await dbGetBefore(
+                                runtimeData.loginInfo.uin,
+                                runtimeData.chatInfo.show.id,
+                                firstMsgId,
+                                20,
+                            )
+                        }
                         if (localMsgs.length > 0) {
-                            runtimeData.messageList = localMsgs.concat(runtimeData.messageList)
+                            const existingIds = new Set(runtimeData.messageList.map((m) => String(m.message_id ?? '')))
+                            const addList = localMsgs.filter((m) => {
+                                const msgId = String(m?.message_id ?? '')
+                                return msgId.length === 0 || !existingIds.has(msgId)
+                            })
+                            if (addList.length > 0) {
+                                runtimeData.messageList.splice(0, 0, ...addList)
+                            }
                             // 检测 seq 缺口并发起补全请求
                             // 将边界消息（原列表第一条）加入检测范围
-                            const boundary = this.list[localMsgs.length] ?? this.list[localMsgs.length - 1]
-                            const seqGapAnchors = this.detectSeqGaps([...localMsgs, boundary])
+                            const boundary = this.list[addList.length] ?? this.list[addList.length - 1]
+                            const seqGapAnchors = this.detectSeqGaps([...addList, boundary])
                             if (seqGapAnchors.length > 0) {
                                 this.fillSeqGaps(seqGapAnchors)
                             }
-                            runtimeData.tags.nowGetHistory = false
-                            return
                         }
-                        // 本地为空，回落到网络请求
+                        // 本地命中后仍继续请求在线，以确保本地与在线混合加载
                     }
 
                     // 发起获取历史消息请求
@@ -1028,54 +1039,7 @@ import { Img } from '@renderer/function/model/img'
              * @param event 事件
              */
             mainKey(event: KeyboardEvent) {
-                // At 选择器激活时的键盘事件处理
-                if (this.tags.onAtFind && this.atFindList && this.atFindList.length > 0) {
-                    // 上下箭头键（支持按住快速滚动）
-                    if (event.keyCode === 38 || event.keyCode === 40) {
-                        event.preventDefault()
-
-                        const direction = event.keyCode === 38 ? -1 : 1
-
-                        // 立即执行一次移动
-                        this.moveAtSelection(direction)
-
-                        // 如果定时器已经存在，说明已经在处理按住状态，直接返回
-                        if (this.atScrollTimer !== null) return
-
-                        // 延迟后开始快速滚动
-                        this.atScrollTimer = setTimeout(() => {
-                            this.atScrollInterval = setInterval(() => {
-                                this.moveAtSelection(direction)
-                            }, 50) // 每50ms移动一次
-                        }, 300) // 300ms后开始快速滚动
-
-                        return
-                    }
-
-                    // 回车键选择
-                    if (event.keyCode === 13) {
-                        event.preventDefault()
-                        const selectedMember = this.atFindList[this.atSelectedIndex]
-                        if (selectedMember) {
-                            this.choiceAt(selectedMember.user_id)
-                        }
-                        return
-                    }
-
-                    // ESC 键取消
-                    if (event.keyCode === 27) {
-                        event.preventDefault()
-                        // 删除输入框中从最后一个 @ 开始的所有内容
-                        const lastAtIndex = this.msg.lastIndexOf('@')
-                        if (lastAtIndex >= 0) {
-                            this.msg = this.msg.substring(0, lastAtIndex)
-                        }
-                        this.tags.onAtFind = false
-                        this.atFindList = null
-                        this.atSelectedIndex = 0
-                        return
-                    }
-                }
+                if (this.mainAtKey(event)) return
 
                 if(this.tags.onAtFind) return
                 if (event.key !== 'Enter') return
@@ -1123,6 +1087,57 @@ import { Img } from '@renderer/function/model/img'
                 this.tags.sendTag = 'REFUSE'
             },
 
+            /**
+             * 处理 At 选择器按键（支持单行输入框和多行输入框）
+             * @returns 是否已拦截并处理
+             */
+            mainAtKey(event: KeyboardEvent) {
+                if (!this.tags.onAtFind) return false
+
+                // 上下箭头键（支持按住快速滚动）
+                if (event.keyCode === 38 || event.keyCode === 40) {
+                    event.preventDefault()
+
+                    const direction = event.keyCode === 38 ? -1 : 1
+
+                    // 立即执行一次移动
+                    this.moveAtSelection(direction)
+
+                    // 如果定时器已经存在，说明已经在处理按住状态，直接返回
+                    if (this.atScrollTimer !== null) return true
+
+                    // 延迟后开始快速滚动
+                    this.atScrollTimer = setTimeout(() => {
+                        this.atScrollInterval = setInterval(() => {
+                            this.moveAtSelection(direction)
+                        }, 50) // 每50ms移动一次
+                    }, 300) // 300ms后开始快速滚动
+
+                    return true
+                }
+
+                // 回车键选择
+                if (event.keyCode === 13) {
+                    event.preventDefault()
+                    const selectedMember = this.atFindList?.[this.atSelectedIndex]
+                    if (selectedMember) {
+                        this.choiceAt(selectedMember.user_id)
+                    }
+                    return true
+                }
+
+                // ESC 键关闭 At 列表
+                if (event.keyCode === 27) {
+                    event.preventDefault()
+                    this.tags.onAtFind = false
+                    this.atFindList = null
+                    this.atSelectedIndex = 0
+                    return true
+                }
+
+                return false
+            },
+
             handleCompositionStart() {
                 this.tags.sendTag = 'REFUSE'
             },
@@ -1133,6 +1148,10 @@ import { Img } from '@renderer/function/model/img'
 
             mainKeyUp(event: KeyboardEvent) {
                 const logger = new Logger()
+
+                if (event.keyCode === 27) {
+                    return
+                }
 
                 // 清除箭头键快速滚动定时器
                 if (event.keyCode === 38 || event.keyCode === 40) {

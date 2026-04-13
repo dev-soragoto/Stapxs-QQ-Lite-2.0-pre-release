@@ -89,6 +89,15 @@
 
 .chat-pan > div.more > div:nth-child(2) > div {
     background: rgba(var(--color-card-2-rgb), 0.5);
+    box-shadow: 0 0 3px var(--color-shader);
+    backdrop-filter: blur(20px);
+}
+.more-detail > div {
+    background: rgba(var(--color-card-2-rgb), 0.7);
+    backdrop-filter: blur(20px);
+}
+.more-detail > div.space {
+     backdrop-filter: unset;
 }
 .note-base {
     background: rgba(var(--color-card-rgb), 0.5);
@@ -101,7 +110,8 @@
     backdrop-filter: blur(10px);
 }
 .message.selected {
-    background: #00000014;
+    background: #00000010;
+    backdrop-filter: blur(5px);
 }
 
 .msg-replay {
@@ -112,6 +122,8 @@
 .jin-pan,
 .select-tag,
 .replay-tag,
+.at-tag,
+.search-tag,
 .img-pan {
     background-color: rgba(var(--color-card-rgb), 0.5);
     backdrop-filter: blur(15px);
@@ -120,6 +132,10 @@
 .face-stickers > img,
 .jin-pan-body > div {
     background: rgba(var(--color-card-rgb), 0.3);
+}
+.at-tag > div.selected,
+.at-tag > div:hover {
+    background-color: rgba(var(--color-card-2-rgb), 0.5);
 }
 
 .contributors-card {
@@ -151,11 +167,13 @@
 .opt-item input[type='password'],
 .opt-item input[type='text'],
 .opt-item select,
-.ss-range input,
 .opt-item > div.file-choice > div,
 .ss-switch > div,
 .debug-info {
     background: rgba(var(--color-card-1-rgb), 0.5);
+}
+.ss-range input {
+    background-color: rgba(var(--color-card-1-rgb), 0.5);
 }
 
 .dept-list > div:first-child {

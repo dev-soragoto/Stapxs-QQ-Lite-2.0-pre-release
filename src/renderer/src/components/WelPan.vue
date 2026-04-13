@@ -91,7 +91,7 @@
                                     index === 0 : Number(runtimeData.sysConfig.theme_color) === index"
                                 @change="save($event)">
                             <div
-                                :style="'background: var(--color-main-' + index + ')'">
+                                :style="{ 'background': `var(--color-main-${index})` }">
                                 <div />
                             </div>
                         </label>
@@ -242,8 +242,7 @@
                 <span>{{ $t('Stapxs QQ Lite 会将部分使用数据上传到自建的 umami 服务器中用于了解用户使用情况以及制作一些有趣的统计信息。') }}</span>
                 <span style="margin-bottom: 20px;">{{ $t('如果你并不希望上传这些数据，可以选择关闭它。') }}</span>
                 <div class="opt-item wel-opt-item"
-                    :style="runtimeData.sysConfig.close_ga !== true ?
-                        'background: var(--color-card-1);' : ''">
+                    :style="{ 'background': runtimeData.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
                     <font-awesome-icon :icon="['fas', 'cloud']" />
                     <div>
                         <span>{{ $t('关闭分析') }}</span>
