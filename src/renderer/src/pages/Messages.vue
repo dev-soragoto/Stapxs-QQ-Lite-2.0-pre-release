@@ -20,6 +20,10 @@
                     <div class="base only">
                         <span>{{ $t('消息') }}</span>
                         <div style="flex: 1" />
+                        <font-awesome-icon
+                    :icon="['fas', 'clock-rotate-left']"
+                    @click="openHistory"
+                />
                         <font-awesome-icon :icon="['fas', 'trash-can']" @click="cleanList" />
                     </div>
                     <div class="small">
@@ -188,7 +192,7 @@
     import Menu from 'vue3-bcui/packages/bc-menu/index'
     import Option from '@renderer/function/option'
 
-    import { defineComponent } from 'vue'
+    import { defineComponent, markRaw } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import {
         UserFriendElem,
@@ -212,6 +216,7 @@
     import { Notify } from '@renderer/function/notify'
     import { refreshFavicon } from '@renderer/function/favicon'
     import { backend } from '@renderer/runtime/backend'
+import History from '@renderer/components/History.vue'
 
     export default defineComponent({
         name: 'VueMessages',
@@ -593,6 +598,15 @@
             },
             showMenuEnd() {
                 this.showMenu = false
+            },
+
+            openHistory() {
+                const popInfo = {
+                    template: markRaw(History),
+                    svg: 'clock-rotate-left',
+                    title: app.config.globalProperties.$t('历史记录')
+                }
+                runtimeData.popBoxList.push(popInfo)
             },
         },
     })

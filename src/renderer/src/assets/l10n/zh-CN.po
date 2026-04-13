@@ -1555,3 +1555,6 @@ msgstr ""
 
 msgid "自助问答"
 msgstr ""
+
+msgid "历史记录"
+msgstr ""
