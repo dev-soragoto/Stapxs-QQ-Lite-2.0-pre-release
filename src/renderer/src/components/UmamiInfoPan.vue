@@ -150,9 +150,9 @@
                 </template>
                 <!-- 访客详情 & 事件详情 -->
                 <template v-if="showName === 'event' || showName === 'session'">
-                    <div v-show="mainListSelected != ''" v-if="eventData != null && eventData.color" class="pie-pan">
+                    <div v-show="mainListSelected != ''" v-if="eventData != null" class="pie-pan">
                         <v-chart :option="eventData" autoresize />
-                        <a>{{ $t('占比小于 {per}% 的数据将不会展示在饼图中', { per: minPiePercentage * 100 }) }}</a>
+                        <a v-if="eventData.series && eventData.series[0] && eventData.series[0].type === 'pie'">{{ $t('占比小于 {per}% 的数据将不会展示在饼图中', { per: minPiePercentage * 100 }) }}</a>
                     </div>
                     <div v-show="mainListSelected != ''" v-else>
                         <a>{{ $t('暂无数据') }}</a>
@@ -167,7 +167,7 @@
     import { defineComponent } from 'vue'
 
     import { use } from 'echarts/core'
-    import { PieChart, BarChart } from 'echarts/charts'
+    import { PieChart, BarChart, SunburstChart } from 'echarts/charts'
     import {
         LegendComponent,
         BrushComponent,
@@ -189,7 +189,8 @@
         ToolboxComponent,
         TooltipComponent,
         BarChart,
-        GridComponent
+        GridComponent,
+        SunburstChart
     ])
 
     const API_URL = import.meta.env.VITE_APP_MU_DATA_API
@@ -400,21 +401,19 @@
                         // 按 value 降序排列
                         pieData.sort((a: any, b: any) => b.value - a.value)
 
+                        const isSunburstMetric =
+                            value.indexOf('app_version') == 0 ||
+                            value.indexOf('os_version') == 0 ||
+                            value.indexOf('bot_version') == 0
+
                         // ======= 特殊处理 =======
-                        // 应用版本去除 beta- 后的部分，pre. 后的部分
-                        if (value.indexOf('app_version') == 0) {
-                            pieData = this.processAppVersion(pieData)
-                        }
-                        // 系统版本格式是：Windows 10.0.22031 (Web) 这样的，只取前两段。如果有 Web 全都归为 Web
-                        else if (value.indexOf('os_version') == 0) {
-                            pieData = this.processOsVersion(pieData)
-                        }
-                        // 机器人版本忽略版本号第三位，如果版本号前有 v 也去掉
-                        else if (value.indexOf('bot_version') == 0) {
-                            pieData = this.processBotVersion(pieData)
+                        // 应用版本、系统版本、机器人版本改为旭日图逐层展示
+                        if (isSunburstMetric) {
+                            this.eventData = this.buildSunburstOption(value, pieData, colorCard, colorFont)
+                            return
                         }
                         // 系统架构将 x86_64 统一为 x64、arm64 统一为 aarch64
-                        else if (value.indexOf('os_arch') == 0) {
+                        if (value.indexOf('os_arch') == 0) {
                             pieData = this.processOsArch(pieData)
                         }
                         // 触发按钮进行名称映射
@@ -710,6 +709,263 @@
                     }
                     return { value: item.value, name: name + ',' + version }
                 }))
+            },
+
+            buildSunburstOption(metric: string, pieData: Array<{ name: string, value: number }>, colorCard: string, colorFont: string) {
+                const sunburstData = this.getSunburstData(metric, pieData)
+                if (!sunburstData || sunburstData.length === 0) {
+                    return null
+                }
+
+                return {
+                    tooltip: {
+                        trigger: 'item',
+                        backgroundColor: colorCard,
+                        textStyle: {
+                            color: colorFont
+                        },
+                        formatter: (params: any) => {
+                            const treePath = params.treePathInfo || []
+                            const visiblePath = treePath.slice(1)
+                            const path = visiblePath.map((item: any) => item.name).join(' ')
+
+                            const toPercent = (part: number, whole: number) => {
+                                if (!whole || whole <= 0) return '0.00%'
+                                return `${((part / whole) * 100).toFixed(2)}%`
+                            }
+
+                            const rootValue = Number(treePath[0]?.value || params.value || 0)
+                            const levelLines = visiblePath.map((node: any, index: number) => {
+                                const currentValue = Number(node.value || 0)
+                                const parentValue = Number(treePath[index]?.value || rootValue)
+                                const parentPercent = toPercent(currentValue, parentValue)
+                                const totalPercent = toPercent(currentValue, rootValue)
+                                return `${node.name}: ${parentPercent} (${this.$t('全局')} ${totalPercent})`
+                            })
+
+                            return `${params.marker} ${path}<br/>${this.$t('数值')}: ${params.value}<br/>${levelLines.join('<br/>')}`
+                        }
+                    },
+                    series: [
+                        {
+                            type: 'sunburst',
+                            radius: ['20%', '90%'],
+                            itemStyle: {
+                                borderWidth: 3,
+                                borderRadius: 7,
+                                borderColor: colorCard
+                            },
+                            label: {
+                                show: false
+                            },
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: sunburstData
+                        }
+                    ]
+                }
+            },
+
+            getSunburstData(metric: string, pieData: Array<{ name: string, value: number }>) {
+                if (metric.indexOf('os_version') == 0) {
+                    return this.buildOsVersionSunburstData(pieData)
+                }
+                if (metric.indexOf('app_version') == 0) {
+                    return this.buildVersionSunburstData(pieData, 'app')
+                }
+                if (metric.indexOf('bot_version') == 0) {
+                    return this.buildVersionSunburstData(pieData, 'bot')
+                }
+                return []
+            },
+
+            buildOsVersionSunburstData(pieData: Array<{ name: string, value: number }>) {
+                const tree: Record<string, Record<string, number>> = {}
+                const appleSystems = new Set(['macOS', 'iPadOS', 'iOS'])
+
+                for (const item of pieData) {
+                    const parsed = this.parseOsVersionNode(item.name)
+                    const rawSystemName = parsed.systemName
+                    const systemName = appleSystems.has(rawSystemName) ? `apple/${rawSystemName}` : rawSystemName
+                    const version = parsed.version
+
+                    if (!tree[systemName]) {
+                        tree[systemName] = {}
+                    }
+                    tree[systemName][version] = (tree[systemName][version] || 0) + item.value
+                }
+
+                const result: Array<{ name: string, children: any[] }> = []
+                const appleChildren: Array<{ name: string, children: any[] }> = []
+
+                for (const systemName of Object.keys(tree)) {
+                    const children = Object.keys(tree[systemName]).map(version => ({
+                        name: version,
+                        value: tree[systemName][version]
+                    }))
+                    children.sort((a, b) => b.value - a.value)
+
+                    if (systemName.startsWith('apple/')) {
+                        appleChildren.push({
+                            name: systemName.replace('apple/', ''),
+                            children
+                        })
+                    } else {
+                        result.push({
+                            name: systemName,
+                            children
+                        })
+                    }
+                }
+
+                if (appleChildren.length > 0) {
+                    appleChildren.sort((a, b) => {
+                        const aValue = a.children.reduce((sum, child) => sum + child.value, 0)
+                        const bValue = b.children.reduce((sum, child) => sum + child.value, 0)
+                        return bValue - aValue
+                    })
+                    result.push({
+                        name: 'apple',
+                        children: appleChildren
+                    })
+                }
+
+                result.sort((a, b) => {
+                    const aValue = a.children.reduce((sum, child) => sum + child.value, 0)
+                    const bValue = b.children.reduce((sum, child) => sum + child.value, 0)
+                    return bValue - aValue
+                })
+                return result
+            },
+
+            buildVersionSunburstData(pieData: Array<{ name: string, value: number }>, type: 'app' | 'bot') {
+                const tree: Record<string, Record<string, Record<string, number>>> = {}
+
+                for (const item of pieData) {
+                    let parsed
+                    if (type === 'app') {
+                        parsed = this.parseAppVersionNode(item.name)
+                    } else {
+                        parsed = this.parseBotVersionNode(item.name)
+                    }
+
+                    const branch = parsed.branch
+                    const majorMinor = parsed.majorMinor
+                    const detail = parsed.detail
+
+                    if (!tree[branch]) {
+                        tree[branch] = {}
+                    }
+                    if (!tree[branch][majorMinor]) {
+                        tree[branch][majorMinor] = {}
+                    }
+                    tree[branch][majorMinor][detail] = (tree[branch][majorMinor][detail] || 0) + item.value
+                }
+
+                const result = Object.keys(tree).map(branch => ({
+                    name: branch,
+                    children: Object.keys(tree[branch]).map(majorMinor => ({
+                        name: majorMinor,
+                        children: Object.keys(tree[branch][majorMinor]).map(detail => ({
+                            name: detail,
+                            value: tree[branch][majorMinor][detail]
+                        })).sort((a, b) => b.value - a.value)
+                    }))
+                }))
+
+                result.sort((a, b) => {
+                    const sumNode = (node: any): number => {
+                        if (node.value) return node.value
+                        if (!node.children) return 0
+                        return node.children.reduce((sum: number, child: any) => sum + sumNode(child), 0)
+                    }
+                    return sumNode(b) - sumNode(a)
+                })
+
+                return result
+            },
+
+            parseOsVersionNode(rawName: string) {
+                const raw = (rawName || '').trim()
+                if (!raw) {
+                    return {
+                        systemName: this.$t('未知'),
+                        version: this.$t('未知')
+                    }
+                }
+
+                if (raw.includes('(Web)')) {
+                    return {
+                        systemName: 'Web',
+                        version: 'Web'
+                    }
+                }
+
+                const parts = raw.split(/\s+/)
+                if (parts.length >= 2) {
+                    return {
+                        systemName: parts[0],
+                        version: parts[1]
+                    }
+                }
+
+                return {
+                    systemName: raw,
+                    version: this.$t('未知')
+                }
+            },
+
+            parseAppVersionNode(rawName: string) {
+                const raw = (rawName || '').trim()
+                const segs = raw.split(',').map(seg => seg.trim()).filter(Boolean)
+                const versionRaw = segs[1] || ''
+                const versionLower = versionRaw.toLowerCase()
+                const branchRaw = segs[0] || this.$t('未知')
+                const branch = versionLower.includes('pre') ? 'pre' : branchRaw
+                const versionInfo = this.extractVersionGroups(versionRaw)
+                return {
+                    branch,
+                    majorMinor: versionInfo.majorMinor,
+                    detail: versionInfo.detail
+                }
+            },
+
+            parseBotVersionNode(rawName: string) {
+                const raw = (rawName || '').trim()
+                const segs = raw.split(',').map(seg => seg.trim()).filter(Boolean)
+                const branch = segs[0] || this.$t('未知')
+                const versionRaw = segs[1] || segs[0] || ''
+                const versionInfo = this.extractVersionGroups(versionRaw)
+                return {
+                    branch,
+                    majorMinor: versionInfo.majorMinor,
+                    detail: versionInfo.detail
+                }
+            },
+
+            extractVersionGroups(rawVersion: string) {
+                const cleaned = (rawVersion || '').replace(/^v/i, '')
+                const matched = cleaned.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?(.*)?/) || []
+
+                if (!matched[1]) {
+                    const unknown = this.$t('未知')
+                    return {
+                        majorMinor: unknown,
+                        detail: unknown
+                    }
+                }
+
+                const major = matched[1]
+                const minorNum = matched[2] || '0'
+                const patchNum = matched[3] || '0'
+                const suffix = (matched[4] || '').trim()
+                const detail = `${patchNum}${suffix}`
+
+                return {
+                    majorMinor: `${major}.${minorNum}`,
+                    detail
+                }
             },
 
             /**
