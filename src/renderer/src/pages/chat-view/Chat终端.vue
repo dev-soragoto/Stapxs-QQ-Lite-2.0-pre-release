@@ -107,9 +107,9 @@
                         <div
                             v-if="msgItem.html"
                             v-html="msgItem.html" />
-                        <span
-                            v-else
-                            :style="'color:' + msgItem.color">{{ msgItem.str }}</span>
+                        <span v-else :style="{ 'color': msgItem.color }">
+                            {{ msgItem.str }}
+                        </span>
                     </div>
                 </template>
             </div>

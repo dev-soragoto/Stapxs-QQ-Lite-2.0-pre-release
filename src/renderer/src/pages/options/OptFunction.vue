@@ -274,8 +274,7 @@
             <header>{{ $t('消息存储') }}</header>
             <div
                 class="opt-item"
-                :style="runtimeData.sysConfig.enable_local_history ?
-                    'background: var(--color-card-1);' : ''">
+                :style="{ 'background': runtimeData.sysConfig.enable_local_history ? 'var(--color-card-1)' : 'none' }">
                 <div :class="checkDefault('enable_local_history')" />
                 <font-awesome-icon :icon="['fas', 'database']" />
                 <div>
@@ -294,6 +293,40 @@
                 {{
                     $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
                 }}
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
+                <div :class="checkDefault('mixed_load_messages')" />
+                <font-awesome-icon :icon="['fas', 'shuffle']" />
+                <div>
+                    <span>{{ $t('混合加载消息（实验性）') }}</span>
+                    <span>{{ $t('优先加载本地缓存的消息以取得更快的加载速度') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.mixed_load_messages"
+                        type="checkbox"
+                        name="mixed_load_messages"
+                        @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
+                <div :class="checkDefault('disable_local_history_image_cache')" />
+                <font-awesome-icon :icon="['fas', 'image']" />
+                <div>
+                    <span>{{ $t('不缓存图片') }}</span>
+                    <span>{{ $t('开启后将删除已缓存图片，仅保留消息文本') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.disable_local_history_image_cache"
+                        type="checkbox"
+                        name="disable_local_history_image_cache"
+                        @change="toggleLocalHistoryImageCache">
+                    <div>
+                        <div />
+                    </div>
+                </label>
             </div>
             <div v-if="runtimeData.sysConfig.enable_local_history && dbStats != null" class="db-stats-cards">
                 <div class="db-stat-card">
@@ -317,8 +350,7 @@
             <header>{{ $t('分析信息') }}</header>
             <div
                 class="opt-item"
-                :style="runtimeData.sysConfig.close_ga !== true ?
-                    'background: var(--color-card-1);' : ''">
+                :style="{ 'background': runtimeData.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
                 <div :class="checkDefault('close_ga')" />
                 <font-awesome-icon :icon="['fas', 'cloud']" />
                 <div>
@@ -373,12 +405,13 @@
 
 <script lang="ts">
     import { defineComponent, markRaw } from 'vue'
-    import { runASWEvent as save, checkDefault } from '@renderer/function/option'
+    import { PopInfo, PopType } from '@renderer/function/base'
+    import { runASWEvent as save, checkDefault, runAS } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
-import { backend } from '@renderer/runtime/backend'
-import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
+    import { backend } from '@renderer/runtime/backend'
+    import { dbClearImages, dbGetStats } from '@renderer/function/utils/localHistoryUtil'
 
     export default defineComponent({
         name: 'ViewOptFunction',
@@ -389,6 +422,7 @@ import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
                 runtimeData: runtimeData,
                 dbStats: null as { totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null,
                 save: save,
+                clearImageProgressText: '' as string,
                 ndt: 0,
                 ndv: false,
             }
@@ -412,6 +446,73 @@ import { dbGetStats } from '@renderer/function/utils/localHistoryUtil'
             },
         },
         methods: {
+            toggleLocalHistoryImageCache(event: Event) {
+                save(event)
+
+                const sender = event.target as HTMLInputElement
+                if (!sender.checked) return
+
+                const selfId = runtimeData.loginInfo?.uin
+                if (!selfId) {
+                    new PopInfo().add(PopType.INFO, this.$t('请连接后在进行操作'))
+                    return
+                }
+
+                const popInfo = {
+                    title: this.$t('提醒'),
+                    html: `<span>${this.$t('确认要关闭图片缓存吗？所有已缓存图片都将被清除！')}</span>`,
+                    button: [
+                        {
+                            text: this.$t('确认'),
+                            fun: async() =>  {
+                                runtimeData.popBoxList.shift()
+
+                                const progressPop = {
+                                    title: this.$t('提醒'),
+                                    html: `<span>${this.$t('正在清理图片缓存 0/0（0%）')}</span>`,
+                                    allowClose: false
+                                }
+
+                                this.clearImageProgressText = this.$t('正在清理图片缓存 0/0（0%）')
+                                runtimeData.popBoxList.push(progressPop)
+
+                                const result = await dbClearImages(selfId, (progress) => {
+                                    const text = this.$t('正在清理图片缓存 {deleted}/{total}（{percent}%）', {
+                                        deleted: progress.deleted,
+                                        total: progress.total,
+                                        percent: progress.progress.toFixed(1),
+                                    })
+                                    this.clearImageProgressText = text
+                                    progressPop.html = `<span>${text}</span>`
+                                })
+
+                                if (runtimeData.popBoxList.length > 0) {
+                                    runtimeData.popBoxList.shift()
+                                }
+
+                                new PopInfo().add(
+                                    PopType.INFO,
+                                    this.$t('图片缓存清理完成，共删除 {count} 项（{batches} 批）。', {
+                                        count: result.deleted,
+                                        batches: result.batches,
+                                    }),
+                                )
+                                this.clearImageProgressText = ''
+                                this.loadDbStats()
+                            },
+                        },
+                        {
+                            text: this.$t('取消'),
+                            master: true,
+                            fun: () => {
+                                runAS('disable_local_history_image_cache', false)
+                                runtimeData.popBoxList.shift()
+                            },
+                        }
+                    ],
+                }
+                runtimeData.popBoxList.push(popInfo)
+            },
             async loadDbStats() {
                 if (runtimeData.loginInfo?.uin) {
                     this.dbStats = await dbGetStats(runtimeData.loginInfo.uin)

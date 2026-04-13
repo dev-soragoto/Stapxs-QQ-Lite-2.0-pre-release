@@ -29,6 +29,7 @@ export interface RunTimeDataElem {
         nowGetHistory: boolean
         canLoadHistory: boolean
         loadHistoryFail: boolean
+        historyBeforeTime?: number
         openSideBar: boolean
         loginWaveTimer?: any
         connectSsl: boolean
