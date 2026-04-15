@@ -1,11 +1,12 @@
 <template>
-    <div ref="lottieContainer" class="lazy-lottie">
+    <div ref="lottieContainer" :class="['lazy-lottie', {'loaded': loaded }]">
         <Lottie
             v-if="shouldRender"
             ref="lottieRef"
             :animation-link="animationLink"
             :title="title"
-            :auto-play="false" />
+            :auto-play="false"
+            @on-animation-loaded="loaded = true" />
     </div>
 </template>
 
@@ -21,6 +22,7 @@ defineProps<{
 const lottieContainer = ref<HTMLElement | null>(null)
 const lottieRef = ref<any>(null)
 const shouldRender = ref(false)
+const loaded = ref(false)
 let observer: IntersectionObserver | null = null
 
 const playAnimation = () => {
@@ -93,5 +95,8 @@ onUnmounted(() => {
     display: inline-block;
     min-height: 100px;
     min-width: 100px;
+}
+.lazy-lottie.loaded {
+    background: transparent !important;
 }
 </style>
