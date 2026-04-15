@@ -7,7 +7,7 @@ export enum BotMsgType {
 }
 
 export interface RunTimeDataElem {
-    sysConfig: Record<keyof typeof optDefault, any|null>
+    sysConfig: Record<keyof typeof optDefault, any | null>
     jsonMap?: any
     botInfo: { [key: string]: any }
     loginInfo: { [key: string]: any }
@@ -28,7 +28,7 @@ export interface RunTimeDataElem {
         msgType: BotMsgType
         nowGetHistory: boolean
         canLoadHistory: boolean
-		loadHistoryFail: boolean
+        loadHistoryFail: boolean
         historyBeforeTime?: number
         openSideBar: boolean
         loginWaveTimer?: any
@@ -44,7 +44,7 @@ export interface RunTimeDataElem {
         lastHeartbeatTime?: number
         backTimes: number
     }
-	inch: number
+    inch: number
     messageList: any[]
     mergeMsgStack: MergeStackData[]
     mergeMessageList?: any[] | undefined
@@ -177,7 +177,7 @@ export interface MsgItemElem {
     [key: string]: any
 }
 
-export interface MergeStackData{
+export interface MergeStackData {
     messageList: any[]      // 消息列表
     imageList: any[]        // 图片列表
     placeCache: number      // 位置缓存
@@ -189,3 +189,5 @@ export interface MenuEventData {
     y: number
     target: HTMLElement
 }
+
+export type Session = UserGroupElem & UserFriendElem

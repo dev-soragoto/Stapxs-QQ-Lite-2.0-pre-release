@@ -599,6 +599,7 @@ import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/func
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
+import { useSessionHistoryStore } from '@renderer/state/sessionHistory'
 </script>
 
 <script lang="ts">
@@ -756,6 +757,11 @@ import { Img } from '@renderer/function/model/img'
                 this.$nextTick(() => {
                     this.resizeMainInput()
                 })
+                // 记录历史
+                const history = useSessionHistoryStore()
+                const sessionId = this.chat.show.id
+                const session = [...runtimeData.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
+                if (session) history.add(session)
             },
             msg(newMsg: string, oldMsg: string) {
                 this.oldMsg = oldMsg
@@ -767,6 +773,12 @@ import { Img } from '@renderer/function/model/img'
             }
         },
         async mounted() {
+            // 记录历史
+            const history = useSessionHistoryStore()
+            const sessionId = this.chat.show.id
+            const session = [...runtimeData.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
+            if (session) history.add(session)
+
             // 消息列表刷新
             this.updateList(this.list.length, 0)
             // PS：由于监听 list 本身返回的新旧值是一样，于是监听 length（反正也只要知道长度）
