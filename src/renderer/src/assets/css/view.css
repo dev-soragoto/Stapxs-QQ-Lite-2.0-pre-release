@@ -718,6 +718,7 @@ textarea:focus {
     transition:
         background 0.2s,
         color 0.2s,
+        backdrop-filter 0.2s,
         transform 0.2s;
 }
 .friend-body.active {
