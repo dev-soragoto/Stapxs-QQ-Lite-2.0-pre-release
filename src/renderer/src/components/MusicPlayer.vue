@@ -9,6 +9,7 @@
                 </a>
                 <audio :src="backend.proxyUrl(currentMusic?.url ?? '')"
                     @loadedmetadata="audioLoaded"
+                    @error="audioLoadFail"
                     @timeupdate="audioUpdate()" />
                 <div>
                     <input id="music-controller-bar" value="0" min="0"
@@ -60,6 +61,9 @@
     import { backend } from '@renderer/runtime/backend'
     import { registerExtraOptionCard, registerExtraOptionItem } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
+import { PopInfo, PopType } from '@renderer/function/base'
+
+    type LyricLine = { [key: number]: string }
 
     export interface MusicInfo {
         title: string,                                  // 标题
@@ -70,7 +74,7 @@
         free?: boolean                                  // 试听标识
         time?: number                                   // 音频时长
         data?: any                                      // 额外数据（如歌曲ID等）
-        lyric?: { time: number, text: string }[]        // 歌词（可选）
+        lyric?: LyricLine[]                              // 歌词（可选）
     }
 
     const emit = ref(undefined as any)
@@ -81,6 +85,67 @@
     const readyToPlayState = ref(false)
     const audoState = ref(null as HTMLAudioElement | null)
     const nowLyricState = ref(undefined as { index: number, text: string } | undefined)
+
+    const lyricTime = (line: LyricLine) => parseFloat(Object.keys(line)[0])
+    const lyricText = (line: LyricLine) => Object.values(line)[0]
+
+    const parseLyric = (lyricText: string) => {
+        return lyricText
+            .split('\n')
+            .flatMap((line: string) => {
+                const timeMatches = [...line.matchAll(/\[(\d{1,2}):(\d{1,2}(?:\.\d+)?)\]/g)]
+                if (timeMatches.length === 0) {
+                    return []
+                }
+
+                const text = line.replace(/\[[^\]]+\]/g, '').trim()
+                if (!text) {
+                    return []
+                }
+
+                return timeMatches.map(match => {
+                    const time = parseFloat(match[1]) * 60 + parseFloat(match[2])
+                    return {
+                        [time]: text,
+                    }
+                })
+            })
+            .sort((a, b) => lyricTime(a) - lyricTime(b))
+    }
+
+    const mergeLyric = (originalLyric: LyricLine[], translatedLyric: LyricLine[]) => {
+        const merged = new Map<number, string>()
+
+        originalLyric.forEach(line => {
+            merged.set(lyricTime(line), lyricText(line))
+        })
+        translatedLyric.forEach(line => {
+            merged.set(lyricTime(line), lyricText(line))
+        })
+
+        return [...merged.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([time, text]) => ({ [time]: text }))
+    }
+
+    const findLyricIndex = (lyrics: LyricLine[], currentTime: number) => {
+        let left = 0
+        let right = lyrics.length - 1
+        let ans = -1
+
+        while (left <= right) {
+            const mid = Math.floor((left + right) / 2)
+            const midTime = lyricTime(lyrics[mid])
+            if (midTime <= currentTime) {
+                ans = mid
+                left = mid + 1
+            } else {
+                right = mid - 1
+            }
+        }
+
+        return ans
+    }
 
     export const getCurrentMusic = () => {
         if (currentIndexState.value < 0 || currentIndexState.value >= musicListState.value.length) {
@@ -223,28 +288,24 @@
                     fetch(import.meta.env.VITE_APP_163_MUSIC_API + '/lyric?id=' + currentMusic.value.data)
                         .then(res => res.json())
                         .then(data => {
-                            // lrc（原文），tlyric（翻译），优先用翻译
-                            let lyric = (data.tlyric?.lyric || data.lrc?.lyric || '')
-                            // 如果设置了显示原歌词，则使用原歌词
-                            if(runtimeData.sysConfig.original_lyrics) {
-                                lyric = data.lrc?.lyric || lyric
-                            }
-                            const final = lyric.split('\n').map((line: string) => {
-                                const text = line.split(']')[1]
-                                const time = line.split(']')[0].substring(1).split(':')
-                                if(text && time.length === 2) {
-                                    return {
-                                        time: parseFloat(time[0]) * 60 + parseFloat(time[1]),
-                                        text,
-                                    }
-                                }
-                                return null
-                            }).filter((line: any) => line !== null)
+                            const originalLyric = parseLyric(data.lrc?.lyric || '')
+                            const translatedLyric = parseLyric(data.tlyric?.lyric || '')
+                            // 默认展示“翻译 + 原文”合并结果：同时间点优先使用翻译歌词。
+                            // 当用户开启“显示原歌词”时，仅展示原文歌词。
+                            const final = runtimeData.sysConfig.original_lyrics ? originalLyric : mergeLyric(originalLyric, translatedLyric)
+
                             if (currentMusic.value === musicRef) {
                                 musicRef.lyric = final
                             }
                         })
                     }
+            }
+
+            const audioLoadFail = () => {
+                if(currentMusic.value?.title != undefined) {
+                    new PopInfo().add(PopType.INFO, '加载资源 ' + currentMusic.value?.title + ' 失败', false)
+                    switchMusic(currentIndex.value + 1, true)
+                }
             }
 
             const audioUpdate = () => {
@@ -275,28 +336,20 @@
                         }
                     }
 
-                    if(currentMusic.value?.lyric) {
-                        // 如果没有 nowLyric 就循环定位
-                        if(!nowLyric.value) {
-                            for(let i = 0; i < currentMusic.value.lyric.length; i++) {
-                                if(currentMusic.value.lyric[i].time > audio.value.currentTime) {
-                                    nowLyric.value = {
-                                        index: i - 1,
-                                        text: currentMusic.value.lyric[i - 1]?.text
-                                    }
-                                    break
+                    if(currentMusic.value?.lyric && currentMusic.value.lyric.length > 0) {
+                        const lyricIndex = findLyricIndex(currentMusic.value.lyric, audio.value.currentTime)
+                        if(lyricIndex >= 0) {
+                            const text = lyricText(currentMusic.value.lyric[lyricIndex])
+                            if(!nowLyric.value || nowLyric.value.index !== lyricIndex || nowLyric.value.text !== text) {
+                                nowLyric.value = {
+                                    index: lyricIndex,
+                                    text,
                                 }
                             }
                         } else {
-                            // 如果有 nowLyric 就判断是否需要更新
-                            const nextIndex = nowLyric.value.index + 1
-                            if(nextIndex < currentMusic.value.lyric.length && currentMusic.value.lyric[nextIndex].time <= audio.value.currentTime) {
-                                nowLyric.value = {
-                                    index: nextIndex,
-                                    text: currentMusic.value.lyric[nextIndex].text
-                                }
-                            }
+                            nowLyric.value = undefined
                         }
+
                         if(runtimeData.sysConfig.glabal_lyric == true) {
                             emit.value('update-lyric', nowLyric.value?.text ?? currentMusic.value.title)
                         } else {
@@ -343,6 +396,7 @@
                 audio,
                 isLoaded,
                 audioLoaded,
+                audioLoadFail,
                 audioUpdate,
                 audioChange,
                 audioControll,
