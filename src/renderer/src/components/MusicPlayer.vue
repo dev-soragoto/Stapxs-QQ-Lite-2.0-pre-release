@@ -7,7 +7,7 @@
                     <a v-if="currentMusic?.free != null">{{ $t('（试听）') }}</a>
                     <span> / {{ currentMusic?.author.join('/') }}</span>
                 </a>
-                <audio :src="backend.proxyUrl(currentMusic?.url ?? '')"
+                <audio :src="currentMusic?.url ?? ''"
                     @loadedmetadata="audioLoaded"
                     @timeupdate="audioUpdate()" />
                 <div>
@@ -171,6 +171,20 @@
                     audio.value.play()
                     readyToPlay.value = false
                 }
+                // 更新媒体信息
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title : currentMusic.value?.title ?? '',
+                        artist: currentMusic.value?.author.join('/') ?? '',
+                        artwork: [
+                            { src: currentMusic.value?.cover ?? '', sizes: '130x130', type: 'image/png' },
+                        ]
+                    });
+
+                    navigator.mediaSession.setActionHandler('nexttrack', () => {
+                        switchMusic(currentIndex.value + 1, true)
+                    });
+                }
             }
 
             const audioUpdate = () => {
@@ -190,7 +204,7 @@
                             currentIndex.value = musicList.value.length - 1
                         }
                         if(currentIndex.value >= 0) {
-                            audio.value.src = backend.proxyUrl(musicList.value[currentIndex.value].url)
+                            audio.value.src = musicList.value[currentIndex.value].url
                             readyToPlay.value = true
                         } else {
                             resetController.value()
