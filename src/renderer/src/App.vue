@@ -52,6 +52,10 @@
                         class="music-entry-cover"
                         :src="tags.currentMusic.cover"
                         :alt="tags.currentMusic.title">
+                    <template v-if="tags.currentMusic">
+                        <font-awesome-icon v-if="tags.musicPlaying" class="music-entry-status" :icon="['fas', 'play']" />
+                        <font-awesome-icon v-else class="music-entry-status" :icon="['fas', 'pause']" />
+                    </template>
                 </li>
                 <li :class="tags.page == 'Options' ? 'active' : ''" @click="changeTab('设置', 'Options', false)">
                     <font-awesome-icon :icon="['fas', 'gear']" />
@@ -202,7 +206,10 @@
         </TransitionGroup>
         <Transition name="music-player-float">
             <div v-show="tags.showMusicPlayer" class="global-music-player ss-card">
-                <MusicPlayer @open-panel="toggleMusicPlayer" @update-lyric="updateMusicLyric" />
+                <MusicPlayer
+                    @open-panel="toggleMusicPlayer"
+                    @update-lyric="updateMusicLyric"
+                    @update-status="updateMusicStatus" />
             </div>
         </Transition>
         <Transition name="modal">
@@ -313,6 +320,7 @@ export default defineComponent({
                 showHistoryDropdown: false,
                 showMusicPlayer: false,
                 currentMusic: null as null | { title: string, cover: string },
+                musicPlaying: false,
                 musicLyric: '',
             },
             fps: {
@@ -594,6 +602,9 @@ export default defineComponent({
         },
         updateMusicLyric(lyric: string) {
             this.tags.musicLyric = lyric
+        },
+        updateMusicStatus(isPlaying: boolean) {
+            this.tags.musicPlaying = isPlaying
         },
 
         refreshCurrentMusic() {
@@ -1039,10 +1050,17 @@ export default defineComponent({
 }
 
 .music-entry-cover {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     border-radius: 6px;
     object-fit: cover;
+    margin: 10px;
+}
+.music-entry-status {
+    transform: translateY(calc(-100% - 3px));
+    margin-bottom: calc(-100% + 10px);
+    background-color: transparent !important;
+    color: #fff !important;
 }
 
 .global-music-player {

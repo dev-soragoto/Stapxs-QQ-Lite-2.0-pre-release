@@ -7,7 +7,7 @@
                     <a v-if="currentMusic?.free != null">{{ $t('（试听）') }}</a>
                     <span> / {{ currentMusic?.author?.join('/') }}</span>
                 </a>
-                <audio :src="currentMusic?.url ?? ''"
+                <audio :src="backend.proxyUrl(currentMusic?.url ?? '')"
                     @loadedmetadata="audioLoaded"
                     @timeupdate="audioUpdate()" />
                 <div>
@@ -19,8 +19,8 @@
                             width: sizeDur / sizeMax * 100 > 100 ? 'calc(100% + 9px)' : ('calc(' + (sizeDur / sizeMax * 100) + '% + 9px)'),
                         }" />
                         <div :style="{
-                            width: sizeReal > 0 ? ((1 - sizeMax / sizeReal) * 100) + '%' : '0%',
-                            marginLeft: sizeReal > 0 ? (sizeMax / sizeReal * 100) + '%' : '0%',
+                            width: sizeReal > 0 ? ('calc(' + ((1 - (sizeReal / sizeMax)) * 100) + '% - 9px)') : '0%',
+                            marginLeft: sizeReal > 0 ? ('calc(' + ((sizeReal / sizeMax * 100) + '% + 9px)')) : '0%',
                         }" />
                     </div>
                     <font-awesome-icon v-if="!isLoaded" :icon="['fas', 'spinner']" spin />
@@ -123,7 +123,7 @@
 
     export default defineComponent({
         name: 'MusicPlayer',
-        emits: ['open-panel', 'update-lyric'],
+        emits: ['open-panel', 'update-lyric', 'update-status'],
         setup(_, context) {
             emit.value = context.emit
             const audio = audoState
@@ -249,6 +249,8 @@
 
             const audioUpdate = () => {
                 if(audio.value) {
+                    emit.value('update-status', audio.value.paused)
+
                     const bar = document.getElementById('music-controller-bar') as HTMLInputElement
                     if(bar) {
                         bar.value = audio.value.currentTime.toString()
@@ -265,7 +267,7 @@
                         }
                         if(currentIndex.value >= 0) {
                             resetController.value()
-                            audio.value.src = musicList.value[currentIndex.value].url
+                            audio.value.src = backend.proxyUrl(musicList.value[currentIndex.value].url)
                             readyToPlay.value = true
                         } else {
                             resetController.value()

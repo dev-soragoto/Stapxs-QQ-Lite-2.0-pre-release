@@ -83,7 +83,7 @@ textarea:focus {
     position: absolute;
     width: 100%;
     padding: 10px 0;
-    z-index: 101;
+    z-index: 99;
     height: calc(var(--safe-area-top) + 10px);
 }
 
