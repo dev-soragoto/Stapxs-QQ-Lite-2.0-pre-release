@@ -254,21 +254,6 @@
                     </div>
                 </label>
             </div>
-            <div class="opt-item">
-                <div :class="checkDefault('close_browser')" />
-                <font-awesome-icon :icon="['fas', 'globe']" />
-                <div>
-                    <span>{{ $t('禁用内置浏览器') }}</span>
-                    <span>{{ $t('让我看看你的浏览器 👀') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.close_browser"
-                        type="checkbox" name="close_browser" @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
-            </div>
         </div>
         <div v-if="backend.type === 'tauri'" class="ss-card">
             <header>{{ $t('消息存储') }}</header>

@@ -83,51 +83,14 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
  * @param url 链接
  * @param external 是否外部打开
  */
-export function openLink(url: string, external = false) {
+export function openLink(url: string) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
     if (backend.isDesktop()) {
-        if (!external && !runtimeData.sysConfig.close_browser) {
-            runtimeData.popBoxList = []
-            url = backend.proxyUrl(url)
-            const popInfo = {
-                html: `<iframe src="${url}" class="view-iframe"></iframe>`,
-                full: true,
-                button: [
-                    {
-                        text: app.config.globalProperties.$t(
-                            '请不要在内嵌页面中输入敏感信息，内嵌页面并不安全。',
-                        ),
-                        fun: () => undefined,
-                    },
-                    {
-                        text: app.config.globalProperties.$t('打开…'),
-                        fun: () => {
-                            const shell = window.electron?.shell
-                            if (shell) {
-                                shell.openExternal(url)
-                            } else {
-                                backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
-                            }
-                            runtimeData.popBoxList.shift()
-                        },
-                    },
-                    {
-                        text: app.config.globalProperties.$t('关闭'),
-                        master: true,
-                        fun: () => {
-                            runtimeData.popBoxList.shift()
-                        },
-                    },
-                ],
-            }
-            runtimeData.popBoxList.push(popInfo)
+        const shell = window.electron?.shell
+        if (shell) {
+            shell.openExternal(url)
         } else {
-            const shell = window.electron?.shell
-            if (shell) {
-                shell.openExternal(url)
-            } else {
-                backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
-            }
+            backend.call('', 'sys:openInBrowser', false, backend.unProxyUrl(url))
         }
     } else {
         window.open(url)
@@ -855,7 +818,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         {
             text: $t('下载更新…'),
             master: true,
-            fun: () => openLink(data.html_url, true),
+            fun: () => openLink(data.html_url),
         },
     ] : [
         {
@@ -874,7 +837,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
         button: isUpdated ? [
             {
                 text: $t('查看…'),
-                fun: () => openLink(data.html_url, true),
+                fun: () => openLink(data.html_url),
             },
             {
                 text: $t('知道了'),

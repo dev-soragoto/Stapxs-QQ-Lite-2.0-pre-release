@@ -105,7 +105,6 @@ export const optDefault: { [key: string]: any } = {
     send_face: false,
     use_breakline: true,
     send_key: 'none',
-    close_browser: false,
     close_ga: false,
     open_ga_bot: true,
     record_recent_emoji: '100times' as 'none' | 'order' | '100times' | '500times',

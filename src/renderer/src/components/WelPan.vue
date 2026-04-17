@@ -51,12 +51,12 @@
             <div />
             <div>
                 <span>{{ $t('在开始之前，请阅读以下条款：') }}</span>
-                <a @click="openLink(`https://github.com/${repoName}/blob/next/DISCLAIMER.md`, true)">Stapxs QQ Lite 免责条款（简体中文）</a>
-                <a @click="openLink(`https://github.com/${repoName}/blob/next/LICENSE`, true)">Stapxs QQ Lite 开源许可（英文）</a>
+                <a @click="openLink(`https://github.com/${repoName}/blob/next/DISCLAIMER.md`)">Stapxs QQ Lite 免责条款（简体中文）</a>
+                <a @click="openLink(`https://github.com/${repoName}/blob/next/LICENSE`)">Stapxs QQ Lite 开源许可（英文）</a>
                 <br>
                 <span>{{ $t('并酌情阅读以下文档：') }}</span>
-                <a @click="openLink('https://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html', true)">《如何有效地报告 BUG》</a>
-                <a @click="openLink('https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md', true)">《提问的智慧》</a>
+                <a @click="openLink('https://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html')">《如何有效地报告 BUG》</a>
+                <a @click="openLink('https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md')">《提问的智慧》</a>
             </div>
             <span>{{ $t('点击继续则默许已阅读并同意以上条款内容') }}</span>
         </div>

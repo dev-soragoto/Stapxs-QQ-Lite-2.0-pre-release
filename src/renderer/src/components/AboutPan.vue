@@ -203,7 +203,7 @@
                             text: this.$t('打开…'),
                             master: true,
                             fun: () => {
-                                openLink(import.meta.env.VITE_APP_SPONSORS_URL, true)
+                                openLink(import.meta.env.VITE_APP_SPONSORS_URL)
                                 runtimeData.popBoxList.shift()
                             },
                         }
