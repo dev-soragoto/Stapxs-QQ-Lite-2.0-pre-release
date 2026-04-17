@@ -324,7 +324,8 @@
                                     type: 'music163',
                                     cover: pageViewInfo.data.cover,
                                     free: pageViewInfo.data.info.free,
-                                    time: pageViewInfo.data.info.time
+                                    time: pageViewInfo.data.info.time,
+                                    data: pageViewInfo.data.id,
                                 })" />
                             </div>
                         </div>

@@ -5,6 +5,9 @@
         {{ ' / client: ' + appClient.type }}
         {{ ' / fps: ' + fps.value }}
     </div>
+    <div v-if="tags.musicLyric != ''" class="lyric-bar">
+        {{ tags.musicLyric }}
+    </div>
     <div v-if="['linux', 'win32'].includes(backend.platform ?? '')"
         :class="'top-bar' + ((backend.platform == 'win32' && dev) ? ' win' : '')"
         name="appbar"
@@ -199,7 +202,7 @@
         </TransitionGroup>
         <Transition name="music-player-float">
             <div v-show="tags.showMusicPlayer" class="global-music-player ss-card">
-                <MusicPlayer @open-panel="toggleMusicPlayer" />
+                <MusicPlayer @open-panel="toggleMusicPlayer" @update-lyric="updateMusicLyric" />
             </div>
         </Transition>
         <Transition name="modal">
@@ -266,12 +269,12 @@ import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
 import { getDeviceType } from './function/utils/systemUtil'
 import { uptime } from '@renderer/main'
+import { backend } from './runtime/backend'
 
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import MusicPlayer from './components/MusicPlayer.vue'
-import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
 import Tooltips from './components/tooltip/Tooltips.vue'
@@ -309,7 +312,8 @@ export default defineComponent({
                 selectedHistoryIndex: -1,
                 showHistoryDropdown: false,
                 showMusicPlayer: false,
-                currentMusic: null as null | { title: string, cover: string }
+                currentMusic: null as null | { title: string, cover: string },
+                musicLyric: '',
             },
             fps: {
                 last: Date.now(),
@@ -588,6 +592,10 @@ export default defineComponent({
             }
             this.refreshCurrentMusic()
         },
+        updateMusicLyric(lyric: string) {
+            this.tags.musicLyric = lyric
+        },
+
         refreshCurrentMusic() {
             const nowMusic = getCurrentMusic()
             if (!nowMusic) {

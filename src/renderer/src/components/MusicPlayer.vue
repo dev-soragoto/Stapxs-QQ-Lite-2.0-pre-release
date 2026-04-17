@@ -5,7 +5,7 @@
             <div>
                 <a>{{ currentMusic?.title }}
                     <a v-if="currentMusic?.free != null">{{ $t('（试听）') }}</a>
-                    <span> / {{ currentMusic?.author.join('/') }}</span>
+                    <span> / {{ currentMusic?.author?.join('/') }}</span>
                 </a>
                 <audio :src="currentMusic?.url ?? ''"
                     @loadedmetadata="audioLoaded"
@@ -19,8 +19,8 @@
                             width: sizeDur / sizeMax * 100 > 100 ? '100%' : (sizeDur / sizeMax * 100) + '%',
                         }" />
                         <div :style="{
-                            width: sizeReal > 0 ? ((1 - sizeMax / sizeReal) * 100) + '%' : '0%',
-                            marginLeft: sizeReal > 0 ? (sizeMax / sizeReal * 100) + '%' : '',
+                            width: sizeReal > 0 ? ('calc(' + ((1 - sizeMax / sizeReal) * 100) + '% + 9px)') : '0%',
+                            marginLeft: sizeReal > 0 ? ('calc(' + (sizeMax / sizeReal * 100) + '% - 9px)') : '0%',
                         }" />
                     </div>
                     <font-awesome-icon v-if="!isLoaded" :icon="['fas', 'spinner']" spin />
@@ -34,6 +34,7 @@
             </div>
         </div>
     </div>
+    <span v-if="nowLyric && nowLyric.text && nowLyric.text.trim() != ''" class="music-lyric">{{ nowLyric.text }}</span>
     <div class="music-list">
         <template v-if="false">
             播放列表为空
@@ -56,13 +57,15 @@
     import { backend } from '@renderer/runtime/backend'
 
     export interface MusicInfo {
-        title: string,                  // 标题
-        author: string[],               // 作者
-        url: string,                    // 音乐链接
-        type: 'default' | 'music163',   // 音乐类型（用于特殊功能）
-        cover: string,                  // 封面链接
-        free?: boolean                  // 试听标识
-        time?: number                   // 音频时长
+        title: string,                                  // 标题
+        author: string[],                               // 作者
+        url: string,                                    // 音乐链接
+        type: 'default' | 'music163',                   // 音乐类型（用于特殊功能）
+        cover: string,                                  // 封面链接
+        free?: boolean                                  // 试听标识
+        time?: number                                   // 音频时长
+        data?: any                                      // 额外数据（如歌曲ID等）
+        lyric?: { time: number, text: string }[]        // 歌词（可选）
     }
 
     const emit = ref(undefined as any)
@@ -81,7 +84,10 @@
         return musicListState.value[currentIndexState.value]
     }
 
-    export const addMusic = (info: MusicInfo, type: 'top' | 'bottom' | 'current' = 'bottom', open: boolean = false) => {
+    export const addMusic = (info: MusicInfo | null | undefined, type: 'top' | 'bottom' | 'current' = 'bottom', open: boolean = false) => {
+        if (!info) {
+            return
+        }
         // 筛选掉同 title 的
         musicListState.value = musicListState.value.filter(item => {
             return item.title !== info.title
@@ -91,13 +97,12 @@
             currentIndexState.value++
         } else if (type === 'current') {
             if(audoState.value?.played) {
-                audoState.value.pause
+                audoState.value.pause()
                 musicListState.value.unshift(info)
                 currentIndexState.value = 0
             } else {
                 musicListState.value.unshift(info)
             }
-            resetController.value()
             readyToPlayState.value = true
         } else {
             musicListState.value.push(info)
@@ -110,7 +115,7 @@
 
     export default defineComponent({
         name: 'MusicPlayer',
-        emits: ['open-panel'],
+        emits: ['open-panel', 'update-lyric'],
         setup(_, context) {
             emit.value = context.emit
             const audio = audoState
@@ -129,6 +134,8 @@
             const minutesDur = ref(0)
             const secondsDur = ref(0)
 
+            const nowLyric = ref(undefined as { index: number, text: string } | undefined)
+
             const currentMusic = computed(() => {
                 if (currentIndex.value < 0 || currentIndex.value >= musicList.value.length) {
                     return null
@@ -145,18 +152,35 @@
                 seconds.value = 0
                 minutesDur.value = 0
                 secondsDur.value = 0
+                nowLyric.value = undefined
+                emit.value('update-lyric', '')
             }
 
             const switchMusic = (index: number, pass: boolean = false) => {
                 if(pass) {
                     musicList.value.splice(currentIndex.value, 1)
+                    if(musicList.value.length === 0) {
+                        resetController.value()
+                        emit.value('open-panel', false)
+                        return
+                    }
+
                     if(currentIndex.value >= musicList.value.length) {
                         currentIndex.value = musicList.value.length - 1
                     }
-                }
-                resetController.value()
 
-                const music = musicList.value[index]
+                    resetController.value()
+                    addMusic(musicList.value[currentIndex.value], 'current')
+                    return
+                }
+
+                const safeIndex = Math.min(Math.max(index, 0), musicList.value.length - 1)
+                const music = musicList.value[safeIndex]
+                if (!music) {
+                    return
+                }
+
+                resetController.value()
                 addMusic(music, 'current')
             }
 
@@ -175,7 +199,7 @@
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title : currentMusic.value?.title ?? '',
-                        artist: currentMusic.value?.author.join('/') ?? '',
+                        artist: currentMusic.value?.author?.join('/') ?? '',
                         artwork: [
                             { src: currentMusic.value?.cover ?? '', sizes: '130x130', type: 'image/png' },
                         ]
@@ -185,6 +209,29 @@
                         switchMusic(currentIndex.value + 1, true)
                     });
                 }
+                // 如果是网易云音乐，异步获取歌词
+                if (currentMusic.value?.type === 'music163' && currentMusic.value.data && typeof currentMusic.value.data === 'string') {
+                    const musicRef = currentMusic.value
+                    fetch(import.meta.env.VITE_APP_163_MUSIC_API + '/lyric?id=' + currentMusic.value.data)
+                        .then(res => res.json())
+                        .then(data => {
+                            // lrc（原文），tlyric（翻译），优先用翻译
+                            const lyric = (data.tlyric?.lyric || data.lrc?.lyric || '').split('\n').map((line: string) => {
+                                const text = line.split(']')[1]
+                                const time = line.split(']')[0].substring(1).split(':')
+                                if(text && time.length === 2) {
+                                    return {
+                                        time: parseFloat(time[0]) * 60 + parseFloat(time[1]),
+                                        text,
+                                    }
+                                }
+                                return null
+                            }).filter((line: any) => line !== null)
+                            if (currentMusic.value === musicRef) {
+                                musicRef.lyric = lyric
+                            }
+                        })
+                    }
             }
 
             const audioUpdate = () => {
@@ -204,11 +251,38 @@
                             currentIndex.value = musicList.value.length - 1
                         }
                         if(currentIndex.value >= 0) {
+                            resetController.value()
                             audio.value.src = musicList.value[currentIndex.value].url
                             readyToPlay.value = true
                         } else {
                             resetController.value()
+                            emit.value('open-panel', false)
                         }
+                    }
+
+                    if(currentMusic.value?.lyric) {
+                        // 如果没有 nowLyric 就循环定位
+                        if(!nowLyric.value) {
+                            for(let i = 0; i < currentMusic.value.lyric.length; i++) {
+                                if(currentMusic.value.lyric[i].time > audio.value.currentTime) {
+                                    nowLyric.value = {
+                                        index: i - 1,
+                                        text: currentMusic.value.lyric[i - 1]?.text
+                                    }
+                                    break
+                                }
+                            }
+                        } else {
+                            // 如果有 nowLyric 就判断是否需要更新
+                            const nextIndex = nowLyric.value.index + 1
+                            if(nextIndex < currentMusic.value.lyric.length && currentMusic.value.lyric[nextIndex].time <= audio.value.currentTime) {
+                                nowLyric.value = {
+                                    index: nextIndex,
+                                    text: currentMusic.value.lyric[nextIndex].text
+                                }
+                            }
+                        }
+                        emit.value('update-lyric', nowLyric.value?.text ?? '')
                     }
                 }
             }
@@ -260,6 +334,7 @@
                 seconds,
                 minutesDur,
                 secondsDur,
+                nowLyric
             }
         },
     })
@@ -366,6 +441,17 @@
     }
     .music-controller > div:first-child > div.me > div > div > div {
         background: var(--color-font-r);
+    }
+
+    .music-lyric {
+        background: var(--color-card-1);
+        display: block;
+        text-align: center;
+        padding: 5px;
+        border-radius: 7px;
+        margin-top: 10px;
+        color: var(--color-font-2);
+        font-size: 0.8rem;
     }
 
     .music-list {

@@ -63,17 +63,25 @@ if (!success) {
 
 const getType = () => {
     switch(parsedContent.name) {
-        case '网易云音乐': return 'music163'
-        default: return 'default'
+        case '网易云音乐': return {
+            type: 'music163',
+            data: parsedContent.jumpUrl.match(/id=(\d+)/)?.[1]
+        }
+        default: return {
+            type: 'default',
+            data: undefined
+        }
     }
 }
 
 const sendPlay = () => {
+    const typeInfo = getType()
     addMusic({
         title: parsedContent.title,
         author: [parsedContent.desc],
         url: parsedContent.musicUrl,
-        type: getType(),
+        type: typeInfo.type as any,
+        data: typeInfo.data,
         cover: parsedContent.img,
     }, 'current', true)
 }
