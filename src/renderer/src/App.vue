@@ -43,6 +43,13 @@
                     <span>{{ $t('列表') }}</span>
                 </li>
                 <div class="side-bar-space" />
+                <li :class="(tags.showMusicPlayer ? 'active ' : '') + 'music-entry'" @click="toggleMusicPlayer(undefined)">
+                    <img
+                        v-if="tags.currentMusic"
+                        class="music-entry-cover"
+                        :src="tags.currentMusic.cover"
+                        :alt="tags.currentMusic.title">
+                </li>
                 <li :class="tags.page == 'Options' ? 'active' : ''" @click="changeTab('设置', 'Options', false)">
                     <font-awesome-icon :icon="['fas', 'gear']" />
                     <span>{{ $t('设置') }}</span>
@@ -190,6 +197,11 @@
                 </div>
             </div>
         </TransitionGroup>
+        <Transition name="music-player-float">
+            <div v-show="tags.showMusicPlayer" class="global-music-player ss-card">
+                <MusicPlayer @open-panel="toggleMusicPlayer" />
+            </div>
+        </Transition>
         <Transition name="modal">
             <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
@@ -258,6 +270,7 @@ import { uptime } from '@renderer/main'
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
+import MusicPlayer from './components/MusicPlayer.vue'
 import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
@@ -269,6 +282,8 @@ provide('viewer', ntViewer)
 </script>
 
 <script lang="ts">
+import { getCurrentMusic } from './components/MusicPlayer.vue'
+
 export default defineComponent({
     name: 'App',
     data() {
@@ -284,6 +299,7 @@ export default defineComponent({
             popInfo: new PopInfo(),
             appMsgs: popList,
             loadHistory: App.loadHistory,
+            musicSyncTimer: -1,
             tags: {
                 page: 'Home',
                 showChat: false,
@@ -291,7 +307,9 @@ export default defineComponent({
                 savePassword: false,
                 quickLoginSelect: '',
                 selectedHistoryIndex: -1,
-                showHistoryDropdown: false
+                showHistoryDropdown: false,
+                showMusicPlayer: false,
+                currentMusic: null as null | { title: string, cover: string }
             },
             fps: {
                 last: Date.now(),
@@ -306,6 +324,10 @@ export default defineComponent({
 
         // 添加全局点击事件监听，用于关闭下拉菜单
         document.addEventListener('click', this.handleClickOutside)
+        this.refreshCurrentMusic()
+        this.musicSyncTimer = window.setInterval(() => {
+            this.refreshCurrentMusic()
+        }, 1000)
 
         // 页面加载完成后
         window.onload = async () => {
@@ -552,8 +574,31 @@ export default defineComponent({
     unmounted() {
         // 移除全局点击事件监听器
         document.removeEventListener('click', this.handleClickOutside)
+        if (this.musicSyncTimer > 0) {
+            clearInterval(this.musicSyncTimer)
+            this.musicSyncTimer = -1
+        }
     },
     methods: {
+        toggleMusicPlayer(open: boolean | undefined) {
+            if(open != undefined ) {
+                this.tags.showMusicPlayer = open
+            } else {
+                this.tags.showMusicPlayer = !this.tags.showMusicPlayer
+            }
+            this.refreshCurrentMusic()
+        },
+        refreshCurrentMusic() {
+            const nowMusic = getCurrentMusic()
+            if (!nowMusic) {
+                this.tags.currentMusic = null
+                return
+            }
+            this.tags.currentMusic = {
+                title: nowMusic.title,
+                cover: nowMusic.cover,
+            }
+        },
         updateNapcatColor(token: string) {
             const logger = new Logger()
             // api/base/Theme 获取主题配置信息
@@ -983,6 +1028,53 @@ export default defineComponent({
 
 .modal-leave-active .pop-box-body {
     animation: panelSlideDown 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.music-entry-cover {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.global-music-player {
+    position: fixed;
+    left: 90px;
+    bottom: 20px;
+    z-index: 33;
+    width: 350px;
+    max-height: min(72vh, 560px);
+    box-shadow: 0 0 10px var(--color-shader);
+    overflow: auto;
+}
+
+.music-player-float-enter-active,
+.music-player-float-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.music-player-float-enter-from,
+.music-player-float-leave-to {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+@media (max-width: 700px) {
+    .global-music-player {
+        left: 100px;
+        bottom: 60px;
+        width: calc(100vw - 200px);
+        max-height: min(66vh, 460px);
+    }
+}
+
+@media (max-width: 500px) {
+    .global-music-player {
+        left: 20px;
+        bottom: 60px;
+        width: calc(100vw - 70px);
+        max-height: min(66vh, 460px);
+    }
 }
 
 @keyframes panelSlideUp {
