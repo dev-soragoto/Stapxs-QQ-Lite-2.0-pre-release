@@ -191,7 +191,6 @@
     /* 多条更新记录样式 */
     .update-info.multiple-releases {
         margin: 5px 0 0 -10px;
-        max-height: 55vh;
         overflow-y: auto;
     }
 

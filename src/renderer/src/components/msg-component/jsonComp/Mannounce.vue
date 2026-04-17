@@ -1,13 +1,12 @@
 <template>
-    <div v-if="success" class="msg-json">
-        <p>{{ parsedContent.title }}</p>
+    <div v-if="success" class="msg-json mannounce">
+        <div class="bottom-bar">
+            <font-awesome-icon :icon="['fas', 'bullhorn']" />
+            <span>{{ parsedContent.title }}</span>
+        </div>
         <span>{{ parsedContent.content }}</span>
         <img v-if="parsedContent.img" :src="parsedContent.img.url" alt=""
             @click="viewImg()">
-        <div class="bottom-bar">
-            <font-awesome-icon :icon="['fas', 'bullhorn']" />
-            <span>{{ $t('群公告') }}</span>
-        </div>
     </div>
     <span v-else class="msg-unknown">{{
         '( ' + $t('加载失败') + ': ' + id + ' )'
@@ -91,3 +90,16 @@ function viewImg(): void {
     viewer.value.open(new Img(parsedContent.img!.url))
 }
 </script>
+
+<style scoped>
+.mannounce {
+    padding: 10px 5px 0 5px;
+}
+.mannounce > span {
+    opacity: 1 !important;
+}
+.bottom-bar {
+    margin: -10px -10px 10px -10px !important;
+    background: unset !important;
+}
+</style>
