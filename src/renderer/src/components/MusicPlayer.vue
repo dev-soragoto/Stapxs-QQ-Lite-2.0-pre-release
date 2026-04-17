@@ -16,11 +16,11 @@
                         @input="audioChange">
                     <div>
                         <div :style="{
-                            width: sizeDur / sizeMax * 100 > 100 ? '100%' : (sizeDur / sizeMax * 100) + '%',
+                            width: sizeDur / sizeMax * 100 > 100 ? 'calc(100% + 9px)' : ('calc(' + (sizeDur / sizeMax * 100) + '% + 9px)'),
                         }" />
                         <div :style="{
-                            width: sizeReal > 0 ? ('calc(' + ((1 - sizeMax / sizeReal) * 100) + '% + 9px)') : '0%',
-                            marginLeft: sizeReal > 0 ? ('calc(' + (sizeMax / sizeReal * 100) + '% - 9px)') : '0%',
+                            width: sizeReal > 0 ? ((1 - sizeMax / sizeReal) * 100) + '%' : '0%',
+                            marginLeft: sizeReal > 0 ? (sizeMax / sizeReal * 100) + '%' : '0%',
                         }" />
                     </div>
                     <font-awesome-icon v-if="!isLoaded" :icon="['fas', 'spinner']" spin />
@@ -34,7 +34,10 @@
             </div>
         </div>
     </div>
-    <span v-if="nowLyric && nowLyric.text && nowLyric.text.trim() != ''" class="music-lyric">{{ nowLyric.text }}</span>
+    <span v-if="nowLyric &&
+              nowLyric.text &&
+              nowLyric.text.trim() != ''"
+        class="music-lyric">{{ nowLyric.text }}</span>
     <div class="music-list">
         <template v-if="false">
             播放列表为空
@@ -55,6 +58,8 @@
 <script lang="ts">
     import { computed, defineComponent, ref } from 'vue'
     import { backend } from '@renderer/runtime/backend'
+    import { registerExtraOptionCard, registerExtraOptionItem } from '@renderer/function/option'
+    import { runtimeData } from '@renderer/function/msg'
 
     export interface MusicInfo {
         title: string,                                  // 标题
@@ -75,6 +80,7 @@
     const currentIndexState = ref(0)
     const readyToPlayState = ref(false)
     const audoState = ref(null as HTMLAudioElement | null)
+    const nowLyricState = ref(undefined as { index: number, text: string } | undefined)
 
     export const getCurrentMusic = () => {
         if (currentIndexState.value < 0 || currentIndexState.value >= musicListState.value.length) {
@@ -103,6 +109,8 @@
             } else {
                 musicListState.value.unshift(info)
             }
+            nowLyricState.value = undefined
+            emit.value('update-lyric', '')
             readyToPlayState.value = true
         } else {
             musicListState.value.push(info)
@@ -134,7 +142,7 @@
             const minutesDur = ref(0)
             const secondsDur = ref(0)
 
-            const nowLyric = ref(undefined as { index: number, text: string } | undefined)
+            const nowLyric = nowLyricState
 
             const currentMusic = computed(() => {
                 if (currentIndex.value < 0 || currentIndex.value >= musicList.value.length) {
@@ -216,7 +224,12 @@
                         .then(res => res.json())
                         .then(data => {
                             // lrc（原文），tlyric（翻译），优先用翻译
-                            const lyric = (data.tlyric?.lyric || data.lrc?.lyric || '').split('\n').map((line: string) => {
+                            let lyric = (data.tlyric?.lyric || data.lrc?.lyric || '')
+                            // 如果设置了显示原歌词，则使用原歌词
+                            if(runtimeData.sysConfig.original_lyrics) {
+                                lyric = data.lrc?.lyric || lyric
+                            }
+                            const final = lyric.split('\n').map((line: string) => {
                                 const text = line.split(']')[1]
                                 const time = line.split(']')[0].substring(1).split(':')
                                 if(text && time.length === 2) {
@@ -228,7 +241,7 @@
                                 return null
                             }).filter((line: any) => line !== null)
                             if (currentMusic.value === musicRef) {
-                                musicRef.lyric = lyric
+                                musicRef.lyric = final
                             }
                         })
                     }
@@ -282,7 +295,11 @@
                                 }
                             }
                         }
-                        emit.value('update-lyric', nowLyric.value?.text ?? '')
+                        if(runtimeData.sysConfig.glabal_lyric == true) {
+                            emit.value('update-lyric', nowLyric.value?.text ?? currentMusic.value.title)
+                        } else {
+                            emit.value('update-lyric', '')
+                        }
                     }
                 }
             }
@@ -317,6 +334,7 @@
 
             return {
                 backend,
+                runtimeData,
                 musicList,
                 currentIndex,
                 currentMusic,
@@ -337,6 +355,30 @@
                 nowLyric
             }
         },
+        mounted() {
+            registerExtraOptionCard({
+                id: 'music-player',
+                title: '音乐播放器设置',
+            })
+            registerExtraOptionItem('music-player', {
+                id: 'glabal_lyric',
+                icon: 'book',
+                label: '显示歌词横幅',
+                description: '在应用顶部显示当前播放音乐的歌词',
+                type: 'switch',
+                optionKey: 'glabal_lyric',
+                defaultValue: true,
+            })
+            registerExtraOptionItem('music-player', {
+                id: 'original_lyrics',
+                icon: 'font',
+                label: '显示原歌词',
+                description: '显示原文歌词而非翻译歌词（需要重新播放）',
+                type: 'switch',
+                optionKey: 'original_lyrics',
+                defaultValue: false,
+            })
+        }
     })
 </script>
 
