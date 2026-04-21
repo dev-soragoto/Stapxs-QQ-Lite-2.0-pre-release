@@ -1,5 +1,5 @@
 <template>
-    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
+    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl ?? '')">
         <p>{{ parsedContent.title }}</p>
         <img :src="parsedContent.img" alt="">
         <div class="bottom-bar">
@@ -31,13 +31,14 @@ const miniapp = z
                 desc: z.string(),
                 icon: z.string(),
                 preview: z.string(),
-                qqdocurl: z.string(),
+                qqdocurl: z.string().optional(),
+                url: z.string().optional(),
             }),
         }),
     })
     .transform((o) => ({
         title: o.meta.detail_1.desc,
-        jumpUrl: o.meta.detail_1.qqdocurl,
+        jumpUrl: o.meta.detail_1.qqdocurl || o.meta.detail_1.url,
         img: o.meta.detail_1.preview,
         icon: o.meta.detail_1.icon,
         name: o.meta.detail_1.title,
