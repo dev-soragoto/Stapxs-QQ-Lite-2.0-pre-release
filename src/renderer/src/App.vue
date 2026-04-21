@@ -617,7 +617,7 @@ export default defineComponent({
             }
             let coverLight = this.tags.currentMusic?.coverLight ?? true
             if(nowMusic.cover != this.tags.currentMusic?.cover) {
-                coverLight = await getForegroundToneFromImageUrl(nowMusic.cover, 0.4) == 'light'
+                coverLight = await getForegroundToneFromImageUrl(backend.proxyUrl(nowMusic.cover), 0.4) == 'light'
             }
             this.tags.currentMusic = {
                 title: nowMusic.title,

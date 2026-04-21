@@ -380,6 +380,7 @@ import {
 } from '@renderer/function/utils/appUtil'
 import { vUserTooltip } from '@renderer/function/tooltip'
 import {
+    getForegroundToneGridFromImageUrl,
     getSizeFromBytes,
     getTrueLang,
     getViewTime } from '@renderer/function/utils/systemUtil'
@@ -671,7 +672,7 @@ function getUserById(id: number): IUser | undefined {
             /**
              * 图片加载完成，滚到底部
              */
-            imageLoaded(event: Event) {
+            async imageLoaded(event: Event) {
                 const img = event.target as HTMLImageElement
                 // 计算图片宽度
                 const vh = document.documentElement.clientHeight || document.body.clientHeight
@@ -685,6 +686,14 @@ function getUserById(id: number): IUser | undefined {
                 // 避免截图被判为长图，这里设置为它
                 if (aspectRatio > 2.5) {
                     img.classList.add('long-img')
+                    try {
+                        const picLight = ( await getForegroundToneGridFromImageUrl(backend.proxyUrl(img.src), 0.4))[1][1] === 'light'
+                        if(picLight) {
+                            img.classList.add('light')
+                        }
+                    } catch {
+                        // do nothing
+                    }
                 } else {
                     // 普通图片的处理逻辑保持不变
                     if (imgHeight > vh * 0.35)

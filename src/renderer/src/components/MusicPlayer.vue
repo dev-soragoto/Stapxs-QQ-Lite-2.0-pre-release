@@ -440,7 +440,10 @@
 
 <style scoped>
     .music-controller {
+        background: var(--color-card-1);
+        border-radius: 7px 7px 0 0;
         flex-direction: column;
+        padding: 15px 15px 10px 15px;
         display: flex;
     }
     .music-controller > div:first-child {
@@ -461,6 +464,7 @@
     .music-controller > div:first-child > div > a {
         font-size: 0.9rem;
         font-weight: bold;
+        margin-bottom: 5px;
     }
     .music-controller > div:first-child > div > a > a {
         font-size: 0.7rem;
@@ -481,7 +485,6 @@
         -webkit-appearance: none;
         width: 100%;
         background: transparent;
-        margin-bottom: 10px;
         margin-right: 10px;
     }
     .music-controller > div:first-child > div > div > input::-webkit-slider-thumb {
@@ -510,7 +513,7 @@
         cursor: pointer;
     }
     .music-controller > div:first-child > div > div > span {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         text-align: right;
         margin-right: 10px;
         flex: 1;
@@ -522,7 +525,7 @@
         margin-left: 3px;
     }
     .music-controller > div:first-child > div > div > div > div {
-        transform: translateY(calc(-100% - 10px));
+        transform: translateY(calc(-100% - 2px));
         background: var(--color-main);
         pointer-events: none;
         border-radius: 6px;
@@ -542,20 +545,18 @@
     }
 
     .music-lyric {
-        background: var(--color-card-1);
         display: block;
         text-align: center;
         padding: 5px;
-        border-radius: 7px;
-        margin-top: 10px;
+        border-radius: 0 0 7px 7px;
         color: var(--color-font-2);
+        background: var(--color-card-2);
         font-size: 0.8rem;
     }
 
     .music-list {
-        background: var(--color-card-1);
         padding: 10px;
-        margin-top: 10px;
+        margin: 10px 0 -15px 0;
         border-radius: 7px;
         max-height: 20vh;
         overflow-y: scroll;

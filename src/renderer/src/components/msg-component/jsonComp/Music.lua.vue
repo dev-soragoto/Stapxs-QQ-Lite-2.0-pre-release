@@ -29,6 +29,7 @@ import { addMusic } from '@renderer/components/MusicPlayer.vue'
 import { Logger } from '@renderer/function/base'
 import { openLink } from '@renderer/function/utils/appUtil'
 import { getForegroundToneGridFromImageUrl } from '@renderer/function/utils/systemUtil'
+import { backend } from '@renderer/runtime/backend'
 
 const { data: jsonData, id } = defineProps<{
     data: string,
@@ -81,7 +82,7 @@ const getType = () => {
 }
 
 const lightColor = ref(true)
- getForegroundToneGridFromImageUrl(parsedContent.img, 0.4).then(tone => {
+ getForegroundToneGridFromImageUrl(backend.proxyUrl(parsedContent.img), 0.4).then(tone => {
     lightColor.value = tone[1][1] === 'light'
  })
 

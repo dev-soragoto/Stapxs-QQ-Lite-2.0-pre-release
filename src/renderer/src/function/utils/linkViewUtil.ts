@@ -1,3 +1,4 @@
+import { backend } from '@renderer/runtime/backend'
 import { Logger } from '../base'
 import { getApi, getForegroundToneGridFromImageUrl } from './systemUtil'
 import jp from 'jsonpath'
@@ -69,7 +70,7 @@ export const linkView = {
                     detail: responseDetail,
                     url: responseUrl,
                 }
-                const colorInfo = await getForegroundToneGridFromImageUrl(jp.query(getData['detail'], '$..al.picUrl')[0], 0.4)
+                const colorInfo = await getForegroundToneGridFromImageUrl(backend.proxyUrl(jp.query(getData['detail'], '$..al.picUrl')[0]), 0.4)
                 const finalData = {
                     type: 'music163',
                     sub_type: 'song',

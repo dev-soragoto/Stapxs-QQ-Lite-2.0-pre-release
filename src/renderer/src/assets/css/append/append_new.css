@@ -83,9 +83,11 @@ body {
     background-color: rgba(var(--color-card-rgb), 0.4) !important;
     backdrop-filter: blur(30px);
 }
-.music-lyric,
-.music-list {
+.music-controller {
     background: rgba(var(--color-card-1-rgb), 0.7) !important;
+}
+.music-lyric {
+    background: rgba(var(--color-card-2-rgb), 0.7) !important;
 }
 .music-list::-webkit-scrollbar {
     display: none;
