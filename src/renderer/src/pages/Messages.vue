@@ -21,9 +21,8 @@
                         <span>{{ $t('消息') }}</span>
                         <div style="flex: 1" />
                         <font-awesome-icon
-                    :icon="['fas', 'clock-rotate-left']"
-                    @click="openHistory"
-                />
+                            :icon="['fas', 'clock-rotate-left']"
+                            @click="openHistory" />
                         <font-awesome-icon :icon="['fas', 'trash-can']" @click="cleanList" />
                     </div>
                     <div class="small">
@@ -56,6 +55,7 @@
                             always_top: true,
                             nickname: $t('系统通知'),
                             remark: $t('系统通知'),
+                            raw_msg: runtimeData.systemNoticesList[0].comment
                         }"
                         @click="systemNoticeClick"
                         @contextmenu.prevent="systemNoticeMenuShow($event)"
@@ -638,8 +638,17 @@ import History from '@renderer/components/History.vue'
     }
 
     @media (max-width: 700px) {
+        .friend-list-container {
+            overflow: unset;
+        }
         .menu {
             width: 140px !important;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .friend-list-container {
+            overflow: hidden;
         }
     }
 </style>

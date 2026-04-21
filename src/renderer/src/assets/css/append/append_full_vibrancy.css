@@ -210,3 +210,16 @@
 .release-item {
     background: rgba(var(--color-card-rgb), 0.5) !important;
 }
+
+@media (max-width: 700px) {
+    .friend-list {
+        background: transparent !important;
+    }
+}
+
+@media (max-width: 500px) {
+    .chat-pan {
+        background: rgba(var(--color-card-2-rgb), 0.5);
+        backdrop-filter: blur(10px);
+    }
+}
