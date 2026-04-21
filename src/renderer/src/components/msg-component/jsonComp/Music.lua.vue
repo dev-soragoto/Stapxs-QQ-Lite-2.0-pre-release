@@ -6,7 +6,10 @@
                 <span>{{ parsedContent.desc }}</span>
             </div>
             <img :src="parsedContent.img" alt="">
-            <font-awesome-icon :icon="['fas', 'play']" @click="sendPlay" />
+            <font-awesome-icon
+                :icon="['fas', 'play']"
+                :class="{ light: lightColor }"
+                @click="sendPlay" />
         </div>
         <div class="bottom-bar">
             <img :src="parsedContent.icon" alt="">
@@ -19,10 +22,13 @@
 </template>
 
 <script setup lang="ts">
-import { addMusic } from '@renderer/components/MusicPlayer.vue';
-import { Logger } from '@renderer/function/base';
-import { openLink } from '@renderer/function/utils/appUtil'
 import * as z from 'zod'
+
+import { ref } from 'vue'
+import { addMusic } from '@renderer/components/MusicPlayer.vue'
+import { Logger } from '@renderer/function/base'
+import { openLink } from '@renderer/function/utils/appUtil'
+import { getForegroundToneGridFromImageUrl } from '@renderer/function/utils/systemUtil'
 
 const { data: jsonData, id } = defineProps<{
     data: string,
@@ -74,6 +80,11 @@ const getType = () => {
     }
 }
 
+const lightColor = ref(true)
+ getForegroundToneGridFromImageUrl(parsedContent.img, 0.4).then(tone => {
+    lightColor.value = tone[1][1] === 'light'
+ })
+
 const sendPlay = () => {
     const typeInfo = getType()
     addMusic({
@@ -101,10 +112,14 @@ const sendPlay = () => {
 }
 .music-data svg {
     --size: 20px;
+    color: #545454;
     width: var(--size);
     height: var(--size);
     padding: calc(calc(60px - var(--size)) / 2);
     transform: translateX(-100%);
+}
+.music-data svg.light {
+    color: #e5e5e5;
 }
 .music-data p {
     text-wrap: nowrap;

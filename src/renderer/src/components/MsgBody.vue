@@ -317,16 +317,19 @@
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
                                 </div>
                                 <img :src="pageViewInfo.data.cover">
-                                <font-awesome-icon :icon="['fas', 'play']" @click="sendPlay({
-                                    title: pageViewInfo.data.info.name,
-                                    author: pageViewInfo.data.info.author,
-                                    url: pageViewInfo.data.play_link,
-                                    type: 'music163',
-                                    cover: pageViewInfo.data.cover,
-                                    free: pageViewInfo.data.info.free,
-                                    time: pageViewInfo.data.info.time,
-                                    data: pageViewInfo.data.id,
-                                })" />
+                                <font-awesome-icon
+                                    :icon="['fas', 'play']"
+                                    :class="{ light: pageViewInfo.data.cover_light }"
+                                    @click="sendPlay({
+                                        title: pageViewInfo.data.info.name,
+                                        author: pageViewInfo.data.info.author,
+                                        url: pageViewInfo.data.play_link,
+                                        type: 'music163',
+                                        cover: pageViewInfo.data.cover,
+                                        free: pageViewInfo.data.info.free,
+                                        time: pageViewInfo.data.info.time,
+                                        data: pageViewInfo.data.id,
+                                    })" />
                             </div>
                         </div>
                     </template>
@@ -1286,9 +1289,13 @@ function getUserById(id: number): IUser | undefined {
     }
     .link-view-music163 svg {
         --size: 20px;
+        color: #545454;
         width: var(--size);
         height: var(--size);
         padding: calc(calc(60px - var(--size)) / 2);
         transform: translateX(-100%);
+    }
+    .link-view-music163 svg.light {
+        color: #e5e5e5;
     }
 </style>

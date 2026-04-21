@@ -53,8 +53,10 @@
                         :src="tags.currentMusic.cover"
                         :alt="tags.currentMusic.title">
                     <template v-if="tags.currentMusic">
-                        <font-awesome-icon v-if="tags.musicPlaying" class="music-entry-status" :icon="['fas', 'play']" />
-                        <font-awesome-icon v-else class="music-entry-status" :icon="['fas', 'pause']" />
+                        <font-awesome-icon v-if="tags.musicPlaying" :icon="['fas', 'play']"
+                            :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                        <font-awesome-icon v-else :icon="['fas', 'pause']"
+                            :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
                     </template>
                 </li>
                 <li :class="tags.page == 'Options' ? 'active' : ''" @click="changeTab('设置', 'Options', false)">
@@ -274,7 +276,7 @@ import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
-import { getDeviceType } from './function/utils/systemUtil'
+import { getDeviceType, getForegroundToneFromImageUrl } from './function/utils/systemUtil'
 import { uptime } from '@renderer/main'
 import { backend } from './runtime/backend'
 
@@ -319,7 +321,7 @@ export default defineComponent({
                 selectedHistoryIndex: -1,
                 showHistoryDropdown: false,
                 showMusicPlayer: false,
-                currentMusic: null as null | { title: string, cover: string },
+                currentMusic: null as null | { title: string, cover: string, coverLight: boolean },
                 musicPlaying: false,
                 musicLyric: '',
             },
@@ -607,15 +609,20 @@ export default defineComponent({
             this.tags.musicPlaying = isPlaying
         },
 
-        refreshCurrentMusic() {
+        async refreshCurrentMusic() {
             const nowMusic = getCurrentMusic()
             if (!nowMusic) {
                 this.tags.currentMusic = null
                 return
             }
+            let coverLight = this.tags.currentMusic?.coverLight ?? true
+            if(nowMusic.cover != this.tags.currentMusic?.cover) {
+                coverLight = await getForegroundToneFromImageUrl(nowMusic.cover, 0.4) == 'light'
+            }
             this.tags.currentMusic = {
                 title: nowMusic.title,
                 cover: nowMusic.cover,
+                coverLight
             }
         },
         updateNapcatColor(token: string) {
@@ -1060,7 +1067,10 @@ export default defineComponent({
     transform: translateY(calc(-100% - 3px));
     margin-bottom: calc(-100% + 10px);
     background-color: transparent !important;
-    color: #fff !important;
+    color: #545454 !important;
+}
+.music-entry-status.light {
+    color: #e5e5e5 !important;
 }
 
 .global-music-player {

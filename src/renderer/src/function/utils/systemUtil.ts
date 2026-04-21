@@ -242,6 +242,161 @@ export function hslToRgb(h: number, s: number, l: number) {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
 }
 
+export type ForegroundTone = 'dark' | 'light'
+
+/**
+ * 根据图片 URL 计算前景色建议（深色或浅色）
+ * 说明：返回 dark 表示背景偏亮，前景建议用深色；返回 light 表示背景偏暗，前景建议用浅色
+ * @param url 图片地址
+ * @param threshold 亮度阈值，范围 [0, 1]，默认 0.55
+ */
+export async function getForegroundToneFromImageUrl(
+    url: string,
+    threshold = 0.55,
+): Promise<ForegroundTone> {
+    const img = await loadImageElement(url)
+    const size = 32
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) {
+        return 'light'
+    }
+
+    try {
+        ctx.drawImage(img, 0, 0, size, size)
+        const { data } = ctx.getImageData(0, 0, size, size)
+        let luminanceSum = 0
+        let pixelCount = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3] / 255
+            if (alpha < 0.1) continue
+
+            const r = srgbToLinear(data[i] / 255)
+            const g = srgbToLinear(data[i + 1] / 255)
+            const b = srgbToLinear(data[i + 2] / 255)
+
+            const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            luminanceSum += luminance
+            pixelCount += 1
+        }
+
+        if (pixelCount === 0) {
+            return 'light'
+        }
+
+        const avgLuminance = luminanceSum / pixelCount
+        return avgLuminance >= normalizeThreshold(threshold) ? 'dark' : 'light'
+    } catch (error) {
+        new Logger().error(error as Error, '读取图片像素失败，使用默认浅色前景')
+        return 'light'
+    }
+}
+
+/**
+ * 将图片划分为 3x3 并返回每一块的前景色建议
+ * @param url 图片地址
+ * @param threshold 亮度阈值，范围 [0, 1]，默认 0.55
+ */
+export async function getForegroundToneGridFromImageUrl(
+    url: string,
+    threshold = 0.55,
+): Promise<ForegroundTone[][]> {
+    const img = await loadImageElement(url)
+    const size = 90
+    const grid = 3
+    const cellSize = size / grid
+    const safeThreshold = normalizeThreshold(threshold)
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) {
+        return buildFallbackGrid(grid)
+    }
+
+    try {
+        ctx.drawImage(img, 0, 0, size, size)
+        const { data } = ctx.getImageData(0, 0, size, size)
+        const result: ForegroundTone[][] = []
+
+        for (let row = 0; row < grid; row++) {
+            result.push([])
+            for (let col = 0; col < grid; col++) {
+                const startX = Math.floor(col * cellSize)
+                const endX = Math.floor((col + 1) * cellSize)
+                const startY = Math.floor(row * cellSize)
+                const endY = Math.floor((row + 1) * cellSize)
+
+                let luminanceSum = 0
+                let pixelCount = 0
+
+                for (let y = startY; y < endY; y++) {
+                    for (let x = startX; x < endX; x++) {
+                        const index = (y * size + x) * 4
+                        const alpha = data[index + 3] / 255
+                        if (alpha < 0.1) continue
+
+                        const r = srgbToLinear(data[index] / 255)
+                        const g = srgbToLinear(data[index + 1] / 255)
+                        const b = srgbToLinear(data[index + 2] / 255)
+                        const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+                        luminanceSum += luminance
+                        pixelCount += 1
+                    }
+                }
+
+                const avgLuminance = pixelCount > 0 ? luminanceSum / pixelCount : 0
+                result[row].push(avgLuminance >= safeThreshold ? 'dark' : 'light')
+            }
+        }
+
+        return result
+    } catch (error) {
+        new Logger().error(error as Error, '读取图片分块像素失败，使用默认浅色前景')
+        return buildFallbackGrid(grid)
+    }
+}
+
+function loadImageElement(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const image = new Image()
+        image.crossOrigin = 'anonymous'
+        image.decoding = 'async'
+        image.onload = () => resolve(image)
+        image.onerror = () => reject(new Error(`图片加载失败: ${url}`))
+        image.src = url
+    })
+}
+
+function srgbToLinear(value: number): number {
+    if (value <= 0.04045) {
+        return value / 12.92
+    }
+    return Math.pow((value + 0.055) / 1.055, 2.4)
+}
+
+function normalizeThreshold(value: number): number {
+    if (Number.isNaN(value)) return 0.55
+    if (value < 0) return 0
+    if (value > 1) return 1
+    return value
+}
+
+function buildFallbackGrid(grid: number): ForegroundTone[][] {
+    const result: ForegroundTone[][] = []
+    for (let row = 0; row < grid; row++) {
+        result.push([])
+        for (let col = 0; col < grid; col++) {
+            result[row].push('light')
+        }
+    }
+    return result
+}
+
 /**
  * 将字节大小转为可读的文件大小
  * @param size 字节大小
@@ -454,3 +609,5 @@ export async function copyToClipboard(content: ClipboardItem[] | string) {
     else
         await window.navigator.clipboard.write(content)
 }
+
+
