@@ -61,7 +61,7 @@
     import { backend } from '@renderer/runtime/backend'
     import { registerExtraOptionCard, registerExtraOptionItem } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
-import { PopInfo, PopType } from '@renderer/function/base'
+    import { PopInfo, PopType } from '@renderer/function/base'
 
     type LyricLine = { [key: number]: string }
 
@@ -290,7 +290,7 @@ import { PopInfo, PopType } from '@renderer/function/base'
                         .then(data => {
                             const originalLyric = parseLyric(data.lrc?.lyric || '')
                             const translatedLyric = parseLyric(data.tlyric?.lyric || '')
-                            // 默认展示“翻译 + 原文”合并结果：同时间点优先使用翻译歌词。
+                            // 默认展示“翻译 + 原文”合并结果：同时间点优先使用翻译歌词
                             // 当用户开启“显示原歌词”时，仅展示原文歌词。
                             const final = runtimeData.sysConfig.original_lyrics ? originalLyric : mergeLyric(originalLyric, translatedLyric)
 
