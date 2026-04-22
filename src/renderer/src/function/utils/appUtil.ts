@@ -1530,6 +1530,24 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData) => void> {
     type Binding = DirectiveBinding<(event: MenuEventData) => void> & { modifiers: { prevent?: boolean, stop?: boolean } }
 
     let activeMenu = false
+    const activePenPointers = new Set<number>()
+
+    const isPenTouchEvent = (event: TouchEvent) => {
+        if (activePenPointers.size > 0) return true
+        const touch = event.changedTouches[0] || event.touches[0]
+        const touchType = (touch as Touch & { touchType?: string })?.touchType
+        return touchType === 'stylus'
+    }
+
+    const recordPointerType = (event: PointerEvent, isStart: boolean) => {
+        if (event.pointerType !== 'pen') return
+        if (isStart) {
+            activePenPointers.add(event.pointerId)
+            activeMenu = false
+        } else {
+            activePenPointers.delete(event.pointerId)
+        }
+    }
 
     // 右键菜单事件数据类型
     const {
@@ -1577,15 +1595,21 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData) => void> {
                 binding.value(data)
             }, options)
             el.addEventListener('touchstart', (event) => {
+                if (isPenTouchEvent(event)) return
                 menuTouchHandle(event, binding)
                 touchStartTime = Date.now()
             }, options)
             el.addEventListener('touchmove', (event) => {
+                if (isPenTouchEvent(event)) return
                 if (prevent && activeMenu) event.preventDefault()
                 if (stop && activeMenu) event.stopPropagation()
                 menuTouchHandle(event, binding)
             }, options)
             el.addEventListener('touchend', (event) => {
+                if (isPenTouchEvent(event)) {
+                    activeMenu = false
+                    return
+                }
                 if (prevent && activeMenu) event.preventDefault()
                 if (stop && activeMenu) event.stopPropagation()
                 menuTouchEnd(event)
@@ -1593,6 +1617,15 @@ function createVMenu(): Directive<HTMLElement, (event: MenuEventData) => void> {
                 // 快速点击则触发点击事件
                 if (Date.now() - touchStartTime < 200)
                     event.target?.['click']?.()
+            }, options)
+            el.addEventListener('pointerdown', (event) => {
+                recordPointerType(event, true)
+            }, options)
+            el.addEventListener('pointerup', (event) => {
+                recordPointerType(event, false)
+            }, options)
+            el.addEventListener('pointercancel', (event) => {
+                recordPointerType(event, false)
             }, options)
 
                 // 绑定控制器
@@ -1803,6 +1836,24 @@ function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>> {
                 speedList: [] as number[],
                 touchLast: null as null | TouchEvent,
             }
+            const activePenPointers = new Set<number>()
+
+            const isPenTouchEvent = (event: TouchEvent) => {
+                if (activePenPointers.size > 0) return true
+                const touch = event.changedTouches[0] || event.touches[0]
+                const touchType = (touch as Touch & { touchType?: string })?.touchType
+                return touchType === 'stylus'
+            }
+
+            const recordPointerType = (event: PointerEvent, isStart: boolean) => {
+                if (event.pointerType !== 'pen') return
+                if (isStart) {
+                    activePenPointers.add(event.pointerId)
+                    moveFlag.touchLast = null
+                } else {
+                    activePenPointers.delete(event.pointerId)
+                }
+            }
 
             const getPxValue = (option: { type: 'px' | '%', value: number }) => {
                 if (option.type === 'px') return option.value
@@ -1842,6 +1893,7 @@ function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>> {
             // 触屏开始
             const chatMoveStartEvent = (event: TouchEvent) => {
                 if (moveFlag.onScroll === 'wheel') return
+                if (isPenTouchEvent(event)) return
                 // 触屏开始时，记录触摸点
                 moveFlag.touchLast = event
             }
@@ -1849,6 +1901,7 @@ function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>> {
             // 触屏滑动
             const chatMoveEvent = (event: TouchEvent) => {
                 if (moveFlag.onScroll === 'wheel') return
+                if (isPenTouchEvent(event)) return
                 if (!moveFlag.touchLast) return
                 const touch = event.changedTouches[0]
                 const lastTouch = moveFlag.touchLast.changedTouches[0]
@@ -1868,6 +1921,10 @@ function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>> {
             // 触屏滑动结束
             const chatMoveEndEvent = (event: TouchEvent) => {
                 if (moveFlag.onScroll === 'wheel') return
+                if (isPenTouchEvent(event)) {
+                    moveFlag.touchLast = null
+                    return
+                }
                 const touch = event.changedTouches[0]
                 const lastTouch = moveFlag.touchLast?.changedTouches[0]
                 if (lastTouch) {
@@ -1974,6 +2031,15 @@ function createVMove<T extends HTMLElement>(): Directive<T, VMoveOptions<T>> {
             const controller = new AbortController()
             const listenerOptions = { signal: controller.signal }
             el.addEventListener('wheel', chatWheelEvent, { ...listenerOptions, passive: false })
+            el.addEventListener('pointerdown', (event) => {
+                recordPointerType(event, true)
+            }, listenerOptions)
+            el.addEventListener('pointerup', (event) => {
+                recordPointerType(event, false)
+            }, listenerOptions)
+            el.addEventListener('pointercancel', (event) => {
+                recordPointerType(event, false)
+            }, listenerOptions)
             el.addEventListener('touchstart', chatMoveStartEvent, listenerOptions)
             el.addEventListener('touchmove', chatMoveEvent, listenerOptions)
             el.addEventListener('touchend', chatMoveEndEvent, listenerOptions)
