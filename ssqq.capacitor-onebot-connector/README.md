@@ -14,7 +14,17 @@ npx cap sync
 <docgen-index>
 
 * [`connect(...)`](#connect)
+* [`close()`](#close)
 * [`send(...)`](#send)
+* [`findService()`](#findservice)
+* [`changeIcon(...)`](#changeicon)
+* [`getUsedIcon()`](#getusedicon)
+* [`getRelease()`](#getrelease)
+* [`getSystemInfo()`](#getsysteminfo)
+* [`getFinalRedirectUrl(...)`](#getfinalredirecturl)
+* [`getHtml(...)`](#gethtml)
+* [`getApi(...)`](#getapi)
+* [`getImageData(...)`](#getimagedata)
 
 </docgen-index>
 
@@ -36,6 +46,17 @@ connect(options: { url: string; }) => Promise<{ success: boolean; }>
 --------------------
 
 
+### close()
+
+```typescript
+close() => Promise<{ success: boolean; }>
+```
+
+**Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
 ### send(...)
 
 ```typescript
@@ -47,6 +68,125 @@ send(options: { data: string; }) => Promise<{ success: boolean; }>
 | **`options`** | <code>{ data: string; }</code> |
 
 **Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
+### findService()
+
+```typescript
+findService() => Promise<{ success: boolean; }>
+```
+
+**Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
+### changeIcon(...)
+
+```typescript
+changeIcon(options: { name: string; }) => Promise<{ success: boolean; }>
+```
+
+| Param         | Type                           |
+| ------------- | ------------------------------ |
+| **`options`** | <code>{ name: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
+### getUsedIcon()
+
+```typescript
+getUsedIcon() => Promise<{ success: boolean; }>
+```
+
+**Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
+### getRelease()
+
+```typescript
+getRelease() => Promise<{ release: string; arch: string; }>
+```
+
+**Returns:** <code>Promise&lt;{ release: string; arch: string; }&gt;</code>
+
+--------------------
+
+
+### getSystemInfo()
+
+```typescript
+getSystemInfo() => Promise<{ success: string; }>
+```
+
+**Returns:** <code>Promise&lt;{ success: string; }&gt;</code>
+
+--------------------
+
+
+### getFinalRedirectUrl(...)
+
+```typescript
+getFinalRedirectUrl(options: { url: string; }) => Promise<{ url: string; }>
+```
+
+| Param         | Type                          |
+| ------------- | ----------------------------- |
+| **`options`** | <code>{ url: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ url: string; }&gt;</code>
+
+--------------------
+
+
+### getHtml(...)
+
+```typescript
+getHtml(options: { url: string; }) => Promise<{ data: string; }>
+```
+
+| Param         | Type                          |
+| ------------- | ----------------------------- |
+| **`options`** | <code>{ url: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ data: string; }&gt;</code>
+
+--------------------
+
+
+### getApi(...)
+
+```typescript
+getApi(options: { url: string; }) => Promise<{ data: string; }>
+```
+
+| Param         | Type                          |
+| ------------- | ----------------------------- |
+| **`options`** | <code>{ url: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ data: string; }&gt;</code>
+
+--------------------
+
+
+### getImageData(...)
+
+```typescript
+getImageData(options: { url: string; }) => Promise<{ data: string; }>
+```
+
+| Param         | Type                          |
+| ------------- | ----------------------------- |
+| **`options`** | <code>{ url: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ data: string; }&gt;</code>
 
 --------------------
 

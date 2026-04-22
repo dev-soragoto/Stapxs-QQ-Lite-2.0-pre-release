@@ -51,6 +51,23 @@ export const backend = {
     },
 
     /**
+     * 代理图片 URL 转换
+     * 此方法在移动端还会会向后端直接索要图片的 base64 数据，以解决移动端的跨域问题
+     * @param url 需要转换的 URL
+     * @returns 转换后的 URL（移动端返回 data:image/...）
+     */
+    async proxyImageUrl(url: string) {
+        if (this.isMobile() && url) {
+            const dataUrl = await this.call('Onebot', 'sys:getImageData', true, { url })
+            if (typeof dataUrl === 'string' && dataUrl.startsWith('data:image')) {
+                return dataUrl
+            }
+            logger.add(LogType.DEBUG, '移动端图片代理失败，回退到普通代理 URL', { url })
+        }
+        return this.proxyUrl(url)
+    },
+
+    /**
      * 反代理 URL 转换
      * @param url 需要转换的 URL
      * @returns 转换后的 URL

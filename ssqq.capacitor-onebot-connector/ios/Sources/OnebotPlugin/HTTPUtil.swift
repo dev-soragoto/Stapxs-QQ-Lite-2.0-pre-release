@@ -69,4 +69,31 @@ class HTTPUtil: NSObject, URLSessionDelegate, URLSessionDataDelegate {
 
         task.resume()
     }
+
+    func fetchImageDataURL(from url: URL, completion: @escaping (String?) -> Void) {
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard error == nil else {
+                print("Image request failed: \(error!.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode),
+                  let data = data else {
+                print("Invalid image response")
+                completion(nil)
+                return
+            }
+
+            let mimeType = httpResponse.mimeType ?? "image/jpeg"
+            let base64 = data.base64EncodedString()
+            completion("data:\(mimeType);base64,\(base64)")
+        }
+
+        task.resume()
+    }
 }

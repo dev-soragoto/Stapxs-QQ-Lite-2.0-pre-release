@@ -307,6 +307,15 @@ html {
     transform: translateY(calc(-100% - 10px)) !important;
 }
 
+.msg-img.long-img {
+    max-height: 20vh;
+    width: 40vw;
+}
+.msg-json > img {
+    height: 15vh;
+    max-width: 100vw;
+}
+
 @media (max-width: 500px) {
     .global-music-player {
         bottom: calc(70px + var(--safe-area-bottom)) !important;

@@ -107,6 +107,7 @@
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, Number(index), isFace(item))"
                             :src="getImgSrc(item.url)"
+                            data-type="image"
                             @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(item.url)">
@@ -674,6 +675,14 @@ function getUserById(id: number): IUser | undefined {
              */
             async imageLoaded(event: Event) {
                 const img = event.target as HTMLImageElement
+
+                // 移动端使用后端重新加载图片
+                if(backend.isMobile() && img.src && !img.src.startsWith('data:')
+                    && img.dataset.type === 'image') {
+                    img.src = await backend.proxyImageUrl(img.src)
+                    return
+                }
+
                 // 计算图片宽度
                 const vh = document.documentElement.clientHeight || document.body.clientHeight
                 const imgHeight = img.naturalHeight || img.height
