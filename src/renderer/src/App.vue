@@ -28,7 +28,7 @@
         data-tauri-drag-region="true" />
     <div id="base-app">
         <div class="main-body">
-            <ul :style="{ 'padding-bottom': get('fs_adaptation') > 0 ? `${get('fs_adaptation')}px` : '0' }">
+            <ul :style="{ 'padding-bottom': get('fs_adaptation') > 0 ? `${get('fs_adaptation')}px` : '' }">
                 <li id="bar-home" :class="(tags.page == 'Home' ? 'active' : '') +
                     (loginInfo.status ? ' hiden-home' : '')"
                     @click="changeTab('主页', 'Home', false)">
@@ -46,25 +46,30 @@
                     <span>{{ $t('列表') }}</span>
                 </li>
                 <div class="side-bar-space" />
-                <li :class="(tags.showMusicPlayer ? 'active ' : '') + 'music-entry'" @click="toggleMusicPlayer(undefined)">
-                    <img
-                        v-if="tags.currentMusic"
-                        class="music-entry-cover"
+                <li v-if="tags.currentMusic" :class="['music-entry', { 'active': tags.showMusicPlayer }]" @click="toggleMusicPlayer(undefined)">
+                    <img class="music-entry-cover"
                         :src="tags.currentMusic.cover"
                         :alt="tags.currentMusic.title">
-                    <template v-if="tags.currentMusic">
-                        <font-awesome-icon v-if="tags.musicPlaying" :icon="['fas', 'play']"
-                            :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
-                        <font-awesome-icon v-else :icon="['fas', 'pause']"
-                            :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
-                    </template>
+                    <font-awesome-icon v-if="tags.musicPlaying" :icon="['fas', 'play']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                    <font-awesome-icon v-else :icon="['fas', 'pause']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
                 </li>
                 <li :class="tags.page == 'Options' ? 'active' : ''" @click="changeTab('设置', 'Options', false)">
                     <font-awesome-icon :icon="['fas', 'gear']" />
                     <span>{{ $t('设置') }}</span>
                 </li>
+                <li v-if="tags.currentMusic" :class="['music-entry-small', { 'active': tags.showMusicPlayer }]" @click="toggleMusicPlayer(undefined)">
+                    <img class="music-entry-cover"
+                        :src="tags.currentMusic.cover"
+                        :alt="tags.currentMusic.title">
+                    <font-awesome-icon v-if="tags.musicPlaying" :icon="['fas', 'play']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                    <font-awesome-icon v-else :icon="['fas', 'pause']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                </li>
             </ul>
-            <div :style="{ 'height': get('fs_adaptation') > 0 ? `calc(100% - ${75 + Number(get('fs_adaptation'))}px)` : '100%' }">
+            <div :style="{ 'height': get('fs_adaptation') > 0 ? `calc(100% - ${75 + Number(get('fs_adaptation'))}px)` : '' }">
                 <div v-if="tags.page == 'Home'" id="homeTab" name="主页">
                     <div class="home-body">
                         <div v-if="!napcat" class="login-pan-card ss-card">
@@ -219,7 +224,7 @@
                 <div :class="'pop-box-body ss-card' +
                          (runtimeData.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
-                    :style="{ 'margin-bottom': get('fs_adaptation') > 0 ? `${40 + Number(get('fs_adaptation'))}px` : '0' }">
+                    :style="{ 'margin-bottom': get('fs_adaptation') > 0 ? `${40 + Number(get('fs_adaptation'))}px` : '' }">
                     <header v-show="runtimeData.popBoxList[0].title != undefined">
                         <div v-if="runtimeData.popBoxList[0].svg != undefined">
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
@@ -1056,6 +1061,9 @@ export default defineComponent({
     animation: panelSlideDown 0.2s cubic-bezier(0.4, 0, 0.6, 1);
 }
 
+.music-entry-small {
+    display: none;
+}
 .music-entry-cover {
     width: 25px;
     height: 25px;
@@ -1106,10 +1114,24 @@ export default defineComponent({
 
 @media (max-width: 500px) {
     .global-music-player {
-        left: 20px;
+        left: 20px !important;
         bottom: 60px;
         width: calc(100vw - 70px);
         max-height: min(66vh, 460px);
+    }
+    .music-entry-small {
+        margin-bottom: 10px !important;
+        display: flex;
+    }
+    .music-entry-small img {
+        width: 35px;
+        height: 35px;
+    }
+    .music-entry-small svg {
+        transform: translateY(calc(-100% - 10px));
+    }
+    .music-entry {
+        display: none;
     }
 }
 

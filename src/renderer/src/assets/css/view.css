@@ -1680,7 +1680,7 @@ textarea:focus {
         flex-direction: column-reverse;
     }
     .main-body > div {
-        height: calc(100% - 75px) !important;
+        height: calc(100% - 75px);
     }
     .main-body > ul {
         padding-top: 0 !important;
