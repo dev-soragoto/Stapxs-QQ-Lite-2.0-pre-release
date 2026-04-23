@@ -52,6 +52,10 @@ body {
 .friend-body {
     margin-left: 0;
 }
+.friend-body.onmenu,
+.friend-body:hover {
+    background: rgba(var(--color-card-2-rgb), 0.7) !important;
+}
 
 .opt-main {
     height: calc(100% - 10px);

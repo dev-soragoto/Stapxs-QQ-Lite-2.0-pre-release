@@ -1,5 +1,7 @@
 package cn.stapxs.qqweb.connector;
 
+import android.util.Base64;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -61,6 +63,30 @@ public class HTTPUtils {
             }
 
             return response.body() != null ? response.body().string() : null;
+        }
+    }
+
+    public static String fetchImageAsDataUrl(String url) throws IOException {
+        Request request = new Request.Builder()
+            .url(url)
+            .addHeader("Accept", "image/*")
+            .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code " + response);
+            }
+
+            if (response.body() == null) {
+                throw new IOException("Empty image response body");
+            }
+
+            byte[] imageBytes = response.body().bytes();
+            String mimeType = response.body().contentType() != null
+                ? response.body().contentType().toString()
+                : "image/jpeg";
+            String base64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+            return "data:" + mimeType + ";base64," + base64;
         }
     }
 }

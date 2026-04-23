@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.getcapacitor.JSObject;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;

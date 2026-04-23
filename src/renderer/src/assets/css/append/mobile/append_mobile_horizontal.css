@@ -129,14 +129,12 @@ html {
     height: calc(100% - 34px - var(--append-fs-adaptation));
 }
 .chat-pan > div.chat {
-    margin-bottom: -60px;
-    padding-bottom: 60px;
-}
-.chat-pan > div.chat {
-    margin-bottom: -30px;
+    padding-bottom: 70px;
 }
 .chat-pan > div.more {
     padding-bottom: var(--safe-area-bottom);
+    background: rgba(var(--color-card-rgb), 0.7);
+    backdrop-filter: blur(35px);
 }
 .chat-pan > div.more > div:first-child {
     padding-bottom: 20px;
@@ -145,8 +143,7 @@ html {
     border-radius: 999px;
 }
 .chat-pan > div.more > div:nth-child(2) {
-    background: rgba(var(--color-card-rgb), 0.7);
-    backdrop-filter: blur(35px);
+    padding: 0 20px 20px 20px;
 }
 .chat-pan > div.more > div:nth-child(2) > div:first-child {
     border-radius: 999px;
@@ -299,4 +296,28 @@ html {
     font-size: 0.85rem;
     color: var(--color-font-1);
     margin-top: 5px;
+}
+
+.music-entry-small img {
+    --size: calc(var(--safe-area-bottom) + 10px);
+    width: var(--size) !important;
+    height: var(--size) !important;
+}
+.music-entry-small svg {
+    transform: translateY(calc(-100% - 10px)) !important;
+}
+
+.msg-img.long-img {
+    max-height: 20vh;
+    width: 40vw;
+}
+.msg-json > img {
+    height: 15vh;
+    max-width: 100vw;
+}
+
+@media (max-width: 500px) {
+    .global-music-player {
+        bottom: calc(70px + var(--safe-area-bottom)) !important;
+    }
 }

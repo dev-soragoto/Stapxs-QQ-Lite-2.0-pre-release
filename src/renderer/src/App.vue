@@ -5,6 +5,9 @@
         {{ ' / client: ' + appClient.type }}
         {{ ' / fps: ' + fps.value }}
     </div>
+    <div v-if="tags.musicLyric != ''" class="lyric-bar">
+        {{ tags.musicLyric }}
+    </div>
     <div v-if="['linux', 'win32'].includes(backend.platform ?? '')"
         :class="'top-bar' + ((backend.platform == 'win32' && dev) ? ' win' : '')"
         name="appbar"
@@ -25,7 +28,7 @@
         data-tauri-drag-region="true" />
     <div id="base-app">
         <div class="main-body">
-            <ul :style="{ 'padding-bottom': get('fs_adaptation') > 0 ? `${get('fs_adaptation')}px` : '0' }">
+            <ul :style="{ 'padding-bottom': get('fs_adaptation') > 0 ? `${get('fs_adaptation')}px` : '' }">
                 <li id="bar-home" :class="(tags.page == 'Home' ? 'active' : '') +
                     (loginInfo.status ? ' hiden-home' : '')"
                     @click="changeTab('主页', 'Home', false)">
@@ -43,12 +46,30 @@
                     <span>{{ $t('列表') }}</span>
                 </li>
                 <div class="side-bar-space" />
+                <li v-if="tags.currentMusic" :class="['music-entry', { 'active': tags.showMusicPlayer }]" @click="toggleMusicPlayer(undefined)">
+                    <img class="music-entry-cover"
+                        :src="tags.currentMusic.cover"
+                        :alt="tags.currentMusic.title">
+                    <font-awesome-icon v-if="tags.musicPlaying" :icon="['fas', 'play']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                    <font-awesome-icon v-else :icon="['fas', 'pause']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                </li>
                 <li :class="tags.page == 'Options' ? 'active' : ''" @click="changeTab('设置', 'Options', false)">
                     <font-awesome-icon :icon="['fas', 'gear']" />
                     <span>{{ $t('设置') }}</span>
                 </li>
+                <li v-if="tags.currentMusic" :class="['music-entry-small', { 'active': tags.showMusicPlayer }]" @click="toggleMusicPlayer(undefined)">
+                    <img class="music-entry-cover"
+                        :src="tags.currentMusic.cover"
+                        :alt="tags.currentMusic.title">
+                    <font-awesome-icon v-if="tags.musicPlaying" :icon="['fas', 'play']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                    <font-awesome-icon v-else :icon="['fas', 'pause']"
+                        :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                </li>
             </ul>
-            <div :style="{ 'height': get('fs_adaptation') > 0 ? `calc(100% - ${75 + Number(get('fs_adaptation'))}px)` : '100%' }">
+            <div :style="{ 'height': get('fs_adaptation') > 0 ? `calc(100% - ${75 + Number(get('fs_adaptation'))}px)` : '' }">
                 <div v-if="tags.page == 'Home'" id="homeTab" name="主页">
                     <div class="home-body">
                         <div v-if="!napcat" class="login-pan-card ss-card">
@@ -190,12 +211,20 @@
                 </div>
             </div>
         </TransitionGroup>
+        <Transition name="music-player-float">
+            <div v-show="tags.showMusicPlayer" class="global-music-player ss-card">
+                <MusicPlayer
+                    @open-panel="toggleMusicPlayer"
+                    @update-lyric="updateMusicLyric"
+                    @update-status="updateMusicStatus" />
+            </div>
+        </Transition>
         <Transition name="modal">
             <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
                          (runtimeData.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
-                    :style="{ 'margin-bottom': get('fs_adaptation') > 0 ? `${40 + Number(get('fs_adaptation'))}px` : '0' }">
+                    :style="{ 'margin-bottom': get('fs_adaptation') > 0 ? `${40 + Number(get('fs_adaptation'))}px` : '' }">
                     <header v-show="runtimeData.popBoxList[0].title != undefined">
                         <div v-if="runtimeData.popBoxList[0].svg != undefined">
                             <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
@@ -252,13 +281,14 @@ import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
-import { getDeviceType } from './function/utils/systemUtil'
+import { getDeviceType, getForegroundToneFromImageUrl } from './function/utils/systemUtil'
 import { uptime } from '@renderer/main'
+import { backend } from './runtime/backend'
 
 import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
-import { backend } from './runtime/backend'
+import MusicPlayer from './components/MusicPlayer.vue'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
 import Tooltips from './components/tooltip/Tooltips.vue'
@@ -269,6 +299,8 @@ provide('viewer', ntViewer)
 </script>
 
 <script lang="ts">
+import { getCurrentMusic } from './components/MusicPlayer.vue'
+
 export default defineComponent({
     name: 'App',
     data() {
@@ -284,6 +316,7 @@ export default defineComponent({
             popInfo: new PopInfo(),
             appMsgs: popList,
             loadHistory: App.loadHistory,
+            musicSyncTimer: -1,
             tags: {
                 page: 'Home',
                 showChat: false,
@@ -291,7 +324,11 @@ export default defineComponent({
                 savePassword: false,
                 quickLoginSelect: '',
                 selectedHistoryIndex: -1,
-                showHistoryDropdown: false
+                showHistoryDropdown: false,
+                showMusicPlayer: false,
+                currentMusic: null as null | { title: string, cover: string, coverLight: boolean },
+                musicPlaying: false,
+                musicLyric: '',
             },
             fps: {
                 last: Date.now(),
@@ -306,6 +343,10 @@ export default defineComponent({
 
         // 添加全局点击事件监听，用于关闭下拉菜单
         document.addEventListener('click', this.handleClickOutside)
+        this.refreshCurrentMusic()
+        this.musicSyncTimer = window.setInterval(() => {
+            this.refreshCurrentMusic()
+        }, 1000)
 
         // 页面加载完成后
         window.onload = async () => {
@@ -552,8 +593,44 @@ export default defineComponent({
     unmounted() {
         // 移除全局点击事件监听器
         document.removeEventListener('click', this.handleClickOutside)
+        if (this.musicSyncTimer > 0) {
+            clearInterval(this.musicSyncTimer)
+            this.musicSyncTimer = -1
+        }
     },
     methods: {
+        toggleMusicPlayer(open: boolean | undefined) {
+            if(open != undefined ) {
+                this.tags.showMusicPlayer = open
+            } else {
+                this.tags.showMusicPlayer = !this.tags.showMusicPlayer
+            }
+            this.refreshCurrentMusic()
+        },
+        updateMusicLyric(lyric: string) {
+            this.tags.musicLyric = lyric
+        },
+        updateMusicStatus(isPlaying: boolean) {
+            this.tags.musicPlaying = isPlaying
+        },
+
+        async refreshCurrentMusic() {
+            const nowMusic = getCurrentMusic()
+            if (!nowMusic) {
+                this.tags.currentMusic = null
+                return
+            }
+            let coverLight = this.tags.currentMusic?.coverLight ?? true
+            const cover = await backend.proxyImageUrl(nowMusic.cover)
+            if(nowMusic.cover != this.tags.currentMusic?.cover) {
+                coverLight = await getForegroundToneFromImageUrl(cover, 0.4) == 'light'
+            }
+            this.tags.currentMusic = {
+                title: nowMusic.title,
+                cover,
+                coverLight
+            }
+        },
         updateNapcatColor(token: string) {
             const logger = new Logger()
             // api/base/Theme 获取主题配置信息
@@ -983,6 +1060,80 @@ export default defineComponent({
 
 .modal-leave-active .pop-box-body {
     animation: panelSlideDown 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.music-entry-small {
+    display: none;
+}
+.music-entry-cover {
+    width: 25px;
+    height: 25px;
+    border-radius: 6px;
+    object-fit: cover;
+    margin: 10px;
+}
+.music-entry-status {
+    transform: translateY(calc(-100% - 3px));
+    margin-bottom: calc(-100% + 10px);
+    background-color: transparent !important;
+    color: #545454 !important;
+}
+.music-entry-status.light {
+    color: #e5e5e5 !important;
+}
+
+.global-music-player {
+    position: fixed;
+    left: 90px;
+    bottom: 20px;
+    z-index: 33;
+    width: 350px;
+    max-height: min(72vh, 560px);
+    box-shadow: 0 0 10px var(--color-shader);
+    overflow: auto;
+}
+
+.music-player-float-enter-active,
+.music-player-float-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.music-player-float-enter-from,
+.music-player-float-leave-to {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+@media (max-width: 700px) {
+    .global-music-player {
+        left: 100px;
+        bottom: 60px;
+        width: calc(100vw - 200px);
+        max-height: min(66vh, 460px);
+    }
+}
+
+@media (max-width: 500px) {
+    .global-music-player {
+        left: 20px !important;
+        bottom: 60px;
+        width: calc(100vw - 70px);
+        max-height: min(66vh, 460px);
+    }
+    .music-entry-small {
+        margin-bottom: 10px !important;
+        display: flex;
+    }
+    .music-entry-small img {
+        width: 35px;
+        height: 35px;
+    }
+    .music-entry-small svg {
+        transform: translateY(calc(-100% - 10px));
+    }
+    .music-entry {
+        display: none;
+    }
 }
 
 @keyframes panelSlideUp {

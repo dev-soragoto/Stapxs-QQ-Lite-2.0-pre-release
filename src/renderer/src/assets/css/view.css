@@ -71,6 +71,21 @@ textarea:focus {
     box-shadow: unset;
     left: 90px;
 }
+.lyric-bar {
+    transition: opacity 0.3s;
+    background: var(--color-card-2);
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    color: var(--color-font-2);
+    font-size: 0.7rem;
+    box-shadow: 0 0 10px var(--color-shader);
+    position: absolute;
+    width: 100%;
+    padding: 10px 0;
+    z-index: 99;
+    height: calc(var(--safe-area-top) + 10px);
+}
 
 .top-bar {
     -webkit-app-region: drag;
@@ -599,6 +614,9 @@ textarea:focus {
     display: flex;
     color: var(--color-font);
 }
+.friend-list > div:first-child > div.base > svg {
+    margin: 5px;
+}
 .friend-list > div:first-child > div.base > span {
     font-weight: bold;
     flex: 1;
@@ -718,6 +736,7 @@ textarea:focus {
     transition:
         background 0.2s,
         color 0.2s,
+        backdrop-filter 0.2s,
         transform 0.2s;
 }
 .friend-body.active {
@@ -1690,14 +1709,21 @@ textarea:focus {
     .friend-list.open .small {
         display: flex;
     }
+    .friend-list > div:first-child {
+        margin-bottom: 0 !important;
+    }
     .friend-list > div:first-child > div.base {
         display: none;
     }
     .friend-list > div:first-child > div.small {
         align-items: center;
         display: flex;
-        height: 50px;
+        height: 60px;
         width: 100%;
+    }
+    .group-assist-message-list:not(.open) > div:first-child > div.small {
+        flex-direction: column;
+        height: 120px;
     }
     .friend-list > div:first-child > div.small > div.reload {
         display: none;
@@ -1717,8 +1743,11 @@ textarea:focus {
         border-radius: 7px;
         cursor: pointer;
         display: flex;
-        height: 100%;
+        height: 50px;
         width: 50px;
+    }
+    .group-assist-message-list:not(.open) > div:first-child > div.small > div {
+        margin: 0 0 10px 0 !important;
     }
     .friend-list > div:first-child > div.small > label {
         margin-right: 10px;
@@ -1761,7 +1790,7 @@ textarea:focus {
         margin-right: -100%;
     }
     .group-assist-message-list.show {
-        margin-left: -100%;
+        margin-left: -50%;
         margin-right: 0;
     }
 
@@ -1857,12 +1886,15 @@ textarea:focus {
         display: flex !important;
         margin-right: 0;
     }
+    .friend-list > div:first-child > div.small > div:last-child {
+        display: none;
+    }
+    .friend-list > div:first-child > div.small > div:not(:last-child) {
+        margin-right: 20px !important;
+    }
     .friend-list > div:first-child > div.small > div.reload,
     .friend-list > div:first-child > div.small > label {
         display: flex !important;
-    }
-    .friend-list > div:first-child > div.small > div:last-child {
-        margin-left: 10px;
     }
     .friend-list-space {
         overflow: hidden;
@@ -1940,6 +1972,45 @@ textarea:focus {
 }
 .v-leave-to > div.ss-card {
     transform: translateY(20px);
+}
+
+.history-box > .space {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+}
+.history-box > .space > svg {
+    font-size: 50px;
+    color: var(--color-main);
+}
+
+.history-box > .main {
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    max-height: 60vh;
+}
+
+.history-box > .main > div {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 7px;
+}
+
+.history-box > .main > div:hover {
+    background-color: var(--color-card-2);
+}
+
+.history-box > .main > div > img {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 2px solid var(--color-main);
+    margin-right: 5px;
 }
 
 @keyframes wordsLoop {

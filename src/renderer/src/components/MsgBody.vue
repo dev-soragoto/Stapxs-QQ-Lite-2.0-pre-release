@@ -107,6 +107,7 @@
                             :alt="$t('图片')"
                             :class=" imgStyle(data.message.length, Number(index), isFace(item))"
                             :src="getImgSrc(item.url)"
+                            data-type="image"
                             @load="imageLoaded"
                             @error="imgLoadFail"
                             @click="imgClick(item.url)">
@@ -308,29 +309,28 @@
                                 {{ pageViewInfo.data.stat.like }}
                             </div>
                         </div>
-                        <div v-else-if="pageViewInfo.type == 'music163'" class="link-view-music163">
-                            <div>
-                                <img :src="pageViewInfo.data.cover">
-                                <div :id="'music163-audio-' + data.message_id" :class="isMe ? 'me' : ''">
+                        <div v-else-if="pageViewInfo.type == 'music163'" style="width: 100%;">
+                            <div class="link-view-music163">
+                                <div>
                                     <a>{{ pageViewInfo.data.info.name }}
                                         <a v-if="pageViewInfo.data.info.free != null">{{ $t('（试听）') }}</a>
                                     </a>
                                     <span>{{ pageViewInfo.data.info.author.join('/') }}</span>
-                                    <audio :src="backend.proxyUrl(pageViewInfo.data.play_link)"
-                                        @loadedmetadata="audioLoaded()"
-                                        @timeupdate="audioUpdate()" />
-                                    <div>
-                                        <input value="0" min="0" step="0.1"
-                                            type="range" @input="audioChange()">
-                                        <div><div /><div /></div>
-                                        <font-awesome-icon v-if="!pageViewInfo.data.loaded" :icon="['fas', 'spinner']" spin />
-                                        <template v-else>
-                                            <font-awesome-icon v-if="!pageViewInfo.data.play" :icon="['fas', 'play']" @click="audioControll()" />
-                                            <font-awesome-icon v-else :icon="['fas', 'pause']" @click="audioControll()" />
-                                        </template>
-                                        <span>00:00 / 00:00</span>
-                                    </div>
                                 </div>
+                                <img :src="pageViewInfo.data.cover">
+                                <font-awesome-icon
+                                    :icon="['fas', 'play']"
+                                    :class="{ light: pageViewInfo.data.cover_light }"
+                                    @click="sendPlay({
+                                        title: pageViewInfo.data.info.name,
+                                        author: pageViewInfo.data.info.author,
+                                        url: pageViewInfo.data.play_link,
+                                        type: 'music163',
+                                        cover: pageViewInfo.data.cover,
+                                        free: pageViewInfo.data.info.free,
+                                        time: pageViewInfo.data.info.time,
+                                        data: pageViewInfo.data.id,
+                                    })" />
                             </div>
                         </div>
                     </template>
@@ -381,6 +381,7 @@ import {
 } from '@renderer/function/utils/appUtil'
 import { vUserTooltip } from '@renderer/function/tooltip'
 import {
+    getForegroundToneGridFromImageUrl,
     getSizeFromBytes,
     getTrueLang,
     getViewTime } from '@renderer/function/utils/systemUtil'
@@ -394,6 +395,7 @@ import { Img } from '@renderer/function/model/img'
 import { dbGetImage, hashUrl } from '@renderer/function/utils/localHistoryUtil'
 import JsonSegComp from './msg-component/JsonSegComp.vue'
 import XmlSegComp from './msg-component/XmlSegComp.vue'
+import { addMusic, MusicInfo } from './MusicPlayer.vue'
 
 type Msg = any
 type IUser = any
@@ -671,8 +673,16 @@ function getUserById(id: number): IUser | undefined {
             /**
              * 图片加载完成，滚到底部
              */
-            imageLoaded(event: Event) {
+            async imageLoaded(event: Event) {
                 const img = event.target as HTMLImageElement
+
+                // 移动端使用后端重新加载图片
+                if(backend.isMobile() && img.src && !img.src.startsWith('data:')
+                    && img.dataset.type === 'image') {
+                    img.src = await backend.proxyImageUrl(img.src)
+                    return
+                }
+
                 // 计算图片宽度
                 const vh = document.documentElement.clientHeight || document.body.clientHeight
                 const imgHeight = img.naturalHeight || img.height
@@ -685,6 +695,14 @@ function getUserById(id: number): IUser | undefined {
                 // 避免截图被判为长图，这里设置为它
                 if (aspectRatio > 2.5) {
                     img.classList.add('long-img')
+                    try {
+                        const picLight = ( await getForegroundToneGridFromImageUrl(backend.proxyUrl(img.src), 0.4))[1][1] === 'light'
+                        if(picLight) {
+                            img.classList.add('light')
+                        }
+                    } catch {
+                        // do nothing
+                    }
                 } else {
                     // 普通图片的处理逻辑保持不变
                     if (imgHeight > vh * 0.35)
@@ -1093,112 +1111,8 @@ function getUserById(id: number): IUser | undefined {
 
                 return id
             },
-
-            audioLoaded() {
-                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
-                if(mainBody) {
-                    const bar = mainBody.getElementsByTagName('input')[0]
-                    const audio = mainBody.getElementsByTagName('audio')[0]
-                    const span = mainBody.getElementsByTagName('div')[0].getElementsByTagName('span')[0]
-                    const div = mainBody.getElementsByTagName('div')[0].getElementsByTagName('div')[0].children[1] as HTMLDivElement
-                    if(bar && audio && span && div) {
-                        const max = this.pageViewInfo?.data.info.time ?? audio.duration
-                        bar.max = max.toString()
-                        // 设置进度文本
-                        const minutes = Math.floor(max / 60)
-                        const seconds = Math.floor(max % 60)
-                        span.innerHTML = '00:00 / ' +
-                            (minutes < 10 ? '0' + minutes : minutes) + ':' +
-                            (seconds < 10 ? '0' + seconds : seconds)
-                        // 设置不可播放长度
-                        if(max > audio.duration) {
-                            const percent = audio.duration / max
-                            if(percent > 0) {
-                                div.style.width = 'calc(' + (1 - percent) * 100 + '% - 9px)'
-                                div.style.marginLeft = 'calc(' + percent * 100 + '% + 9px)'
-                            } else {
-                                div.style.width = '0%'
-                            }
-                        }
-                    }
-                }
-                if(this.pageViewInfo) this.pageViewInfo.data.loaded = true
-            },
-
-            audioControll() {
-                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
-                if(mainBody) {
-                    const audio = mainBody.getElementsByTagName('audio')[0]
-                    if(audio) {
-                        if(audio.paused) {
-                            audio.play()
-                            if(this.pageViewInfo) this.pageViewInfo.data.play = true
-                        } else {
-                            audio.pause()
-                            if(this.pageViewInfo) this.pageViewInfo.data.play = false
-                        }
-                    }
-                }
-            },
-
-            audioUpdate() {
-                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
-                if(mainBody) {
-                    const bar = mainBody.getElementsByTagName('input')[0]
-                    const audio = mainBody.getElementsByTagName('audio')[0]
-                    const span = mainBody.getElementsByTagName('div')[0].getElementsByTagName('span')[0]
-                    const div = mainBody.getElementsByTagName('div')[0].getElementsByTagName('div')[0].children[0] as HTMLDivElement
-                    if(bar && audio && span && div) {
-                        const max = this.pageViewInfo?.data.info.time ?? audio.duration
-                        bar.value = audio.currentTime.toString()
-                        // 设置进度文本
-                        const minutes = Math.floor(audio.currentTime / 60)
-                        const seconds = Math.floor(audio.currentTime % 60)
-                        const minutesDur = Math.floor(max / 60)
-                        const secondsDur = Math.floor(max % 60)
-
-                        span.innerHTML = (minutes < 10 ? '0' + minutes : minutes) + ':' +
-                            (seconds < 10 ? '0' + seconds : seconds) + ' / ' +
-                            (minutesDur < 10 ? '0' + minutesDur : minutesDur) + ':' +
-                            (secondsDur < 10 ? '0' + secondsDur : secondsDur)
-
-                        const perCent = (audio.currentTime / max) * 100
-                        if(perCent > 100) {
-                            div.style.width = '100%'
-                        } else {
-                            div.style.width = perCent + '%'
-                        }
-
-                        if(audio.currentTime >= audio.duration) {
-                            bar.value = '0'
-                            audio.currentTime = 0
-                            if(this.pageViewInfo) this.pageViewInfo.data.play = false
-                            div.style.width = '0%'
-                        }
-                    }
-                }
-            },
-
-            audioChange() {
-                const mainBody = document.getElementById('music163-audio-' + this.data.message_id)
-                if(mainBody) {
-                    const bar = mainBody.getElementsByTagName('input')[0]
-                    const audio = mainBody.getElementsByTagName('audio')[0]
-                    if(bar && audio) {
-                        const value = parseFloat(bar.value)
-                        if(value <= audio.duration) {
-                            if(audio.paused) {
-                                audio.currentTime = value
-                            } else {
-                                audio.pause()
-                                audio.currentTime = value
-                                audio.play()
-                            }
-                        } else {
-                            bar.value = audio.currentTime.toString()
-                        }
-                    }
-                }
+            sendPlay(info: MusicInfo) {
+                addMusic(info, 'current', true)
             },
             openMerge(){
                 const seg = this.data.message[0]
@@ -1366,103 +1280,40 @@ function getUserById(id: number): IUser | undefined {
     }
 
     .link-view-music163 {
+        width: calc(100% + 60px);
+        margin-right: -60px;
+        display: flex;
+    }
+    .link-view-music163 div {
+        display: flex;
         flex-direction: column;
-        display: flex;
+        flex: 1;
     }
-    .link-view-music163 > div:first-child {
-        align-items: flex-start;
-        display: flex;
-    }
-    .link-view-music163 > div:first-child > img {
+    .link-view-music163 img {
+        width: 60px;
+        height: 60px;
         border-radius: 7px;
-        margin-right: 20px;
-        max-height: 80px;
-        width: 25%;
+        margin-left: 20px;
     }
-    .link-view-music163 > div:first-child > div {
-        flex-direction: column;
-        display: flex;
-        width: 100%;
-    }
-    .link-view-music163 > div:first-child > div > a {
-        font-size: 0.9rem;
+    .link-view-music163 a {
+        text-wrap: nowrap;
         font-weight: bold;
+        margin: 0;
     }
-    .link-view-music163 > div:first-child > div > a > a {
-        font-size: 0.7rem;
-        font-weight: normal;
-    }
-    .link-view-music163 > div:first-child > div > span {
+    .link-view-music163 span {
+        text-wrap: nowrap;
         font-size: 0.8rem;
         opacity: 0.7;
     }
-    .link-view-music163 > div:first-child > div > div {
-        flex-direction: row;
-        margin-top: 5px;
-        flex-wrap: wrap;
-        display: flex;
+    .link-view-music163 svg {
+        --size: 20px;
+        color: #545454;
+        width: var(--size);
+        height: var(--size);
+        padding: calc(calc(60px - var(--size)) / 2);
+        transform: translateX(-100%);
     }
-    .link-view-music163 > div:first-child > div > div > input {
-        appearance: none;
-        -webkit-appearance: none;
-        width: calc(100% - 20px);
-        background: transparent;
-        margin-bottom: 10px;
-        margin-right: 20px;
-    }
-    .link-view-music163 > div:first-child > div > div > input::-webkit-slider-thumb {
-        background: var(--color-main);
-        -webkit-appearance: none;
-        border-radius: 100%;
-        margin-top: -3px;
-        height: 12px;
-        width: 12px;
-    }
-    .link-view-music163 > div:first-child > div.me > div > input::-webkit-slider-thumb {
-        background: var(--color-font-r);
-    }
-    .link-view-music163 > div:first-child > div > div > input::-webkit-slider-runnable-track {
-        background: var(--color-card-1);
-        border-radius: 10px;
-        height: 6px;
-    }
-    .link-view-music163 > div:first-child > div.me > div > input::-webkit-slider-runnable-track {
-        background: var(--color-font-2);
-    }
-    .link-view-music163 > div:first-child > div > div > svg {
-        font-size: 0.75rem;
-        margin-left: 4px;
-        cursor: pointer;
-    }
-    .link-view-music163 > div:first-child > div > div > span {
-        font-size: 0.75rem;
-        margin-right: 20px;
-        text-align: right;
-        flex: 1;
-    }
-    .link-view-music163 > div:first-child > div > div > div {
-        width: calc(100% - 20px);
-        margin-bottom: -6px;
-        margin-right: 20px;
-        margin-left: 3px;
-    }
-    .link-view-music163 > div:first-child > div > div > div > div {
-        transform: translateY(calc(-100% - 10px));
-        background: var(--color-main);
-        pointer-events: none;
-        border-radius: 6px;
-        height: 6px;
-        width: 0%;
-    }
-    .link-view-music163 > div:first-child > div > div > div > div:nth-child(2) {
-        transform: translateY(calc(-100% - 16px));
-        background: var(--color-card-2);
-        border-radius: 0 6px 6px 0;
-    }
-    .link-view-music163 > div:first-child > div.me > div > div > div:nth-child(2) {
-        background: var(--color-font-1);
-    }
-    .link-view-music163 > div:first-child > div.me > div > div > div {
-        background: var(--color-font-r);
+    .link-view-music163 svg.light {
+        color: #e5e5e5;
     }
 </style>

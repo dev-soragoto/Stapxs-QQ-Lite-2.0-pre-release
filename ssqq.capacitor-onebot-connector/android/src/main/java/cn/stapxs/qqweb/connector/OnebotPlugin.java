@@ -121,7 +121,7 @@ public class OnebotPlugin extends Plugin {
             ret.put("url", finalUrl);
             call.resolve(ret);
         } catch (IOException e) {
-            Log.e("获取链接重定向失败：", Objects.requireNonNull(e.getMessage()));
+            Log.e("OneBotPlugin", "获取链接重定向失败：" + Objects.requireNonNull(e.getMessage()));
             JSObject ret = new JSObject();
             ret.put("url", url);
             call.resolve(ret);
@@ -138,7 +138,7 @@ public class OnebotPlugin extends Plugin {
             ret.put("html", htmlContent);
             call.resolve(ret);
         } catch (IOException e) {
-            Log.e("请求失败：", Objects.requireNonNull(e.getMessage()));
+            Log.e("OneBotPlugin", "请求失败：" + Objects.requireNonNull(e.getMessage()));
             JSObject ret = new JSObject();
             ret.put("html", null);
             call.resolve(ret);
@@ -153,10 +153,33 @@ public class OnebotPlugin extends Plugin {
             String jsonContent = HTTPUtils.fetchContent(url, "application/json");
             call.resolve(new JSObject(jsonContent));
         } catch (Exception e) {
-            Log.e("请求失败：", Objects.requireNonNull(e.getMessage()));
+            Log.e("OneBotPlugin", "请求失败：" + Objects.requireNonNull(e.getMessage()));
             JSObject ret = new JSObject();
             ret.put("html", null);
             call.resolve(ret);
+        }
+    }
+
+    @PluginMethod
+    public void getImageData(PluginCall call) {
+        String url = call.getString("url");
+        if (url == null || url.isEmpty()) {
+            url = call.getString("data");
+        }
+
+        if (url == null || url.isEmpty()) {
+            call.reject("缺少图片 URL 参数");
+            return;
+        }
+
+        try {
+            String dataUrl = HTTPUtils.fetchImageAsDataUrl(url);
+            JSObject ret = new JSObject();
+            ret.put("data", dataUrl);
+            call.resolve(ret);
+        } catch (IOException e) {
+            Log.e("图片下载失败：", Objects.requireNonNull(e.getMessage()));
+            call.reject("图片下载失败");
         }
     }
 }

@@ -29,6 +29,11 @@
 .friend-view > div:last-child > div.cd {
     display: none;
 }
+.friend-body.onmenu,
+.friend-body:hover {
+    background: rgba(var(--color-card-2-rgb), 0.7) !important;
+    backdrop-filter: blur(20px);
+}
 .friend-body > svg {
     background: var(--color-main);
     color: var(--color-font-r);
@@ -204,4 +209,17 @@
 
 .release-item {
     background: rgba(var(--color-card-rgb), 0.5) !important;
+}
+
+@media (max-width: 700px) {
+    .friend-list {
+        background: transparent !important;
+    }
+}
+
+@media (max-width: 500px) {
+    .chat-pan {
+        background: rgba(var(--color-card-2-rgb), 0.5);
+        backdrop-filter: blur(10px);
+    }
 }

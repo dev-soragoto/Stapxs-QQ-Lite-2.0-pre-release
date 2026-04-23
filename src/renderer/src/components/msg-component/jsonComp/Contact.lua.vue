@@ -1,13 +1,13 @@
 <template>
-    <div v-if="success" class="msg-json" @click="open(parsedContent.jumpUrl)">
-        <p>{{ parsedContent.title }}</p>
-        <span v-if="parsedContent.type === 'group'">{{ parsedContent.desc }}</span>
-        <img :src="parsedContent.img" alt="">
+    <div v-if="success" class="msg-json">
+        <div class="contact-data">
+            <img :src="parsedContent.img" alt="">
+            <div>
+                <p>{{ parsedContent.title }}</p>
+                <span v-if="parsedContent.type === 'group'">{{ parsedContent.desc }}</span>
+            </div>
+        </div>
         <div class="bottom-bar">
-            <font-awesome-icon
-                v-if="parsedContent.type === 'group'"
-                :icon="['fas', 'users']" />
-            <font-awesome-icon v-else :icon="['fas', 'user']" />
             <span>{{ parsedContent.name }}</span>
         </div>
     </div>
@@ -105,3 +105,31 @@ if (!success) {
     new Logger().error(parsedData.error, 'Card Parse Error')
 }
 </script>
+
+<style scoped>
+.contact-data {
+    display: flex;
+    align-items: center;
+}
+.contact-data img {
+    width: 45px;
+    height: 45px;
+    border-radius: 100%;
+    margin-right: 15px;
+}
+.contact-data > div {
+    display: flex;
+    flex-direction: column;
+}
+.contact-data p {
+    text-wrap: nowrap;
+    margin: 0;
+    font-weight: bold;
+}
+.contact-data span {
+    text-wrap: nowrap;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 5px;
+}
+</style>

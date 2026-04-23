@@ -24,7 +24,8 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
 
         CAPPluginMethod(name: "getFinalRedirectUrl", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getHtml", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getApi", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getApi", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getImageData", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Onebot()
     private let logger = Logger()
@@ -160,6 +161,23 @@ public class OnebotPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
             } else {
                 print("请求失败")
+            }
+        }
+    }
+
+    @objc func getImageData(_ call: CAPPluginCall) {
+        let urlGet = call.getString("url") ?? call.getString("data") ?? ""
+        guard let url = URL(string: urlGet), !urlGet.isEmpty else {
+            call.reject("缺少图片 URL 参数")
+            return
+        }
+
+        let httpUtil = HTTPUtil()
+        httpUtil.fetchImageDataURL(from: url) { dataUrl in
+            if let dataUrl = dataUrl {
+                call.resolve(["data": dataUrl])
+            } else {
+                call.reject("图片下载失败")
             }
         }
     }

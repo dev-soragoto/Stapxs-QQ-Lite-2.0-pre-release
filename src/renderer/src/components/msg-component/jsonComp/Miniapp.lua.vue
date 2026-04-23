@@ -28,10 +28,10 @@ const miniapp = z
         meta: z.object({
             miniapp: z.object({
                 title: z.string(),
-                source: z.string(),
-                sourcelogo: z.url(),
+                jumpUrl: z.string(),
                 preview: z.string(),
-                jumpUrl: z.url(),
+                tagIcon: z.string(),
+                tag: z.string(),
             }),
         }),
     })
@@ -39,10 +39,9 @@ const miniapp = z
         title: o.meta.miniapp.title,
         jumpUrl: o.meta.miniapp.jumpUrl,
         img: o.meta.miniapp.preview,
-        icon: o.meta.miniapp.sourcelogo,
-        name: o.meta.miniapp.source,
+        icon: o.meta.miniapp.tagIcon,
+        name: o.meta.miniapp.tag,
     }))
-
 
 const json = JSON.parse(jsonData)
 const parsedData = miniapp.safeParse(json)

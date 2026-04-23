@@ -14,4 +14,5 @@ export interface OnebotPlugin {
     getFinalRedirectUrl(options: { url: string }): Promise<{ url: string }>;
     getHtml(options: { url: string }): Promise<{ data: string }>;
     getApi(options: { url: string }): Promise<{ data: string }>;
+    getImageData(options: { url: string }): Promise<{ data: string }>;
 }

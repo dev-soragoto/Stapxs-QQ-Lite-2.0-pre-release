@@ -247,6 +247,7 @@
 /* 长图优化样式 */
 div:has(> .msg-img.long-img)::after {
     content: '长图';
+    color: #434343;
     background: rgba(var(--color-card-2-rgb), 0.5);
     width: calc(100% - 10px);
     display: block;
@@ -258,6 +259,9 @@ div:has(> .msg-img.long-img)::after {
     border-radius: 7px;
     font-size: 0.65rem;
     backdrop-filter: blur(20px);
+}
+div:has(> .msg-img.long-img.light)::after {
+    color: #dbdbdb;
 }
 .msg-img.long-img {
     max-height: 40vh;

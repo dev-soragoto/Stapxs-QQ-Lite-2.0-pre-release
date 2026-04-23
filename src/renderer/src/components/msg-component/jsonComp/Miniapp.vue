@@ -1,5 +1,5 @@
 <template>
-    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
+    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl ?? '')">
         <p>{{ parsedContent.title }}</p>
         <img :src="parsedContent.img" alt="">
         <div class="bottom-bar">
@@ -22,26 +22,42 @@ const { data: jsonData, id } = defineProps<{
     id: string,
 }>()
 
-const miniapp = z
-    .object({
+const detailSchema = z.object({
+    title: z.string(),
+    desc: z.string(),
+    icon: z.string(),
+    preview: z.string(),
+    qqdocurl: z.string().optional(),
+    url: z.string().optional(),
+}).transform((o) => ({
+    title: o.desc,
+    name: o.title,
+    icon: o.icon,
+    img: o.preview,
+    jumpUrl: o.qqdocurl ?? o.url,
+}))
+
+const invitationSchema = z.object({
+    title: z.string(),
+    name: z.string(),
+    icon: z.string(),
+    imageUrl: z.string(),
+    path: z.string().optional(),
+}).transform((o) => ({
+    title: o.title,
+    name: o.name,
+    icon: o.icon,
+    img: o.imageUrl,
+    jumpUrl: o.path,
+}))
+
+const miniapp = z.object({
         app: z.literal('com.tencent.miniapp_01'),
-        meta: z.object({
-            detail_1: z.object({
-                title: z.string(),
-                desc: z.string(),
-                icon: z.string(),
-                preview: z.string(),
-                qqdocurl: z.string(),
-            }),
-        }),
-    })
-    .transform((o) => ({
-        title: o.meta.detail_1.desc,
-        jumpUrl: o.meta.detail_1.qqdocurl,
-        img: o.meta.detail_1.preview,
-        icon: o.meta.detail_1.icon,
-        name: o.meta.detail_1.title,
-    }))
+        meta: z.union([
+            z.object({ detail_1: detailSchema, }).transform(v => v.detail_1),
+            z.object({ invitation_1: invitationSchema, }).transform(v => v.invitation_1),
+        ]),
+    }).transform(o => o.meta)
 
 const json = JSON.parse(jsonData)
 const parsedData = miniapp.safeParse(json)

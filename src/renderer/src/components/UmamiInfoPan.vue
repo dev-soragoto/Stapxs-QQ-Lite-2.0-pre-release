@@ -173,7 +173,8 @@
         BrushComponent,
         ToolboxComponent,
         TooltipComponent,
-        GridComponent
+        GridComponent,
+        PolarComponent
     } from 'echarts/components'
     import { CanvasRenderer } from 'echarts/renderers'
 
@@ -190,6 +191,7 @@
         TooltipComponent,
         BarChart,
         GridComponent,
+        PolarComponent,
         SunburstChart
     ])
 
@@ -412,6 +414,13 @@
                             this.eventData = this.buildSunburstOption(value, pieData, colorCard, colorFont)
                             return
                         }
+
+                        // 触发彩蛋改为直方图
+                        if (value.indexOf('show_qed') == 0) {
+                            this.eventData = this.buildShowQedHistogramOption(pieData, colorCard, colorFont, colorMainRaw)
+                            return
+                        }
+
                         // 系统架构将 x86_64 统一为 x64、arm64 统一为 aarch64
                         if (value.indexOf('os_arch') == 0) {
                             pieData = this.processOsArch(pieData)
@@ -419,10 +428,6 @@
                         // 触发按钮进行名称映射
                         else if (value.indexOf('click_statistics') == 0) {
                             pieData = this.processClickStatistics(pieData)
-                        }
-                        // 触发彩蛋的数值实际上是尝试次数，把它们划到一个合适的指数区间内
-                        else if (value.indexOf('show_qed') == 0) {
-                            pieData = this.processShowQed(pieData)
                         }
                         // 这边的颜色用 colorMainRaw 创建 10 级不同透明度的颜色，不需要转为 rgba，使用十六进制颜色
                         const colors = [] as string[]
@@ -762,6 +767,103 @@
                                 focus: 'series'
                             },
                             data: sunburstData
+                        }
+                    ]
+                }
+            },
+
+            buildShowQedHistogramOption(pieData: Array<{ name: string, value: number }>, colorCard: string, colorFont: string, colorMainRaw: string) {
+                const attempts = pieData
+                    .map(item => Number(item.name))
+                    .filter(item => !isNaN(item) && item > 0)
+                const maxAttempt = attempts.length > 0 ? Math.max(...attempts) : 0
+                if (maxAttempt <= 0) {
+                    return null
+                }
+
+                const bucketSize = 150
+                const bucketCount = Math.ceil(maxAttempt / bucketSize)
+                const bucketMap: Record<string, number> = {}
+                const labels: string[] = []
+                for (let i = 0; i < bucketCount; i++) {
+                    const start = i * bucketSize + 1
+                    const end = (i + 1) * bucketSize
+                    const label = `${start}-${end}`
+                    labels.push(label)
+                    bucketMap[label] = 0
+                }
+
+                for (const item of pieData) {
+                    const attempt = Number(item.name)
+                    if (isNaN(attempt) || attempt <= 0) continue
+                    const bucketIndex = Math.floor((attempt - 1) / bucketSize)
+                    const label = labels[bucketIndex]
+                    if (!label) continue
+                    bucketMap[label] += Number(item.value || 0)
+                }
+
+                const activeLabels = labels.filter(label => bucketMap[label] > 0)
+                const points = activeLabels.map(label => [label, bucketMap[label]])
+
+                if (activeLabels.length === 0) {
+                    return null
+                }
+
+                return {
+                    tooltip: {
+                        trigger: 'item',
+                        backgroundColor: colorCard,
+                        textStyle: {
+                            color: colorFont
+                        },
+                        formatter: (params: any) => {
+                            const label = activeLabels[params.dataIndex] || params.name
+                            return `${params.marker} ${this.$t('尝试区间')}: ${label}<br/>${this.$t('出现次数')}: ${params.value}`
+                        }
+                    },
+                    polar: {
+                        radius: ['20%', '80%']
+                    },
+                    angleAxis: {
+                        type: 'category',
+                        data: activeLabels,
+                        startAngle: 90,
+                        axisLine: {
+                            show: false
+                        },
+                        axisTick: {
+                            show: false
+                        },
+                        axisLabel: {
+                            show: false
+                        },
+                        nameTextStyle: {
+                            color: colorFont
+                        }
+                    },
+                    radiusAxis: {
+                        type: 'value',
+                        name: this.$t('触发尝试次数'),
+                        minInterval: 1,
+                        nameTextStyle: {
+                            color: colorFont
+                        },
+                        axisLabel: {
+                            color: colorFont,
+                            formatter: (value: number) => `${Math.round(value)}`
+                        }
+                    },
+                    series: [
+                        {
+                            type: 'bar',
+                            coordinateSystem: 'polar',
+                            roundCap: true,
+                            barMaxWidth: 28,
+                            itemStyle: {
+                                color: colorMainRaw,
+                                borderRadius: 6
+                            },
+                            data: points.map(point => point[1])
                         }
                     ]
                 }

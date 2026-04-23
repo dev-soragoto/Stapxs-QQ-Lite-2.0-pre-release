@@ -2058,7 +2058,4 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
     .chat-pan.open {
         transform: translateX(100%);
     }
-    .chat-pan > div.info > svg {
-        display: block;
-    }
 }

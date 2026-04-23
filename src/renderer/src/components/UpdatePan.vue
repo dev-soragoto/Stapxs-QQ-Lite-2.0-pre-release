@@ -26,7 +26,7 @@
                             class="log-issue">
                             <span> -&gt; </span>
                             <div />
-                            <a @click="openLink(`https://github.com/${repoName}/issues/${item.issue}`, true)">#{{ item.issue }}</a>
+                            <a @click="openLink(`https://github.com/${repoName}/issues/${item.issue}`)">#{{ item.issue }}</a>
                         </div>
                     </div>
                 </div>
@@ -60,7 +60,7 @@
                                 class="log-issue">
                                 <span> -&gt; </span>
                                 <div />
-                                <a @click="openLink(`https://github.com/${repoName}/issues/${item.issue}`, true)">#{{ item.issue }}</a>
+                                <a @click="openLink(`https://github.com/${repoName}/issues/${item.issue}`)">#{{ item.issue }}</a>
                             </div>
                         </div>
                     </div>
@@ -191,7 +191,6 @@
     /* 多条更新记录样式 */
     .update-info.multiple-releases {
         margin: 5px 0 0 -10px;
-        max-height: 55vh;
         overflow-y: auto;
     }
 
