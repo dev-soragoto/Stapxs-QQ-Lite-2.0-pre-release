@@ -1263,7 +1263,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/android@npm:^6.0.0, @capacitor/android@npm:^6.2.0":
+"@capacitor/android@npm:^6.0.0":
   version: 6.2.1
   resolution: "@capacitor/android@npm:6.2.1"
   peerDependencies:
@@ -1272,12 +1272,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/app@npm:^6.0.2":
-  version: 6.0.3
-  resolution: "@capacitor/app@npm:6.0.3"
+"@capacitor/android@npm:^8.0.0":
+  version: 8.3.1
+  resolution: "@capacitor/android@npm:8.3.1"
   peerDependencies:
-    "@capacitor/core": ^6.0.0
-  checksum: 10c0/f5da7375829bc2f4687e7e4001c471e3f5cc780142fa63facb22ec3e9fa907c7c7ec1df93e94ffc7b09976f8b08fb6daef2fe3585fd92051dad967eef56fcbc7
+    "@capacitor/core": ^8.3.0
+  checksum: 10c0/c7b59e0561c1ceade4da5d096af3f30750d4c6082b2a5debe16c1d7dd46fb5821c43e81e2af4eb098b31a35a9e846a7e57e9aa8181067e82e1ec25d1a23bf539
+  languageName: node
+  linkType: hard
+
+"@capacitor/app@npm:^8.0.0":
+  version: 8.1.0
+  resolution: "@capacitor/app@npm:8.1.0"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/670a5bc3f0c1706f9d09ad03873836ac9b56e1ca6c9853e283d43b4ff04c7295b30801d49f563206aadcf882245025be1ecdc12c22c7d479c636b34123e9a0d3
   languageName: node
   linkType: hard
 
@@ -1331,40 +1340,49 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^6.2.0":
-  version: 6.2.1
-  resolution: "@capacitor/cli@npm:6.2.1"
+"@capacitor/cli@npm:^8.0.0":
+  version: 8.3.1
+  resolution: "@capacitor/cli@npm:8.3.1"
   dependencies:
-    "@ionic/cli-framework-output": "npm:^2.2.5"
-    "@ionic/utils-fs": "npm:^3.1.6"
-    "@ionic/utils-subprocess": "npm:2.1.11"
-    "@ionic/utils-terminal": "npm:^2.3.3"
-    commander: "npm:^9.3.0"
-    debug: "npm:^4.3.4"
+    "@ionic/cli-framework-output": "npm:^2.2.8"
+    "@ionic/utils-subprocess": "npm:^3.0.1"
+    "@ionic/utils-terminal": "npm:^2.3.5"
+    commander: "npm:^12.1.0"
+    debug: "npm:^4.4.0"
     env-paths: "npm:^2.2.0"
-    kleur: "npm:^4.1.4"
-    native-run: "npm:^2.0.0"
+    fs-extra: "npm:^11.2.0"
+    kleur: "npm:^4.1.5"
+    native-run: "npm:^2.0.3"
     open: "npm:^8.4.0"
-    plist: "npm:^3.0.5"
+    plist: "npm:^3.1.0"
     prompts: "npm:^2.4.2"
-    rimraf: "npm:^4.4.1"
-    semver: "npm:^7.3.7"
-    tar: "npm:^6.1.11"
-    tslib: "npm:^2.4.0"
-    xml2js: "npm:^0.5.0"
+    rimraf: "npm:^6.0.1"
+    semver: "npm:^7.6.3"
+    tar: "npm:^7.5.3"
+    tslib: "npm:^2.8.1"
+    xml2js: "npm:^0.6.2"
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/668ab3df335047b8e56f1aac79c8135cc9b8112adfc10db4516ef49f3eb6aa902075efeceab583b8a5d91794ff2a4b878cdfe1d9b01ad0539e9138e4730081c0
+  checksum: 10c0/7e23fd4f1ea78ce23634ef7ca34fab6f937c1cf5410190520e8996256bfbfd690b94df60ea9058c425c9e2ac4d28de975f1bdc5df5cda9582b6a8ee27ac6a8e3
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^6.0.0, @capacitor/core@npm:^6.2.0":
+"@capacitor/core@npm:^6.0.0":
   version: 6.2.1
   resolution: "@capacitor/core@npm:6.2.1"
   dependencies:
     tslib: "npm:^2.1.0"
   checksum: 10c0/09562ab35724eda31f9675fba11905b60d8bc31831e1d4b8f08476c043ca5bf4e5f674ec5ba63a5544e759c2269cb23b6bfe246ad6e998ecceef3f0e8d0129bb
+  languageName: node
+  linkType: hard
+
+"@capacitor/core@npm:^8.0.0":
+  version: 8.3.1
+  resolution: "@capacitor/core@npm:8.3.1"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  checksum: 10c0/c35d65e94f3f2523e2ccd10d1f1e4b74596aeede5d2cabcb03f02464dfc78679bcdf0570ecaa7916f08bc25de404313d8628d2832c138cfccf8b7f8e5c7b3761
   languageName: node
   linkType: hard
 
@@ -1383,7 +1401,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^6.0.0, @capacitor/ios@npm:^6.2.0":
+"@capacitor/ios@npm:^6.0.0":
   version: 6.2.1
   resolution: "@capacitor/ios@npm:6.2.1"
   peerDependencies:
@@ -1392,30 +1410,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/keyboard@npm:^6.0.3":
-  version: 6.0.4
-  resolution: "@capacitor/keyboard@npm:6.0.4"
+"@capacitor/ios@npm:^8.0.0":
+  version: 8.3.1
+  resolution: "@capacitor/ios@npm:8.3.1"
   peerDependencies:
-    "@capacitor/core": ^6.0.0
-  checksum: 10c0/f3c23619dddcf5992ebfb07776d184150cd706c12252ded9f23cce22020b7f95900f7752f68b60b7c3f78f6346e66ffd263c2bd077d642c4740cc908f6eaa36c
+    "@capacitor/core": ^8.3.0
+  checksum: 10c0/314fb4ad90a144b9c956175e488cf523c46a484221db462a3df8aae0e1ee1d8820988cd5fa4038574e7f3f29b2e331aa47b05fcf0c6c457b9ca61177a9137699
   languageName: node
   linkType: hard
 
-"@capacitor/local-notifications@npm:^6.1.1":
-  version: 6.1.3
-  resolution: "@capacitor/local-notifications@npm:6.1.3"
+"@capacitor/keyboard@npm:^8.0.0":
+  version: 8.0.3
+  resolution: "@capacitor/keyboard@npm:8.0.3"
   peerDependencies:
-    "@capacitor/core": ^6.0.0
-  checksum: 10c0/350fed5563640a68dc54605b1f67930b58facc277ec500abc10e1e56061710ae8b40422e0324704b86f0b3f5379f4f41b8d1c8cc9d9abd92409e7f8c57599ef2
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/502c7ff5b88367df92ab4c0a51f04d70a6bd2b7ce03ead881035e63286282bc4abfb35d9fe55c8ebed538fe8b665e632050810e89ac6014a70fc98afaf8bbf23
   languageName: node
   linkType: hard
 
-"@capacitor/status-bar@npm:^6.0.2":
-  version: 6.0.3
-  resolution: "@capacitor/status-bar@npm:6.0.3"
+"@capacitor/local-notifications@npm:^8.0.0":
+  version: 8.0.2
+  resolution: "@capacitor/local-notifications@npm:8.0.2"
   peerDependencies:
-    "@capacitor/core": ^6.0.0
-  checksum: 10c0/6c4500637ecbff3a2d9a379658ad7504db9260afff27441638966fb8ff022c6ace50f3c413c386ea3b7685c2965d977a74d07dd834244ba9e6daa1a5d384ca7d
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/e53b3770c00fee0c632098085e5148ce76f78337a74009b91902dbb031ae39196962332460c0738b038c54d4d948603216e0a4c985af759b0f9594af13105e89
+  languageName: node
+  linkType: hard
+
+"@capacitor/status-bar@npm:^8.0.0":
+  version: 8.0.2
+  resolution: "@capacitor/status-bar@npm:8.0.2"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/2e27cf6629666b9e3078ac26e68a13d211a442b24ce64e40510ca9741666abe72c64c0be05b2645ebfcd297413a2f5238812218649e74b906d11893378a15231
   languageName: node
   linkType: hard
 
@@ -1929,7 +1956,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/cli-framework-output@npm:^2.2.5":
+"@ionic/cli-framework-output@npm:^2.2.5, @ionic/cli-framework-output@npm:^2.2.8":
   version: 2.2.8
   resolution: "@ionic/cli-framework-output@npm:2.2.8"
   dependencies:
@@ -1970,16 +1997,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/utils-array@npm:2.1.5":
-  version: 2.1.5
-  resolution: "@ionic/utils-array@npm:2.1.5"
-  dependencies:
-    debug: "npm:^4.0.0"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/2f14392a56130d1727f373405b75a0d14a3a21617ae4500a547e2ad92dd2e1c1b8e630ced557ab756b2b71d5916c2606e9cddf983e7f2fce1fa021a088ea4710
-  languageName: node
-  linkType: hard
-
 "@ionic/utils-array@npm:2.1.6":
   version: 2.1.6
   resolution: "@ionic/utils-array@npm:2.1.6"
@@ -1987,18 +2004,6 @@ __metadata:
     debug: "npm:^4.0.0"
     tslib: "npm:^2.0.1"
   checksum: 10c0/07b9a1c77b34e0c4d0e3bd1f638d7f7ede9481e8903328f4d1ecce20a96e92d71faed7f1c7572bcc7099d14f5c26d815c38b15a7c0679d71ee0ab40c3fde3d20
-  languageName: node
-  linkType: hard
-
-"@ionic/utils-fs@npm:3.1.6":
-  version: 3.1.6
-  resolution: "@ionic/utils-fs@npm:3.1.6"
-  dependencies:
-    "@types/fs-extra": "npm:^8.0.0"
-    debug: "npm:^4.0.0"
-    fs-extra: "npm:^9.0.0"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/43be4b8bf3379409fb1d5d036be539c7f7abf371f7c74f007f72cb8f5a93c32a1d088c36a42fc610dad36e3634551ebb698dea3b0d5ec9b93a5ede40b3ee29b7
   languageName: node
   linkType: hard
 
@@ -2014,16 +2019,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/utils-object@npm:2.1.5":
-  version: 2.1.5
-  resolution: "@ionic/utils-object@npm:2.1.5"
-  dependencies:
-    debug: "npm:^4.0.0"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/0a2d98244d5e8377cf788a9b854e2f27dd6082135a631736ff51be046e397c5d8ccdef2f2c062241a1ae9566e08066576cd88b7e38cfaf1e95a742b51035965b
-  languageName: node
-  linkType: hard
-
 "@ionic/utils-object@npm:2.1.6":
   version: 2.1.6
   resolution: "@ionic/utils-object@npm:2.1.6"
@@ -2031,20 +2026,6 @@ __metadata:
     debug: "npm:^4.0.0"
     tslib: "npm:^2.0.1"
   checksum: 10c0/17b55abb65008d6be72db8cd4d3fffd2fdf103de11b38f48b65c9f6f8fe0501ff19bb7dd972014852b19dce79cf4029d0a905628e041894be10f4d2fd19f601f
-  languageName: node
-  linkType: hard
-
-"@ionic/utils-process@npm:2.1.10":
-  version: 2.1.10
-  resolution: "@ionic/utils-process@npm:2.1.10"
-  dependencies:
-    "@ionic/utils-object": "npm:2.1.5"
-    "@ionic/utils-terminal": "npm:2.3.3"
-    debug: "npm:^4.0.0"
-    signal-exit: "npm:^3.0.3"
-    tree-kill: "npm:^1.2.2"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/872ef083b85c84f04f68454c694a141d7f475ca32e98a6a39aad074f83d382fd8c921c595d492eddc458a14708d702a510c448c9a7c842b9f208f0671b66be50
   languageName: node
   linkType: hard
 
@@ -2076,16 +2057,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/utils-stream@npm:3.1.5":
-  version: 3.1.5
-  resolution: "@ionic/utils-stream@npm:3.1.5"
-  dependencies:
-    debug: "npm:^4.0.0"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/6a9a67bdf5b4cfd7f7a3d47af02413cf636d7891bd632d788a5e74fd35acacd992b50bca1e23041854b93cad6ae8f4e3abf30cf4d6c71573ec8ac67cbafb788e
-  languageName: node
-  linkType: hard
-
 "@ionic/utils-stream@npm:3.1.6":
   version: 3.1.6
   resolution: "@ionic/utils-stream@npm:3.1.6"
@@ -2103,22 +2074,6 @@ __metadata:
     debug: "npm:^4.0.0"
     tslib: "npm:^2.0.1"
   checksum: 10c0/738715334237cbafe4c43f3620ffd6ccbef3a6148958d6d4642dba784acb55223c4c059d7593edddcc72fcab7b5fe7c5c51b74cfd54521dd91ff1a9de7d5d121
-  languageName: node
-  linkType: hard
-
-"@ionic/utils-subprocess@npm:2.1.11":
-  version: 2.1.11
-  resolution: "@ionic/utils-subprocess@npm:2.1.11"
-  dependencies:
-    "@ionic/utils-array": "npm:2.1.5"
-    "@ionic/utils-fs": "npm:3.1.6"
-    "@ionic/utils-process": "npm:2.1.10"
-    "@ionic/utils-stream": "npm:3.1.5"
-    "@ionic/utils-terminal": "npm:2.3.3"
-    cross-spawn: "npm:^7.0.3"
-    debug: "npm:^4.0.0"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/16881fc898684640e21d3e98717456475d98056c112ef84f11edb984efdd6afc937b726389f6f4cf90a4d32f7eceb13e9fcf0ff805338ba95e0e7321c6669109
   languageName: node
   linkType: hard
 
@@ -2154,23 +2109,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/utils-terminal@npm:2.3.3":
-  version: 2.3.3
-  resolution: "@ionic/utils-terminal@npm:2.3.3"
-  dependencies:
-    "@types/slice-ansi": "npm:^4.0.0"
-    debug: "npm:^4.0.0"
-    signal-exit: "npm:^3.0.3"
-    slice-ansi: "npm:^4.0.0"
-    string-width: "npm:^4.1.0"
-    strip-ansi: "npm:^6.0.0"
-    tslib: "npm:^2.0.1"
-    untildify: "npm:^4.0.0"
-    wrap-ansi: "npm:^7.0.0"
-  checksum: 10c0/f853e9009cc1eef013cc95ea020a8e2b5340c91a0f94fe5fdfd71fa7e4f583c0ed1801cfff2261211f76428d23d4a695234285848bd1172166db0acdb6ee68d9
-  languageName: node
-  linkType: hard
-
 "@ionic/utils-terminal@npm:2.3.4":
   version: 2.3.4
   resolution: "@ionic/utils-terminal@npm:2.3.4"
@@ -2188,7 +2126,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/utils-terminal@npm:2.3.5, @ionic/utils-terminal@npm:^2.3.3, @ionic/utils-terminal@npm:^2.3.4":
+"@ionic/utils-terminal@npm:2.3.5, @ionic/utils-terminal@npm:^2.3.3, @ionic/utils-terminal@npm:^2.3.4, @ionic/utils-terminal@npm:^2.3.5":
   version: 2.3.5
   resolution: "@ionic/utils-terminal@npm:2.3.5"
   dependencies:
@@ -5110,6 +5048,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:^12.1.0":
+  version: 12.1.0
+  resolution: "commander@npm:12.1.0"
+  checksum: 10c0/6e1996680c083b3b897bfc1cfe1c58dfbcd9842fd43e1aaf8a795fbc237f65efcc860a3ef457b318e73f29a4f4a28f6403c3d653d021d960e4632dd45bde54a9
+  languageName: node
+  linkType: hard
+
 "commander@npm:^5.0.0":
   version: 5.1.0
   resolution: "commander@npm:5.1.0"
@@ -5590,7 +5535,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.0.0, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.1":
+"debug@npm:4, debug@npm:^4.0.0, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.0, debug@npm:^4.4.1":
   version: 4.4.3
   resolution: "debug@npm:4.4.3"
   dependencies:
@@ -9225,6 +9170,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"native-run@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "native-run@npm:2.0.3"
+  dependencies:
+    "@ionic/utils-fs": "npm:^3.1.7"
+    "@ionic/utils-terminal": "npm:^2.3.4"
+    bplist-parser: "npm:^0.3.2"
+    debug: "npm:^4.3.4"
+    elementtree: "npm:^0.1.7"
+    ini: "npm:^4.1.1"
+    plist: "npm:^3.1.0"
+    split2: "npm:^4.2.0"
+    through2: "npm:^4.0.2"
+    tslib: "npm:^2.6.2"
+    yauzl: "npm:^2.10.0"
+  bin:
+    native-run: bin/native-run
+  checksum: 10c0/ce7e4fccca1f3dce3a4c5c8ceca5ad84dde66eda5c912311990c7c4cf8bfade607d8ea4707349cbe309bba151e779dc1a1f8428b7ebbc114ada4e8f08d717d6b
+  languageName: node
+  linkType: hard
+
 "natural-compare-lite@npm:^1.4.0":
   version: 1.4.0
   resolution: "natural-compare-lite@npm:1.4.0"
@@ -11184,15 +11150,15 @@ __metadata:
   resolution: "stapxs-qq-lite@workspace:."
   dependencies:
     "@ai-sdk/openai-compatible": "npm:^2.0.38"
-    "@capacitor/android": "npm:^6.2.0"
-    "@capacitor/app": "npm:^6.0.2"
+    "@capacitor/android": "npm:^8.0.0"
+    "@capacitor/app": "npm:^8.0.0"
     "@capacitor/assets": "npm:^3.0.5"
-    "@capacitor/cli": "npm:^6.2.0"
-    "@capacitor/core": "npm:^6.2.0"
-    "@capacitor/ios": "npm:^6.2.0"
-    "@capacitor/keyboard": "npm:^6.0.3"
-    "@capacitor/local-notifications": "npm:^6.1.1"
-    "@capacitor/status-bar": "npm:^6.0.2"
+    "@capacitor/cli": "npm:^8.0.0"
+    "@capacitor/core": "npm:^8.0.0"
+    "@capacitor/ios": "npm:^8.0.0"
+    "@capacitor/keyboard": "npm:^8.0.0"
+    "@capacitor/local-notifications": "npm:^8.0.0"
+    "@capacitor/status-bar": "npm:^8.0.0"
     "@electron-toolkit/eslint-config": "npm:^1.0.2"
     "@electron-toolkit/eslint-config-ts": "npm:^2.0.0"
     "@electron-toolkit/preload": "npm:^3.0.0"
@@ -11655,6 +11621,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tar@npm:^7.5.3":
+  version: 7.5.13
+  resolution: "tar@npm:7.5.13"
+  dependencies:
+    "@isaacs/fs-minipass": "npm:^4.0.0"
+    chownr: "npm:^3.0.0"
+    minipass: "npm:^7.1.2"
+    minizlib: "npm:^3.1.0"
+    yallist: "npm:^5.0.0"
+  checksum: 10c0/5c65b8084799bde7a791593a1c1a45d3d6ee98182e3700b24c247b7b8f8654df4191642abbdb07ff25043d45dcff35620827c3997b88ae6c12040f64bed5076b
+  languageName: node
+  linkType: hard
+
 "temp-dir@npm:^2.0.0":
   version: 2.0.0
   resolution: "temp-dir@npm:2.0.0"
@@ -11950,7 +11929,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.1, tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.6.2":
+"tslib@npm:^2.0.1, tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.6.2, tslib@npm:^2.8.1":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
@@ -13165,6 +13144,16 @@ __metadata:
     sax: "npm:>=0.6.0"
     xmlbuilder: "npm:~11.0.0"
   checksum: 10c0/c9cd07cd19c5e41c740913bbbf16999a37a204488e11f86eddc2999707d43967197e257014d7ed72c8fc4348c192fa47eb352d1d9d05637cefd0d2e24e9aa4c8
+  languageName: node
+  linkType: hard
+
+"xml2js@npm:^0.6.2":
+  version: 0.6.2
+  resolution: "xml2js@npm:0.6.2"
+  dependencies:
+    sax: "npm:>=0.6.0"
+    xmlbuilder: "npm:~11.0.0"
+  checksum: 10c0/e98a84e9c172c556ee2c5afa0fc7161b46919e8b53ab20de140eedea19903ed82f7cd5b1576fb345c84f0a18da1982ddf65908129b58fc3d7cbc658ae232108f
   languageName: node
   linkType: hard
 

@@ -491,7 +491,7 @@
                 },
             )
             // 获取当前使用的图标
-            const Onebot = window.Capacitor?.Plugins?.Onebot
+            const Onebot = (window.Capacitor as any)?.Plugins?.Onebot
             if (Onebot) {
                 Onebot.addListener('onebot:icon', (data: any) => {
                     this.usedIcon = data.name.replace('AppIcon', '')

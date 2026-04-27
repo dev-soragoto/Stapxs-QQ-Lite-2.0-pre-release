@@ -567,12 +567,15 @@ export async function loadMobile() {
             // 干脆把所有的 iOS 版本处理方法都改为内部避让
             if (backend.platform == 'ios') {
                 const baseApp = document.getElementById('base-app')
+                // 使用键盘高度减去底部安全区域，不添加额外偏移量
+                // 避免硬编码的 +100 导致 WebView 定位错误，引发键盘焦点丢失
+                const keyboardOffset = Math.max(0, keyboardHeight - safeArea.bottom)
                 if (safeArea && baseApp) {
-                    baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 100) + 'px')
+                    baseApp.style.setProperty('--safe-area-bottom', keyboardOffset + 'px')
                 }
                 // 调整菜单高度
                 if (safeArea && tabBar) {
-                    tabBar.style.setProperty('padding-bottom', (keyboardHeight - safeArea.bottom + 100) + 'px', 'important')
+                    tabBar.style.setProperty('padding-bottom', keyboardOffset + 'px', 'important')
                 }
             }
 

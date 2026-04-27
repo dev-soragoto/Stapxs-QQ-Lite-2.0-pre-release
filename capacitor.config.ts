@@ -21,6 +21,12 @@ const config: CapacitorConfig = {
             keystoreAliasPassword: process.env.KEYSTORE_ALIAS_PASSWORD || '',
             releaseType: 'APK'
         }
+    },
+    plugins: {
+        Keyboard: {
+            resize: 'none',
+            scrollPadding: false,
+        }
     }
 }
 
