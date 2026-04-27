@@ -84,6 +84,8 @@ export const optDefault: { [key: string]: any } = {
     opt_auto_win_color: false,
     chat_background: '',
     chat_background_blur: 0,
+    chat_background_align: 'center',
+    chat_background_fit: 'cover',
     chatview_name: '',
     opt_fast_animation: false,
     chat_more_blur: false,

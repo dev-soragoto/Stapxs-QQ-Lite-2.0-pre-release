@@ -15,7 +15,11 @@
         :class="'chat-pan' +
             (runtimeData.tags.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
-        :style="{ 'background-image': `url(${!runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})` }"
+        :style="{
+            'background-image': `url(${!runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})`,
+            'background-position': runtimeData.sysConfig.chat_background_align ?? 'center',
+            'background-size': runtimeData.sysConfig.chat_background_fit ?? 'cover'
+        }"
         @v-move-right.prevent="exitWin()">
         <slot name="chat-extra" />
         <!-- 聊天基本信息 -->

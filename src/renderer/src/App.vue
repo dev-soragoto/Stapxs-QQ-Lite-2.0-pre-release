@@ -262,6 +262,8 @@
     <div class="main-bg"
         :style="{
             'background-image': `url(${runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})`,
+            'background-position': runtimeData.sysConfig.chat_background_align ?? 'center',
+            'background-size': runtimeData.sysConfig.chat_background_fit ?? 'cover',
             'opacity': 1 - Number(runtimeData.sysConfig.chat_background_blur) / 100 }" />
 </template>
 

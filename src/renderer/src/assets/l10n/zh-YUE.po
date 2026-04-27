@@ -630,6 +630,45 @@ msgstr "背景模糊"
 msgid "什么都看不见了（恼"
 msgstr "調較背景圖片的模糊程度，以防內容被遮擋。"
 
+msgid "背景对齐"
+msgstr "背景對齊"
+
+msgid "调整背景图片的对齐位置"
+msgstr "調較背景圖片嘅對齊位置"
+
+msgid "居中"
+msgstr "置中"
+
+msgid "顶部"
+msgstr "頂部"
+
+msgid "底部"
+msgstr "底部"
+
+msgid "左侧"
+msgstr "左側"
+
+msgid "右侧"
+msgstr "右側"
+
+msgid "背景填充"
+msgstr "背景填充"
+
+msgid "调整背景图片的填充方式"
+msgstr "調較背景圖片嘅填充方式"
+
+msgid "覆盖"
+msgstr "覆蓋"
+
+msgid "包含"
+msgstr "包含"
+
+msgid "拉伸"
+msgstr "拉伸"
+
+msgid "原始大小"
+msgstr "原始大小"
+
 msgid "压缩图片失败"
 msgstr "圖片壓縮失敗"
 

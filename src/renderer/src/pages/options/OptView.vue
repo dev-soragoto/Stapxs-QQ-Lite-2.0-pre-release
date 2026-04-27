@@ -224,6 +224,61 @@
                     </div>
                 </template>
             </div>
+            <div class="opt-item">
+                <div :class="checkDefault('chat_background_align')" />
+                <font-awesome-icon :icon="['fas', 'crosshairs']" />
+                <div>
+                    <span>{{ $t('背景对齐') }}</span>
+                    <span>{{ $t('调整背景图片的对齐位置') }}</span>
+                </div>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.chat_background_align"
+                        name="chat_background_align" title="chat_background_align"
+                        @change="save($event)">
+                        <option value="center">
+                            {{ $t('居中') }}
+                        </option>
+                        <option value="top">
+                            {{ $t('顶部') }}
+                        </option>
+                        <option value="bottom">
+                            {{ $t('底部') }}
+                        </option>
+                        <option value="left">
+                            {{ $t('左侧') }}
+                        </option>
+                        <option value="right">
+                            {{ $t('右侧') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="opt-item">
+                <div :class="checkDefault('chat_background_fit')" />
+                <font-awesome-icon :icon="['fas', 'up-right-and-down-left-from-center']" />
+                <div>
+                    <span>{{ $t('背景填充') }}</span>
+                    <span>{{ $t('调整背景图片的填充方式') }}</span>
+                </div>
+                <div class="select-wrapper">
+                    <select v-model="runtimeData.sysConfig.chat_background_fit"
+                        name="chat_background_fit" title="chat_background_fit"
+                        @change="save($event)">
+                        <option value="cover">
+                            {{ $t('覆盖') }}
+                        </option>
+                        <option value="contain">
+                            {{ $t('包含') }}
+                        </option>
+                        <option value="fill">
+                            {{ $t('拉伸') }}
+                        </option>
+                        <option value="none">
+                            {{ $t('原始大小') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('页面') }}</header>

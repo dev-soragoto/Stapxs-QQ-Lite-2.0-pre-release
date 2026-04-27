@@ -48,7 +48,7 @@
                 <span> {{ $t('赞助者') }} </span>
                 <div class="contributors">
                     <div v-for="info in sponsorList.slice(0, 3)" :key="info.user.name">
-                        <img :src="info.user.avatar">
+                        <img lazy :src="info.user.avatar">
                         <div>
                             <span>{{ info.user.name }}</span>
                             <span>{{ Intl.DateTimeFormat(trueLang, {
@@ -62,6 +62,7 @@
                 <div v-if="sponsorList.length > 3">
                     <img v-for="info in sponsorList.slice(3)"
                         :key="info.user.name"
+                        lazy
                         :src="info.user.avatar">
                 </div>
             </div>
@@ -72,7 +73,7 @@
                     <div v-for="(info, index) in constList.slice(1, 4)" :key="info.title"
                         :class="(info.isMe ? 'me' : '') + (info.isSuperThakns ? ' super-thanks' : '')"
                         @click="openLink(info.link)">
-                        <img :src="info.url">
+                        <img lazy :src="info.url">
                         <div>
                             <span>{{ info.title }}</span>
                             <span>{{ $t('{time} 次提交', { time: info.contributions }) }}</span>
@@ -83,6 +84,7 @@
                 <div>
                     <img v-for="info in constList.slice(4)"
                         :key="info.title"
+                        lazy
                         :src="info.url"
                         @click="openLink(info.link)">
                 </div>

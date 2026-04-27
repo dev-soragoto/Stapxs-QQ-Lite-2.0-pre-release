@@ -630,6 +630,45 @@ msgstr ""
 msgid "什么都看不见了（恼"
 msgstr ""
 
+msgid "背景对齐"
+msgstr ""
+
+msgid "调整背景图片的对齐位置"
+msgstr ""
+
+msgid "居中"
+msgstr ""
+
+msgid "顶部"
+msgstr ""
+
+msgid "底部"
+msgstr ""
+
+msgid "左侧"
+msgstr ""
+
+msgid "右侧"
+msgstr ""
+
+msgid "背景填充"
+msgstr ""
+
+msgid "调整背景图片的填充方式"
+msgstr ""
+
+msgid "覆盖"
+msgstr ""
+
+msgid "包含"
+msgstr ""
+
+msgid "拉伸"
+msgstr ""
+
+msgid "原始大小"
+msgstr ""
+
 msgid "压缩图片失败"
 msgstr ""
 
