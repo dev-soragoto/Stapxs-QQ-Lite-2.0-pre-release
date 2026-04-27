@@ -46,7 +46,12 @@
                     <span>{{ $t('列表') }}</span>
                 </li>
                 <div class="side-bar-space" />
-                <li v-if="tags.currentMusic" :class="['music-entry', { 'active': tags.showMusicPlayer }]" @click="toggleMusicPlayer(undefined)">
+                <li v-if="tags.currentMusic"
+                    :class="['music-entry', {
+                        'active': tags.showMusicPlayer,
+                        'music-entry-always-hide': backend.isMobile()
+                    }]"
+                    @click="toggleMusicPlayer(undefined)">
                     <img class="music-entry-cover"
                         :src="tags.currentMusic.cover"
                         :alt="tags.currentMusic.title">
@@ -59,7 +64,12 @@
                     <font-awesome-icon :icon="['fas', 'gear']" />
                     <span>{{ $t('设置') }}</span>
                 </li>
-                <li v-if="tags.currentMusic" :class="['music-entry-small', { 'active': tags.showMusicPlayer }]" @click="toggleMusicPlayer(undefined)">
+                <li v-if="tags.currentMusic"
+                    :class="['music-entry-small', {
+                        'active': tags.showMusicPlayer,
+                        'music-entry-small-always-show': backend.isMobile()
+                    }]"
+                    @click="toggleMusicPlayer(undefined)">
                     <img class="music-entry-cover"
                         :src="tags.currentMusic.cover"
                         :alt="tags.currentMusic.title">
@@ -1082,6 +1092,20 @@ export default defineComponent({
 }
 .music-entry-status.light {
     color: #e5e5e5 !important;
+}
+.music-entry-always-hide {
+    display: none !important;
+}
+.music-entry-small-always-show {
+    display: flex !important;
+    margin-bottom: 10px !important;
+}
+.music-entry-small-always-show img {
+    width: 35px;
+    height: 35px;
+}
+.music-entry-small-always-show svg {
+    transform: translateY(calc(-100% - 10px));
 }
 
 .global-music-player {

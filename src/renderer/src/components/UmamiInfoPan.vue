@@ -1048,7 +1048,7 @@
 
             extractVersionGroups(rawVersion: string) {
                 const cleaned = (rawVersion || '').replace(/^v/i, '')
-                const matched = cleaned.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?(.*)?/) || []
+                const matched = cleaned.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?(.+)?/) || []
 
                 if (!matched[1]) {
                     const unknown = this.$t('未知')

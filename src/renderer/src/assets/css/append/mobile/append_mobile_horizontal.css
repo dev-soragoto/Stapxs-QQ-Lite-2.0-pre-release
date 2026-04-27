@@ -49,7 +49,14 @@ html {
 .side-bar-space {
     display: none;
 }
+
+.global-music-player {
+    bottom: calc(65px + var(--safe-area-bottom)) !important;
+    left: 10px !important;
+}
+
 .friend-list {
+    padding-bottom: calc(85px + var(--safe-area-bottom));
     background: var(--color-card);
     width: 365px;
 }
@@ -248,7 +255,8 @@ html {
     padding-top: 70px;
 }
 .opt-tab .tab-body > div {
-    padding: 0 10%;
+    margin: 0 auto;
+    width: 85%;
 }
 .friend-list-space {
     border-left: 1px solid var(--color-card-2);
@@ -258,8 +266,9 @@ html {
 .opt-main {
     padding-top: 0;
 }
-.opt-main>div:first-child {
+.opt-main > div:first-child {
     padding-top: var(--safe-area-top);
+    padding-bottom: calc(85px + var(--safe-area-bottom));
 }
 
 .chat-pan > div.more > div:nth-child(2) > div > form > input,
