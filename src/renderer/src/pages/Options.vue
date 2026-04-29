@@ -78,9 +78,10 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
+<script setup lang="ts">
+    import { ref, watch, onMounted, nextTick } from 'vue'
 
+    import { i18n } from '@renderer/main'
     import packageInfo from '../../../../package.json'
 
     import BcTab from 'vue3-bcui/packages/bc-tab'
@@ -90,59 +91,45 @@
     import OptFunction from './options/OptFunction.vue'
     import OptAddon from './options/OptAddon.vue'
 
-    import { openLink } from '@renderer/function/utils/appUtil'
     import AboutPan from '@renderer/components/AboutPan.vue'
 
-    export default defineComponent({
-        name: 'ViewOption',
-        components: {
-            BcTab,
-            OptAccount,
-            OptView,
-            OptDev,
-            OptFunction,
-            OptAddon,
-            AboutPan,
+    defineOptions({ name: 'ViewOption' })
+
+    const $t = i18n.global.t
+
+    const props = defineProps({
+        show: Boolean,
+        config: {
+            type: Object,
+            default: () => ({} as
+                { [key: string]: string | number | boolean }),
         },
-        props: {
-            show: Boolean,
-            config: {
-                type: Object,
-                default: () => ({} as
-                    { [key: string]: string | number | boolean }),
-            },
-        },
-        data() {
-            return {
-                packageInfo: packageInfo,
-                openLink: openLink,
-                showAbout: true,
+    })
+
+    const showAbout = ref(true)
+
+    function updateShowAbout() {
+        nextTick(() => {
+            const width = window.innerWidth
+            if (width < 700) {
+                showAbout.value = true
+            } else {
+                showAbout.value = false
+            }
+        })
+    }
+
+    watch(
+        () => props.show,
+        (val) => {
+            if (val) {
+                updateShowAbout()
             }
         },
-        mounted() {
-            // 监听窗口大小变化
-            window.addEventListener('resize', () => {
-                this.$nextTick(() => {
-                    const width = window.innerWidth
-                    if (width < 700) {
-                        this.showAbout = true
-                    } else {
-                        this.showAbout = false
-                    }
-                })
-            })
-            this.$watch('show', (val) => {
-                if (val) {
-                    this.$nextTick(() => {
-                        const width = window.innerWidth
-                        if (width < 700) {
-                            this.showAbout = true
-                        } else {
-                            this.showAbout = false
-                        }
-                    })
-                }
-            })
-        },
+    )
+
+    onMounted(() => {
+        // 监听窗口大小变化
+        window.addEventListener('resize', updateShowAbout)
     })
 </script>

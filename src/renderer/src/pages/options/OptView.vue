@@ -171,13 +171,13 @@
                 </div>
                 <div class="file-choice">
                     <div class="choice-btn"
-                        @click="($refs.choiceImg as any)?.click()">
+                        @click="choiceImgRef?.click()">
                         {{
                             runtimeData.sysConfig.chat_background
                                 ? $t('更换背景')
                                 : $t('上传背景')
                         }}
-                        <input ref="choiceImg"
+                        <input ref="choiceImgRef"
                             type="file"
                             style="display: none"
                             name="chat_background"
@@ -437,352 +437,347 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent, toRaw } from 'vue'
-    import { runtimeData } from '../../function/msg'
-    import Option, { runASWEvent as save, get, checkDefault, runAS } from '../../function/option'
-    import { BrowserInfo, detect } from 'detect-browser'
-    import { getDeviceType } from '@renderer/function/utils/systemUtil'
+<script setup lang="ts">
+import { ref, watch, toRaw, onMounted, useTemplateRef } from 'vue'
+import { runtimeData } from '../../function/msg'
+import Option, { runASWEvent as save, checkDefault, runAS } from '../../function/option'
+import { BrowserInfo, detect } from 'detect-browser'
+import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
-    import languages from '../../assets/l10n/_l10nconfig.json'
-    import { sendIdentifyData } from '@renderer/function/utils/appUtil'
-    import { backend } from '@renderer/runtime/backend'
+import languages from '../../assets/l10n/_l10nconfig.json'
+import { sendIdentifyData } from '@renderer/function/utils/appUtil'
+import { backend } from '@renderer/runtime/backend'
+import { i18n } from '@renderer/main'
 
-    export default defineComponent({
-        name: 'ViewOptTheme',
-        data() {
-            return {
-                napcat: import.meta.env.VITE_NAPCAT,
-                backend: backend,
-                get: get,
-                runtimeData: runtimeData,
-                checkDefault: checkDefault,
-                save: save,
-                languages: languages,
-                // 别问我为什么微软是紫色的
-                colors: [
-                    '林槐蓝',
-                    '墨竹青',
-                    '少女粉',
-                    '微软紫',
-                    '坏猫黄',
-                    '玄素黑',
-                ],
-                browser: detect() as BrowserInfo,
-                initialScaleShow: 0.5,
-                fsAdaptationShow: 0,
-                usedIcon: '',
-                themeColorRaw: '',
-            }
-        },
-        mounted() {
-            this.themeColorRaw = '#' + ('000000' + Number((this.runtimeData.sysConfig.theme_color || 0)).toString(16)).slice(-6)
-            // 一次性初始化一次缩放级别
-            const watch = this.$watch(
-                () => runtimeData.sysConfig,
-                () => {
-                    this.initialScaleShow = toRaw(
-                        runtimeData.sysConfig.initial_scale,
-                    )
-                    this.fsAdaptationShow = toRaw(
-                        runtimeData.sysConfig.fs_adaptation,
-                    )
-                    watch()
-                },
+defineOptions({ name: 'ViewOptTheme' })
+
+const $t = i18n.global.t
+
+const napcat = import.meta.env.VITE_NAPCAT
+const colors = [
+    '林槐蓝',
+    '墨竹青',
+    '少女粉',
+    '微软紫',
+    '坏猫黄',
+    '玄素黑',
+]
+const browser = detect() as BrowserInfo
+
+const initialScaleShow = ref(0.5)
+const fsAdaptationShow = ref(0)
+const usedIcon = ref('')
+const themeColorRaw = ref('')
+
+const choiceImgRef = useTemplateRef<HTMLInputElement>('choiceImgRef')
+
+onMounted(() => {
+    themeColorRaw.value = '#' + ('000000' + Number((runtimeData.sysConfig.theme_color || 0)).toString(16)).slice(-6)
+    // 一次性初始化一次缩放级别
+    const unwatch = watch(
+        () => runtimeData.sysConfig,
+        () => {
+            initialScaleShow.value = toRaw(
+                runtimeData.sysConfig.initial_scale,
             )
-            // 获取当前使用的图标
-            const Onebot = (window.Capacitor as any)?.Plugins?.Onebot
-            if (Onebot) {
-                Onebot.addListener('onebot:icon', (data: any) => {
-                    this.usedIcon = data.name.replace('AppIcon', '')
-                })
-                Onebot.getUsedIcon()
-            }
+            fsAdaptationShow.value = toRaw(
+                runtimeData.sysConfig.fs_adaptation,
+            )
+            unwatch()
         },
-        methods: {
-            gaLanguage(event: Event) {
-                const sender = event.target as HTMLInputElement
-                sendIdentifyData({ use_language: sender.value })
-            },
+    )
+    // 获取当前使用的图标
+    const Onebot = (window.Capacitor as any)?.Plugins?.Onebot
+    if (Onebot) {
+        Onebot.addListener('onebot:icon', (data: any) => {
+            usedIcon.value = data.name.replace('AppIcon', '')
+        })
+        Onebot.getUsedIcon()
+    }
+})
 
-            gaChatView(event: Event) {
-                const sender = event.target as HTMLInputElement
-                sendIdentifyData({ use_chatview: sender.value })
-            },
+function gaLanguage(event: Event) {
+    const sender = event.target as HTMLInputElement
+    sendIdentifyData({ use_language: sender.value })
+}
 
-            gaColor(event: Event) {
-                const sender = event.target as HTMLInputElement
-                sendIdentifyData({ use_theme_color: this.colors[Number(sender.dataset.id)] })
-            },
+function gaChatView(event: Event) {
+    const sender = event.target as HTMLInputElement
+    sendIdentifyData({ use_chatview: sender.value })
+}
 
-            themeColorChange(event: Event) {
-                event.preventDefault()
+function gaColor(event: Event) {
+    const sender = event.target as HTMLInputElement
+    sendIdentifyData({ use_theme_color: colors[Number(sender.dataset.id)] })
+}
 
-                const colorInput = document.getElementById(
-                    'theme_color_custom',
-                ) as HTMLInputElement
-                if (colorInput) {
-                    colorInput.click()
-                    colorInput.onchange = (e) => {
-                        const value = (e.target as HTMLInputElement).value
-                        const saveValue = parseInt(value.replace('#', ''), 16)
-                        runAS('theme_color', saveValue)
-                    }
+function themeColorChange(event: Event) {
+    event.preventDefault()
+
+    const colorInput = document.getElementById(
+        'theme_color_custom',
+    ) as HTMLInputElement
+    if (colorInput) {
+        colorInput.click()
+        colorInput.onchange = (e) => {
+            const value = (e.target as HTMLInputElement).value
+            const saveValue = parseInt(value.replace('#', ''), 16)
+            runAS('theme_color', saveValue)
+        }
+    }
+}
+
+function blurTip(event: Event) {
+    const sender = event.target as HTMLInputElement
+    if (sender.checked) {
+        const popInfo = {
+            title: $t('提醒'),
+            html: `<span>${$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与"背景图片"的部分功能冲突同时会降低元素可读性。')}<br><br>
+                        ${$t('开启后需要重启应用才能生效，确定要开启吗？')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        save(event)
+                        sendIdentifyData({ use_transparent: true })
+                        setTimeout(() => {
+                            restartapp()
+                        }, 500)
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        sender.checked = false
+                    },
+                },
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    } else {
+        const popInfo = {
+            title: $t('提醒'),
+            html: `<span>${$t('关闭透明模式需要重启应用才能生效。')}<br><br>
+                        ${$t('确定要重启吗？')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        save(event)
+                        sendIdentifyData({ use_transparent: false })
+                        setTimeout(() => {
+                            restartapp()
+                        }, 500)
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        sender.checked = true
+                    },
+                },
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
+}
+
+function scaleSave(event: Event) {
+    save(event)
+    // 5 秒后自动取消防止误操作导致无法恢复
+    const timerId = setTimeout(() => {
+        (event.target as HTMLInputElement).value = '0.85'
+        runtimeData.sysConfig.initial_scale = 0.85
+        initialScaleShow.value = 0.85
+        save(event)
+        runtimeData.popBoxList.pop()
+        const popInfo = {
+            svg: 'up-down-left-right',
+            html: '<span>' + $t('缩放比例调整已取消，已恢复默认缩放比例。') + '</span>',
+            title: $t('确认缩放比例'),
+            button: [
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runtimeData.popBoxList.pop()
+                    },
                 }
-            },
-
-            blurTip(event: Event) {
-                const sender = event.target as HTMLInputElement
-                if (sender.checked) {
-                    const popInfo = {
-                        title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与"背景图片"的部分功能冲突同时会降低元素可读性。')}<br><br>
-                        ${this.$t('开启后需要重启应用才能生效，确定要开启吗？')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('确认'),
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    save(event)
-                                    sendIdentifyData({ use_transparent: true })
-                                    setTimeout(() => {
-                                        this.restartapp()
-                                    }, 500)
-                                },
-                            },
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    sender.checked = false
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                } else {
-                    const popInfo = {
-                        title: this.$t('提醒'),
-                        html: `<span>${this.$t('关闭透明模式需要重启应用才能生效。')}<br><br>
-                        ${this.$t('确定要重启吗？')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('确认'),
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    save(event)
-                                    sendIdentifyData({ use_transparent: false })
-                                    setTimeout(() => {
-                                        this.restartapp()
-                                    }, 500)
-                                },
-                            },
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    sender.checked = true
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                }
-            },
-
-            scaleSave(event: Event) {
-                save(event)
-                // 5 秒后自动取消防止误操作导致无法恢复
-                const timerId = setTimeout(() => {
-                    (event.target as HTMLInputElement).value = '0.85'
-                    runtimeData.sysConfig.initial_scale = 0.85
-                    this.initialScaleShow = 0.85
-                    save(event)
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }, 5000)
+    // 保存提醒
+    const popInfo = {
+        svg: 'up-down-left-right',
+        html: '<span>' + $t('点击确认以应用缩放比例，预览将在 5 秒后取消……') + '</span>',
+        title: $t('确认缩放比例'),
+        button: [
+            {
+                text: $t('确定'),
+                fun: () => {
                     runtimeData.popBoxList.pop()
-                    const popInfo = {
-                        svg: 'up-down-left-right',
-                        html: '<span>' + this.$t('缩放比例调整已取消，已恢复默认缩放比例。') + '</span>',
-                        title: this.$t('确认缩放比例'),
-                        button: [
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    runtimeData.popBoxList.pop()
-                                },
-                            }
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                }, 5000)
-                // 保存提醒
-                const popInfo = {
-                    svg: 'up-down-left-right',
-                    html: '<span>' + this.$t('点击确认以应用缩放比例，预览将在 5 秒后取消……') + '</span>',
-                    title: this.$t('确认缩放比例'),
-                    button: [
-                        {
-                            text: this.$t('确定'),
-                            fun: () => {
-                                runtimeData.popBoxList.pop()
-                                clearTimeout(timerId)
-                            },
-                        }
-                    ],
-                }
-                runtimeData.popBoxList.push(popInfo)
-            },
+                    clearTimeout(timerId)
+                },
+            }
+        ],
+    }
+    runtimeData.popBoxList.push(popInfo)
+}
 
-            setInitialScaleShow(event: Event) {
-                const sender = event.target as HTMLInputElement
-                this.initialScaleShow = Number(sender.value)
-            },
-            setFsAdaptationShow(event: Event) {
-                const sender = event.target as HTMLInputElement
-                this.fsAdaptationShow = Number(sender.value)
-            },
+function setInitialScaleShow(event: Event) {
+    const sender = event.target as HTMLInputElement
+    initialScaleShow.value = Number(sender.value)
+}
 
-            restartapp() {
-                backend.call(undefined, 'win:relaunch', false)
-            },
+function setFsAdaptationShow(event: Event) {
+    const sender = event.target as HTMLInputElement
+    fsAdaptationShow.value = Number(sender.value)
+}
 
-            isMobile() {
-                return (
-                    getDeviceType() === 'Android' || getDeviceType() === 'iOS'
-                )
-            },
+function restartapp() {
+    backend.call(undefined, 'win:relaunch', false)
+}
 
-            getAppendChatView() {
-                const chatView = import.meta.glob('@renderer/pages/chat-view/*.vue', { eager: true })
-                const chatViewList: string[] = []
-                Object.keys(chatView).forEach((key: string) => {
-                    let name = key.split('/').pop()?.split('.')[0]
-                    name = name ? name.toString().replaceAll(/(^['"]|['"]$)/g, '').trim() : name
-                    if (name && name.startsWith('Chat')) {
-                        chatViewList.push(name)
-                    }
-                })
-                return chatViewList
-            },
+function isMobile() {
+    return (
+        getDeviceType() === 'Android' || getDeviceType() === 'iOS'
+    )
+}
 
-            getIconList() {
-                const iconList = import.meta.glob('@renderer/assets/img/icons/*.png', { eager: true })
-                const iconListInfo = [] as { name: string, icon: any }[]
-                Object.keys(iconList).forEach((key: string) => {
-                    const name = key.split('/').pop()?.split('.')[0]
-                    const iconName = name?.replace('AppIcon', '')
-                    if( name && name.indexOf('AppIcon') >= 0 && iconName != undefined) {
-                        if(!runtimeData.tags.darkMode && !iconName.endsWith('Dark')) {
-                            iconListInfo.push({ name: iconName, icon: (iconList[key] as any).default })
-                        } else if(runtimeData.tags.darkMode && iconName.endsWith('Dark')) {
-                            iconListInfo.push({ name: iconName.replace('Dark', ''), icon: (iconList[key] as any).default })
-                        }
-                    }
-                })
-                return iconListInfo
-            },
-
-            changeIcon(name: string) {
-                backend.call('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
-                this.usedIcon = name
-            },
-
-
-            /**
-             * 设置背景图片
-             */
-            setBackground(event: Event) {
-                const sender = event.target as HTMLInputElement
-                const img = sender.files?.[0]
-                if (!img) return
-                img.arrayBuffer().then((buffer) => {
-                    // 使用更可靠的方式将二进制数据转换为 base64
-                    const bytes = new Uint8Array(buffer)
-                    let binary = ''
-                    const chunkSize = 0x8000 // 32KB chunks to avoid call stack size exceeded
-                    for (let i = 0; i < bytes.length; i += chunkSize) {
-                        const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length))
-                        // 使用 fromCodePoint 为每个字节生成字符并拼接，避免使用 apply 导致的参数长度问题
-                        binary += Array.from(chunk, (b) => String.fromCodePoint(b)).join('')
-                    }
-                    const base64String = btoa(binary)
-                    const imgSrc = `data:${img.type};base64,${base64String}`
-                    runtimeData.sysConfig.chat_background = imgSrc
-                    Option.runAS('chat_background', imgSrc)
-                })
-            },
-            /**
-             * 移除背景图片
-             */
-            removeBackground() {
-                runtimeData.sysConfig.chat_background = ''
-                Option.runAS('chat_background', '')
-            },
-
-            /**
-             * 切换 Glass Effect
-             */
-            glassEffectToggle(event: Event) {
-                const sender = event.target as HTMLInputElement
-
-                if (sender.checked) {
-                    const popInfo = {
-                        title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启原生玻璃效果需要重启应用才能生效。')}<br><br>
-                        ${this.$t('确定要重启吗？')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('确认'),
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    save(event)
-                                    setTimeout(() => {
-                                        this.restartapp()
-                                    }, 500)
-                                },
-                            },
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    sender.checked = false
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                } else {
-                    const popInfo = {
-                        title: this.$t('提醒'),
-                        html: `<span>${this.$t('关闭流体玻璃效果需要重启应用才能生效')}<br><br>
-                        ${this.$t('确定要重启吗？')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('确认'),
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    save(event)
-                                    setTimeout(() => {
-                                        this.restartapp()
-                                    }, 500)
-                                },
-                            },
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                    sender.checked = true
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                }
-            },
-        },
+function getAppendChatView() {
+    const chatView = import.meta.glob('@renderer/pages/chat-view/*.vue', { eager: true })
+    const chatViewList: string[] = []
+    Object.keys(chatView).forEach((key: string) => {
+        let name = key.split('/').pop()?.split('.')[0]
+        name = name ? name.toString().replaceAll(/(^['"]|['"]$)/g, '').trim() : name
+        if (name && name.startsWith('Chat')) {
+            chatViewList.push(name)
+        }
     })
+    return chatViewList
+}
+
+function getIconList() {
+    const iconList = import.meta.glob('@renderer/assets/img/icons/*.png', { eager: true })
+    const iconListInfo = [] as { name: string, icon: any }[]
+    Object.keys(iconList).forEach((key: string) => {
+        const name = key.split('/').pop()?.split('.')[0]
+        const iconName = name?.replace('AppIcon', '')
+        if( name && name.indexOf('AppIcon') >= 0 && iconName != undefined) {
+            if(!runtimeData.tags.darkMode && !iconName.endsWith('Dark')) {
+                iconListInfo.push({ name: iconName, icon: (iconList[key] as any).default })
+            } else if(runtimeData.tags.darkMode && iconName.endsWith('Dark')) {
+                iconListInfo.push({ name: iconName.replace('Dark', ''), icon: (iconList[key] as any).default })
+            }
+        }
+    })
+    return iconListInfo
+}
+
+function changeIcon(name: string) {
+    backend.call('Onebot', 'changeIcon', false, { name: name != '' ? (name + 'AppIcon') : name })
+    usedIcon.value = name
+}
+
+/**
+ * 设置背景图片
+ */
+function setBackground(event: Event) {
+    const sender = event.target as HTMLInputElement
+    const img = sender.files?.[0]
+    if (!img) return
+    img.arrayBuffer().then((buffer) => {
+        // 使用更可靠的方式将二进制数据转换为 base64
+        const bytes = new Uint8Array(buffer)
+        let binary = ''
+        const chunkSize = 0x8000 // 32KB chunks to avoid call stack size exceeded
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length))
+            // 使用 fromCodePoint 为每个字节生成字符并拼接，避免使用 apply 导致的参数长度问题
+            binary += Array.from(chunk, (b) => String.fromCodePoint(b)).join('')
+        }
+        const base64String = btoa(binary)
+        const imgSrc = `data:${img.type};base64,${base64String}`
+        runtimeData.sysConfig.chat_background = imgSrc
+        Option.runAS('chat_background', imgSrc)
+    })
+}
+
+/**
+ * 移除背景图片
+ */
+function removeBackground() {
+    runtimeData.sysConfig.chat_background = ''
+    Option.runAS('chat_background', '')
+}
+
+/**
+ * 切换 Glass Effect
+ */
+function glassEffectToggle(event: Event) {
+    const sender = event.target as HTMLInputElement
+
+    if (sender.checked) {
+        const popInfo = {
+            title: $t('提醒'),
+            html: `<span>${$t('开启原生玻璃效果需要重启应用才能生效。')}<br><br>
+                        ${$t('确定要重启吗？')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        save(event)
+                        setTimeout(() => {
+                            restartapp()
+                        }, 500)
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        sender.checked = false
+                    },
+                },
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    } else {
+        const popInfo = {
+            title: $t('提醒'),
+            html: `<span>${$t('关闭流体玻璃效果需要重启应用才能生效')}<br><br>
+                        ${$t('确定要重启吗？')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        save(event)
+                        setTimeout(() => {
+                            restartapp()
+                        }, 500)
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                        sender.checked = true
+                    },
+                },
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
+}
 </script>

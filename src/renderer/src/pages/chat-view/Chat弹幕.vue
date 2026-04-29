@@ -17,6 +17,7 @@
         ">
         <div class="danmu-pan">
             <vue-danmaku
+                v-if="containerReady"
                 ref="danmakuRef"
                 style="height: calc(100vh - 40px); width: 100%"
                 :channels="0"
@@ -325,11 +326,11 @@
     </div>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
     import vueDanmaku from 'vue3-danmaku'
 
     import { Connector } from '@renderer/function/connect'
-    import { defineComponent } from 'vue'
+    import { ref, onMounted, watch, useTemplateRef, nextTick } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import { getMsgRawTxt, sendMsgRaw } from '@renderer/function/utils/msgUtil'
     import { parseMsg } from '@renderer/function/sender'
@@ -340,197 +341,206 @@
     import { PopInfo, PopType } from '@renderer/function/base'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
+    import { i18n } from '@renderer/main'
 
-    export default defineComponent({
-        name: 'ChatDan',
-        components: { vueDanmaku },
-        props: ['chat', 'list', 'mumberInfo'],
-        data() {
-            return {
-                backend,
-                opt: {
-                    speeds: 140,
-                    loop: true,
-                },
-                runtimeData: runtimeData,
-                trueLang: getTrueLang(),
-                danmus: [],
-                imgCache: [] as string[],
-                sendCache: [] as MsgItemElem[],
-                msg: '',
-                parseIndex: -1,
-                operaParse: false,
-            }
-        },
-        mounted() {
-            // 监听元素尺寸变化
-            const ele = document.getElementById('chat-pan') as Element
-            const resizeObserver = new ResizeObserver(() => {
-                (this.$refs.danmakuRef as any)?.resize()
-            })
-            resizeObserver.observe(ele)
-            // 监听消息列表，刷新到弹幕列表中
-            this.$watch(() => this.list.length, this.updateList)
-        },
-        methods: {
-            openLeftBar() {
-                runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
-            },
+    defineOptions({ name: 'ChatDan' })
 
-            pause(index: number) {
-                (this.$refs.danmakuRef as any)?.pause()
-                this.parseIndex = index
-            },
+    const $t = i18n.global.t
 
-            play() {
-                if (!this.operaParse) {
-                    (this.$refs.danmakuRef as any)?.play()
-                    this.parseIndex = -1
-                }
-            },
+    const props = defineProps<{
+        chat: any
+        list: any
+        mumberInfo: any
+    }>()
 
-            opera() {
-                if (this.parseIndex == -1) {
-                    this.operaParse = true
-                    this.pause(0)
-                } else {
-                    this.operaParse = false
-                    this.play()
-                }
-            },
+    const danmakuRef = useTemplateRef<any>('danmakuRef')
 
-            sendMsg(event: KeyboardEvent) {
-                if (event.keyCode === 13 && this.msg != '') {
-                    const msg = parseMsg(
-                        this.msg, this.sendCache, this.imgCache)
-                    if (this.chat.show.temp) {
-                        sendMsgRaw(
-                            this.chat.show.id + '/' + this.chat.show.temp,
-                            this.chat.show.type,
-                            msg,
-                        )
-                    } else {
-                        sendMsgRaw(this.chat.show.id, this.chat.show.type, msg)
-                    }
-                    // 发送后处理
-                    this.sendCache = []
-                    this.imgCache = []
-                    this.msg = ''
-                }
-            },
-
-            addImg(event: ClipboardEvent) {
-                // 判断粘贴类型
-                if (!(event.clipboardData && event.clipboardData.items)) {
-                    return
-                }
-                for (
-                    let i = 0, len = event.clipboardData.items.length;
-                    i < len;
-                    i++
-                ) {
-                    const item = event.clipboardData.items[i]
-                    if (item.kind === 'file') {
-                        this.setImg(item.getAsFile())
-                        // 阻止默认行为
-                        event.preventDefault()
-                    }
-                }
-            },
-
-            setImg(blob: File | null) {
-                const popInfo = new PopInfo()
-                if (
-                    blob !== null &&
-                    blob.type.indexOf('image/') >= 0 &&
-                    blob.size !== 0
-                ) {
-                    if (blob.size < 3145728) {
-                        // 转换为 Base64
-                        const reader = new FileReader()
-                        reader.readAsDataURL(blob)
-                        reader.onloadend = () => {
-                            const base64data = reader.result as string
-                            if (base64data !== null) {
-                                // 记录图片信息
-                                // 只要你内存够猛，随便 cache 图片，这边就不做限制了
-                                this.imgCache.push(base64data)
-                            }
-                        }
-                    } else {
-                        popInfo.add(PopType.INFO, this.$t('图片过大'))
-                    }
-                }
-            },
-
-            addSpecialMsg(data: SQCodeElem) {
-                if (data !== undefined) {
-                    const index = this.sendCache.length
-                    this.sendCache.push(data.msgObj)
-                    if (data.addText === true) {
-                        if (data.addTop === true) {
-                            this.msg = '[SQ:' + index + ']' + this.msg
-                        } else {
-                            this.msg += '[SQ:' + index + ']'
-                        }
-                    }
-                    return index
-                }
-                return -1
-            },
-
-            updateList() {
-                if (this.opt.loop) {
-                    // 如果弹幕列表长度是 20，请求更多消息
-                    if (this.list.length == 20) {
-                        const type = runtimeData.chatInfo.show.type
-                        const id = runtimeData.chatInfo.show.id
-                        const firstMsgId = this.list[0].message_id ?? 0
-                        let name
-                        const fullPage =
-                            runtimeData.jsonMap.message_list?.pagerType ==
-                            'full'
-                        if (
-                            runtimeData.jsonMap.message_list &&
-                            type != 'group'
-                        ) {
-                            name = runtimeData.jsonMap.message_list.private_name
-                        } else {
-                            name = runtimeData.jsonMap.message_list.name
-                        }
-                        Connector.send(
-                            name ?? 'get_chat_history',
-                            {
-                                group_id: type == 'group' ? id : undefined,
-                                user_id: type != 'group' ? id : undefined,
-                                message_id: firstMsgId,
-                                count: fullPage? runtimeData.messageList.length + 10: 10,
-                            },
-                            'getChatHistory',
-                        )
-                    }
-                    const list = this.list.map((data: any) => {
-                        return {
-                            text: getMsgRawTxt(data),
-                            id: data.sender.user_id,
-                        }
-                    })
-                    // list 只需要最新的 30 条消息，多余的从前删除
-                    if (list.length > 30) {
-                        list.splice(0, list.length - 30)
-                    }
-                    // 倒序, 保证最新的消息最现出来
-                    this.danmus = list.reverse()
-                } else {
-                    // 只添加最后一条
-                    (this.$refs.danmakuRef as any)?.push({
-                        text: getMsgRawTxt(this.list[this.list.length - 1]),
-                        id: this.list[this.list.length - 1].sender.user_id,
-                    })
-                }
-            },
-        },
+    const opt = ref({
+        speeds: 140,
+        loop: true,
     })
+    const trueLang = getTrueLang()
+    const danmus = ref<any[]>([])
+    const imgCache = ref<string[]>([])
+    const sendCache = ref<MsgItemElem[]>([])
+    const msg = ref('')
+    const parseIndex = ref(-1)
+    const operaParse = ref(false)
+    const containerReady = ref(false)
+
+    onMounted(() => {
+        // 监听元素尺寸变化
+        const ele = document.getElementById('chat-pan') as Element
+        const resizeObserver = new ResizeObserver(() => {
+            danmakuRef.value?.resize()
+        })
+        resizeObserver.observe(ele)
+        // 监听消息列表，刷新到弹幕列表中
+        watch(() => props.list.length, updateList)
+        // 等待容器渲染完成后再初始化弹幕组件
+        nextTick(() => {
+            containerReady.value = true
+        })
+    })
+
+    function openLeftBar() {
+        runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
+    }
+
+    function pause(index: number) {
+        danmakuRef.value?.pause()
+        parseIndex.value = index
+    }
+
+    function play() {
+        if (!operaParse.value) {
+            danmakuRef.value?.play()
+            parseIndex.value = -1
+        }
+    }
+
+    function opera() {
+        if (parseIndex.value == -1) {
+            operaParse.value = true
+            pause(0)
+        } else {
+            operaParse.value = false
+            play()
+        }
+    }
+
+    function sendMsg(event: KeyboardEvent) {
+        if (event.keyCode === 13 && msg.value != '') {
+            const parsedMsg = parseMsg(
+                msg.value, sendCache.value, imgCache.value)
+            if (props.chat.show.temp) {
+                sendMsgRaw(
+                    props.chat.show.id + '/' + props.chat.show.temp,
+                    props.chat.show.type,
+                    parsedMsg,
+                )
+            } else {
+                sendMsgRaw(props.chat.show.id, props.chat.show.type, parsedMsg)
+            }
+            // 发送后处理
+            sendCache.value = []
+            imgCache.value = []
+            msg.value = ''
+        }
+    }
+
+    function addImg(event: ClipboardEvent) {
+        // 判断粘贴类型
+        if (!(event.clipboardData && event.clipboardData.items)) {
+            return
+        }
+        for (
+            let i = 0, len = event.clipboardData.items.length;
+            i < len;
+            i++
+        ) {
+            const item = event.clipboardData.items[i]
+            if (item.kind === 'file') {
+                setImg(item.getAsFile())
+                // 阻止默认行为
+                event.preventDefault()
+            }
+        }
+    }
+
+    function setImg(blob: File | null) {
+        const popInfo = new PopInfo()
+        if (
+            blob !== null &&
+            blob.type.indexOf('image/') >= 0 &&
+            blob.size !== 0
+        ) {
+            if (blob.size < 3145728) {
+                // 转换为 Base64
+                const reader = new FileReader()
+                reader.readAsDataURL(blob)
+                reader.onloadend = () => {
+                    const base64data = reader.result as string
+                    if (base64data !== null) {
+                        // 记录图片信息
+                        // 只要你内存够猛，随便 cache 图片，这边就不做限制了
+                        imgCache.value.push(base64data)
+                    }
+                }
+            } else {
+                popInfo.add(PopType.INFO, $t('图片过大'))
+            }
+        }
+    }
+
+    function addSpecialMsg(data: SQCodeElem) {
+        if (data !== undefined) {
+            const index = sendCache.value.length
+            sendCache.value.push(data.msgObj)
+            if (data.addText === true) {
+                if (data.addTop === true) {
+                    msg.value = '[SQ:' + index + ']' + msg.value
+                } else {
+                    msg.value += '[SQ:' + index + ']'
+                }
+            }
+            return index
+        }
+        return -1
+    }
+
+    defineExpose({ addSpecialMsg })
+
+    function updateList() {
+        if (opt.value.loop) {
+            // 如果弹幕列表长度是 20，请求更多消息
+            if (props.list.length == 20) {
+                const type = runtimeData.chatInfo.show.type
+                const id = runtimeData.chatInfo.show.id
+                const firstMsgId = props.list[0].message_id ?? 0
+                let name
+                const fullPage =
+                    runtimeData.jsonMap.message_list?.pagerType ==
+                    'full'
+                if (
+                    runtimeData.jsonMap.message_list &&
+                    type != 'group'
+                ) {
+                    name = runtimeData.jsonMap.message_list.private_name
+                } else {
+                    name = runtimeData.jsonMap.message_list.name
+                }
+                Connector.send(
+                    name ?? 'get_chat_history',
+                    {
+                        group_id: type == 'group' ? id : undefined,
+                        user_id: type != 'group' ? id : undefined,
+                        message_id: firstMsgId,
+                        count: fullPage? runtimeData.messageList.length + 10: 10,
+                    },
+                    'getChatHistory',
+                )
+            }
+            const list = props.list.map((data: any) => {
+                return {
+                    text: getMsgRawTxt(data),
+                    id: data.sender.user_id,
+                }
+            })
+            // list 只需要最新的 30 条消息，多余的从前删除
+            if (list.length > 30) {
+                list.splice(0, list.length - 30)
+            }
+            // 倒序, 保证最新的消息最现出来
+            danmus.value = list.reverse()
+        } else {
+            // 只添加最后一条
+            danmakuRef.value?.push({
+                text: getMsgRawTxt(props.list[props.list.length - 1]),
+                id: props.list[props.list.length - 1].sender.user_id,
+            })
+        }
+    }
 </script>
 
 <style>

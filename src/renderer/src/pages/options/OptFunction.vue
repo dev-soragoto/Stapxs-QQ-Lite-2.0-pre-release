@@ -388,164 +388,155 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent, markRaw } from 'vue'
+<script lang="ts" setup>
+    import { ref, watch, markRaw } from 'vue'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { runASWEvent as save, checkDefault, runAS } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
+    import { i18n } from '@renderer/main'
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
     import { backend } from '@renderer/runtime/backend'
     import { dbClearImages, dbGetStats } from '@renderer/function/utils/localHistoryUtil'
 
-    export default defineComponent({
-        name: 'ViewOptFunction',
-        data() {
-            return {
-                backend,
-                checkDefault: checkDefault,
-                runtimeData: runtimeData,
-                dbStats: null as { totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null,
-                save: save,
-                clearImageProgressText: '' as string,
-                ndt: 0,
-                ndv: false,
-            }
-        },
-        watch: {
-            'runtimeData.loginInfo.uin': {
-                immediate: true,
-                handler(uin: string | number) {
-                    if (uin && runtimeData.sysConfig.enable_local_history) {
-                        this.loadDbStats()
-                    }
-                },
-            },
-            'runtimeData.sysConfig.enable_local_history': {
-                immediate: true,
-                handler(enabled: boolean) {
-                    if (enabled && runtimeData.loginInfo.uin) {
-                        this.loadDbStats()
-                    }
-                },
-            },
-        },
-        methods: {
-            toggleLocalHistoryImageCache(event: Event) {
-                save(event)
+    const $t = i18n.global.t
 
-                const sender = event.target as HTMLInputElement
-                if (!sender.checked) return
+    defineOptions({ name: 'ViewOptFunction' })
 
-                const selfId = runtimeData.loginInfo?.uin
-                if (!selfId) {
-                    new PopInfo().add(PopType.INFO, this.$t('请连接后在进行操作'))
-                    return
-                }
+    const dbStats = ref<{ totalMessages: number; imageCount: number; imageCacheBytes: number; dbSizeBytes: number } | null>(null)
+    const clearImageProgressText = ref('')
+    const ndt = ref(0)
+    const ndv = ref(false)
 
-                const popInfo = {
-                    title: this.$t('提醒'),
-                    html: `<span>${this.$t('确认要关闭图片缓存吗？所有已缓存图片都将被清除！')}</span>`,
-                    button: [
-                        {
-                            text: this.$t('确认'),
-                            fun: async() =>  {
-                                runtimeData.popBoxList.shift()
+    watch(() => runtimeData.loginInfo.uin, (uin) => {
+        if (uin && runtimeData.sysConfig.enable_local_history) {
+            loadDbStats()
+        }
+    }, { immediate: true })
 
-                                const progressPop = {
-                                    title: this.$t('提醒'),
-                                    html: `<span>${this.$t('正在清理图片缓存 0/0（0%）')}</span>`,
-                                    allowClose: false
-                                }
+    watch(() => runtimeData.sysConfig.enable_local_history, (enabled) => {
+        if (enabled && runtimeData.loginInfo.uin) {
+            loadDbStats()
+        }
+    }, { immediate: true })
 
-                                this.clearImageProgressText = this.$t('正在清理图片缓存 0/0（0%）')
-                                runtimeData.popBoxList.push(progressPop)
+    async function loadDbStats() {
+        if (runtimeData.loginInfo?.uin) {
+            dbStats.value = await dbGetStats(runtimeData.loginInfo.uin)
+        }
+    }
 
-                                const result = await dbClearImages(selfId, (progress) => {
-                                    const text = this.$t('正在清理图片缓存 {deleted}/{total}（{percent}%）', {
-                                        deleted: progress.deleted,
-                                        total: progress.total,
-                                        percent: progress.progress.toFixed(1),
-                                    })
-                                    this.clearImageProgressText = text
-                                    progressPop.html = `<span>${text}</span>`
-                                })
+    function formatDbSize(bytes: number): string {
+        if (bytes < 1024) return `${bytes} B`
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+        if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+        return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+    }
 
-                                if (runtimeData.popBoxList.length > 0) {
-                                    runtimeData.popBoxList.shift()
-                                }
+    function showUmamiInfo() {
+        const popInfo = {
+            title: '',
+            template: markRaw(UmamiInfoPan),
+            full: true,
+            allowQuickClose: false
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
 
-                                new PopInfo().add(
-                                    PopType.INFO,
-                                    this.$t('图片缓存清理完成，共删除 {count} 项（{batches} 批）。', {
-                                        count: result.deleted,
-                                        batches: result.batches,
-                                    }),
-                                )
-                                this.clearImageProgressText = ''
-                                this.loadDbStats()
-                            },
+    function msgND() {
+        ndt.value++
+        setTimeout(() => {
+            ndv.value = false
+        }, 300)
+    }
+
+    function breakLineTip(event: Event) {
+        const sender = event.target as HTMLInputElement
+        if (sender.checked) {
+            const popInfo = {
+                title: $t('提醒'),
+                html: `<span>${$t('开启多行模式可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）')}</span>`,
+                button: [
+                    {
+                        text: $t('知道了'),
+                        master: true,
+                        fun: () => {
+                            runtimeData.popBoxList.shift()
                         },
-                        {
-                            text: this.$t('取消'),
-                            master: true,
-                            fun: () => {
-                                runAS('disable_local_history_image_cache', false)
-                                runtimeData.popBoxList.shift()
-                            },
-                        }
-                    ],
-                }
-                runtimeData.popBoxList.push(popInfo)
-            },
-            async loadDbStats() {
-                if (runtimeData.loginInfo?.uin) {
-                    this.dbStats = await dbGetStats(runtimeData.loginInfo.uin)
-                }
-            },
-            formatDbSize(bytes: number): string {
-                if (bytes < 1024) return `${bytes} B`
-                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-                if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-                return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-            },
-            showUmamiInfo() {
-                const popInfo = {
-                    title: '',
-                    template: markRaw(UmamiInfoPan),
-                    full: true,
-                    allowQuickClose: false
-                }
-                runtimeData.popBoxList.push(popInfo)
-            },
-
-            msgND: function () {
-                this.ndt++
-                setTimeout(() => {
-                    this.ndv = false
-                }, 300)
-            },
-            breakLineTip(event: Event) {
-                const sender = event.target as HTMLInputElement
-                if (sender.checked) {
-                    const popInfo = {
-                        title: this.$t('提醒'),
-                        html: `<span>${this.$t('开启多行模式可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('知道了'),
-                                master: true,
-                                fun: () => {
-                                    runtimeData.popBoxList.shift()
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                }
+                    },
+                ],
             }
-        },
-    })
+            runtimeData.popBoxList.push(popInfo)
+        }
+    }
+
+    function toggleLocalHistoryImageCache(event: Event) {
+        save(event)
+
+        const sender = event.target as HTMLInputElement
+        if (!sender.checked) return
+
+        const selfId = runtimeData.loginInfo?.uin
+        if (!selfId) {
+            new PopInfo().add(PopType.INFO, $t('请连接后在进行操作'))
+            return
+        }
+
+        const popInfo = {
+            title: $t('提醒'),
+            html: `<span>${$t('确认要关闭图片缓存吗？所有已缓存图片都将被清除！')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: async() =>  {
+                        runtimeData.popBoxList.shift()
+
+                        const progressPop = {
+                            title: $t('提醒'),
+                            html: `<span>${$t('正在清理图片缓存 0/0（0%）')}</span>`,
+                            allowClose: false
+                        }
+
+                        clearImageProgressText.value = $t('正在清理图片缓存 0/0（0%）')
+                        runtimeData.popBoxList.push(progressPop)
+
+                        const result = await dbClearImages(selfId, (progress) => {
+                            const text = $t('正在清理图片缓存 {deleted}/{total}（{percent}%）', {
+                                deleted: progress.deleted,
+                                total: progress.total,
+                                percent: progress.progress.toFixed(1),
+                            })
+                            clearImageProgressText.value = text
+                            progressPop.html = `<span>${text}</span>`
+                        })
+
+                        if (runtimeData.popBoxList.length > 0) {
+                            runtimeData.popBoxList.shift()
+                        }
+
+                        new PopInfo().add(
+                            PopType.INFO,
+                            $t('图片缓存清理完成，共删除 {count} 项（{batches} 批）。', {
+                                count: result.deleted,
+                                batches: result.batches,
+                            }),
+                        )
+                        clearImageProgressText.value = ''
+                        loadDbStats()
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runAS('disable_local_history_image_cache', false)
+                        runtimeData.popBoxList.shift()
+                    },
+                }
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
 </script>
 <style>
     .ss-switch input:checked ~ div {

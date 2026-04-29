@@ -352,51 +352,51 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+    import { ref } from 'vue'
+    import { i18n } from '@renderer/main'
     import languages from '@renderer/assets/l10n/_l10nconfig.json'
-
-    import { defineComponent } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import { runASWEvent as save } from '@renderer/function/option'
     import { openLink, sendIdentifyData } from '@renderer/function/utils/appUtil'
 
-    export default defineComponent({
-        name: 'WelcomePan',
-        props: ['data'],
-        data() {
-            return {
-                napcat: import.meta.env.VITE_NAPCAT,
-                repoName: import.meta.env.VITE_APP_REPO_NAME,
-                languages: languages,
-                openLink: openLink,
-                runtimeData: runtimeData,
-                save: save,
-                show: 'home',
-                colors: [
-                    '林槐蓝',
-                    '墨竹青',
-                    '少女粉',
-                    '微软紫',
-                    '坏猫黄',
-                    '玄素黑',
-                ],
-            }
-        },
-        methods: {
-            changeView(name: string) {
-                if(this.show === name || this.show === 'license') return
-                this.show = name
-            },
-            gaLanguage(event: Event) {
-                const sender = event.target as HTMLInputElement
-                sendIdentifyData({ use_language: sender.value })
-                // TODO: 刷新菜单
-            },
-            setPage(name: string) {
-                this.show = name
-            },
-        },
+    defineOptions({ name: 'WelcomePan' })
+
+    const $t = i18n.global.t
+
+    defineProps({
+        data: {
+            type: null,
+            default: undefined
+        }
     })
+
+    const napcat = import.meta.env.VITE_NAPCAT
+    const repoName = import.meta.env.VITE_APP_REPO_NAME
+    const show = ref('home')
+    const colors = [
+        '林槐蓝',
+        '墨竹青',
+        '少女粉',
+        '微软紫',
+        '坏猫黄',
+        '玄素黑',
+    ]
+
+    function changeView(name: string) {
+        if(show.value === name || show.value === 'license') return
+        show.value = name
+    }
+
+    function gaLanguage(event: Event) {
+        const sender = event.target as HTMLInputElement
+        sendIdentifyData({ use_language: sender.value })
+        // TODO: 刷新菜单
+    }
+
+    function setPage(name: string) {
+        show.value = name
+    }
 </script>
 
 <style scoped>

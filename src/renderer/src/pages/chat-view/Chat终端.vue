@@ -158,14 +158,13 @@
     </div>
 </template>
 
-<script lang="ts">
-    import app from '@renderer/main'
+<script lang="ts" setup>
+    import app, { i18n, uptime } from '@renderer/main'
     import SendUtil from '@renderer/function/sender'
     import packageInfo from '../../../../../package.json'
 
-    import { nextTick } from 'vue'
+    import { nextTick, ref, watch, onMounted, markRaw } from 'vue'
     import { Connector } from '@renderer/function/connect'
-    import { defineComponent, markRaw } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import {
@@ -182,699 +181,696 @@
         PopType,
     } from '@renderer/function/base'
     import { sendMsgRaw, getMsgRawTxt, getShowName } from '@renderer/function/utils/msgUtil'
-    import { uptime } from '@renderer/main'
     import { backend } from '@renderer/runtime/backend'
 
-    export default defineComponent({
-        name: 'ChatShell',
-        props: ['chat', 'list', 'mumberInfo'],
-        data() {
-            return {
-                URL: URL,
-                backend,
-                tags: {
-                    fullscreen: false,
-                    fistget: true,
-                    cmdTags: {} as { [key: string]: any },
-                    newMsg: 0,
-                    replyName: null as string | null,
-                    replyId: null as string | null,
-                },
-                getMsgRawTxt: getMsgRawTxt,
-                popInfo: new PopInfo(),
-                packageInfo: packageInfo,
-                runMode: import.meta.env.DEV,
-                timeLoad: markRaw({
-                    time: Intl.DateTimeFormat(getTrueLang(), {
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        second: 'numeric',
-                    }).format(new Date()),
-                }),
-                runtimeData: runtimeData,
-                trueLang: getTrueLang(),
-                timeShow: '',
-                timeSetter: undefined as unknown,
-                msg: '',
-                supportCmd: {} as { [key: string]: any },
-                imgCache: [] as string[],
-                sendCache: [] as MsgItemElem[],
-                searchListCache: [] as (UserFriendElem & UserGroupElem)[],
-            }
-        },
-        watch: {
-            chat() {
-                this.tags.fistget = true
-                this.tags.cmdTags = {}
-            },
-        },
-        mounted() {
-            this.supportCmd = {
-                help: {
-                    info: 'Show All Command.',
-                    fun: () => {
-                        let back = ''
-                        Object.keys(this.supportCmd).forEach((name) => {
-                            if (name != '')
-                                back +=
-                                    '<span style="color: var(--color-font-2);"><span style="width: 13ch;display: inline-block;">' +
-                                    name +
-                                    '</span>: ' +
-                                    this.supportCmd[name].info +
-                                    '</span><br>'
-                        })
-                        this.addCommandOut('', '', back)
-                    },
-                },
-                ls: {
-                    info: 'List all contacts in the current message queue.',
-                    fun: () => {
-                        this.searchListCache = [...runtimeData.onMsgList.values()]
-                        let str =
-                            '  total ' + this.searchListCache.length + '\n'
-                        let hasMsg = false
-                        Array.from(runtimeData.onMsgList).forEach((item, index) => {
-                            if (item.new_msg == true) {
-                                str += '• '
-                                hasMsg = true
-                            } else str += '  '
-                            str += ('#' + index.toString()).padEnd(8, ' ')
-                            str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
-                            str += getShowName(item.group_name || item.nickname, item.remark)
-                            str += '\n'
-                        })
-                        if (hasMsg)
-                            this.addCommandOut(':: You have message.', 'yellow')
-                        this.addCommandOut(str)
-                    },
-                },
-                ssqq: {
-                    info: 'Stapxs QQ Lite Base Command.',
-                    fun: (raw: string, item: string[]) => {
-                        switch (item[1]) {
-                            // 发送消息
-                            case 'send': {
-                                const rawMsg = raw.substring(
-                                    raw.indexOf('send') + 5,
-                                )
-                                const msg = SendUtil.parseMsg(
-                                    rawMsg,
-                                    this.sendCache,
-                                    this.imgCache,
-                                )
-                                if (this.chat.show.temp) {
-                                    sendMsgRaw(
-                                        this.chat.show.id +
-                                            '/' +
-                                            this.chat.show.temp,
-                                        this.chat.show.type,
-                                        msg,
-                                    )
-                                } else {
-                                    sendMsgRaw(
-                                        this.chat.show.id,
-                                        this.chat.show.type,
-                                        msg,
-                                    )
-                                }
-                                // 发送后处理
-                                this.sendCache = []
-                                this.imgCache = []
+    defineOptions({ name: 'ChatShell' })
 
-                                this.tags.replyName = null
-                                this.tags.replyId = null
-                                break
+    const $t = i18n.global.t
+    const { URL } = globalThis
+
+    const { chat, list } = defineProps<{
+        chat: any
+        list: any
+        mumberInfo: any
+    }>()
+
+    // --- data ---
+    const tags = ref({
+        fullscreen: false,
+        fistget: true,
+        cmdTags: {} as { [key: string]: any },
+        newMsg: 0,
+        replyName: null as string | null,
+        replyId: null as string | null,
+    })
+    const _popInfo = new PopInfo()
+    const trueLang = getTrueLang()
+    const timeShow = ref('')
+    let _timeSetter: ReturnType<typeof setInterval> | undefined = undefined
+    const msg = ref('')
+    const supportCmd = ref<{ [key: string]: any }>({})
+    const imgCache = ref<string[]>([])
+    const sendCache = ref<MsgItemElem[]>([])
+    const searchListCache = ref<(UserFriendElem & UserGroupElem)[]>([])
+
+    // --- watchers ---
+    watch(() => chat, () => {
+        tags.value.fistget = true
+        tags.value.cmdTags = {}
+    })
+
+    // --- methods ---
+    function hasReply(msg: any) {
+        if (msg.message) {
+            const repItem = msg.message.filter((item: any) => {
+                return item.type == 'reply'
+            })
+            if (repItem[0]) {
+                const repMsg = runtimeData.messageList.filter(
+                    (item) => {
+                        return item.message_id == repItem[0].id
+                    },
+                )
+                if (repMsg[0]) {
+                    return (
+                        '->' +
+                        (repMsg[0].sender.card? repMsg[0].sender.card: repMsg[0].sender.nickname)
+                    )
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * 消息区滚动到指定位置
+     * @param where 位置（px）
+     * @param showAnimation 是否使用动画
+     */
+    function scrollTo(where: number | undefined, showAnimation = true) {
+        const pan = document.getElementById('shell-pan')
+        if (pan !== null && where) {
+            if (showAnimation === false) {
+                pan.style.scrollBehavior = 'unset'
+            } else {
+                pan.style.scrollBehavior = 'smooth'
+            }
+            pan.scrollTop = where
+            pan.style.scrollBehavior = 'smooth'
+        }
+    }
+
+    function scrollBottom(showAnimation = false) {
+        const pan = document.getElementById('shell-pan')
+        if (pan !== null) {
+            scrollTo(pan.scrollHeight + 40, showAnimation)
+        }
+    }
+
+    function updateList(_: number, oldLength: number) {
+        if (tags.value.fistget && oldLength == 0) {
+            tags.value.fistget = false
+            addCommandOutF(':: joining chat ..', 'yellow')
+            addCommandLineF(
+                'screen ' + runtimeData.chatInfo.show.id,
+                runtimeData.chatInfo.show.type,
+            )
+            addCommandLineF('[screen is terminating]')
+            addCommandOutF(
+                '* Stapxs QQ Lite Shell requires "FiraCode Nerd Font" to display complete command line symbols, please ensure the device has installed this font.\n\n* Use the command "fullscreen" or return to the parent directory to exit the full screen mode.\n\n* 使用 "help" 命令查看所有可用命令。\n\n\n',
+                'var(--color-font)',
+            )
+            addCommandOutF(
+                `  => 当前存在 ${runtimeData.onMsgList.length} 个活跃会话\n\n`,
+                'var(--color-font)',
+            )
+            addCommandOutF(
+                `Welcome to Stapxs QQ Lite ${packageInfo.version} (Vue ${packageInfo.devDependencies.vue}-${import.meta.env.DEV ? 'development' : 'production'})\n\n`,
+                'var(--color-font)',
+            )
+        }
+        scrollBottom(true)
+    }
+
+    function showPop(newLength: number, oldLength: number) {
+        if (newLength > oldLength) {
+            const info = popList[popList.length - 1]
+            if (info.svg == PopType.ERR) {
+                addCommandOut('::' + info.text, 'red')
+            } else {
+                addCommandOut('::' + info.text, 'yellow')
+            }
+        }
+    }
+
+    function addCommandOut(
+        raw: string,
+        color = 'var(--color-font-2)',
+        html = undefined as unknown,
+    ) {
+        runtimeData.messageList.push({
+            commandOut: true,
+            color: color,
+            str: raw,
+            html: html,
+        })
+    }
+
+    function addCommandOutF(
+        raw: string,
+        color = 'var(--color-font-2)',
+        html = undefined as unknown,
+    ) {
+        runtimeData.messageList.unshift({
+            commandOut: true,
+            color: color,
+            str: raw,
+            html: html,
+        })
+    }
+
+    function addCommandLine(
+        str: string,
+        dir = runtimeData.chatInfo.show.name,
+        appendData: { [key: string]: any } = {},
+    ) {
+        runtimeData.messageList.push({
+            dir: dir,
+            commandLine: true,
+            str: str,
+            time: markRaw({
+                time: Intl.DateTimeFormat(getTrueLang(), {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                }).format(new Date()),
+            }),
+            data: appendData,
+        })
+    }
+
+    function addCommandLineF(str: string, dir = runtimeData.chatInfo.show.name) {
+        runtimeData.messageList.unshift({
+            dir: dir,
+            commandLine: true,
+            str: str,
+            time: markRaw({
+                time: Intl.DateTimeFormat(getTrueLang(), {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                }).format(new Date()),
+            }),
+            data: {},
+        })
+    }
+
+    function sendMsg(event: KeyboardEvent) {
+        // 执行指令
+        if (event.keyCode === 13) {
+            addCommandLine(
+                msg.value,
+                runtimeData.chatInfo.show.name,
+                tags.value.cmdTags,
+            )
+            if (msg.value == '') return
+
+            // 检查是否是支持的指令
+            let currentMsg = msg.value
+            if (currentMsg[0] == '/') {
+                currentMsg =
+                    'ssqq send ' + currentMsg.substring(1, currentMsg.length)
+            }
+            const msgList = currentMsg.split(' ')
+            new Logger().add(
+                LogType.DEBUG,
+                'CMD: ' + msgList.toString(),
+            )
+            if (msgList.length > 0 && supportCmd.value[msgList[0]]) {
+                supportCmd.value[msgList[0]].fun(currentMsg, msgList)
+                msg.value = ''
+            } else {
+                addCommandOut(
+                    'stsh: command not found, use the help command to view all available commands.',
+                    'red',
+                )
+            }
+            // 发送后处理
+            tags.value.cmdTags = {}
+            if (
+                sendCache.value.filter((item) => {
+                    return item.type === 'reply'
+                }).length > 0
+            ) {
+                tags.value.cmdTags.reply = true
+            }
+        }
+        setTimeout(() => {
+            scrollBottom()
+        }, 500)
+    }
+
+    function copy(str: string) {
+        const input = document.getElementById('msgInput')
+        if (input) {
+            msg.value = 'ssqq reply ' + str + ' '
+            input.focus()
+        }
+        app.config.globalProperties.$copyText(String(str)).then(
+            () => {
+                addCommandOut(
+                    ':: Copy messageId successfully.',
+                    'gray',
+                )
+            },
+            () => {
+                addCommandOut(':: Copy messageId failed.', 'gray')
+            },
+        )
+    }
+
+    /**
+     * 添加特殊消息结构
+     * @param data obj
+     */
+    function addSpecialMsg(data: SQCodeElem) {
+        if (data !== undefined) {
+            const index = sendCache.value.length
+            sendCache.value.push(data.msgObj)
+            if (data.addText === true) {
+                if (data.addTop === true) {
+                    msg.value = '[SQ:' + index + ']' + msg.value
+                } else {
+                    msg.value += '[SQ:' + index + ']'
+                }
+            }
+            return index
+        }
+        return -1
+    }
+
+    function getRecallName(id: number) {
+        let backName = id.toString()
+        // 补全撤回者信息
+        if (runtimeData.chatInfo.show.type === 'group') {
+            // 寻找群成员信息
+            if (runtimeData.chatInfo.info.group_members !== undefined) {
+                const back =
+                    runtimeData.chatInfo.info.group_members.filter(
+                        (item) => {
+                            return item.user_id === Number(id)
+                        },
+                    )
+                if (back.length === 1) {
+                    backName =
+                        back[0].card === ''? back[0].nickname: back[0].card
+                }
+            }
+        } else {
+            backName = runtimeData.chatInfo.show.name
+        }
+        return backName
+    }
+
+    function addImg(event: ClipboardEvent) {
+        // 判断粘贴类型
+        if (!(event.clipboardData && event.clipboardData.items)) {
+            return
+        }
+        for (
+            let i = 0, len = event.clipboardData.items.length;
+            i < len;
+            i++
+        ) {
+            const item = event.clipboardData.items[i]
+            if (item.kind === 'file') {
+                setImg(item.getAsFile())
+                // 阻止默认行为
+                event.preventDefault()
+            }
+        }
+    }
+
+    function setImg(blob: File | null) {
+        const popInfoLocal = new PopInfo()
+        if (
+            blob !== null &&
+            blob.type.indexOf('image/') >= 0 &&
+            blob.size !== 0
+        ) {
+            if (blob.size < 3145728) {
+                // 转换为 Base64
+                const reader = new FileReader()
+                reader.readAsDataURL(blob)
+                reader.onloadend = () => {
+                    const base64data = reader.result as string
+                    if (base64data !== null) {
+                        // 记录图片信息
+                        // 只要你内存够猛，随便 cache 图片，这边就不做限制了
+                        imgCache.value.push(base64data)
+                    }
+                }
+            } else {
+                popInfoLocal.add(PopType.INFO, $t('图片过大'))
+            }
+        }
+    }
+
+    // --- mounted ---
+    onMounted(() => {
+        supportCmd.value = {
+            help: {
+                info: 'Show All Command.',
+                fun: () => {
+                    let back = ''
+                    Object.keys(supportCmd.value).forEach((name) => {
+                        if (name != '')
+                            back +=
+                                '<span style="color: var(--color-font-2);"><span style="width: 13ch;display: inline-block;">' +
+                                name +
+                                '</span>: ' +
+                                supportCmd.value[name].info +
+                                '</span><br>'
+                    })
+                    addCommandOut('', '', back)
+                },
+            },
+            ls: {
+                info: 'List all contacts in the current message queue.',
+                fun: () => {
+                    searchListCache.value = [...runtimeData.onMsgList.values()]
+                    let str =
+                        '  total ' + searchListCache.value.length + '\n'
+                    let hasMsg = false
+                    Array.from(runtimeData.onMsgList).forEach((item, index) => {
+                        if (item.new_msg == true) {
+                            str += '• '
+                            hasMsg = true
+                        } else str += '  '
+                        str += ('#' + index.toString()).padEnd(8, ' ')
+                        str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
+                        str += getShowName(item.group_name || item.nickname, item.remark)
+                        str += '\n'
+                    })
+                    if (hasMsg)
+                        addCommandOut(':: You have message.', 'yellow')
+                    addCommandOut(str)
+                },
+            },
+            ssqq: {
+                info: 'Stapxs QQ Lite Base Command.',
+                fun: (raw: string, item: string[]) => {
+                    switch (item[1]) {
+                        // 发送消息
+                        case 'send': {
+                            const rawMsg = raw.substring(
+                                raw.indexOf('send') + 5,
+                            )
+                            const parsedMsg = SendUtil.parseMsg(
+                                rawMsg,
+                                sendCache.value,
+                                imgCache.value,
+                            )
+                            if (chat.show.temp) {
+                                sendMsgRaw(
+                                    chat.show.id +
+                                        '/' +
+                                        chat.show.temp,
+                                    chat.show.type,
+                                    parsedMsg,
+                                )
+                            } else {
+                                sendMsgRaw(
+                                    chat.show.id,
+                                    chat.show.type,
+                                    parsedMsg,
+                                )
                             }
-                            // 寻找联系人
-                            case 'list': {
-                                const value = item[2]
-                                this.searchListCache =
-                                    runtimeData.userList.filter(
-                                        (
-                                            item: UserFriendElem &
-                                                UserGroupElem,
-                                        ) => {
-                                            const name = (
-                                                item.user_id? item.nickname +
-                                                      item.remark: item.group_name
-                                            ).toLowerCase()
-                                            const id = item.user_id? item.user_id: item.group_id
-                                            return (
-                                                name.indexOf(
-                                                    value.toLowerCase(),
-                                                ) !== -1 ||
-                                                id.toString() === value
-                                            )
-                                        },
-                                    ) as (UserFriendElem & UserGroupElem)[]
-                                let str =
-                                    '  total ' +
-                                    this.searchListCache.length +
-                                    '\n'
-                                this.searchListCache.forEach((item, index) => {
-                                    str += ('#' + index.toString()).padEnd(8, ' ')
-                                    str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
-                                    str += getShowName(item.group_name || item.nickname, item.remark)
-                                    str += '\n'
+                            // 发送后处理
+                            sendCache.value = []
+                            imgCache.value = []
+
+                            tags.value.replyName = null
+                            tags.value.replyId = null
+                            break
+                        }
+                        // 寻找联系人
+                        case 'list': {
+                            const value = item[2]
+                            searchListCache.value =
+                                runtimeData.userList.filter(
+                                    (
+                                        item: UserFriendElem &
+                                            UserGroupElem,
+                                    ) => {
+                                        const name = (
+                                            item.user_id? item.nickname +
+                                                  item.remark: item.group_name
+                                        ).toLowerCase()
+                                        const id = item.user_id? item.user_id: item.group_id
+                                        return (
+                                            name.indexOf(
+                                                value.toLowerCase(),
+                                            ) !== -1 ||
+                                            id.toString() === value
+                                        )
+                                    },
+                                ) as (UserFriendElem & UserGroupElem)[]
+                            let str =
+                                '  total ' +
+                                searchListCache.value.length +
+                                '\n'
+                            searchListCache.value.forEach((item, index) => {
+                                str += ('#' + index.toString()).padEnd(8, ' ')
+                                str += (item.group_id ? item.group_id : item.user_id).toString().padEnd(20, ' ')
+                                str += getShowName(item.group_name || item.nickname, item.remark)
+                                str += '\n'
+                            })
+                            addCommandOut(str)
+                            break
+                        }
+                        // 回复消息
+                        case 'reply': {
+                            // 去除回复消息缓存
+                            sendCache.value = sendCache.value.filter(
+                                (item) => {
+                                    return item.type !== 'reply'
+                                },
+                            )
+                            if (item[2] && item[2] != 'clear') {
+                                // 根据 item[2] 寻找这条消息 的名字
+                                const replyMsg = runtimeData.messageList.filter(
+                                    (msg) => {
+                                        return msg.message_id == item[2]
+                                    },
+                                )
+                                tags.value.replyId = item[2]
+                                if (replyMsg[0]) {
+                                    tags.value.replyName = replyMsg[0].sender.card? replyMsg[0].sender.card: replyMsg[0].sender.nickname
+                                }
+                                addSpecialMsg({
+                                    msgObj: { type: 'reply', id: item[2] },
+                                    addText: false,
+                                    addTop: true,
                                 })
-                                this.addCommandOut(str)
-                                break
-                            }
-                            // 回复消息
-                            case 'reply': {
-                                // 去除回复消息缓存
-                                this.sendCache = this.sendCache.filter(
+                            } else if (item[2] && item[2] == 'clear') {
+                                sendCache.value = sendCache.value.filter(
                                     (item) => {
                                         return item.type !== 'reply'
                                     },
                                 )
-                                if (item[2] && item[2] != 'clear') {
-                                    // 根据 item[2] 寻找这条消息 的名字
-                                    const msg = runtimeData.messageList.filter(
-                                        (msg) => {
-                                            return msg.message_id == item[2]
-                                        },
-                                    )
-                                    this.tags.replyId = item[2]
-                                    if (msg[0]) {
-                                        this.tags.replyName = msg[0].sender.card? msg[0].sender.card: msg[0].sender.nickname
-                                    }
-                                    this.addSpecialMsg({
-                                        msgObj: { type: 'reply', id: item[2] },
-                                        addText: false,
-                                        addTop: true,
-                                    })
-                                } else if (item[2] && item[2] == 'clear') {
-                                    this.sendCache = this.sendCache.filter(
-                                        (item) => {
-                                            return item.type !== 'reply'
-                                        },
-                                    )
-                                    this.tags.replyName = null
-                                    this.tags.replyId = null
-                                }
-                                if (item[3]) {
-                                    this.supportCmd['ssqq'].fun(
-                                        'ssqq send ' + item[3],
-                                        ['ssqq', 'send', item[3]],
-                                    )
-                                    this.msg = ''
-                                }
-                                break
+                                tags.value.replyName = null
+                                tags.value.replyId = null
                             }
-                            // 加载历史记录
-                            case 'history': {
-                                // 移除顶部的首次加载提示
-                                if (runtimeData.messageList[0].commandOut) {
-                                    runtimeData.messageList.shift()
-                                    runtimeData.messageList.shift()
-                                    runtimeData.messageList.shift()
-                                    runtimeData.messageList.shift()
-                                }
-                                // 加载历史消息
-                                // 获取列表第一条消息 ID
-                                const firstMsgId =
-                                    runtimeData.messageList[0].message_id ?? 0
-                                // 发起获取历史消息请求
-                                const type = runtimeData.chatInfo.show.type
-                                const id = runtimeData.chatInfo.show.id
-                                let name
-                                const fullPage =
+                            if (item[3]) {
+                                supportCmd.value['ssqq'].fun(
+                                    'ssqq send ' + item[3],
+                                    ['ssqq', 'send', item[3]],
+                                )
+                                msg.value = ''
+                            }
+                            break
+                        }
+                        // 加载历史记录
+                        case 'history': {
+                            // 移除顶部的首次加载提示
+                            if (runtimeData.messageList[0].commandOut) {
+                                runtimeData.messageList.shift()
+                                runtimeData.messageList.shift()
+                                runtimeData.messageList.shift()
+                                runtimeData.messageList.shift()
+                            }
+                            // 加载历史消息
+                            // 获取列表第一条消息 ID
+                            const firstMsgId =
+                                runtimeData.messageList[0].message_id ?? 0
+                            // 发起获取历史消息请求
+                            const type = runtimeData.chatInfo.show.type
+                            const id = runtimeData.chatInfo.show.id
+                            let name
+                            const fullPage =
+                                runtimeData.jsonMap.message_list
+                                    ?.pagerType == 'full'
+                            if (
+                                runtimeData.jsonMap.message_list &&
+                                type != 'group'
+                            ) {
+                                name =
                                     runtimeData.jsonMap.message_list
-                                        ?.pagerType == 'full'
-                                if (
-                                    runtimeData.jsonMap.message_list &&
-                                    type != 'group'
-                                ) {
-                                    name =
-                                        runtimeData.jsonMap.message_list
-                                            .private_name
-                                } else {
-                                    name = runtimeData.jsonMap.message_list.name
-                                }
-                                Connector.send(
-                                    name ?? 'get_chat_history',
-                                    {
-                                        group_id:
-                                            type == 'group' ? id : undefined,
-                                        user_id:
-                                            type != 'group' ? id : undefined,
-                                        message_id: firstMsgId,
-                                        count: fullPage? runtimeData.messageList.length +
-                                              20: 20,
-                                    },
-                                    'getChatHistory',
-                                )
-                                break
-                            }
-                            default: {
-                                this.addCommandOut(
-                                    'usage: ssqq send [msg]: Send a message, you can directly use "/<Message>" to replace it, \n           list [search]: Fuzzy search in the list of friends/groups, \n           reply [msgId] <message>: Use the message id to reply to the message, Click the message to copy the id, \n           history: Load more history.',
-                                )
-                            }
-                        }
-                    },
-                },
-                fullscreen: {
-                    info: 'fullscreen chat view.',
-                    fun: () => {
-                        const pan = document.getElementById('chat-pan')
-                        if (pan) {
-                            if (!this.tags.fullscreen) {
-                                this.tags.fullscreen = true
-                                pan.classList.add('full')
+                                        .private_name
                             } else {
-                                this.tags.fullscreen = false
-                                pan.classList.remove('full')
+                                name = runtimeData.jsonMap.message_list.name
                             }
+                            Connector.send(
+                                name ?? 'get_chat_history',
+                                {
+                                    group_id:
+                                        type == 'group' ? id : undefined,
+                                    user_id:
+                                        type != 'group' ? id : undefined,
+                                    message_id: firstMsgId,
+                                    count: fullPage? runtimeData.messageList.length +
+                                          20: 20,
+                                },
+                                'getChatHistory',
+                            )
+                            break
                         }
-                    },
+                        default: {
+                            addCommandOut(
+                                'usage: ssqq send [msg]: Send a message, you can directly use "/<Message>" to replace it, \n           list [search]: Fuzzy search in the list of friends/groups, \n           reply [msgId] <message>: Use the message id to reply to the message, Click the message to copy the id, \n           history: Load more history.',
+                            )
+                        }
+                    }
                 },
-                fastfetch: {
-                    info: 'print system info.',
-                    fun: () => {
-                        const infoList = {
-                            Application: 'Stapxs QQ Lite',
-                            Kernel: packageInfo.version + '-' + backend.type,
-                            Shell: 'stsh Basic Shell 1.0',
-                            Theme: 'ChatSHell',
-                            Uptime:
-                                Math.floor(
-                                    ((new Date().getTime() - uptime) / 1000) *
-                                        100,
-                                ) /
-                                    100 +
-                                ' s',
-                            Resolution:
-                                window.screen.width +
-                                'x' +
-                                window.screen.height,
-                        } as { [key: string]: string }
-                        let info = ''
-                        Object.keys(infoList).forEach((key) => {
-                            info += `<span>${key}<span>: ${infoList[key]}</span></span>`
-                        })
-                        this.addCommandOut(
-                            '',
-                            '',
-                            `<div class="shell-fastfetch"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>&nbsp;*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;************<br>&nbsp;************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***********<br>&nbsp;***********,**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*.***********<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;&nbsp;&nbsp;***********************************&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***</span><div><span>${runtimeData.loginInfo.nickname}<span>@</span>ssqq-vue</span><a>-----------------</a>${info}<div><div style="background:black"></div><div style="background:red"></div><div style="background:green"></div><div style="background:yellow"></div><div style="background:blue"></div><div style="background:violet"></div></div></div></div>`,
-                        )
-                    },
-                },
-                clear: {
-                    info: 'clear message list.',
-                    fun: () => {
-                        runtimeData.messageList = []
-                        // PS：让消息列表不是空的防止输出首次进入信息
-                        this.addCommandOut('')
-                    },
-                },
-                screen: {
-                    info: 'Switch to a specified contact chat.',
-                    fun: (_: string, itemInfo: string[]) => {
-                        let id = '0'
-                        if (
-                            itemInfo.length == 1 &&
-                            this.searchListCache.length == 1
-                        ) {
-                            id = (
-                                this.searchListCache[0].user_id? this.searchListCache[0].user_id: this.searchListCache[0].group_id
-                            ).toString()
+            },
+            fullscreen: {
+                info: 'fullscreen chat view.',
+                fun: () => {
+                    const pan = document.getElementById('chat-pan')
+                    if (pan) {
+                        if (!tags.value.fullscreen) {
+                            tags.value.fullscreen = true
+                            pan.classList.add('full')
                         } else {
-                            id = itemInfo[1]
-                            if (itemInfo[1] == '../') {
-                                const pan = document.getElementById('chat-pan')
-                                if (pan) {
-                                    this.tags.fullscreen = false
-                                    pan.classList.remove('full')
-                                    runtimeData.chatInfo.show.id = 0
-                                }
+                            tags.value.fullscreen = false
+                            pan.classList.remove('full')
+                        }
+                    }
+                },
+            },
+            fastfetch: {
+                info: 'print system info.',
+                fun: () => {
+                    const infoList = {
+                        Application: 'Stapxs QQ Lite',
+                        Kernel: packageInfo.version + '-' + backend.type,
+                        Shell: 'stsh Basic Shell 1.0',
+                        Theme: 'ChatSHell',
+                        Uptime:
+                            Math.floor(
+                                ((new Date().getTime() - uptime) / 1000) *
+                                    100,
+                            ) /
+                                100 +
+                            ' s',
+                        Resolution:
+                            window.screen.width +
+                            'x' +
+                            window.screen.height,
+                    } as { [key: string]: string }
+                    let info = ''
+                    Object.keys(infoList).forEach((key) => {
+                        info += `<span>${key}<span>: ${infoList[key]}</span></span>`
+                    })
+                    addCommandOut(
+                        '',
+                        '',
+                        `<div class="shell-fastfetch"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>&nbsp;*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;************<br>&nbsp;************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***********<br>&nbsp;***********,**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*.***********<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;&nbsp;&nbsp;***********************************&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***</span><div><span>${runtimeData.loginInfo.nickname}<span>@</span>ssqq-vue</span><a>-----------------</a>${info}<div><div style="background:black"></div><div style="background:red"></div><div style="background:green"></div><div style="background:yellow"></div><div style="background:blue"></div><div style="background:violet"></div></div></div></div>`,
+                    )
+                },
+            },
+            clear: {
+                info: 'clear message list.',
+                fun: () => {
+                    runtimeData.messageList = []
+                    // PS：让消息列表不是空的防止输出首次进入信息
+                    addCommandOut('')
+                },
+            },
+            screen: {
+                info: 'Switch to a specified contact chat.',
+                fun: (_: string, itemInfo: string[]) => {
+                    let id = '0'
+                    if (
+                        itemInfo.length == 1 &&
+                        searchListCache.value.length == 1
+                    ) {
+                        id = (
+                            searchListCache.value[0].user_id? searchListCache.value[0].user_id: searchListCache.value[0].group_id
+                        ).toString()
+                    } else {
+                        id = itemInfo[1]
+                        if (itemInfo[1] == '../') {
+                            const pan = document.getElementById('chat-pan')
+                            if (pan) {
+                                tags.value.fullscreen = false
+                                pan.classList.remove('full')
+                                runtimeData.chatInfo.show.id = 0
+                            }
+                            return
+                        }
+                        if (itemInfo[1].startsWith('#')) {
+                            const index = Number(itemInfo[1].substring(1))
+                            if (searchListCache.value[index]) {
+                                id = (
+                                    searchListCache.value[index].user_id? searchListCache.value[index]
+                                              .user_id: searchListCache.value[index]
+                                              .group_id
+                                ).toString()
+                            } else {
+                                addCommandOut(
+                                    ':: Search cache id does not exist',
+                                    'red',
+                                )
                                 return
                             }
-                            if (itemInfo[1].startsWith('#')) {
-                                const index = Number(itemInfo[1].substring(1))
-                                if (this.searchListCache[index]) {
-                                    id = (
-                                        this.searchListCache[index].user_id? this.searchListCache[index]
-                                                  .user_id: this.searchListCache[index]
-                                                  .group_id
-                                    ).toString()
+                        }
+                    }
+                    // 从缓存列表里寻找这个 ID
+                    for (let i = 0; i < runtimeData.userList.length; i++) {
+                        const item = runtimeData.userList[i]
+                        const gid =
+                            item.user_id !== undefined? item.user_id: item.group_id
+                        if (String(gid) === id) {
+                            // 检查显示列表里有没有它
+                            if (!document.getElementById('user-' + id)) {
+                                // 把它插入到显示列表
+                                runtimeData.baseOnMsgList?.set(Number(id), item)
+                            }
+                            nextTick(() => {
+                                const bodyNext = document.getElementById(
+                                    'user-' + id,
+                                )
+                                if (bodyNext !== null) {
+                                    // 然后点一下它触发聊天框切换
+                                    bodyNext.click()
                                 } else {
-                                    this.addCommandOut(
-                                        ':: Search cache id does not exist',
+                                    addCommandOut(
+                                        ':: No valid contacts found',
                                         'red',
                                     )
-                                    return
                                 }
-                            }
+                            })
+                            return
                         }
-                        // 从缓存列表里寻找这个 ID
-                        for (let i = 0; i < runtimeData.userList.length; i++) {
-                            const item = runtimeData.userList[i]
-                            const gid =
-                                item.user_id !== undefined? item.user_id: item.group_id
-                            if (String(gid) === id) {
-                                // 检查显示列表里有没有它
-                                if (!document.getElementById('user-' + id)) {
-                                    // 把它插入到显示列表
-                                    runtimeData.baseOnMsgList?.set(Number(id), item)
-                                }
-                                nextTick(() => {
-                                    const bodyNext = document.getElementById(
-                                        'user-' + id,
-                                    )
-                                    if (bodyNext !== null) {
-                                        // 然后点一下它触发聊天框切换
-                                        bodyNext.click()
-                                    } else {
-                                        this.addCommandOut(
-                                            ':: No valid contacts found',
-                                            'red',
-                                        )
-                                    }
-                                })
-                                return
-                            }
-                        }
-                        this.addCommandOut(':: No valid contacts found', 'red')
+                    }
+                    addCommandOut(':: No valid contacts found', 'red')
 
-                        this.tags.replyName = null
-                        this.tags.replyId = null
-                    },
+                    tags.value.replyName = null
+                    tags.value.replyId = null
                 },
-            }
+            },
+        }
 
-            this.$watch(() => this.list.length, this.updateList)
-            this.$watch(() => popList.length, this.showPop)
-            this.timeSetter = setInterval(() => {
-                this.timeShow = Intl.DateTimeFormat(this.trueLang, {
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    second: 'numeric',
-                }).format(new Date())
-                // 刷新新消息数
-                this.tags.newMsg = [...runtimeData.onMsgList.values()].filter((item) => {
-                    return item.new_msg == true
-                }).length
-            }, 1000)
-            const pan = document.getElementById('chat-pan')
-            if (pan) {
-                this.tags.fullscreen = true
-                pan.classList.add('full')
-            }
-        },
-        methods: {
-            hasReply(msg: any) {
-                if (msg.message) {
-                    const repItem = msg.message.filter((item: any) => {
-                        return item.type == 'reply'
-                    })
-                    if (repItem[0]) {
-                        const repMsg = runtimeData.messageList.filter(
-                            (item) => {
-                                return item.message_id == repItem[0].id
-                            },
-                        )
-                        if (repMsg[0]) {
-                            return (
-                                '->' +
-                                (repMsg[0].sender.card? repMsg[0].sender.card: repMsg[0].sender.nickname)
-                            )
-                        }
-                    }
-                }
-                return null
-            },
-
-            /**
-             * 消息区滚动到指定位置
-             * @param where 位置（px）
-             * @param showAnimation 是否使用动画
-             */
-            scrollTo(where: number | undefined, showAnimation = true) {
-                const pan = document.getElementById('shell-pan')
-                if (pan !== null && where) {
-                    if (showAnimation === false) {
-                        pan.style.scrollBehavior = 'unset'
-                    } else {
-                        pan.style.scrollBehavior = 'smooth'
-                    }
-                    pan.scrollTop = where
-                    pan.style.scrollBehavior = 'smooth'
-                }
-            },
-            scrollBottom(showAnimation = false) {
-                const pan = document.getElementById('shell-pan')
-                if (pan !== null) {
-                    this.scrollTo(pan.scrollHeight + 40, showAnimation)
-                }
-            },
-
-            updateList(_: number, oldLength: number) {
-                if (this.tags.fistget && oldLength == 0) {
-                    this.tags.fistget = false
-                    this.addCommandOutF(':: joining chat ..', 'yellow')
-                    this.addCommandLineF(
-                        'screen ' + runtimeData.chatInfo.show.id,
-                        runtimeData.chatInfo.show.type,
-                    )
-                    this.addCommandLineF('[screen is terminating]')
-                    this.addCommandOutF(
-                        '* Stapxs QQ Lite Shell requires "FiraCode Nerd Font" to display complete command line symbols, please ensure the device has installed this font.\n\n* Use the command "fullscreen" or return to the parent directory to exit the full screen mode.\n\n* 使用 "help" 命令查看所有可用命令。\n\n\n',
-                        'var(--color-font)',
-                    )
-                    this.addCommandOutF(
-                        `  => 当前存在 ${runtimeData.onMsgList.length} 个活跃会话\n\n`,
-                        'var(--color-font)',
-                    )
-                    this.addCommandOutF(
-                        `Welcome to Stapxs QQ Lite ${packageInfo.version} (Vue ${packageInfo.devDependencies.vue}-${this.runMode ? 'development' : 'production'})\n\n`,
-                        'var(--color-font)',
-                    )
-                }
-                this.scrollBottom(true)
-            },
-
-            showPop(newLength: number, oldLength: number) {
-                if (newLength > oldLength) {
-                    const info = popList[popList.length - 1]
-                    if (info.svg == PopType.ERR) {
-                        this.addCommandOut('::' + info.text, 'red')
-                    } else {
-                        this.addCommandOut('::' + info.text, 'yellow')
-                    }
-                }
-            },
-
-            addCommandOut(
-                raw: string,
-                color = 'var(--color-font-2)',
-                html = undefined as unknown,
-            ) {
-                runtimeData.messageList.push({
-                    commandOut: true,
-                    color: color,
-                    str: raw,
-                    html: html,
-                })
-            },
-            addCommandOutF(
-                raw: string,
-                color = 'var(--color-font-2)',
-                html = undefined as unknown,
-            ) {
-                runtimeData.messageList.unshift({
-                    commandOut: true,
-                    color: color,
-                    str: raw,
-                    html: html,
-                })
-            },
-
-            addCommandLine(
-                str: string,
-                dir = runtimeData.chatInfo.show.name,
-                appendData: { [key: string]: any } = {},
-            ) {
-                runtimeData.messageList.push({
-                    dir: dir,
-                    commandLine: true,
-                    str: str,
-                    time: markRaw({
-                        time: Intl.DateTimeFormat(getTrueLang(), {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            second: 'numeric',
-                        }).format(new Date()),
-                    }),
-                    data: appendData,
-                })
-            },
-            addCommandLineF(str: string, dir = runtimeData.chatInfo.show.name) {
-                runtimeData.messageList.unshift({
-                    dir: dir,
-                    commandLine: true,
-                    str: str,
-                    time: markRaw({
-                        time: Intl.DateTimeFormat(getTrueLang(), {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            second: 'numeric',
-                        }).format(new Date()),
-                    }),
-                    data: {},
-                })
-            },
-
-            sendMsg(event: KeyboardEvent) {
-                // 执行指令
-                if (event.keyCode === 13) {
-                    this.addCommandLine(
-                        this.msg,
-                        runtimeData.chatInfo.show.name,
-                        this.tags.cmdTags,
-                    )
-                    if (this.msg == '') return
-
-                    // 检查是否是支持的指令
-                    if (this.msg[0] == '/') {
-                        this.msg =
-                            'ssqq send ' + this.msg.substring(1, this.msg.length)
-                    }
-                    const msgList = this.msg.split(' ')
-                    new Logger().add(
-                        LogType.DEBUG,
-                        'CMD: ' + msgList.toString(),
-                    )
-                    if (msgList.length > 0 && this.supportCmd[msgList[0]]) {
-                        this.supportCmd[msgList[0]].fun(this.msg, msgList)
-                        this.msg = ''
-                    } else {
-                        this.addCommandOut(
-                            'stsh: command not found, use the help command to view all available commands.',
-                            'red',
-                        )
-                    }
-                    // 发送后处理
-                    this.tags.cmdTags = {}
-                    if (
-                        this.sendCache.filter((item) => {
-                            return item.type === 'reply'
-                        }).length > 0
-                    ) {
-                        this.tags.cmdTags.reply = true
-                    }
-                }
-                setTimeout(() => {
-                    this.scrollBottom()
-                }, 500)
-            },
-
-            copy(str: string) {
-                const input = document.getElementById('msgInput')
-                if (input) {
-                    this.msg = 'ssqq reply ' + str + ' '
-                    input.focus()
-                }
-                app.config.globalProperties.$copyText(String(str)).then(
-                    () => {
-                        this.addCommandOut(
-                            ':: Copy messageId successfully.',
-                            'gray',
-                        )
-                    },
-                    () => {
-                        this.addCommandOut(':: Copy messageId failed.', 'gray')
-                    },
-                )
-            },
-
-            /**
-             * 添加特殊消息结构
-             * @param data obj
-             */
-            addSpecialMsg(data: SQCodeElem) {
-                if (data !== undefined) {
-                    const index = this.sendCache.length
-                    this.sendCache.push(data.msgObj)
-                    if (data.addText === true) {
-                        if (data.addTop === true) {
-                            this.msg = '[SQ:' + index + ']' + this.msg
-                        } else {
-                            this.msg += '[SQ:' + index + ']'
-                        }
-                    }
-                    return index
-                }
-                return -1
-            },
-            getRecallName(id: number) {
-                let backName = id.toString()
-                // 补全撤回者信息
-                if (runtimeData.chatInfo.show.type === 'group') {
-                    // 寻找群成员信息
-                    if (runtimeData.chatInfo.info.group_members !== undefined) {
-                        const back =
-                            runtimeData.chatInfo.info.group_members.filter(
-                                (item) => {
-                                    return item.user_id === Number(id)
-                                },
-                            )
-                        if (back.length === 1) {
-                            backName =
-                                back[0].card === ''? back[0].nickname: back[0].card
-                        }
-                    }
-                } else {
-                    backName = runtimeData.chatInfo.show.name
-                }
-                return backName
-            },
-
-            addImg(event: ClipboardEvent) {
-                // 判断粘贴类型
-                if (!(event.clipboardData && event.clipboardData.items)) {
-                    return
-                }
-                for (
-                    let i = 0, len = event.clipboardData.items.length;
-                    i < len;
-                    i++
-                ) {
-                    const item = event.clipboardData.items[i]
-                    if (item.kind === 'file') {
-                        this.setImg(item.getAsFile())
-                        // 阻止默认行为
-                        event.preventDefault()
-                    }
-                }
-            },
-
-            setImg(blob: File | null) {
-                const popInfo = new PopInfo()
-                if (
-                    blob !== null &&
-                    blob.type.indexOf('image/') >= 0 &&
-                    blob.size !== 0
-                ) {
-                    if (blob.size < 3145728) {
-                        // 转换为 Base64
-                        const reader = new FileReader()
-                        reader.readAsDataURL(blob)
-                        reader.onloadend = () => {
-                            const base64data = reader.result as string
-                            if (base64data !== null) {
-                                // 记录图片信息
-                                // 只要你内存够猛，随便 cache 图片，这边就不做限制了
-                                this.imgCache.push(base64data)
-                            }
-                        }
-                    } else {
-                        popInfo.add(PopType.INFO, this.$t('图片过大'))
-                    }
-                }
-            },
-        },
+        watch(() => list.length, updateList)
+        watch(() => popList.length, showPop)
+        _timeSetter = setInterval(() => {
+            timeShow.value = Intl.DateTimeFormat(trueLang, {
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+            }).format(new Date())
+            // 刷新新消息数
+            tags.value.newMsg = [...runtimeData.onMsgList.values()].filter((item) => {
+                return item.new_msg == true
+            }).length
+        }, 1000)
+        const pan = document.getElementById('chat-pan')
+        if (pan) {
+            tags.value.fullscreen = true
+            pan.classList.add('full')
+        }
     })
 </script>
 

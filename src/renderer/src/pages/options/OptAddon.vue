@@ -91,8 +91,8 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
+<script setup lang="ts">
+    import { i18n } from '@renderer/main'
     import { runtimeData } from '@renderer/function/msg'
     import {
         extraOptionCards,
@@ -100,61 +100,61 @@
         type ExtraOptionItem,
     } from '@renderer/function/option'
 
-    export default defineComponent({
-        name: 'ViewOptAddon',
-        data() {
-            return {
-                runtimeData: runtimeData,
-                cards: extraOptionCards,
+    defineOptions({ name: 'ViewOptAddon' })
+
+    const $t = i18n.global.t
+
+    const cards = extraOptionCards
+
+    function getItemValue(item: ExtraOptionItem): any {
+        const key = item.optionKey
+        if (key && runtimeData.sysConfig &&
+            Object.prototype.hasOwnProperty.call(runtimeData.sysConfig, key)) {
+            return (runtimeData.sysConfig as any)[key]
+        }
+        return item.defaultValue
+    }
+
+    function handleChange(item: ExtraOptionItem, value: any) {
+        if (item.optionKey) {
+            runAS(item.optionKey, value)
+        }
+        if (typeof item.callback === 'function') {
+            try {
+                item.callback(value)
+            } catch (e) {
+                // 回调异常不影响主流程
+                // eslint-disable-next-line no-console
+                console.error('extra option callback error:', e)
             }
-        },
-        methods: {
-            getItemValue(item: ExtraOptionItem): any {
-                const key = item.optionKey
-                if (key && this.runtimeData.sysConfig &&
-                    Object.prototype.hasOwnProperty.call(this.runtimeData.sysConfig, key)) {
-                    return (this.runtimeData.sysConfig as any)[key]
-                }
-                return item.defaultValue
-            },
-            handleChange(item: ExtraOptionItem, value: any) {
-                if (item.optionKey) {
-                    runAS(item.optionKey, value)
-                }
-                if (typeof item.callback === 'function') {
-                    try {
-                        item.callback(value)
-                    } catch (e) {
-                        // 回调异常不影响主流程
-                        // eslint-disable-next-line no-console
-                        console.error('extra option callback error:', e)
-                    }
-                }
-            },
-            onSwitchChange(event: Event, item: ExtraOptionItem) {
-                const sender = event.target as HTMLInputElement
-                this.handleChange(item, sender.checked)
-            },
-            onInputChange(event: Event, item: ExtraOptionItem) {
-                const sender = event.target as HTMLInputElement
-                this.handleChange(item, sender.value)
-            },
-            onSelectChange(event: Event, item: ExtraOptionItem) {
-                const sender = event.target as HTMLSelectElement
-                this.handleChange(item, sender.value)
-            },
-            onClickButton(item: ExtraOptionItem) {
-                if (typeof item.callback === 'function') {
-                    try {
-                        item.callback(this.getItemValue(item))
-                    } catch (e) {
-                        // eslint-disable-next-line no-console
-                        console.error('extra option button callback error:', e)
-                    }
-                }
-            },
-        },
-    })
+        }
+    }
+
+    function onSwitchChange(event: Event, item: ExtraOptionItem) {
+        const sender = event.target as HTMLInputElement
+        handleChange(item, sender.checked)
+    }
+
+    function onInputChange(event: Event, item: ExtraOptionItem) {
+        const sender = event.target as HTMLInputElement
+        handleChange(item, sender.value)
+    }
+
+    function onSelectChange(event: Event, item: ExtraOptionItem) {
+        const sender = event.target as HTMLSelectElement
+        handleChange(item, sender.value)
+    }
+
+    function onClickButton(item: ExtraOptionItem) {
+        if (typeof item.callback === 'function') {
+            try {
+                item.callback(getItemValue(item))
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.error('extra option button callback error:', e)
+            }
+        }
+    }
 </script>
 <style scoped>
 .empty {

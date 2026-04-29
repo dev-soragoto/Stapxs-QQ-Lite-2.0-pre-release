@@ -48,8 +48,8 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
+<script setup lang="ts">
+    import { i18n } from '@renderer/main'
 
     import {
         getTrueLang,
@@ -63,66 +63,64 @@
     import { Connector } from '@renderer/function/connect'
     import { runtimeData } from '@renderer/function/msg'
 
-    export default defineComponent({
-        name: 'FileBody',
-        props: {
-            item: {
-                type: Object as () => GroupFileElem & GroupFileFolderElem,
-                required: true,
-            },
-            chat: {
-                type: Object,
-                required: true,
-            },
-            parent: {
-                type: String,
-                required: false,
-                default: undefined,
-            },
-        },
-        data() {
-            return {
-                trueLang: getTrueLang(),
-                getSize: getSizeFromBytes,
-                toHtml: escape2Html,
-            }
-        },
-        methods: {
-            /**
-             * 下载文件（获取文件下载地址并下载）
-             */
-            getFile(item: GroupFileElem) {
-                const name = runtimeData.jsonMap.file_download?.name
-                if(name) {
-                    Connector.send(
-                        name,
-                        {
-                            group_id: runtimeData.chatInfo.show.id,
-                            file_id: item.file_id,
-                        },
-                        'downloadGroupFile_' + item.file_id + '_' + btoa(encodeURIComponent(item.file_name)),
-                    )
-                }
-            },
-            /**
-             * 加载子文件夹
-             */
-            loadFileDir(item: GroupFileElem & GroupFileFolderElem) {
-                const id = item.folder_id
+    defineOptions({ name: 'FileBody' })
 
-                const name = runtimeData.jsonMap.group_folder_files?.name
-                if(item.items !== undefined) {
-                    item.show_items = !item.show_items
-                    return
-                }
+    const $t = i18n.global.t
 
-                if (id && name) {
-                    Connector.send(name, {
-                        folder_id: id,
-                        group_id: runtimeData.chatInfo.show.id,
-                    }, 'getGroupDirFiles_' + id)
-                }
-            },
+    defineProps({
+        item: {
+            type: Object as () => GroupFileElem & GroupFileFolderElem,
+            required: true,
+        },
+        chat: {
+            type: Object,
+            required: true,
+        },
+        parent: {
+            type: String,
+            required: false,
+            default: undefined,
         },
     })
+
+    const trueLang = getTrueLang()
+    const getSize = getSizeFromBytes
+    const toHtml = escape2Html
+
+    /**
+     * 下载文件（获取文件下载地址并下载）
+     */
+    function getFile(item: GroupFileElem) {
+        const name = runtimeData.jsonMap.file_download?.name
+        if(name) {
+            Connector.send(
+                name,
+                {
+                    group_id: runtimeData.chatInfo.show.id,
+                    file_id: item.file_id,
+                },
+                'downloadGroupFile_' + item.file_id + '_' + btoa(encodeURIComponent(item.file_name)),
+            )
+        }
+    }
+
+    /**
+     * 加载子文件夹
+     */
+    function loadFileDir(item: GroupFileElem & GroupFileFolderElem) {
+        const id = item.folder_id
+
+        const name = runtimeData.jsonMap.group_folder_files?.name
+        if(item.items !== undefined) {
+            item.show_items = !item.show_items
+            return
+        }
+
+        if (id && name) {
+            Connector.send(name, {
+                folder_id: id,
+                group_id: runtimeData.chatInfo.show.id,
+            }, 'getGroupDirFiles_' + id)
+        }
+    }
 </script>

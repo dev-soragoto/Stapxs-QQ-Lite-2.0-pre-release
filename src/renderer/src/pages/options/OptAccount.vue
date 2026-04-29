@@ -115,112 +115,106 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { runASWEvent as saveR, remove } from '@renderer/function/option'
-    import { runtimeData } from '@renderer/function/msg'
-    import { Connector, login } from '@renderer/function/connect'
-    import { getTrueLang } from '@renderer/function/utils/systemUtil'
+<script setup lang="ts">
+import { runASWEvent as saveR, remove } from '@renderer/function/option'
+import { runtimeData } from '@renderer/function/msg'
+import { Connector } from '@renderer/function/connect'
+import { getTrueLang } from '@renderer/function/utils/systemUtil'
+import { i18n } from '@renderer/main'
 
-    export default {
-        name: 'ViewOptAccount',
-        props: [],
-        data() {
-            return {
-                runtimeData: runtimeData,
-                save: saveR,
-                login: login,
-                sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
-                napcat: import.meta.env.VITE_NAPCAT,
-            }
-        },
-        methods: {
-            /**
-             * 对 botInfo 字段部分需要处理的数据进行处理
-             * @param name 键名
-             * @param value 键值
-             */
-            paseBotInfo(name: string, value: number | string) {
-                if (
-                    typeof value == 'number' &&
-                    name.indexOf('time') > 0 &&
-                    value > 1000000000
-                ) {
-                    // 尝试转换时间戳
-                    if (value / 10000000000 < 1) {
-                        value = value * 1000
-                    }
-                    return Intl.DateTimeFormat(getTrueLang(), {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        second: 'numeric',
-                    }).format(new Date(value))
-                }
-                return value
-            },
+defineOptions({ name: 'ViewOptAccount' })
 
-            /**
-             * 断开连接
-             */
-            exitConnect() {
-                remove('auto_connect')
-                Connector.close()
-            },
+const $t = i18n.global.t
 
-            goLogin() {
-                document.getElementById('bar-home')?.click()
-            },
+const _save = saveR
+const sse = import.meta.env.VITE_APP_SSE_MODE == 'true'
+const napcat = import.meta.env.VITE_NAPCAT
 
-            /**
-             * 设置昵称
-             * @param event 事件
-             */
-            setNick(event: KeyboardEvent) {
-                // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-                if (event.key === 'Enter' && runtimeData.loginInfo.nickname !== '') {
-                    Connector.send(
-                        'set_nickname',
-                        { nickname: runtimeData.loginInfo.nickname },
-                        'setNickname',
-                    )
-                }
-            },
-
-            /**
-             * 设置签名
-             * @param event 事件
-             */
-            setLNick(event: KeyboardEvent) {
-                // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-                if (event.key === 'Enter' && runtimeData.loginInfo.info.lnick !== '') {
-                    Connector.send(
-                        'set_signature',
-                        { signature: runtimeData.loginInfo.info.lnick },
-                        'setSignature',
-                    )
-                }
-            },
-
-            getRunStatus() {
-                const step = runtimeData.watch.heartbeatTime
-                const old = runtimeData.watch.oldHeartbeatTime
-                const last = runtimeData.watch.lastHeartbeatTime
-
-                if (step && old && last) {
-                    if (last - old == step) {
-                        return 'normal'
-                    } else {
-                        return 'slow'
-                    }
-                } else {
-                    if (step == 0) {
-                        return 'loading'
-                    }
-                    return 'unknown'
-                }
-            },
-        },
+/**
+ * 对 botInfo 字段部分需要处理的数据进行处理
+ * @param name 键名
+ * @param value 键值
+ */
+function paseBotInfo(name: string, value: number | string) {
+    if (
+        typeof value == 'number' &&
+        name.indexOf('time') > 0 &&
+        value > 1000000000
+    ) {
+        // 尝试转换时间戳
+        if (value / 10000000000 < 1) {
+            value = value * 1000
+        }
+        return Intl.DateTimeFormat(getTrueLang(), {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+        }).format(new Date(value))
     }
+    return value
+}
+
+/**
+ * 断开连接
+ */
+function exitConnect() {
+    remove('auto_connect')
+    Connector.close()
+}
+
+function goLogin() {
+    document.getElementById('bar-home')?.click()
+}
+
+/**
+ * 设置昵称
+ * @param event 事件
+ */
+function setNick(event: KeyboardEvent) {
+    // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
+    if (event.key === 'Enter' && runtimeData.loginInfo.nickname !== '') {
+        Connector.send(
+            'set_nickname',
+            { nickname: runtimeData.loginInfo.nickname },
+            'setNickname',
+        )
+    }
+}
+
+/**
+ * 设置签名
+ * @param event 事件
+ */
+function setLNick(event: KeyboardEvent) {
+    // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
+    if (event.key === 'Enter' && runtimeData.loginInfo.info.lnick !== '') {
+        Connector.send(
+            'set_signature',
+            { signature: runtimeData.loginInfo.info.lnick },
+            'setSignature',
+        )
+    }
+}
+
+function getRunStatus() {
+    const step = runtimeData.watch.heartbeatTime
+    const old = runtimeData.watch.oldHeartbeatTime
+    const last = runtimeData.watch.lastHeartbeatTime
+
+    if (step && old && last) {
+        if (last - old == step) {
+            return 'normal'
+        } else {
+            return 'slow'
+        }
+    } else {
+        if (step == 0) {
+            return 'loading'
+        }
+        return 'unknown'
+    }
+}
 </script>

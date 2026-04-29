@@ -31,71 +31,64 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
     import { v4 as uuid } from 'uuid'
+    import { ref, watch, onMounted } from 'vue'
 
     import MsgBody from '@renderer/components/MsgBody.vue'
     import NoticeBody from '@renderer/components/NoticeBody.vue'
 
-    import { defineComponent, ref, type Ref } from 'vue';
-    import { runtimeData } from '@renderer/function/msg';
-    import { type MergeStackData } from '@renderer/function/elements/information';
-    import { isDeleteMsg, isShowTime } from '@renderer/function/utils/msgUtil';
+    import { i18n } from '@renderer/main'
+    import { runtimeData } from '@renderer/function/msg'
+    import { type MergeStackData } from '@renderer/function/elements/information'
+    import { isDeleteMsg, isShowTime } from '@renderer/function/utils/msgUtil'
 
-    export default defineComponent({
-        name: 'MergePan',
-        components: { NoticeBody, MsgBody },
-        data() {
-            const stack = runtimeData.mergeMsgStack
-            const nowData: Ref<MergeStackData|undefined> = ref()
-            return {
-                uuid,
-                runtimeData,
-                stack,
-                nowData,
-                isShowTime,
-                isDeleteMsg
-            }
-        },
-        mounted() {
-            this.$watch(
-                () => runtimeData.mergeMsgStack.length,
-                () => {
-                    // 最后一个保留下来做展开关闭动画
-                    if(this.stack.length === 0) {
-                        // 清理下垃圾
-                        runtimeData.mergeMessageImgList = undefined
-                    }
-                    else this.nowData = this.stack.at(-1)
+    defineOptions({ name: 'MergePan' })
+
+    const $t = i18n.global.t
+
+    const stack = runtimeData.mergeMsgStack
+    const nowData = ref<MergeStackData | undefined>()
+
+    /**
+     * 退出一层合并转发弹窗
+     */
+    function exitMergeMsg() {
+        stack.length--
+    }
+
+    /**
+     * 关闭合并转发弹窗
+     */
+    function closeMergeMsg() {
+        stack.length = 0
+    }
+
+    function isMergeOpen() {
+        return stack.length > 0
+    }
+
+    defineExpose({ isMergeOpen })
+
+    onMounted(() => {
+        watch(
+            () => runtimeData.mergeMsgStack.length,
+            () => {
+                // 最后一个保留下来做展开关闭动画
+                if (stack.length === 0) {
+                    // 清理下垃圾
+                    runtimeData.mergeMessageImgList = undefined
                 }
-            )
-            this.$watch(
-                () => this.nowData?.imageList,
-                () => {
-                    if(runtimeData.mergeMsgStack.length === 0 || this.nowData?.imageList === undefined) return
-                    runtimeData.mergeMessageImgList = this.nowData.imageList
-                }
-            )
-        },
-        methods: {
-            /**
-             * 退出一层合并转发弹窗
-             */
-            exitMergeMsg() {
-                this.stack.length --
-            },
-
-            /**
-             * 关闭合并转发弹窗
-             */
-            closeMergeMsg() {
-                this.stack.length = 0
-            },
-
-            isMergeOpen() {
-                return this.stack.length > 0
+                else nowData.value = stack.at(-1)
             }
-        }
+        )
+        watch(
+            () => nowData.value?.imageList,
+            () => {
+                if (runtimeData.mergeMsgStack.length === 0 || nowData.value?.imageList === undefined) return
+                runtimeData.mergeMessageImgList = nowData.value.imageList
+            }
+        )
     })
 </script>
 

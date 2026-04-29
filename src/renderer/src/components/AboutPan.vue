@@ -93,11 +93,11 @@
     </div>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
     import DepPan from './DepPan.vue'
     import packageInfo from '../../../../package.json'
 
-    import { defineComponent, markRaw } from 'vue'
+    import { markRaw, onMounted, ref } from 'vue'
     import { openLink, sendStatEvent, showReleaseHistory } from '@renderer/function/utils/appUtil'
     import { ContributorElem } from '@renderer/function/elements/system'
 
@@ -107,113 +107,101 @@
     import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.vue'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons'
+    import { i18n } from '@renderer/main'
 
-    export default defineComponent({
-        name: 'AboutPan',
-        props: {
-            showUI: {
-                type: Boolean,
-                default: false,
-            },
-        },
-        data() {
-            return {
-                trueLang: 'zh-CN',
-                getViewTime,
-                packageInfo,
-                openLink,
-                constList: [] as ContributorElem[],
-                sponsorList: [] as {
-                    current_plan: string,
-                    last_pay_time: string,
-                    user: {
-                        name: string,
-                        avatar: string
+    defineOptions({ name: 'AboutPan' })
+
+    const $t = i18n.global.t
+
+    defineProps<{
+        showUI: boolean
+    }>()
+
+    const trueLang = ref('zh-CN')
+    const constList = ref<ContributorElem[]>([])
+    const sponsorList = ref<{
+        current_plan: string,
+        last_pay_time: string,
+        user: {
+            name: string,
+            avatar: string
+        }
+    }[]>([])
+
+    function dependencies() {
+        runtimeData.popBoxList = []
+        const popInfo = {
+            title: $t('更多信息'),
+            template: markRaw(DepPan)
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
+
+    function goGithub() {
+        const repoName = import.meta.env.VITE_APP_REPO_NAME
+        openLink(`https://github.com/${repoName}`)
+        sendStatEvent('click_statistics', { name: 'visit_github' })
+    }
+
+    function goFish() {
+        sendStatEvent('click_statistics', { name: 'visit_fish' })
+        if(!import.meta.env.VITE_APP_SPONSORS_URL) {
+            // eslint-disable-next-line no-console
+            console.error('是谁没有设置赞助链接？')
+            sendStatEvent('error_statistics', {
+                type: 'sponsor_link_missing'
+            })
+            return
+        }
+        const popInfo = {
+            title: '',
+            template: markRaw(MealHungryPan),
+            allowQuickClose: false,
+            button: [
+                {
+                    text: $t('打开…'),
+                    master: true,
+                    fun: () => {
+                        openLink(import.meta.env.VITE_APP_SPONSORS_URL)
+                        runtimeData.popBoxList.shift()
+                    },
+                }
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
+
+    onMounted(() => {
+        library.add(faClockRotateLeft)
+        window.onload = async () => {
+            trueLang.value = getTrueLang()
+        }
+        const superThanks = ['doodlehuang']
+        // 加载贡献者信息
+        if(import.meta.env.VITE_APP_REPO_NAME) {
+            fetch(`https://api.github.com/repos/${import.meta.env.VITE_APP_REPO_NAME}/contributors`)
+                .then((response) => response.json())
+                .then((data: { [key: string]: string }[]) => {
+                    for (let i = 0; i < data.length; i++) {
+                        constList.value.push({
+                            url: data[i].avatar_url,
+                            link: data[i].html_url,
+                            title: data[i].login,
+                            contributions: Number(data[i].contributions),
+                            isMe: data[i].login == 'Stapxs',
+                            isSuperThakns: superThanks.includes(data[i].login),
+                        })
                     }
-                }[],
-                sponsorsName: '',
-            }
-        },
-        mounted() {
-            library.add(faClockRotateLeft)
-            window.onload = async () => {
-                this.trueLang = getTrueLang()
-            }
-            const superThanks = ['doodlehuang']
-            // 加载贡献者信息
-            if(import.meta.env.VITE_APP_REPO_NAME) {
-                fetch(`https://api.github.com/repos/${import.meta.env.VITE_APP_REPO_NAME}/contributors`)
-                    .then((response) => response.json())
-                    .then((data: { [key: string]: string }[]) => {
-                        for (let i = 0; i < data.length; i++) {
-                            this.constList.push({
-                                url: data[i].avatar_url,
-                                link: data[i].html_url,
-                                title: data[i].login,
-                                contributions: Number(data[i].contributions),
-                                isMe: data[i].login == 'Stapxs',
-                                isSuperThakns: superThanks.includes(data[i].login),
-                            })
-                        }
-                    })
-            }
-            // 加载赞助者信息
-            if(import.meta.env.VITE_APP_SPONSORS_DATA_API) {
-                fetch(import.meta.env.VITE_APP_SPONSORS_DATA_API)
-                    .then((response) => response.json())
-                    .then((data: { [key: string]: string }) => {
-                        this.sponsorList = data.list as any
-                    })
-            }
-        },
-        methods: {
-            dependencies() {
-                runtimeData.popBoxList = []
-                const popInfo = {
-                    title: this.$t('更多信息'),
-                    template: markRaw(DepPan)
-                }
-                runtimeData.popBoxList.push(popInfo)
-            },
-
-            goGithub() {
-                const repoName = import.meta.env.VITE_APP_REPO_NAME
-                openLink(`https://github.com/${repoName}`)
-                sendStatEvent('click_statistics', { name: 'visit_github' })
-            },
-
-            showReleaseHistory() {
-                showReleaseHistory()
-            },
-
-            goFish() {
-                sendStatEvent('click_statistics', { name: 'visit_fish' })
-                if(!import.meta.env.VITE_APP_SPONSORS_URL) {
-                    // eslint-disable-next-line no-console
-                    console.error('是谁没有设置赞助链接？')
-                    sendStatEvent('error_statistics', {
-                        type: 'sponsor_link_missing'
-                    })
-                    return
-                }
-                const popInfo = {
-                    title: '',
-                    template: markRaw(MealHungryPan),
-                    allowQuickClose: false,
-                    button: [
-                        {
-                            text: this.$t('打开…'),
-                            master: true,
-                            fun: () => {
-                                openLink(import.meta.env.VITE_APP_SPONSORS_URL)
-                                runtimeData.popBoxList.shift()
-                            },
-                        }
-                    ],
-                }
-                runtimeData.popBoxList.push(popInfo)
-            },
-        },
+                })
+        }
+        // 加载赞助者信息
+        if(import.meta.env.VITE_APP_SPONSORS_DATA_API) {
+            fetch(import.meta.env.VITE_APP_SPONSORS_DATA_API)
+                .then((response) => response.json())
+                .then((data: { [key: string]: string }) => {
+                    sponsorList.value = data.list as any
+                })
+        }
     })
 </script>
 

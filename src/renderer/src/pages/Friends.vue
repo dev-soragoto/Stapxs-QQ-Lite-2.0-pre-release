@@ -138,12 +138,11 @@
 </template>
 
 <script setup lang="ts">
-	import { vAutoFocus } from '@renderer/function/utils/appUtil'
-</script>
-<script lang="ts">
+    import { ref, onMounted } from 'vue'
+    import { vAutoFocus } from '@renderer/function/utils/appUtil'
+
     import FriendBody from '@renderer/components/FriendBody.vue'
 
-    import { defineComponent } from 'vue'
     import {
         BaseChatInfoElem,
         UserFriendElem,
@@ -156,150 +155,130 @@
     import { backend } from '@renderer/runtime/backend'
     import { matchPinyin } from '@renderer/function/utils/pinyin'
 
-    export default defineComponent({
-        name: 'ViewFriends',
-        components: { FriendBody },
-        props: ['list'],
-        emits: ['userClick', 'loadHistory'],
-        data() {
-            return {
-                runtimeData: runtimeData,
-                loading: false,
-                isSearch: false,
-                searchInfo: '',
-                classStatus: {} as { [key: string]: boolean },
-                loginInfo: loginInfo,
+    defineOptions({ name: 'ViewFriends' })
+
+    const { list } = defineProps<{ list: (UserFriendElem & UserGroupElem)[] }>()
+    const emit = defineEmits<{
+        userClick: [data: BaseChatInfoElem]
+        loadHistory: [data: BaseChatInfoElem]
+    }>()
+
+    const isSearch = ref(false)
+    const searchInfo = ref('')
+    const classStatus = ref<{ [key: string]: boolean }>({})
+
+    onMounted(() => {
+        // 判断 friend-small-search 是否 display none
+        const smallSearch = document.getElementById('friend-small-search')
+        if(smallSearch) {
+            const style = window.getComputedStyle(smallSearch)
+            let name = 'friend-search'
+            if(style.display != 'none') {
+                name = 'friend-search-small'
             }
-        },
-        mounted() {
-            // 判断 friend-small-search 是否 display none
-            const smallSearch = document.getElementById('friend-small-search')
-            if(smallSearch) {
-                const style = window.getComputedStyle(smallSearch)
-                let name = 'friend-search'
-                if(style.display != 'none') {
-                    name = 'friend-search-small'
-                }
-                // 将焦点移动到搜索框
-                if(backend.isDesktop()) {
-                    const search = document.getElementById(name)
-                    if(search) {
-                        search.focus()
-                    }
+            // 将焦点移动到搜索框
+            if(backend.isDesktop()) {
+                const search = document.getElementById(name)
+                if(search) {
+                    search.focus()
                 }
             }
-        },
-        methods: {
-            /**
-             * 联系人被点击事件
-             * @param data 联系人信息
-             * @param event 点击事件
-             */
-            userClick(data: UserFriendElem & UserGroupElem, event: Event) {
-                const sender = event.currentTarget as HTMLDivElement
-                if (this.runtimeData.tags.openSideBar) {
-                    this.openLeftBar()
-                }
-                this.isSearch = false
-                this.searchInfo = ''
-                this.runtimeData.showList = [] as any[]
-
-                const back = {
-                    type: data.user_id ? 'user' : 'group',
-                    id: data.user_id ? data.user_id : data.group_id,
-                    name: this.getShowName(data),
-                    avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id: 'https://p.qlogo.cn/gh/' +
-                          data.group_id + '/' + data.group_id + '/0',
-                    jump: sender.dataset.jump,
-                } as BaseChatInfoElem
-                // 更新聊天框
-                this.$emit('userClick', back)
-                runtimeData.baseOnMsgList.set(back.id, data)
-                // 获取历史消息
-                if(!runtimeData.tags.nowGetHistory) {
-                    this.$emit('loadHistory', back)
-                }
-                // 切换标签卡
-                const barMsg = document.getElementById('bar-msg')
-                if (barMsg !== null) {
-                    barMsg.click()
-                }
-            },
-
-            /**
-             * 列表搜索
-             * @param event 输入事件
-             */
-            search(event: Event) {
-                const value = (event.target as HTMLInputElement).value.toLocaleLowerCase()
-                if (value !== '') {
-                    this.isSearch = true
-                    this.runtimeData.showList = this.list.filter(
-                        (item: UserFriendElem & UserGroupElem) => {
-                            const name = (
-                                item.user_id? item.nickname + item.remark: item.group_name
-                            ).toLowerCase()
-                            if (name.includes(value)) return true
-                            const id = item.user_id? item.user_id: item.group_id
-                            if (id.toString() === value) return true
-                            if (item.py_name && matchPinyin(item.py_name, value)) return true
-                            return false
-                        },
-                    )
-                } else {
-                    this.isSearch = false
-                    this.runtimeData.showList = [] as any[]
-                }
-                // macOS: 刷新 TouchBar
-                if(backend.isDesktop()) {
-                    // list 只需要 id 和 name
-                    backend.call(undefined, 'sys:flushFriendSearch', false,
-                        this.runtimeData.showList.map((item) => {
-                            return {
-                                id: item.user_id ? item.user_id : item.group_id,
-                                name: this.getShowName(item)
-                            }
-                        }))
-                }
-            },
-
-            /**
-             * 重新加载联系人列表
-             */
-            reloadUser() {
-                reloadUsers()
-            },
-
-            /**
-             * 切换侧边栏状态
-             */
-            openLeftBar() {
-                runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
-            },
-
-            classClick(id: string) {
-                if (this.classStatus[id]) {
-                    this.classStatus[id] = !this.classStatus[id]
-                } else {
-                    this.classStatus[id] = true
-                }
-            },
-
-            getShowName(data: UserFriendElem & UserGroupElem) {
-                const group = data.group_name
-                const remark = data.remark
-                const nickname = data.nickname
-                if (group) return group
-                else {
-                    if (!remark || remark == nickname) {
-                        return nickname
-                    } else {
-                        return remark + '（' + nickname + '）'
-                    }
-                }
-            },
-        },
+        }
     })
+
+    function getShowName(data: UserFriendElem & UserGroupElem) {
+        const group = data.group_name
+        const remark = data.remark
+        const nickname = data.nickname
+        if (group) return group
+        else {
+            if (!remark || remark == nickname) {
+                return nickname
+            } else {
+                return remark + '（' + nickname + '）'
+            }
+        }
+    }
+
+    function openLeftBar() {
+        runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
+    }
+
+    function classClick(id: string) {
+        if (classStatus.value[id]) {
+            classStatus.value[id] = !classStatus.value[id]
+        } else {
+            classStatus.value[id] = true
+        }
+    }
+
+    function userClick(data: UserFriendElem & UserGroupElem, event: Event) {
+        const sender = event.currentTarget as HTMLDivElement
+        if (runtimeData.tags.openSideBar) {
+            openLeftBar()
+        }
+        isSearch.value = false
+        searchInfo.value = ''
+        runtimeData.showList = [] as any[]
+
+        const back = {
+            type: data.user_id ? 'user' : 'group',
+            id: data.user_id ? data.user_id : data.group_id,
+            name: getShowName(data),
+            avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id: 'https://p.qlogo.cn/gh/' +
+                  data.group_id + '/' + data.group_id + '/0',
+            jump: sender.dataset.jump,
+        } as BaseChatInfoElem
+        // 更新聊天框
+        emit('userClick', back)
+        runtimeData.baseOnMsgList.set(back.id, data)
+        // 获取历史消息
+        if(!runtimeData.tags.nowGetHistory) {
+            emit('loadHistory', back)
+        }
+        // 切换标签卡
+        const barMsg = document.getElementById('bar-msg')
+        if (barMsg !== null) {
+            barMsg.click()
+        }
+    }
+
+    function search(event: Event) {
+        const value = (event.target as HTMLInputElement).value.toLocaleLowerCase()
+        if (value !== '') {
+            isSearch.value = true
+            runtimeData.showList = list.filter(
+                (item: UserFriendElem & UserGroupElem) => {
+                    const name = (
+                        item.user_id? item.nickname + item.remark: item.group_name
+                    ).toLowerCase()
+                    if (name.includes(value)) return true
+                    const id = item.user_id? item.user_id: item.group_id
+                    if (id.toString() === value) return true
+                    if (item.py_name && matchPinyin(item.py_name, value)) return true
+                    return false
+                },
+            )
+        } else {
+            isSearch.value = false
+            runtimeData.showList = [] as any[]
+        }
+        // macOS: 刷新 TouchBar
+        if(backend.isDesktop()) {
+            // list 只需要 id 和 name
+            backend.call(undefined, 'sys:flushFriendSearch', false,
+                runtimeData.showList.map((item) => {
+                    return {
+                        id: item.user_id ? item.user_id : item.group_id,
+                        name: getShowName(item)
+                    }
+                }))
+        }
+    }
+
+    function reloadUser() {
+        reloadUsers()
+    }
 </script>
 
 <style scoped>

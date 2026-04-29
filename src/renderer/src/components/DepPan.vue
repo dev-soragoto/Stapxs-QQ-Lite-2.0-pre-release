@@ -70,7 +70,7 @@
                         <div>Apache 2.0</div>
                         <font-awesome-icon :icon="['fas', 'angle-right']" />
                     </div>
-                    <div v-if="appClient.type == 'tauri'"
+                    <div v-if="backend.type == 'tauri'"
                         class="ss-card jump-card"
                         @click="openLink('https://github.com/deltachat/deltachat-desktop')">
                         <header>
@@ -143,28 +143,15 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
+<script setup lang="ts">
+    import { i18n } from '@renderer/main'
     import { openLink } from '@renderer/function/utils/appUtil'
-    import { runtimeData } from '@renderer/function/msg'
     import { backend } from '@renderer/runtime/backend'
-
     import BcTab from 'vue3-bcui/packages/bc-tab'
 
-    export default defineComponent({
-        name: 'DepPan',
-        components: {
-            BcTab,
-        },
-        data() {
-            return {
-                backend,
-                appClient: backend,
-                runtimeData: runtimeData,
-                openLink: openLink
-            }
-        },
-    })
+    defineOptions({ name: 'DepPan' })
+
+    const $t = i18n.global.t
 </script>
 
 <style scoped>

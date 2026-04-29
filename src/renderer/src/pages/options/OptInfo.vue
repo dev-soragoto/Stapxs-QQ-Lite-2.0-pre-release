@@ -18,7 +18,7 @@
                 <font-awesome-icon :icon="['fas', 'pen']" />
                 <div>
                     <span>{{ $t('群聊名称') }}</span>
-                    <span>{{ $t('“你们真是害人不浅呐你们这个群”') }}</span>
+                    <span>{{ $t('"你们真是害人不浅呐你们这个群"') }}</span>
                 </div>
                 <input v-model="runtimeData.chatInfo.show.name" class="ss-input"
                     style="width: 150px" type="text" @keyup="setGroupName">
@@ -56,98 +56,98 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
+<script lang="ts" setup>
     import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
     import { changeGroupNotice, reloadUsers } from '@renderer/function/utils/appUtil'
     import { canGroupNotice } from '@renderer/function/utils/msgUtil'
+    import { i18n } from '@renderer/main'
 
-    export default defineComponent({
-        name: 'ViewOptInfo',
-        props: ['type', 'chat'],
-        emits: ['update_mumber_card'],
-        data() {
-            return {
-                canGroupNotice: canGroupNotice,
-                runtimeData: runtimeData,
-            }
-        },
-        methods: {
-            /**
-            * 设置群消息通知
-            * @param event 输入事件
-            */
-            setGroupNotice(event: Event) {
-                const status = (event.target as HTMLInputElement).checked
-                changeGroupNotice(this.chat.show.id, status)
-            },
+    defineOptions({ name: 'ViewOptInfo' })
 
-            /**
-             * 设置群名片
-             * @param event 按键事件
-             */
-            setGroupCard(event: Event) {
-                this.$emit('update_mumber_card', event, runtimeData.chatInfo.info.me_info)
-            },
+    const $t = i18n.global.t
 
-            /**
-             * 设置群名
-             * @param event 按键事件
-             */
-            setGroupName(event: KeyboardEvent) {
-                if (
-                    event.key === 'Enter' &&
-                    runtimeData.chatInfo.show.name != ''
-                ) {
-                    Connector.send(
-                        'set_group_name',
-                        {
-                            group_id: this.chat.show.id,
-                            group_name: runtimeData.chatInfo.show.name,
-                        },
-                        'setGroupName',
-                    )
-                }
-            },
+    const props = defineProps<{
+        type: string
+        chat: any
+    }>()
 
-            /**
-             * 退出群聊
-             */
-            leaveGroup() {
-                const popInfo = {
-                    html: '<span>' + this.$t('确定要退出群聊吗？') + '</span>',
-                    button: [
-                        {
-                            text: this.$t('确定'),
-                            fun: () => {
-                                if (runtimeData.jsonMap.leave_group?.name) {
-                                    Connector.send(runtimeData.jsonMap.leave_group?.name,
-                                        { group_id: this.chat.show.id },
-                                        'leaveGroup')
-                                }
-                                // 从消息列表中删除该群聊
-                                runtimeData.baseOnMsgList.delete(this.chat.show.id)
-                                // 关闭群聊窗口
-                                runtimeData.chatInfo.show.id = 0
-                                // 刷新好友/群列表
-                                reloadUsers()
-                                runtimeData.popBoxList.shift()
-                            },
-                        },
-                        {
-                            text: this.$t('取消'),
-                            master: true,
-                            fun: () => {
-                                runtimeData.popBoxList.shift()
-                            },
-                        },
-                    ],
-                }
-                runtimeData.popBoxList.push(popInfo)
-            }
+    const emit = defineEmits<{
+        'update_mumber_card': [event: Event, info: any]
+    }>()
+
+    /**
+     * 设置群消息通知
+     * @param event 输入事件
+     */
+    function setGroupNotice(event: Event) {
+        const status = (event.target as HTMLInputElement).checked
+        changeGroupNotice(props.chat.show.id, status)
+    }
+
+    /**
+     * 设置群名片
+     * @param event 按键事件
+     */
+    function setGroupCard(event: Event) {
+        emit('update_mumber_card', event, runtimeData.chatInfo.info.me_info)
+    }
+
+    /**
+     * 设置群名
+     * @param event 按键事件
+     */
+    function setGroupName(event: KeyboardEvent) {
+        if (
+            event.key === 'Enter' &&
+            runtimeData.chatInfo.show.name != ''
+        ) {
+            Connector.send(
+                'set_group_name',
+                {
+                    group_id: props.chat.show.id,
+                    group_name: runtimeData.chatInfo.show.name,
+                },
+                'setGroupName',
+            )
         }
-    })
+    }
+
+    /**
+     * 退出群聊
+     */
+    function leaveGroup() {
+        const popInfo = {
+            html: '<span>' + $t('确定要退出群聊吗？') + '</span>',
+            button: [
+                {
+                    text: $t('确定'),
+                    fun: () => {
+                        if (runtimeData.jsonMap.leave_group?.name) {
+                            Connector.send(runtimeData.jsonMap.leave_group?.name,
+                                { group_id: props.chat.show.id },
+                                'leaveGroup')
+                        }
+                        // 从消息列表中删除该群聊
+                        runtimeData.baseOnMsgList.delete(props.chat.show.id)
+                        // 关闭群聊窗口
+                        runtimeData.chatInfo.show.id = 0
+                        // 刷新好友/群列表
+                        reloadUsers()
+                        runtimeData.popBoxList.shift()
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        runtimeData.popBoxList.shift()
+                    },
+                },
+            ],
+        }
+        runtimeData.popBoxList.push(popInfo)
+    }
 </script>
 
 <style scoped>
