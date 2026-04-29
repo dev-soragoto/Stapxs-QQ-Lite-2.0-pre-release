@@ -15,6 +15,8 @@ import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
 import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem, MenuEventData } from '@renderer/function/elements/information'
+import { useAuthStore } from '@renderer/state/auth'
+import { useContactStore } from '@renderer/state/contact'
 import {
     hslToRgb,
     rgbToHsl,
@@ -159,6 +161,8 @@ export function reloadUsers() {
     // 加载用户列表
     if (login.status) {
         runtimeData.userList = []
+        const contactStore = useContactStore()
+        contactStore.userList = []
         let friendName = 'get_friend_list'
         let groupName = 'get_group_list'
         if (runtimeData.jsonMap.user_list?.name) {
@@ -1185,6 +1189,8 @@ export function loadJsonMap(name: string) {
                 }
             }
             runtimeData.jsonMap = msgPath
+            const authStore = useAuthStore()
+            authStore.jsonMap = msgPath
         } catch (ex) {
             logger.system('很抱歉开发者，映射表加载失败 ……' + ex)
         }

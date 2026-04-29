@@ -14,6 +14,7 @@ import {
 } from '../elements/information'
 import { sendStatEvent } from './appUtil'
 import { backend } from '@renderer/runtime/backend'
+import { useContactStore } from '@renderer/state/contact'
 
 const logger = new Logger()
 
@@ -583,6 +584,9 @@ export function updateBaseOnMsgList() {
 
     runtimeData.onMsgList = onMsgList
     runtimeData.groupAssistList = groupAssistList
+    const contactStore = useContactStore()
+    contactStore.onMsgList = onMsgList
+    contactStore.groupAssistList = groupAssistList
 }
 
 /**

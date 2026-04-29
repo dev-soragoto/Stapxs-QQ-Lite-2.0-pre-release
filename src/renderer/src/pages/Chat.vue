@@ -187,7 +187,7 @@
                                                           minute: 'numeric',
                                                       },
                                                   ).format(new Date(item.sender_time * 1000))
-                                                  : '' }}
+                                                      : '' }}
                                                 {{ $t('发送') }}</span>
                                         </div>
                                         <span>{{
@@ -380,7 +380,7 @@
                                             trueLang, getTimeConfig(
                                                 new Date(chat.info.me_info.shut_up_timestamp * 1000),
                                             ),
-                                        ).format(new Date(chat.info.me_infotimestamp * 1000)),
+                                        ).format(new Date(chat.info.me_info.shut_up_timestamp * 1000)),
                                     }) : ''"
                             @paste="addImg"
                             @keydown="mainAtKey"

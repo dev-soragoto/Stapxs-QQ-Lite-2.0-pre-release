@@ -61,6 +61,11 @@ import { addDownloadTask, completeUploadTask } from '@renderer/components/FileMa
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { getPinyin } from './utils/pinyin'
+import { useAuthStore } from '@renderer/state/auth'
+import { useContactStore } from '@renderer/state/contact'
+import { useChatStore } from '@renderer/state/chat'
+import { useConnectionStore } from '@renderer/state/connection'
+import { useStickerStore } from '@renderer/state/sticker'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -119,11 +124,15 @@ const noticeFunctions = {
         if (firstHeartbeatTime == -1) {
             firstHeartbeatTime = 0
             runtimeData.watch.heartbeatTime = 0
+            const connectionStore = useConnectionStore()
+            connectionStore.heartbeatTime = 0
             return
         }
         if (firstHeartbeatTime == 0) {
             firstHeartbeatTime = msg.time
             runtimeData.watch.lastHeartbeatTime = msg.time
+            const connectionStore = useConnectionStore()
+            connectionStore.lastHeartbeatTime = msg.time
             return
         }
         if (firstHeartbeatTime != -1 && heartbeatTime == -1) {
@@ -136,6 +145,10 @@ const noticeFunctions = {
             runtimeData.watch.oldHeartbeatTime =
                 runtimeData.watch.lastHeartbeatTime
             runtimeData.watch.lastHeartbeatTime = msg.time
+            const connectionStore = useConnectionStore()
+            connectionStore.heartbeatTime = heartbeatTime
+            connectionStore.oldHeartbeatTime = connectionStore.lastHeartbeatTime
+            connectionStore.lastHeartbeatTime = msg.time
         }
     },
 
@@ -153,6 +166,12 @@ const noticeFunctions = {
             runtimeData.systemNoticesList.push(msg)
         } else {
             runtimeData.systemNoticesList = [msg]
+        }
+        const contactStore = useContactStore()
+        if (contactStore.systemNoticesList) {
+            contactStore.systemNoticesList.push(msg)
+        } else {
+            contactStore.systemNoticesList = [msg]
         }
     },
 
@@ -402,6 +421,8 @@ const msgFunctions = {
             )
 
             runtimeData.botInfo = data
+            const authStore = useAuthStore()
+            Object.assign(authStore.botInfo, data)
             if (Option.get('open_ga_bot') !== false) {
                 const appVersion = data.app_version ? ',' + data.app_version : ''
                 const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
@@ -434,6 +455,8 @@ const msgFunctions = {
 
             // 完成登陆初始化
             runtimeData.loginInfo = data
+            const authStore = useAuthStore()
+            Object.assign(authStore.loginInfo, data)
             login.status = true
 
             // 保存用户信息到连接历史
@@ -758,6 +781,8 @@ const msgFunctions = {
         } else {
             runtimeData.stickerCache = runtimeData.stickerCache.concat(data)
         }
+        const stickerStore = useStickerStore()
+        stickerStore.stickerCache = runtimeData.stickerCache ?? []
     },
 
     /**
@@ -1283,6 +1308,8 @@ function saveUser(msg: { [key: string]: any }, type: string) {
             return 0
         })
         runtimeData.userList = runtimeData.userList.concat(list)
+        const contactStore = useContactStore()
+        contactStore.userList = runtimeData.userList
         // 刷新置顶列表
         const info = runtimeData.sysConfig.top_info as {
             [key: string]: number[]
@@ -2147,5 +2174,27 @@ export function resetRimtime(resetAll = false) {
         runtimeData.groupAssistList = reactive([])
         runtimeData.loginInfo = reactive([])
         runtimeData.messageList = reactive([])
+        // Reset auth store
+        const authStore = useAuthStore()
+        Object.assign(authStore.loginInfo, {})
+        Object.assign(authStore.botInfo, {})
+        // Reset contact store
+        const contactStore = useContactStore()
+        contactStore.userList = []
+        contactStore.showList = []
+        contactStore.systemNoticesList = undefined
+        contactStore.baseOnMsgList.clear()
+        contactStore.onMsgList = []
+        contactStore.groupAssistList = []
+        // Reset chat store
+        const chatStore = useChatStore()
+        chatStore.chatInfo = reactive(baseRuntime.chatInfo)
+        chatStore.messageList = []
+        // Reset connection store
+        const connectionStore = useConnectionStore()
+        connectionStore.heartbeatTime = -1
+        connectionStore.oldHeartbeatTime = -1
+        connectionStore.lastHeartbeatTime = -1
+        connectionStore.backTimes = 0
     }
 }
