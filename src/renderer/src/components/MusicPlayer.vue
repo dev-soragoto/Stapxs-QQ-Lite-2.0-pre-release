@@ -57,9 +57,6 @@
 </template>
 
 <script lang="ts">
-    import { computed, defineComponent, ref } from 'vue'
-    import { backend } from '@renderer/runtime/backend'
-    import { registerExtraOptionCard, registerExtraOptionItem } from '@renderer/function/option'
     import { runtimeData } from '@renderer/function/msg'
     import { PopInfo, PopType } from '@renderer/function/base'
 
@@ -77,7 +74,7 @@
         lyric?: LyricLine[]                              // 歌词（可选）
     }
 
-    const emit = ref(undefined as any)
+    const emitRef = ref(undefined as any)
     const resetController = ref(() => {})
 
     const musicListState = ref<MusicInfo[]>([])
@@ -175,266 +172,252 @@
                 musicListState.value.unshift(info)
             }
             nowLyricState.value = undefined
-            emit.value('update-lyric', '')
+            emitRef.value('update-lyric', '')
             readyToPlayState.value = true
         } else {
             musicListState.value.push(info)
         }
 
         if (open) {
-            emit.value('open-panel', true)
+            emitRef.value('open-panel', true)
+        }
+    }
+</script>
+
+<script setup lang="ts">
+    import { computed, onMounted, ref } from 'vue'
+    import { backend } from '@renderer/runtime/backend'
+    import { registerExtraOptionCard, registerExtraOptionItem } from '@renderer/function/option'
+
+    const audio = audoState
+
+    const musicList = musicListState
+    const currentIndex = currentIndexState
+    const readyToPlay = readyToPlayState
+    const isLoaded = ref(false)
+
+    const sizeMax = ref(0)
+    const sizeReal = ref(0)
+    const sizeDur = ref(0)
+
+    const minutes = ref(0)
+    const seconds = ref(0)
+    const minutesDur = ref(0)
+    const secondsDur = ref(0)
+
+    const nowLyric = nowLyricState
+
+    const currentMusic = computed(() => {
+        if (currentIndex.value < 0 || currentIndex.value >= musicList.value.length) {
+            return null
+        }
+        return musicList.value[currentIndex.value]
+    })
+
+    // 定义 emits
+    const emit = defineEmits<{
+        'open-panel': [value: boolean]
+        'update-lyric': [value: string]
+        'update-status': [value: boolean]
+    }>()
+
+    // 设置 emit 引用
+    emitRef.value = emit
+
+    resetController.value = () => {
+        isLoaded.value = false
+        sizeMax.value = 0
+        sizeReal.value = 0
+        sizeDur.value = 0
+        minutes.value = 0
+        seconds.value = 0
+        minutesDur.value = 0
+        secondsDur.value = 0
+        nowLyric.value = undefined
+        emit('update-lyric', '')
+    }
+
+    const switchMusic = (index: number, pass: boolean = false) => {
+        if(pass) {
+            musicList.value.splice(currentIndex.value, 1)
+            if(musicList.value.length === 0) {
+                resetController.value()
+                emit('open-panel', false)
+                return
+            }
+
+            if(currentIndex.value >= musicList.value.length) {
+                currentIndex.value = musicList.value.length - 1
+            }
+
+            resetController.value()
+            addMusic(musicList.value[currentIndex.value], 'current')
+            return
+        }
+
+        const safeIndex = Math.min(Math.max(index, 0), musicList.value.length - 1)
+        const music = musicList.value[safeIndex]
+        if (!music) {
+            return
+        }
+
+        resetController.value()
+        addMusic(music, 'current')
+    }
+
+    const audioLoaded = (event: any) => {
+        isLoaded.value = true
+        audio.value = event.target as HTMLAudioElement
+        sizeMax.value = currentMusic.value?.time ?? audio.value.duration
+        sizeReal.value = audio.value.duration
+        minutes.value = Math.floor(sizeMax.value / 60)
+        seconds.value = Math.floor(sizeMax.value % 60)
+        if(readyToPlay.value) {
+            audio.value.play()
+            readyToPlay.value = false
+        }
+        // 更新媒体信息
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title : currentMusic.value?.title ?? '',
+                artist: currentMusic.value?.author?.join('/') ?? '',
+                artwork: [
+                    { src: currentMusic.value?.cover ?? '', sizes: '130x130', type: 'image/png' },
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                switchMusic(currentIndex.value + 1, true)
+            });
+        }
+        // 如果是网易云音乐，异步获取歌词
+        if (currentMusic.value?.type === 'music163' && currentMusic.value.data && typeof currentMusic.value.data === 'string') {
+            const musicRef = currentMusic.value
+            fetch(import.meta.env.VITE_APP_163_MUSIC_API + '/lyric?id=' + currentMusic.value.data)
+                .then(res => res.json())
+                .then(data => {
+                    const originalLyric = parseLyric(data.lrc?.lyric || '')
+                    const translatedLyric = parseLyric(data.tlyric?.lyric || '')
+                    // 默认展示"翻译 + 原文"合并结果：同时间点优先使用翻译歌词
+                    // 当用户开启"显示原歌词"时，仅展示原文歌词。
+                    const final = runtimeData.sysConfig.original_lyrics ? originalLyric : mergeLyric(originalLyric, translatedLyric)
+
+                    if (currentMusic.value === musicRef) {
+                        musicRef.lyric = final
+                    }
+                })
+            }
+    }
+
+    const audioLoadFail = () => {
+        if(currentMusic.value?.title != undefined) {
+            new PopInfo().add(PopType.INFO, '加载资源 ' + currentMusic.value?.title + ' 失败', false)
+            switchMusic(currentIndex.value + 1, true)
         }
     }
 
-    export default defineComponent({
-        name: 'MusicPlayer',
-        emits: ['open-panel', 'update-lyric', 'update-status'],
-        setup(_, context) {
-            emit.value = context.emit
-            const audio = audoState
+    const audioUpdate = () => {
+        if(audio.value) {
+            emit('update-status', audio.value.paused)
 
-            const musicList = musicListState
-            const currentIndex = currentIndexState
-            const readyToPlay = readyToPlayState
-            const isLoaded = ref(false)
-
-            const sizeMax = ref(0)
-            const sizeReal = ref(0)
-            const sizeDur = ref(0)
-
-            const minutes = ref(0)
-            const seconds = ref(0)
-            const minutesDur = ref(0)
-            const secondsDur = ref(0)
-
-            const nowLyric = nowLyricState
-
-            const currentMusic = computed(() => {
-                if (currentIndex.value < 0 || currentIndex.value >= musicList.value.length) {
-                    return null
-                }
-                return musicList.value[currentIndex.value]
-            })
-
-            resetController.value = () => {
-                isLoaded.value = false
-                sizeMax.value = 0
-                sizeReal.value = 0
-                sizeDur.value = 0
-                minutes.value = 0
-                seconds.value = 0
-                minutesDur.value = 0
-                secondsDur.value = 0
-                nowLyric.value = undefined
-                emit.value('update-lyric', '')
+            const bar = document.getElementById('music-controller-bar') as HTMLInputElement
+            if(bar) {
+                bar.value = audio.value.currentTime.toString()
             }
+            sizeDur.value = audio.value.currentTime
+            minutesDur.value = Math.floor(audio.value.currentTime / 60)
+            secondsDur.value = Math.floor(audio.value.currentTime % 60)
 
-            const switchMusic = (index: number, pass: boolean = false) => {
-                if(pass) {
-                    musicList.value.splice(currentIndex.value, 1)
-                    if(musicList.value.length === 0) {
-                        resetController.value()
-                        emit.value('open-panel', false)
-                        return
-                    }
-
-                    if(currentIndex.value >= musicList.value.length) {
-                        currentIndex.value = musicList.value.length - 1
-                    }
-
+            if(audio.value.currentTime >= audio.value.duration) {
+                // 从列表移除并播放下一首
+                musicList.value.splice(currentIndex.value, 1)
+                if(currentIndex.value >= musicList.value.length) {
+                    currentIndex.value = musicList.value.length - 1
+                }
+                if(currentIndex.value >= 0) {
                     resetController.value()
-                    addMusic(musicList.value[currentIndex.value], 'current')
-                    return
-                }
-
-                const safeIndex = Math.min(Math.max(index, 0), musicList.value.length - 1)
-                const music = musicList.value[safeIndex]
-                if (!music) {
-                    return
-                }
-
-                resetController.value()
-                addMusic(music, 'current')
-            }
-
-            const audioLoaded = (event: any) => {
-                isLoaded.value = true
-                audio.value = event.target as HTMLAudioElement
-                sizeMax.value = currentMusic.value?.time ?? audio.value.duration
-                sizeReal.value = audio.value.duration
-                minutes.value = Math.floor(sizeMax.value / 60)
-                seconds.value = Math.floor(sizeMax.value % 60)
-                if(readyToPlay.value) {
-                    audio.value.play()
-                    readyToPlay.value = false
-                }
-                // 更新媒体信息
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.metadata = new MediaMetadata({
-                        title : currentMusic.value?.title ?? '',
-                        artist: currentMusic.value?.author?.join('/') ?? '',
-                        artwork: [
-                            { src: currentMusic.value?.cover ?? '', sizes: '130x130', type: 'image/png' },
-                        ]
-                    });
-
-                    navigator.mediaSession.setActionHandler('nexttrack', () => {
-                        switchMusic(currentIndex.value + 1, true)
-                    });
-                }
-                // 如果是网易云音乐，异步获取歌词
-                if (currentMusic.value?.type === 'music163' && currentMusic.value.data && typeof currentMusic.value.data === 'string') {
-                    const musicRef = currentMusic.value
-                    fetch(import.meta.env.VITE_APP_163_MUSIC_API + '/lyric?id=' + currentMusic.value.data)
-                        .then(res => res.json())
-                        .then(data => {
-                            const originalLyric = parseLyric(data.lrc?.lyric || '')
-                            const translatedLyric = parseLyric(data.tlyric?.lyric || '')
-                            // 默认展示“翻译 + 原文”合并结果：同时间点优先使用翻译歌词
-                            // 当用户开启“显示原歌词”时，仅展示原文歌词。
-                            const final = runtimeData.sysConfig.original_lyrics ? originalLyric : mergeLyric(originalLyric, translatedLyric)
-
-                            if (currentMusic.value === musicRef) {
-                                musicRef.lyric = final
-                            }
-                        })
-                    }
-            }
-
-            const audioLoadFail = () => {
-                if(currentMusic.value?.title != undefined) {
-                    new PopInfo().add(PopType.INFO, '加载资源 ' + currentMusic.value?.title + ' 失败', false)
-                    switchMusic(currentIndex.value + 1, true)
+                    audio.value.src = backend.proxyUrl(musicList.value[currentIndex.value].url)
+                    readyToPlay.value = true
+                } else {
+                    resetController.value()
+                    emit('open-panel', false)
                 }
             }
 
-            const audioUpdate = () => {
-                if(audio.value) {
-                    emit.value('update-status', audio.value.paused)
-
-                    const bar = document.getElementById('music-controller-bar') as HTMLInputElement
-                    if(bar) {
-                        bar.value = audio.value.currentTime.toString()
-                    }
-                    sizeDur.value = audio.value.currentTime
-                    minutesDur.value = Math.floor(audio.value.currentTime / 60)
-                    secondsDur.value = Math.floor(audio.value.currentTime % 60)
-
-                    if(audio.value.currentTime >= audio.value.duration) {
-                        // 从列表移除并播放下一首
-                        musicList.value.splice(currentIndex.value, 1)
-                        if(currentIndex.value >= musicList.value.length) {
-                            currentIndex.value = musicList.value.length - 1
-                        }
-                        if(currentIndex.value >= 0) {
-                            resetController.value()
-                            audio.value.src = backend.proxyUrl(musicList.value[currentIndex.value].url)
-                            readyToPlay.value = true
-                        } else {
-                            resetController.value()
-                            emit.value('open-panel', false)
+            if(currentMusic.value?.lyric && currentMusic.value.lyric.length > 0) {
+                const lyricIndex = findLyricIndex(currentMusic.value.lyric, audio.value.currentTime)
+                if(lyricIndex >= 0) {
+                    const text = lyricText(currentMusic.value.lyric[lyricIndex])
+                    if(!nowLyric.value || nowLyric.value.index !== lyricIndex || nowLyric.value.text !== text) {
+                        nowLyric.value = {
+                            index: lyricIndex,
+                            text,
                         }
                     }
+                } else {
+                    nowLyric.value = undefined
+                }
 
-                    if(currentMusic.value?.lyric && currentMusic.value.lyric.length > 0) {
-                        const lyricIndex = findLyricIndex(currentMusic.value.lyric, audio.value.currentTime)
-                        if(lyricIndex >= 0) {
-                            const text = lyricText(currentMusic.value.lyric[lyricIndex])
-                            if(!nowLyric.value || nowLyric.value.index !== lyricIndex || nowLyric.value.text !== text) {
-                                nowLyric.value = {
-                                    index: lyricIndex,
-                                    text,
-                                }
-                            }
-                        } else {
-                            nowLyric.value = undefined
-                        }
-
-                        if(runtimeData.sysConfig.glabal_lyric == true) {
-                            emit.value('update-lyric', nowLyric.value?.text ?? currentMusic.value.title)
-                        } else {
-                            emit.value('update-lyric', '')
-                        }
-                    }
+                if(runtimeData.sysConfig.glabal_lyric == true) {
+                    emit('update-lyric', nowLyric.value?.text ?? currentMusic.value.title)
+                } else {
+                    emit('update-lyric', '')
                 }
             }
-
-            const audioChange = (event: any) => {
-                const bar = event.target as HTMLInputElement
-                if (audio.value) {
-                    const value = parseFloat(bar.value)
-                    if(value <= audio.value.duration) {
-                        if(audio.value.paused) {
-                            audio.value.currentTime = value
-                        } else {
-                            audio.value.pause()
-                            audio.value.currentTime = value
-                            audio.value.play()
-                        }
-                    } else {
-                        bar.value = audio.value.currentTime.toString()
-                    }
-                }
-            }
-
-            const audioControll = () => {
-                if (audio.value) {
-                    if (audio.value.paused) {
-                        audio.value.play()
-                    } else {
-                        audio.value.pause()
-                    }
-                }
-            }
-
-            return {
-                backend,
-                runtimeData,
-                musicList,
-                currentIndex,
-                currentMusic,
-                audio,
-                isLoaded,
-                audioLoaded,
-                audioLoadFail,
-                audioUpdate,
-                audioChange,
-                audioControll,
-                switchMusic,
-                sizeMax,
-                sizeReal,
-                sizeDur,
-                minutes,
-                seconds,
-                minutesDur,
-                secondsDur,
-                nowLyric
-            }
-        },
-        mounted() {
-            registerExtraOptionCard({
-                id: 'music-player',
-                title: '音乐播放器设置',
-            })
-            registerExtraOptionItem('music-player', {
-                id: 'glabal_lyric',
-                icon: 'book',
-                label: '显示歌词横幅',
-                description: '在应用顶部显示当前播放音乐的歌词',
-                type: 'switch',
-                optionKey: 'glabal_lyric',
-                defaultValue: true,
-            })
-            registerExtraOptionItem('music-player', {
-                id: 'original_lyrics',
-                icon: 'font',
-                label: '显示原歌词',
-                description: '显示原文歌词而非翻译歌词（需要重新播放）',
-                type: 'switch',
-                optionKey: 'original_lyrics',
-                defaultValue: false,
-            })
         }
+    }
+
+    const audioChange = (event: any) => {
+        const bar = event.target as HTMLInputElement
+        if (audio.value) {
+            const value = parseFloat(bar.value)
+            if(value <= audio.value.duration) {
+                if(audio.value.paused) {
+                    audio.value.currentTime = value
+                } else {
+                    audio.value.pause()
+                    audio.value.currentTime = value
+                    audio.value.play()
+                }
+            } else {
+                bar.value = audio.value.currentTime.toString()
+            }
+        }
+    }
+
+    const audioControll = () => {
+        if (audio.value) {
+            if (audio.value.paused) {
+                audio.value.play()
+            } else {
+                audio.value.pause()
+            }
+        }
+    }
+
+    onMounted(() => {
+        registerExtraOptionCard({
+            id: 'music-player',
+            title: '音乐播放器设置',
+        })
+        registerExtraOptionItem('music-player', {
+            id: 'glabal_lyric',
+            icon: 'book',
+            label: '显示歌词横幅',
+            description: '在应用顶部显示当前播放音乐的歌词',
+            type: 'switch',
+            optionKey: 'glabal_lyric',
+            defaultValue: true,
+        })
+        registerExtraOptionItem('music-player', {
+            id: 'original_lyrics',
+            icon: 'font',
+            label: '显示原歌词',
+            description: '显示原文歌词而非翻译歌词（需要重新播放）',
+            type: 'switch',
+            optionKey: 'original_lyrics',
+            defaultValue: false,
+        })
     })
 </script>
 

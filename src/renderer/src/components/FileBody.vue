@@ -31,22 +31,9 @@
             </div>
         </div>
         <template v-if="item.file_id">
-            <div v-if="item.download_percent === undefined"
-                class="download"
+            <div class="download"
                 @click="getFile(item)">
                 <font-awesome-icon :icon="['fas', 'angle-down']" />
-            </div>
-            <svg v-else-if="item.download_percent !== undefined && item.download_percent < 100"
-                class="download-bar"
-                xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50%" cy="50%" r="40%"
-                    stroke-width="15%" fill="none" stroke-linecap="round" />
-                <circle cx="50%" cy="50%" r="40%"
-                    stroke-width="15%" fill="none"
-                    :stroke-dasharray=" item.download_percent === undefined ? '0,10000' : `${(Math.floor(2 * Math.PI * 25) * item.download_percent) / 100},10000` " />
-            </svg>
-            <div v-else class="download">
-                <font-awesome-icon :icon="['fas', 'check']" />
             </div>
         </template>
         <div v-show="item.show_items !== false && item.items !== undefined"
@@ -115,9 +102,6 @@
                         },
                         'downloadGroupFile_' + item.file_id + '_' + btoa(encodeURIComponent(item.file_name)),
                     )
-                    // PS：在发起下载后就要将百分比设置好 …… 因为下载部分不一定立刻会开始
-                    // 这时候如果用户疑惑为什么点了没反应会多次操作的（用户竟是我自己）
-                    item.download_percent = 0
                 }
             },
             /**

@@ -35,7 +35,6 @@ import {
 import {
     reloadUsers,
     reloadCookies,
-    downloadFile,
     updateMenu,
     loadJsonMap,
     sendIdentifyData,
@@ -58,6 +57,7 @@ import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
 import { dbRevokeMessage, saveMessagesWithSideEffects } from './utils/localHistoryUtil'
+import { addDownloadTask, completeUploadTask } from '@renderer/components/FileManager.vue'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { getPinyin } from './utils/pinyin'
@@ -724,8 +724,13 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
-        runtimeData.popBoxList.shift()
-        msgFunctions['sendMsgBack'](_, msg, echoList)
+        // 标记上传任务完成
+        if (echoList[1] === 'task' && echoList[2] && echoList[3]) {
+            const taskId = echoList[1] + '_' + echoList[2] + '_' + echoList[3]
+            completeUploadTask(taskId)
+        }
+        const newEchoList = ['sendMsgBack', ...echoList.slice(4)]
+        msgFunctions['sendMsgBack'](_, msg, newEchoList)
     },
 
     /**
@@ -864,33 +869,16 @@ const msgFunctions = {
         const data = getMsgData('file_download', msg, msgPath.file_download)[0]
         const url = data.file_url
 
-        const msgId = echoList[1]
         const fileName = decodeURIComponent(atob(echoList[2]))
+        const fileSize = data.file_size || 0
 
-        // 寻找消息（逆序）
-        const msgItem = runtimeData.messageList.find((item) => {
-            return item.message_id == msgId
+        // 使用文件传输管理器下载
+        addDownloadTask({
+            fileName,
+            fileSize,
+            filePath: '',
+            url
         })
-        // 寻找 file 类型消息（一般是第一个）
-        let bodyIndex = -1
-        if (msgItem) {
-            msgItem.message.forEach((item, index) => {
-                if (item.type == 'file') {
-                    bodyIndex = index
-                }
-            })
-        }
-
-        // 下载文件
-        if (msgItem && bodyIndex != -1) {
-            downloadFile(url, fileName, (event: ProgressEvent) => {
-                if (!event.lengthComputable) return
-                const percent = Math.floor((event.loaded / event.total) * 100)
-                msgItem.message[bodyIndex].download_percent = percent
-            }, () => {
-                msgItem.message[bodyIndex].download_percent = undefined
-            })
-        }
     },
 
     /**
@@ -900,43 +888,15 @@ const msgFunctions = {
         const data = getMsgData('file_download', msg, msgPath.file_download)[0]
         const url = data.file_url
 
-        const fileId = echoList[1]
         const fileName = decodeURIComponent(atob(echoList[2]))
+        const fileSize = data.file_size || 0
 
-        const fileList = runtimeData.chatInfo.info.group_files as (GroupFileElem & GroupFileFolderElem)[]
-
-        let listItem = undefined as GroupFileElem | undefined
-        // 寻找文件列表位置
-        fileList.forEach((item, index) => {
-            if (item.file_id == fileId) {
-                listItem = fileList[index]
-            }
-            if (item.items) {
-                item.items.forEach((subItem, subIndex) => {
-                    if (subItem.file_id == fileId && fileList[index]?.items) {
-                        listItem = fileList[index].items[subIndex]
-                    }
-                })
-            }
-        })
-
-        // 下载事件
-        const onProcess = function (event: ProgressEvent): undefined {
-            if (!event.lengthComputable) return
-            const percent = Math.floor((event.loaded / event.total) * 100)
-            if (listItem) {
-                if (listItem.download_percent == undefined) {
-                    listItem.download_percent = 0
-                }
-                listItem.download_percent = percent
-            }
-        }
-
-        // 下载文件
-        downloadFile(url, fileName, onProcess, () => {
-            if (listItem) {
-                listItem.download_percent = undefined
-            }
+        // 使用文件传输管理器下载
+        addDownloadTask({
+            fileName,
+            fileSize,
+            filePath: '',
+            url
         })
     },
 

@@ -272,4 +272,18 @@ export const backend = {
         }
         logger.error(null, `添加后端监听失败：${name}(${type})`)
     },
+
+    /**
+     * 移除后端监听
+     * @param type capacitor：插件类型
+     * @param name 事件名称
+     * @param callBack 要移除的回调函数
+     */
+    removeListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
+        if(this.isDesktop() && this.function && 'removeListener' in this.function) {
+            this.function.removeListener(name, callBack)
+            return
+        }
+        // Capacitor 和 Web 不支持移除监听
+    },
 }

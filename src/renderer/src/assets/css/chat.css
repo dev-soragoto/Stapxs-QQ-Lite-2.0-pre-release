@@ -1098,21 +1098,6 @@ input {
     background: var(--color-card-2);
 } */
 
-.download-bar {
-    --main-size: 25px;
-    height: var(--main-size) !important;
-    width: var(--main-size) !important;
-    transform: rotate(-90deg);
-    padding: calc(5px / 2);
-    margin: 0 !important;
-}
-.download-bar > circle:first-child {
-    stroke: var(--color-card-2);
-}
-.download-bar > circle:last-child {
-    stroke: var(--color-main);
-}
-
 .img-sender {
     pointer-events: all;
     position: absolute;

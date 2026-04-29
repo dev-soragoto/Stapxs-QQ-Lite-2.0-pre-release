@@ -60,6 +60,11 @@
                     <font-awesome-icon v-else :icon="['fas', 'pause']"
                         :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
                 </li>
+                <li :class="{ 'active': tags.showFileManager }"
+                    @click="toggleFileManager(undefined)">
+                    <font-awesome-icon :icon="['fas', 'arrow-down']" />
+                    <span>{{ $t('传输') }}</span>
+                </li>
                 <li :class="tags.page == 'Options' ? 'active' : ''" @click="changeTab('设置', 'Options', false)">
                     <font-awesome-icon :icon="['fas', 'gear']" />
                     <span>{{ $t('设置') }}</span>
@@ -77,6 +82,10 @@
                         :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
                     <font-awesome-icon v-else :icon="['fas', 'pause']"
                         :class="['music-entry-status', { light: tags.currentMusic.coverLight }]" />
+                </li>
+                <li :class="['file-manager-small', { 'active': tags.showFileManager }]"
+                    @click="toggleFileManager(undefined)">
+                    <font-awesome-icon :icon="['fas', 'arrow-down']" />
                 </li>
             </ul>
             <div :style="{ 'height': get('fs_adaptation') > 0 ? `calc(100% - ${75 + Number(get('fs_adaptation'))}px)` : '' }">
@@ -229,6 +238,11 @@
                     @update-status="updateMusicStatus" />
             </div>
         </Transition>
+        <Transition name="music-player-float">
+            <div v-show="tags.showFileManager" class="global-music-player ss-card">
+                <FileManager @open-panel="toggleFileManager" />
+            </div>
+        </Transition>
         <Transition name="modal">
             <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
@@ -301,6 +315,7 @@ import Options from '@renderer/pages/Options.vue'
 import Friends from '@renderer/pages/Friends.vue'
 import Messages from '@renderer/pages/Messages.vue'
 import MusicPlayer from './components/MusicPlayer.vue'
+import FileManager, { panelVisible, closePanel } from './components/FileManager.vue'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
 import Tooltips from './components/tooltip/Tooltips.vue'
@@ -338,6 +353,7 @@ export default defineComponent({
                 selectedHistoryIndex: -1,
                 showHistoryDropdown: false,
                 showMusicPlayer: false,
+                showFileManager: false,
                 currentMusic: null as null | { title: string, cover: string, coverLight: boolean },
                 musicPlaying: false,
                 musicLyric: '',
@@ -359,6 +375,11 @@ export default defineComponent({
         this.musicSyncTimer = window.setInterval(() => {
             this.refreshCurrentMusic()
         }, 1000)
+
+        // 监听 FileManager 面板状态
+        this.$watch(() => panelVisible.value, (val) => {
+            this.tags.showFileManager = val
+        })
 
         // 页面加载完成后
         window.onload = async () => {
@@ -618,6 +639,19 @@ export default defineComponent({
                 this.tags.showMusicPlayer = !this.tags.showMusicPlayer
             }
             this.refreshCurrentMusic()
+        },
+        toggleFileManager(open: boolean | undefined) {
+            if(open != undefined) {
+                this.tags.showFileManager = open
+            } else {
+                this.tags.showFileManager = !this.tags.showFileManager
+            }
+            // 同步状态到 FileManager 模块
+            if (this.tags.showFileManager) {
+                panelVisible.value = true
+            } else {
+                closePanel()
+            }
         },
         updateMusicLyric(lyric: string) {
             this.tags.musicLyric = lyric
@@ -1119,6 +1153,10 @@ export default defineComponent({
     overflow: auto;
 }
 
+.file-manager-small {
+    display: none;
+}
+
 .music-player-float-enter-active,
 .music-player-float-leave-active {
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -1159,6 +1197,10 @@ export default defineComponent({
     }
     .music-entry {
         display: none;
+    }
+    .file-manager-small {
+        display: flex !important;
+        margin-bottom: 10px !important;
     }
 }
 

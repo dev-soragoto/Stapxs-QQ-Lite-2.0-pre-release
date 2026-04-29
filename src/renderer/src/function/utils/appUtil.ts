@@ -230,14 +230,17 @@ export function jumpToChat(userId: string, msgId: string) {
 /**
  * 下载文件
  * @param url 文件链接
- * @param process 下载中回调
+ * @param name 文件名
+ * @param onprocess 下载进度回调
+ * @param oncancel 下载取消回调
+ * @returns 清理函数，用于移除监听器
  */
 export function downloadFile(
     url: string,
     name: string,
     onprocess: (event: ProgressEvent & { [key: string]: any }) => undefined,
     oncancel: (event: ProgressEvent & { [key: string]: any }) => undefined,
-) {
+): () => void {
     if (document.location.protocol == 'https:') {
         // 判断下载文件 URL 的协议
         // PS：Chrome 不会对 http 下载的文件进行协议升级
@@ -258,17 +261,26 @@ export function downloadFile(
         } catch (e) {
             logger.error(e as Error, '下载文件失败')
         }
+        return () => {} // Web 平台不需要清理
     } else {
-        backend.addListener(undefined, 'sys:downloadBack', (event, data) => {
+        // 创建命名回调函数以便后续移除
+        const processCallback = (event: any, data: any) => {
             onprocess(data || event.payload)
-        })
-        backend.addListener(undefined, 'sys:downloadCancel', (event, data) => {
+        }
+        const cancelCallback = (event: any, data: any) => {
             oncancel(data || event.payload)
-        })
+        }
+        backend.addListener(undefined, 'sys:downloadBack', processCallback)
+        backend.addListener(undefined, 'sys:downloadCancel', cancelCallback)
         backend.call(undefined, 'sys:download', false, {
             downloadPath: url,
             fileName: name,
         })
+        // 返回清理函数
+        return () => {
+            backend.removeListener(undefined, 'sys:downloadBack', processCallback)
+            backend.removeListener(undefined, 'sys:downloadCancel', cancelCallback)
+        }
     }
 }
 

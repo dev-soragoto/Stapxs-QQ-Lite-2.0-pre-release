@@ -140,20 +140,8 @@
                             </div>
                             <div>
                                 <font-awesome-icon
-                                    v-if="item.download_percent === undefined"
                                     :icon="['fas', 'angle-down']"
                                     @click="downloadFile(item, data.message_id)" />
-                                <svg v-else-if="item.download_percent !== undefined && item.download_percent < 100"
-                                    class="download-bar"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="50%" cy="50%" r="40%"
-                                        stroke-width="15%" ill="none" stroke-linecap="round" />
-                                    <circle cx="50%" cy="50%" r="40%"
-                                        stroke-width="15%" fill="none"
-                                        :stroke-dasharray="item.download_percent === undefined ? '0,10000' :
-                                            `${(Math.floor(2 * Math.PI * 25) * item.download_percent) / 100},10000`" />
-                                </svg>
-                                <font-awesome-icon v-else :icon="['fas', 'check']" />
                             </div>
                             <div v-if="data.fileView && Object.keys(data.fileView).length > 0"
                                 class="file-view">

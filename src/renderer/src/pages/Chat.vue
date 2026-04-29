@@ -603,6 +603,7 @@ import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
 import { useSessionHistoryStore } from '@renderer/state/sessionHistory'
+import { addUploadTask, failUploadTask } from '@renderer/components/FileManager.vue'
 </script>
 
 <script lang="ts">
@@ -2222,38 +2223,48 @@ import { useSessionHistoryStore } from '@renderer/state/sessionHistory'
                 }
             },
             sendFile(file: File, fileName: string | null) {
-                // 将 file 转换为 base64
-                const reader = new FileReader()
-                    reader.readAsDataURL(file)
-                    reader.onloadend = () => {
-                        let base64data = reader.result as string
-                        // 找到第一个逗号，截取后面的内容
-                        base64data = base64data.substring(
-                            base64data.indexOf('base64,') + 7,
-                            base64data.length,
-                        )
-                        // 发送文件不能包含任何其他内容
-                        this.sendCache = []
-                        this.imgCache.clear()
-                        this.msg = ''
-                        this.addSpecialMsg({
-                            addText: true,
-                            msgObj: {
-                                type: 'file',
-                                file: 'base64://' + base64data,
-                                name: fileName ?? this.$t('未知文件'),
-                            },
-                        })
-                        // 直接触发发送消息
-                        this.sendMsg('sendFileBack')
-                        // 提示
-                        const popInfo = {
-                            title: this.$t('提醒'),
-                            html: `<span>${this.$t('正在发送文件中……')}</span>`,
-                            allowClose: false
+                const displayName = fileName ?? file.name ?? this.$t('未知文件')
+
+                // 创建上传任务
+                const taskId = addUploadTask({
+                    fileName: displayName,
+                    fileSize: file.size,
+                    execute: (onProgress) => {
+                        // 将 file 转换为 base64
+                        const reader = new FileReader()
+                        reader.onprogress = (event) => {
+                            if (event.lengthComputable) {
+                                onProgress(event.loaded, event.total)
+                            }
                         }
-                        runtimeData.popBoxList.push(popInfo)
+                        reader.readAsDataURL(file)
+                        reader.onloadend = () => {
+                            let base64data = reader.result as string
+                            // 找到第一个逗号，截取后面的内容
+                            base64data = base64data.substring(
+                                base64data.indexOf('base64,') + 7,
+                                base64data.length,
+                            )
+                            // 发送文件不能包含任何其他内容
+                            this.sendCache = []
+                            this.imgCache.clear()
+                            this.msg = ''
+                            this.addSpecialMsg({
+                                addText: true,
+                                msgObj: {
+                                    type: 'file',
+                                    file: 'base64://' + base64data,
+                                    name: displayName,
+                                },
+                            })
+                            // 直接触发发送消息，传递 taskId 以便 sendFileBack 回调时完成任务
+                            this.sendMsg('sendFileBack_' + taskId)
+                        }
+                        reader.onerror = () => {
+                            failUploadTask(taskId, '文件读取失败')
+                        }
                     }
+                })
             },
 
             /**

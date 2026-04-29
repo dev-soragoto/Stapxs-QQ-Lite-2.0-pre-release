@@ -178,7 +178,44 @@ export function regIpcListener() {
     ipcMain.on('win:openDevTools', () => {
         if (win) win.webContents.openDevTools()
     })
-    // 下载文件
+    // 下载文件 - 使用集中式处理器避免处理器累积
+    // 存储待处理的下载信息（key 为 downloadPath）
+    const pendingDownloads = new Map<string, string>() // downloadPath -> fileName
+
+    // 注册一次 will-download 处理器
+    if (win) {
+        win.webContents.session.on('will-download', (_, item) => {
+            // 从 URL 中提取 downloadPath 作为标识
+            const downloadUrl = item.getURL()
+            const fileName = pendingDownloads.get(downloadUrl) || item.getFilename()
+            pendingDownloads.delete(downloadUrl)
+
+            item.setSaveDialogOptions({
+                defaultPath: path.join(app.getPath('downloads'), fileName)
+            })
+
+            item.on('updated', (_, state) => {
+                if (state === 'progressing') {
+                    if (!item.isPaused()) {
+                        if (win) {
+                            win.webContents.send('sys:downloadBack', {
+                                lengthComputable: true,
+                                loaded: item.getReceivedBytes(),
+                                total: item.getTotalBytes(),
+                            })
+                            win.setProgressBar( item.getReceivedBytes() / item.getTotalBytes())
+                        }
+                    }
+                }
+            })
+            item.on('done', () => {
+                win?.setProgressBar(-1)
+                logger.info('下载完成')
+                shell.showItemInFolder(item.getSavePath())
+            })
+        })
+    }
+
     ipcMain.on('sys:download', (_, args) => {
         logger.level = logLevel
         logger.info('下载文件：' + args.downloadPath)
@@ -186,31 +223,8 @@ export function regIpcListener() {
         const downloadPath = args.downloadPath
         const fileName = args.fileName
         if (win) {
-            win.webContents.session.on('will-download', (_, item) => {
-                item.setSaveDialogOptions({
-                    defaultPath: path.join(app.getPath('downloads'), fileName)
-                })
-
-                item.on('updated', (_, state) => {
-                    if (state === 'progressing') {
-                        if (!item.isPaused()) {
-                            if (win) {
-                                win.webContents.send('sys:downloadBack', {
-                                    lengthComputable: true,
-                                    loaded: item.getReceivedBytes(),
-                                    total: item.getTotalBytes(),
-                                })
-                                win.setProgressBar( item.getReceivedBytes() / item.getTotalBytes())
-                            }
-                        }
-                    }
-                })
-                item.on('done', () => {
-                    win?.setProgressBar(-1)
-                    logger.info('下载完成')
-                    shell.showItemInFolder(item.getSavePath())
-                })
-            })
+            // 记录下载信息，供 will-download 处理器使用
+            pendingDownloads.set(downloadPath, fileName)
             win.webContents.downloadURL(downloadPath)
         }
     })
