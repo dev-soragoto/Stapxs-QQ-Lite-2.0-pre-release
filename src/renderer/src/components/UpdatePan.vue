@@ -4,15 +4,15 @@
             <span>{{ updated ? $t('更新记录') : $t('新版本') }}</span>
             <a>{{ version }}</a>
             <div class="title">
-                <img :src="user.avatar">
-                <a :href="user.url">{{ user.name }}</a>
+                <img :src="user?.avatar || ''">
+                <a :href="user?.url || ''">{{ user?.name || '' }}</a>
                 <span>
                     {{
                         Intl.DateTimeFormat(getTrueLang(), {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',
-                        }).format(new Date(date))
+                        }).format(new Date(date || 0))
                     }}
                 </span>
             </div>

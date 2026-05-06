@@ -882,7 +882,7 @@ function jumpSearchMsg() {
     closeSearch()
     setTimeout(() => {
         if (!selectedMsg.value) return
-        scrollToMsg('chat-' + selectedMsg.value?.message_id)
+        scrollToMsg('chat-' + selectedMsg.value?.message_id, true)
         closeMsgMenu()
     }, 100)
 }

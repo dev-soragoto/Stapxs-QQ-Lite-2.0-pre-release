@@ -18,18 +18,12 @@
 
 <script setup lang="ts">
 import { Logger } from '@renderer/function/base';
-import { openLink } from '@renderer/function/utils/appUtil'
 import * as z from 'zod'
 
 const { data: jsonData, id } = defineProps<{
     data: string,
     id: string,
 }>()
-
-function open(url: string) {
-    if (!url.startsWith('http')) return
-    openLink(url)
-}
 
 const friend = z
     .object({

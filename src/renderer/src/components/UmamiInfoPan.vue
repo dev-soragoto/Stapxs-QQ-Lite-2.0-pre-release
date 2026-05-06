@@ -676,59 +676,6 @@
         return result
     }
 
-    /**
-     * 处理应用版本数据
-     */
-    function _processAppVersion(pieData: Array<{ name: string, value: number }>) {
-        return mergeAndSort(pieData.map(item => {
-            let name = item.name
-            if (name.includes('beta-')) {
-                name = name.split('beta-')[0] + 'beta'
-            }
-            if (name.includes('pre.')) {
-                name = name.split('pre.')[0] + 'pre'
-            }
-            return { value: item.value, name }
-        }))
-    }
-
-    /**
-     * 处理系统版本数据
-     */
-    function _processOsVersion(pieData: Array<{ name: string, value: number }>) {
-        return mergeAndSort(pieData.map(item => {
-            if (item.name.includes('(Web)')) {
-                return { value: item.value, name: 'Web' }
-            } else {
-                const parts = item.name.split(' ')
-                return { value: item.value, name: parts.slice(0, 2).join(' ') }
-            }
-        }))
-    }
-
-    /**
-     * 处理机器人版本数据
-     */
-    function _processBotVersion(pieData: Array<{ name: string, value: number }>) {
-        return mergeAndSort(pieData.map(item => {
-            const name = item.name.split(',')[0]
-            let version = item.name.split(',')[1]
-
-            if (!item.name || !name || !version) {
-                return { value: item.value, name: item.name }
-            }
-
-            if (version.startsWith('v')) {
-                version = version.slice(1)
-            }
-            const parts = version.split('.')
-            if (parts.length >= 2 && Number(parts[1]) != 0) {
-                version = parts[0] + '.' + parts[1]
-            }
-            return { value: item.value, name: name + ',' + version }
-        }))
-    }
-
     function buildSunburstOption(metric: string, pieData: Array<{ name: string, value: number }>, colorCard: string, colorFont: string) {
         const sunburstData = getSunburstData(metric, pieData)
         if (!sunburstData || sunburstData.length === 0) {
@@ -1109,59 +1056,6 @@
             }
             return { value: item.value, name }
         }))
-    }
-
-    /**
-     * 处理彩蛋数据
-     */
-    function _processShowQed(pieData: Array<{ name: string, value: number }>) {
-        const mapped = pieData.map(item => {
-            let name = item.name
-            const num = Number(name)
-            if (isNaN(num)) {
-                name = $t('未知')
-            } else if (num >= 1000) {
-                name = '1000+'
-            } else if (num >= 500) {
-                name = '500-999'
-            } else if (num >= 200) {
-                name = '200-499'
-            } else if (num >= 100) {
-                name = '100-199'
-            } else if (num >= 50) {
-                name = '50-99'
-            } else if (num >= 20) {
-                name = '20-49'
-            } else if (num >= 10) {
-                name = '10-19'
-            } else if (num >= 5) {
-                name = '5-9'
-            } else if (num >= 1) {
-                name = '1-4'
-            } else {
-                name = $t('未知')
-            }
-            return { value: item.value, name }
-        })
-
-        // 合并同名项
-        const mergedData: Record<string, number> = {}
-        for (const item of mapped) {
-            if (mergedData[item.name]) {
-                mergedData[item.name] += item.value
-            } else {
-                mergedData[item.name] = item.value
-            }
-        }
-        const result = Object.keys(mergedData).map(name => ({
-            name,
-            value: mergedData[name]
-        }))
-
-        // 按区间顺序排列
-        const order = ['1-4', '5-9', '10-19', '20-49', '50-99', '100-199', '200-499', '500-999', '1000+', $t('未知')]
-        result.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name))
-        return result
     }
 
     function getRealTimeRange() {

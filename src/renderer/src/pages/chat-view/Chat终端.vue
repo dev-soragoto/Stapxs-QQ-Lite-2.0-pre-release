@@ -163,7 +163,7 @@
     import SendUtil from '@renderer/function/sender'
     import packageInfo from '../../../../../package.json'
 
-    import { nextTick, ref, watch, onMounted, markRaw } from 'vue'
+    import { nextTick, ref, watch, onMounted, onUnmounted, markRaw } from 'vue'
     import { Connector } from '@renderer/function/connect'
     import { useSettingsStore } from '@renderer/state/settings'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
@@ -212,10 +212,9 @@
         replyName: null as string | null,
         replyId: null as string | null,
     })
-    const _popInfo = new PopInfo()
     const trueLang = getTrueLang()
     const timeShow = ref('')
-    let _timeSetter: ReturnType<typeof setInterval> | undefined = undefined
+    let timeSetter: ReturnType<typeof setInterval> | undefined = undefined
     const msg = ref('')
     const supportCmd = ref<{ [key: string]: any }>({})
     const imgCache = ref<string[]>([])
@@ -864,7 +863,7 @@
 
         watch(() => list.length, updateList)
         watch(() => popList.length, showPop)
-        _timeSetter = setInterval(() => {
+        timeSetter = setInterval(() => {
             timeShow.value = Intl.DateTimeFormat(trueLang, {
                 hour: 'numeric',
                 minute: 'numeric',
@@ -879,6 +878,13 @@
         if (pan) {
             tags.value.fullscreen = true
             pan.classList.add('full')
+        }
+    })
+
+    onUnmounted(() => {
+        if (timeSetter) {
+            clearInterval(timeSetter)
+            timeSetter = undefined
         }
     })
 </script>

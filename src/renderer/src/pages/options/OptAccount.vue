@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { runASWEvent as saveR, remove } from '@renderer/function/option'
+import { remove } from '@renderer/function/option'
 import { Connector } from '@renderer/function/connect'
 import { useConnectionStore } from '@renderer/state/connection'
 import { useAuthStore } from '@renderer/state/auth'
@@ -129,7 +129,6 @@ const $t = i18n.global.t
 const connectionStore = useConnectionStore()
 const authStore = useAuthStore()
 
-const _save = saveR
 const sse = import.meta.env.VITE_APP_SSE_MODE == 'true'
 const napcat = import.meta.env.VITE_NAPCAT
 

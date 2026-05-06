@@ -1,10 +1,10 @@
 <template>
-    <div class="msg-json" v-if="success" @click="openLink(parsedContent.jumpUrl)">
+    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
         <p>{{ parsedContent.title }}</p>
         <span>{{ parsedContent.desc }}</span>
-        <img :src="parsedContent.img" alt="" />
+        <img :src="parsedContent.img" alt="">
         <div class="bottom-bar">
-            <img :src="parsedContent.icon" alt="" />
+            <img :src="parsedContent.icon" alt="">
             <span>{{ parsedContent.name }}</span>
         </div>
     </div>
@@ -29,6 +29,7 @@ const { data: jsonData, id } = defineProps<{
  * @returns 解码后的内部链接，如果解析失败则返回 null
  */
 function unpackNestedUrl(url: string): string | null {
+    const logger = new Logger()
     try {
         const urlObj = new URL(url)
 

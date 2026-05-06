@@ -9,6 +9,8 @@
     ],
     "compilerOptions": {
         "composite": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
         "types": ["electron-vite/node"],
         "module": "NodeNext",
         "moduleResolution": "nodenext",

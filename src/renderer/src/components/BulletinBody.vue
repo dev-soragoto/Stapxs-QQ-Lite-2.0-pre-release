@@ -117,13 +117,6 @@
         }
     }
 
-    function _getSenderName(): string {
-        const result = chatStore.chatInfo.info.group_members.filter((item) => {
-            return Number(item.user_id) === Number(props.data.sender)
-        }).at(0)?.nickname
-        return result ?? $t('已退群( {userId} )', { userId: Number(props.data.sender) })
-    }
-
     /**
      * 图片点击
      * @param img

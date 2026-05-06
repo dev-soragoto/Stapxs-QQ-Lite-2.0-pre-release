@@ -71,7 +71,7 @@
         return stack.length > 0
     }
 
-    defineExpose({ isMergeOpen })
+    defineExpose({ closeMergeMsg, isMergeOpen })
 
     onMounted(() => {
         watch(

@@ -10,6 +10,8 @@ import { useSettingsStore } from '@renderer/state/settings'
 const logger = new Logger()
 const popInfo = new PopInfo()
 
+type CapacitorPluginRegistry = Record<string, Record<string, (...args: any[]) => any>>
+
 export const backend = {
     type: 'web' as 'electron' | 'tauri' | 'capacitor' | 'web',
     platform: undefined as 'win32' | 'darwin' | 'linux' | 'android' | 'ios' | 'web' | undefined,
@@ -21,8 +23,8 @@ export const backend = {
     {
         invoke: <T>(cmd: string, args?: InvokeArgs, options?: InvokeOptions) => Promise<T>
     } | {
-        capacitor: CapacitorGlobal,
-        plugins: CapacitorGlobal['Plugins'],
+        capacitor: CapacitorGlobal & Record<string, any>,
+        plugins: CapacitorPluginRegistry,
         vConsole: VConsole
     } | undefined,
     listener: undefined as ((event: string, ...args: any[]) => void) | undefined,
@@ -104,15 +106,17 @@ export const backend = {
             this.listener = (await import('@tauri-apps/api/event')).listen;
         } else if (window.Capacitor != undefined && window.Capacitor.isNativePlatform()) {
             this.type = 'capacitor';
+            const capacitor = window.Capacitor as CapacitorGlobal & Record<string, any>
+            const plugins = (capacitor.Plugins ?? {}) as CapacitorPluginRegistry
             this.function = {
-                capacitor: window.Capacitor,
-                plugins: window.Capacitor.Plugins,
+                capacitor,
+                plugins,
                 vConsole: new VConsole({
                     theme: useSettingsStore().darkMode ? 'dark' : 'light',
                 })
             }
             this.listener = (type: string, name: string, callBack: (...args: any[]) => void) => {
-                window.Capacitor.Plugins[type].addListener(name, callBack)
+                plugins[type]?.addListener?.(name, callBack)
             }
         }
 
@@ -279,7 +283,7 @@ export const backend = {
      * @param name 事件名称
      * @param callBack 要移除的回调函数
      */
-    removeListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
+    removeListener(_type: string | undefined, name: string, callBack: (...args: any[]) => void) {
         if(this.isDesktop() && this.function && 'removeListener' in this.function) {
             this.function.removeListener(name, callBack)
             return

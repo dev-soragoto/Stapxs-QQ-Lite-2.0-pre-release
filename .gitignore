@@ -16,5 +16,6 @@ dist_capacitor
 stats.html
 
 notice_local.json
+*.tsbuildinfo
 .npmrc
 *.log*

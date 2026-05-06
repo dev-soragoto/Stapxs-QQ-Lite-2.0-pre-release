@@ -550,6 +550,7 @@ export async function loadMobile() {
             })
             // 注册相关事件
             backend.addListener('LocalNotifications', 'localNotificationActionPerformed', (info) => {
+                const contactStore = useContactStore()
                 const notification =
                     info.notification as LocalNotificationSchema
                 if (info.actionId == 'tap') {
@@ -814,6 +815,7 @@ function showUpadteLog(data: any) {
     }
 }
 function showReleaseLog(data: any, isUpdated: boolean) {
+    const uiStore = useUIStore()
     const { $t } = app.config.globalProperties
     let msg = data.body
     // 处理 title，取开头到下一个 “\r\n” 之间的内容
@@ -886,6 +888,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
  * 获取并展示最近5条更新记录
  */
 export function showReleaseHistory() {
+    const uiStore = useUIStore()
     const { $t } = app.config.globalProperties
     const repoName = import.meta.env.VITE_APP_REPO_NAME
     const packageUrl = `https://api.github.com/repos/${repoName}/releases?per_page=5`
@@ -957,6 +960,7 @@ export function showReleaseHistory() {
 * 显示使用次数弹窗
 */
 export function checkOpenTimes() {
+    const uiStore = useUIStore()
     if (import.meta.env.DEV) return     // 开发环境不显示
     const { $t } = app.config.globalProperties
     const repoName = import.meta.env.VITE_APP_REPO_NAME
@@ -1044,6 +1048,7 @@ export function checkOpenTimes() {
 * 显示全局公告弹窗
 */
 export function checkNotice() {
+    const uiStore = useUIStore()
     let url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
     if (import.meta.env.DEV) {
         url = 'notice_local.json'

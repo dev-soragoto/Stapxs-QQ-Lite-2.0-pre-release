@@ -6,7 +6,8 @@
             <font-awesome-icon icon="message" /> {{ parsedContent.comment }}
             <font-awesome-icon icon="thumbs-up" /> {{ parsedContent.prefer }}
         </span>
-        <img v-if="parsedContent.img" :src="parsedContent.img" alt="" class="forum-img">
+        <img v-if="parsedContent.img" :src="parsedContent.img" alt=""
+            class="forum-img">
         <div class="bottom-bar">
             <img :src="parsedContent.icon" alt="">
             <span>{{ parsedContent.name }} ({{ $t('频道') }})</span>
