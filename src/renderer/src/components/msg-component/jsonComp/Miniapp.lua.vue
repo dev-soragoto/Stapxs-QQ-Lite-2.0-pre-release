@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { Logger } from '@renderer/function/base';
+import { Logger } from '@renderer/function/base'
 import { openLink } from '@renderer/function/utils/appUtil'
 import * as z from 'zod'
 

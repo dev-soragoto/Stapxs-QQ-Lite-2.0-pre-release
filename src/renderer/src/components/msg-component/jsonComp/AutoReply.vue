@@ -32,7 +32,7 @@ const { data: jsonData, id } = defineProps<{
     id: string,
 }>()
 
-const music = z
+const autoReply = z
     .object({
         app: z.literal('com.tencent.autoreply'),
         meta: z.object({
@@ -58,7 +58,7 @@ const music = z
         })),
     }))
 const json = JSON.parse(jsonData)
-const parsedData = music.safeParse(json)
+const parsedData = autoReply.safeParse(json)
 const success = parsedData.success
 const parsedContent = parsedData.data!
 if (!success) {

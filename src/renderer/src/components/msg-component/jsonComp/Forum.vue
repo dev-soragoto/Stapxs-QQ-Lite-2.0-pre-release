@@ -6,7 +6,7 @@
             <font-awesome-icon icon="message" /> {{ parsedContent.comment }}
             <font-awesome-icon icon="thumbs-up" /> {{ parsedContent.prefer }}
         </span>
-        <img :src="parsedContent.img" alt="" class="forum-img">
+        <img v-if="parsedContent.img" :src="parsedContent.img" alt="" class="forum-img">
         <div class="bottom-bar">
             <img :src="parsedContent.icon" alt="">
             <span>{{ parsedContent.name }} ({{ $t('频道') }})</span>
@@ -27,7 +27,7 @@ const { data: jsonData, id } = defineProps<{
     id: string,
 }>()
 
-const music = z
+const forum = z
     .object({
         app: z.literal('com.tencent.forum'),
         meta: z.object({
@@ -37,16 +37,18 @@ const music = z
                     guild_name: z.string(),
                 }),
                 feed: z.object({
-                    comment_count: z.number(),
-                    images: z.array(
-                        z.object({
-                            pic_url: z.string(),
-                            height: z.number(),
-                            width: z.number(),
-                        }),
-                    ),
+                    comment_count: z.number().optional(),
+                    images: z
+                        .array(
+                            z.object({
+                                pic_url: z.string(),
+                                height: z.number(),
+                                width: z.number(),
+                            }),
+                        )
+                        .optional(),
                     prefer_count: z.number().optional(),
-                    view_count: z.number(),
+                    view_count: z.number().optional(),
                 }),
                 jump_url: z.string(),
             }),
@@ -55,16 +57,16 @@ const music = z
     })
     .transform((o) => ({
         title: o.prompt.replace('[频道帖子]', ''),
-        view: o.meta.detail.feed.view_count,
-        comment: o.meta.detail.feed.comment_count,
+        view: o.meta.detail.feed.view_count ?? 0,
+        comment: o.meta.detail.feed.comment_count ?? 0,
         prefer: o.meta.detail.feed.prefer_count ?? 0,
         jumpUrl: o.meta.detail.jump_url,
-        img: o.meta.detail.feed.images[0]?.pic_url,
+        img: o.meta.detail.feed.images?.[0]?.pic_url,
         icon: o.meta.detail.channel_info.guild_icon,
         name: o.meta.detail.channel_info.guild_name,
     }))
 const json = JSON.parse(jsonData)
-const parsedData = music.safeParse(json)
+const parsedData = forum.safeParse(json)
 const success = parsedData.success
 const parsedContent = parsedData.data!
 if (!success) {
