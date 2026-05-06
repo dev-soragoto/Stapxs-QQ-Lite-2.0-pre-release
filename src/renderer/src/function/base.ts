@@ -119,10 +119,21 @@ export class Logger {
         if (typeStr === 'WS') {
             if (args.startsWith('GET')) {
                 args = args.substring(4)
-                typeStr = '<<<'
+                typeStr = '◀'
+                if(data.echo) {
+                    typeStr += ` ${data.echo.replace('send_', '')}`
+                } else if(data.post_type) {
+                    typeStr += ` ${data.post_type}`
+                }
             } else if (args.startsWith('PUT')) {
                 args = args.substring(4)
-                typeStr = '>>>'
+                typeStr = '▶'
+                if(data.action) {
+                    typeStr += ` ${data.action}`
+                }
+                if(data.echo) {
+                    typeStr += ` -> ${data.echo.replace('send_', '')}`
+                }
             }
         }
 

@@ -1597,3 +1597,246 @@ msgstr ""
 
 msgid "历史记录"
 msgstr ""
+
+msgid "你们真是害人不浅呐你们这个群"
+msgstr ""
+
+msgid "\"有效数据\"仅包含了访客中连接了 bot 的部分会话。"
+msgstr ""
+
+msgid "Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。"
+msgstr ""
+
+msgid "Tauri 代理服务似乎没有正常启动"
+msgstr ""
+
+msgid "{name} 加入了群聊"
+msgstr ""
+
+msgid "一点文件都没有耶——"
+msgstr ""
+
+msgid "下载"
+msgstr ""
+
+msgid "下载失败"
+msgstr ""
+
+msgid "不支持的卡片类型"
+msgstr ""
+
+msgid "不缓存图片"
+msgstr ""
+
+msgid "什么都木有"
+msgstr ""
+
+msgid "仅支持 macOS 26 及以上系统"
+msgstr ""
+
+msgid "仅有效数据"
+msgstr ""
+
+msgid "优先加载本地缓存的消息以取得更快的加载速度"
+msgstr ""
+
+msgid "传输"
+msgstr ""
+
+msgid "保存消息记录何尝不是一种囤囤鼠"
+msgstr ""
+
+msgid "全局"
+msgstr ""
+
+msgid "关闭流体玻璃效果需要重启应用才能生效"
+msgstr ""
+
+msgid "关闭透明模式需要重启应用才能生效。"
+msgstr ""
+
+msgid "其他"
+msgstr ""
+
+msgid "出现次数"
+msgstr ""
+
+msgid "加载失败"
+msgstr ""
+
+msgid "启用消息存储"
+msgstr ""
+
+msgid "图标"
+msgstr ""
+
+msgid "图片缓存清理完成，共删除 {count} 项（{batches} 批）。"
+msgstr ""
+
+msgid "基础链接预览服务"
+msgstr ""
+
+msgid "始终让自己的消息显示在右边"
+msgstr ""
+
+msgid "尝试区间"
+msgstr ""
+
+msgid "已清空系统通知"
+msgstr ""
+
+msgid "已退群( {userId} )"
+msgstr ""
+
+msgid "开启原生玻璃效果需要重启应用才能生效。"
+msgstr ""
+
+msgid "开启后将删除已缓存图片，仅保留消息文本"
+msgstr ""
+
+msgid "开启后需要重启应用才能生效，确定要开启吗？"
+msgstr ""
+
+msgid "开启透明模式将会对性能产生较为明显的影响，建议不要在性能较差的设备上使用此功能；此功能与\"背景图片\"的部分功能冲突同时会降低元素可读性。"
+msgstr ""
+
+msgid "当前环境不支持剪贴板操作"
+msgstr ""
+
+msgid "数值"
+msgstr ""
+
+msgid "文件大于 1GB。发送速度可能会非常缓慢；确认要发送吗？"
+msgstr ""
+
+msgid "暂无上传任务"
+msgstr ""
+
+msgid "暂无下载任务"
+msgstr ""
+
+msgid "暂无数据"
+msgstr ""
+
+msgid "更换背景"
+msgstr ""
+
+msgid "更新历史"
+msgstr ""
+
+msgid "未知"
+msgstr ""
+
+msgid "未知文件"
+msgstr ""
+
+msgid "未知用户"
+msgstr ""
+
+msgid "本地"
+msgstr ""
+
+msgid "次数"
+msgstr ""
+
+msgid "欸嘿，这个按钮只是用来占位置的"
+msgstr ""
+
+msgid "正在清理图片缓存 0/0（0%）"
+msgstr ""
+
+msgid "正在清理图片缓存 {deleted}/{total}（{percent}%）"
+msgstr ""
+
+msgid "没有需要删除的配置项"
+msgstr ""
+
+msgid "注意：有些功能的设置项可能需要在触发后才会被注册。"
+msgstr ""
+
+msgid "流体玻璃窗口"
+msgstr ""
+
+msgid "消息存储"
+msgstr ""
+
+msgid "混合加载消息（实验性）"
+msgstr ""
+
+msgid "添加本地表情失败"
+msgstr ""
+
+msgid "点击确认以应用缩放比例，预览将在 5 秒后取消……"
+msgstr ""
+
+msgid "独立显示消息"
+msgstr ""
+
+msgid "申请加入群聊"
+msgstr ""
+
+msgid "确定要重启吗？"
+msgstr ""
+
+msgid "确认缩放比例"
+msgstr ""
+
+msgid "确认要关闭图片缓存吗？所有已缓存图片都将被清除！"
+msgstr ""
+
+msgid "禁言中"
+msgstr ""
+
+msgid "离开"
+msgstr ""
+
+msgid "离开 Stapxs QQ Lite？"
+msgstr ""
+
+msgid "空空如也"
+msgstr ""
+
+msgid "缩放比例调整已取消，已恢复默认缩放比例。"
+msgstr ""
+
+msgid "群文件"
+msgstr ""
+
+msgid "背景透明度"
+msgstr ""
+
+msgid "获取更新历史失败"
+msgstr ""
+
+msgid "获取选中消息失败"
+msgstr ""
+
+msgid "触发尝试次数"
+msgstr ""
+
+msgid "请连接后在进行操作"
+msgstr ""
+
+msgid "这里还没有公告哦~"
+msgstr ""
+
+msgid "连接不稳定"
+msgstr ""
+
+msgid "附加"
+msgstr ""
+
+msgid "附加设置页设置项来自页面主题或其他插件注册，现在看起来什么都没有呢。"
+msgstr ""
+
+msgid "预览图片加载失败"
+msgstr ""
+
+msgid "频道"
+msgstr ""
+
+msgid "（未知）"
+msgstr ""
+
+msgid "（试听）"
+msgstr ""
