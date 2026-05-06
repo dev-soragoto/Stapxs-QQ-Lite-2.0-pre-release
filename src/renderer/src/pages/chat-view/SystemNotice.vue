@@ -9,14 +9,14 @@
 <template>
     <div id="chat-pan"
         :class=" 'chat-pan sys-not-pan' +
-            (runtimeData.tags.openSideBar ? ' open' : '') +
+            (uiStore.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
         <div>
             <font-awesome-icon :icon="['fas', 'angle-left']" @click="exit" />
             <span>{{ $t('系统消息') }}</span>
         </div>
         <div class="sys-not-list">
-            <template v-for="(notice, index) in runtimeData.systemNoticesList"
+            <template v-for="(notice, index) in contactStore.systemNoticesList"
                 :key="'sysNot-' + index">
                 <div v-if="notice.request_type == 'friend'">
                     <div>
@@ -111,14 +111,17 @@
 </template>
 
 <script lang="ts" setup>
-    import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
     import { i18n } from '@renderer/main'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useContactStore } from '@renderer/state/contact'
 
     defineOptions({ name: 'ChatSystemNotice' })
 
+    const uiStore = useUIStore()
+    const contactStore = useContactStore()
     const emit = defineEmits(['userClick'])
 
     const $t = i18n.global.t
@@ -156,7 +159,7 @@
     }
 
     function getName(id: number) {
-        const knowUser = runtimeData.userList.filter(
+        const knowUser = contactStore.userList.filter(
             (item) => item.user_id == id || item.group_id == id,
         )
         if (knowUser.length > 0) {

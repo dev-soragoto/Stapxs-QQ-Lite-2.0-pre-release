@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
     import { i18n } from '@renderer/main'
-    import { runtimeData } from '@renderer/function/msg'
+    import { useSettingsStore } from '@renderer/state/settings'
     import {
         extraOptionCards,
         runAS,
@@ -103,14 +103,15 @@
     defineOptions({ name: 'ViewOptAddon' })
 
     const $t = i18n.global.t
+    const settingsStore = useSettingsStore()
 
     const cards = extraOptionCards
 
     function getItemValue(item: ExtraOptionItem): any {
         const key = item.optionKey
-        if (key && runtimeData.sysConfig &&
-            Object.prototype.hasOwnProperty.call(runtimeData.sysConfig, key)) {
-            return (runtimeData.sysConfig as any)[key]
+        if (key && settingsStore.sysConfig &&
+            Object.prototype.hasOwnProperty.call(settingsStore.sysConfig, key)) {
+            return (settingsStore.sysConfig as any)[key]
         }
         return item.defaultValue
     }

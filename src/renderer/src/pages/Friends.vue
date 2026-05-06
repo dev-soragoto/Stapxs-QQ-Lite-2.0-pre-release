@@ -11,7 +11,7 @@
 
 <template>
     <div class="friend-view">
-        <div id="friend-list" :class="'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')">
+        <div id="friend-list" :class="'friend-list' + (uiStore.openSideBar ? ' open' : '')">
             <div>
                 <div class="base">
                     <span>{{ $t('联系人') }}</span>
@@ -46,28 +46,28 @@
                     <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
                 </label>
             </div>
-            <div :class="runtimeData.tags.openSideBar ? 'open' : ''">
-                <template v-if="runtimeData.showList.length <= 0">
-                    <template v-if="runtimeData.tags.classes.length > 0">
-                        <template v-for="info in runtimeData.tags.classes"
+            <div :class="uiStore.openSideBar ? 'open' : ''">
+                <template v-if="contactStore.showList.length <= 0">
+                    <template v-if="settingsStore.classes.length > 0">
+                        <template v-for="info in settingsStore.classes"
                             :key="'class-' + info.class_id">
                             <div :class=" 'list exp-body' +
                                 (classStatus[info.class_id] == true ? ' open' : '')">
                                 <header :title="info.class_name"
                                     :class="'exp-header' +
-                                        (runtimeData.tags.openSideBar ? ' open' : '')"
+                                        (uiStore.openSideBar ? ' open' : '')"
                                     @click="classClick(info.class_id)">
                                     <div />
                                     <span>{{ info.class_name }}</span>
                                     <a>{{
                                         info.user_count ??
-                                            runtimeData.userList.filter((get) => {
+                                            contactStore.userList.filter((get) => {
                                                 return get.class_id == info.class_id
                                             }).length
                                     }}</a>
                                 </header>
                                 <div :id="'class-' + info.class_id">
-                                    <FriendBody v-for="item in runtimeData.userList.filter(
+                                    <FriendBody v-for="item in contactStore.userList.filter(
                                                     (get) => {
                                                         return ( get.class_id == info.class_id )
                                                     },
@@ -81,18 +81,18 @@
                         <div :class="'list exp-body' + (classStatus['-1'] == true ? ' open' : '')">
                             <header :title="$t('群组')"
                                 :class="'exp-header' +
-                                    (runtimeData.tags.openSideBar ? ' open' : '') "
+                                    (uiStore.openSideBar ? ' open' : '') "
                                 @click="classClick('-1')">
                                 <div />
                                 <span>{{ $t('群组') }}</span>
                                 <a>{{
-                                    runtimeData.userList.filter((get) => {
+                                    contactStore.userList.filter((get) => {
                                         return get.class_id == undefined
                                     }).length
                                 }}</a>
                             </header>
                             <div>
-                                <FriendBody v-for="item in runtimeData.userList.filter(
+                                <FriendBody v-for="item in contactStore.userList.filter(
                                                 (get) => {
                                                     return get.class_id == undefined
                                                 },
@@ -105,7 +105,7 @@
                         </div>
                     </template>
                     <template v-else>
-                        <FriendBody v-for="item in runtimeData.userList"
+                        <FriendBody v-for="item in contactStore.userList"
                             :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
                             :data="item"
                             from="friend"
@@ -115,7 +115,7 @@
                 <!-- 搜索用的 -->
                 <div v-else class="list">
                     <div>
-                        <FriendBody v-for="item in runtimeData.showList"
+                        <FriendBody v-for="item in contactStore.showList"
                             :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
                             :data="item" from="friend"
                             @click="userClick(item, $event)" />
@@ -123,12 +123,12 @@
                 </div>
             </div>
         </div>
-        <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
-            <div v-if="!loginInfo.status || runtimeData.chatInfo.show.id == 0" class="ss-card">
+        <div :class="'friend-list-space' + (uiStore.openSideBar ? ' open' : '')">
+            <div v-if="!loginInfo.status || chatStore.chatInfo.show.id == 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
             </div>
-            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card cd">
+            <div v-else-if="chatStore.messageList.length > 0" class="ss-card cd">
                 <font-awesome-icon :icon="['fas', 'angles-right']" />
                 <span>(っ≧ω≦)っ</span>
                 <span>{{ $t('别划了别划了被看见了啦') }}</span>
@@ -149,14 +149,21 @@
         UserGroupElem,
     } from '@renderer/function/elements/information'
 
-    import { runtimeData } from '@renderer/function/msg'
     import { reloadUsers } from '@renderer/function/utils/appUtil'
     import { login as loginInfo } from '@renderer/function/connect'
     import { backend } from '@renderer/runtime/backend'
     import { matchPinyin } from '@renderer/function/utils/pinyin'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useSettingsStore } from '@renderer/state/settings'
+    import { useContactStore } from '@renderer/state/contact'
+    import { useChatStore } from '@renderer/state/chat'
 
     defineOptions({ name: 'ViewFriends' })
 
+    const uiStore = useUIStore()
+    const settingsStore = useSettingsStore()
+    const contactStore = useContactStore()
+    const chatStore = useChatStore()
     const { list } = defineProps<{ list: (UserFriendElem & UserGroupElem)[] }>()
     const emit = defineEmits<{
         userClick: [data: BaseChatInfoElem]
@@ -201,7 +208,7 @@
     }
 
     function openLeftBar() {
-        runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
+        uiStore.openSideBar = !uiStore.openSideBar
     }
 
     function classClick(id: string) {
@@ -214,12 +221,12 @@
 
     function userClick(data: UserFriendElem & UserGroupElem, event: Event) {
         const sender = event.currentTarget as HTMLDivElement
-        if (runtimeData.tags.openSideBar) {
+        if (uiStore.openSideBar) {
             openLeftBar()
         }
         isSearch.value = false
         searchInfo.value = ''
-        runtimeData.showList = [] as any[]
+        contactStore.showList = [] as any[]
 
         const back = {
             type: data.user_id ? 'user' : 'group',
@@ -231,9 +238,9 @@
         } as BaseChatInfoElem
         // 更新聊天框
         emit('userClick', back)
-        runtimeData.baseOnMsgList.set(back.id, data)
+        contactStore.baseOnMsgList.set(back.id, data)
         // 获取历史消息
-        if(!runtimeData.tags.nowGetHistory) {
+        if(!uiStore.nowGetHistory) {
             emit('loadHistory', back)
         }
         // 切换标签卡
@@ -247,7 +254,7 @@
         const value = (event.target as HTMLInputElement).value.toLocaleLowerCase()
         if (value !== '') {
             isSearch.value = true
-            runtimeData.showList = list.filter(
+            contactStore.showList = list.filter(
                 (item: UserFriendElem & UserGroupElem) => {
                     const name = (
                         item.user_id? item.nickname + item.remark: item.group_name
@@ -261,13 +268,13 @@
             )
         } else {
             isSearch.value = false
-            runtimeData.showList = [] as any[]
+            contactStore.showList = [] as any[]
         }
         // macOS: 刷新 TouchBar
         if(backend.isDesktop()) {
             // list 只需要 id 和 name
             backend.call(undefined, 'sys:flushFriendSearch', false,
-                runtimeData.showList.map((item) => {
+                contactStore.showList.map((item) => {
                     return {
                         id: item.user_id ? item.user_id : item.group_id,
                         name: getShowName(item)

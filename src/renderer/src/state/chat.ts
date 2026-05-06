@@ -1,9 +1,9 @@
 import { ChatInfoElem, MergeStackData } from '@renderer/function/elements/information'
 import { defineStore } from 'pinia'
-import { shallowRef } from 'vue'
+import { ref } from 'vue'
 
 export const useChatStore = defineStore('chat', () => {
-    const chatInfo = shallowRef<ChatInfoElem>({
+    const chatInfo = ref<ChatInfoElem>({
         show: { type: '', id: 0, name: '', avatar: '' },
         info: {
             group_info: {},
@@ -19,10 +19,10 @@ export const useChatStore = defineStore('chat', () => {
         },
     })
 
-    const messageList = shallowRef<any[]>([])
-    const mergeMsgStack = shallowRef<MergeStackData[]>([])
-    const mergeMessageList = shallowRef<any[] | undefined>(undefined)
-    const mergeMessageImgList = shallowRef<any[] | undefined>(undefined)
+    const messageList = ref<any[]>([])
+    const mergeMsgStack = ref<MergeStackData[]>([])
+    const mergeMessageList = ref<any[] | undefined>(undefined)
+    const mergeMessageImgList = ref<any[] | undefined>(undefined)
 
     return {
         chatInfo,

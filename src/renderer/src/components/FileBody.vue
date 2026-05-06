@@ -61,10 +61,13 @@
         GroupFileFolderElem
     } from '@renderer/function/elements/information'
     import { Connector } from '@renderer/function/connect'
-    import { runtimeData } from '@renderer/function/msg'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useChatStore } from '@renderer/state/chat'
 
     defineOptions({ name: 'FileBody' })
 
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
     const $t = i18n.global.t
 
     defineProps({
@@ -91,12 +94,12 @@
      * 下载文件（获取文件下载地址并下载）
      */
     function getFile(item: GroupFileElem) {
-        const name = runtimeData.jsonMap.file_download?.name
+        const name = authStore.jsonMap.file_download?.name
         if(name) {
             Connector.send(
                 name,
                 {
-                    group_id: runtimeData.chatInfo.show.id,
+                    group_id: chatStore.chatInfo.show.id,
                     file_id: item.file_id,
                 },
                 'downloadGroupFile_' + item.file_id + '_' + btoa(encodeURIComponent(item.file_name)),
@@ -110,7 +113,7 @@
     function loadFileDir(item: GroupFileElem & GroupFileFolderElem) {
         const id = item.folder_id
 
-        const name = runtimeData.jsonMap.group_folder_files?.name
+        const name = authStore.jsonMap.group_folder_files?.name
         if(item.items !== undefined) {
             item.show_items = !item.show_items
             return
@@ -119,7 +122,7 @@
         if (id && name) {
             Connector.send(name, {
                 folder_id: id,
-                group_id: runtimeData.chatInfo.show.id,
+                group_id: chatStore.chatInfo.show.id,
             }, 'getGroupDirFiles_' + id)
         }
     }

@@ -23,7 +23,7 @@
                     }}</span>
                 </div>
                 <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.msg_type"
+                    <select v-model="settingsStore.sysConfig.msg_type"
                         name="msg_type"
                         title="msg_type"
                         @change="save">
@@ -67,7 +67,7 @@
                     <span>{{ $t('ReferenceError: moYu is not defined') }}</span>
                 </div>
                 <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.log_level"
+                    <select v-model="settingsStore.sysConfig.log_level"
                         name="log_level" title="log_level" @change="save">
                         <option value="err">
                             {{ $t('错误') }}
@@ -94,7 +94,7 @@
                     </span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.debug_msg"
+                    <input v-model="settingsStore.sysConfig.debug_msg"
                         type="checkbox" name="debug_msg" @change="save">
                     <div>
                         <div />
@@ -285,12 +285,19 @@
     } from '@renderer/function/option'
     import { Connector } from '@renderer/function/connect'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { runtimeData, dispatch } from '@renderer/function/msg'
+    import { dispatch } from '@renderer/function/msg'
     import { BrowserInfo, detect } from 'detect-browser'
     import { BotMsgType } from '@renderer/function/elements/information'
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
+    import { useSettingsStore } from '@renderer/state/settings'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useUIStore } from '@renderer/state/ui'
+
+    const settingsStore = useSettingsStore()
+    const authStore = useAuthStore()
+    const uiStore = useUIStore()
 
     defineOptions({ name: 'ViewOptDev' })
 
@@ -299,7 +306,7 @@
     const napcat = import.meta.env.VITE_NAPCAT
     const dev = import.meta.env.DEV
 
-    const jsonMapName = ref(runtimeData.jsonMap?.name ?? '')
+    const jsonMapName = ref(authStore.jsonMap?.name ?? '')
     const ws_text = ref('')
     const parse_text = ref('')
     const appmsg_text = ref('')
@@ -309,8 +316,8 @@
     const cssFileInput = useTemplateRef<HTMLInputElement>('cssFileInput')
 
     watch(
-        () => runtimeData.jsonMap?.name,
-        () => { jsonMapName.value = runtimeData.jsonMap?.name ?? '' },
+        () => authStore.jsonMap?.name,
+        () => { jsonMapName.value = authStore.jsonMap?.name ?? '' },
     )
 
     onMounted(() => {
@@ -376,7 +383,9 @@
         }
         /* eslint-disable no-console */
         console.log('=========================')
-        console.log(runtimeData)
+        console.log('settingsStore:', settingsStore.$state)
+        console.log('authStore:', authStore.$state)
+        console.log('uiStore:', uiStore.$state)
         console.log('=========================')
         /* eslint-enable no-console */
         if(!backend.isMobile()) {
@@ -444,12 +453,12 @@
         info += 'Application Info:\n'
         info += `    Uptime            -> ${Math.floor(((new Date().getTime() - uptime) / 1000) * 100) / 100} s\n`
         info += `    Package Version   -> ${packageInfo.version}\n`
-        info += `    Service Work      -> ${runtimeData.tags.sw}\n`
+        info += `    Service Work      -> ${navigator.serviceWorker?.controller ? 'active' : 'none'}\n`
 
         info += 'Backend Info:\n'
-        info += `    Bot Info Name     -> ${runtimeData.botInfo.app_name}\n`
-        info += `    Bot Info Version  -> ${runtimeData.botInfo.app_version !== undefined ? runtimeData.botInfo.app_version : runtimeData.botInfo.version}\n`
-        info += `    Loaded Config     -> ${runtimeData.jsonMap?.name}\n`
+        info += `    Bot Info Name     -> ${authStore.botInfo.app_name}\n`
+        info += `    Bot Info Version  -> ${authStore.botInfo.app_version !== undefined ? authStore.botInfo.app_version : authStore.botInfo.version}\n`
+        info += `    Loaded Config     -> ${authStore.jsonMap?.name}\n`
 
         info += 'View Info:\n'
         info += `    Doc Width         -> ${document.getElementById('app')?.offsetWidth} px\n`
@@ -501,16 +510,16 @@
                     text: $t('确定'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function printSetUpInfo() {
-        const json = JSON.stringify(runtimeData.sysConfig)
+        const json = JSON.stringify(settingsStore.sysConfig)
         const popInfo = {
             svg: 'upload',
             html:
@@ -533,12 +542,12 @@
                     text: $t('确定'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function importSetUpInfo() {
@@ -550,7 +559,7 @@
                 {
                     text: $t('取消'),
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
                 {
@@ -563,7 +572,7 @@
                         if (input) {
                             try {
                                 const json = JSON.parse(input.value)
-                                runtimeData.sysConfig = json
+                                settingsStore.sysConfig = json
                                 saveAll(json)
                                 location.reload()
                             } catch (e) {
@@ -579,7 +588,7 @@
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function resetApp() {
@@ -609,12 +618,12 @@
                     text: $t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function restartapp() {
@@ -642,13 +651,13 @@
 
     function changeJsonMap() {
         const getPath = loadJsonMap(jsonMapName.value)
-        if (getPath) runtimeData.jsonMap = getPath
+        if (getPath) authStore.jsonMap = getPath
     }
 
     // 查看配置文件
     function rmNeedlessOption() {
         const needless: string[] = []
-        for (const key of Object.keys(runtimeData.sysConfig)) {
+        for (const key of Object.keys(settingsStore.sysConfig)) {
             if (optDefault[key] === undefined) {
                 needless.push(key)
             }
@@ -670,22 +679,22 @@
                     text: $t('确定'),
                     fun: () => {
                         for (const key of needless) {
-                            delete runtimeData.sysConfig[key]
+                            delete settingsStore.sysConfig[key]
                         }
-                        saveAll(runtimeData.sysConfig)
-                        runtimeData.popBoxList.shift()
+                        saveAll(settingsStore.sysConfig)
+                        uiStore.popBoxList.shift()
                     },
                 },
                 {
                     text: $t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     // 自定义 CSS 相关方法
@@ -751,7 +760,7 @@
                 {
                     text: $t('确认上传'),
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                         // 读取文件内容
                         const reader = new FileReader()
                         reader.onload = (e) => {
@@ -781,14 +790,14 @@
                     text: $t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                         // 清空 input 值
                         target.value = ''
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function viewCustomCss() {
@@ -814,12 +823,12 @@
                     text: $t('确定'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function clearCustomCss() {
@@ -837,18 +846,18 @@
                             PopType.INFO,
                             $t('已清除自定义样式'),
                         )
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
                 {
                     text: $t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 </script>

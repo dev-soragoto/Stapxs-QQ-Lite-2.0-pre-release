@@ -14,7 +14,7 @@
         <div class="friend-list-container">
             <div id="message-list"
                 :class="'friend-list' +
-                    (runtimeData.tags.openSideBar ? ' open' : '') +
+                    (uiStore.openSideBar ? ' open' : '') +
                     (showGroupAssist ? ' show' : '')">
                 <div>
                     <div class="base only">
@@ -41,12 +41,12 @@
                     id="message-list-body"
                     name="onmsg"
                     tag="div"
-                    :class="runtimeData.tags.openSideBar ? ' open' : ''"
+                    :class="uiStore.openSideBar ? ' open' : ''"
                     style="overflow-x: hidden">
                     <!-- 系统信息 -->
                     <FriendBody v-if="!showGroupAssist &&
-                                    runtimeData.systemNoticesList &&
-                                    Object.keys(runtimeData.systemNoticesList).length > 0"
+                                    contactStore.systemNoticesList &&
+                                    Object.keys(contactStore.systemNoticesList).length > 0"
                         key="inMessage--10000"
                         :select="chat.show.id === -10000"
                         :menu="menu.select && menu.select.user_id === -10000"
@@ -55,7 +55,7 @@
                             always_top: true,
                             nickname: $t('系统通知'),
                             remark: $t('系统通知'),
-                            raw_msg: runtimeData.systemNoticesList[0].comment
+                            raw_msg: contactStore.systemNoticesList[0].comment
                         }"
                         @click="systemNoticeClick"
                         @contextmenu.prevent="systemNoticeMenuShow($event)"
@@ -64,7 +64,7 @@
                         @touchend="showMenuEnd" />
                     <!--- 群组消息 -->
                     <FriendBody
-                        v-if="runtimeData.groupAssistList && runtimeData.groupAssistList.length > 0"
+                        v-if="contactStore.groupAssistList && contactStore.groupAssistList.length > 0"
                         key="inMessage--10001"
                         :select="chat.show.id === -10001"
                         :data="{
@@ -72,14 +72,14 @@
                             always_top: true,
                             nickname: $t('群收纳盒'),
                             remark: $t('群收纳盒'),
-                            time: runtimeData.groupAssistList[0].time,
-                            raw_msg: runtimeData.groupAssistList[0].group_name + ': ' +
-                                (runtimeData.groupAssistList[0].raw_msg_base ?? '')
+                            time: contactStore.groupAssistList[0].time,
+                            raw_msg: contactStore.groupAssistList[0].group_name + ': ' +
+                                (contactStore.groupAssistList[0].raw_msg_base ?? '')
                         }"
                         @click="showGroupAssistCheck" />
                     <!-- 其他消息 -->
                     <FriendBody
-                        v-for="item in runtimeData.onMsgList"
+                        v-for="item in contactStore.onMsgList"
                         :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
                         :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
                         :menu="menu.select && menu.select == item"
@@ -94,7 +94,7 @@
             </div>
             <div id="group-assist-message-list"
                 :class="'friend-list group-assist-message-list' +
-                    (runtimeData.tags.openSideBar ? ' open' : '') +
+                    (uiStore.openSideBar ? ' open' : '') +
                     (showGroupAssist ? ' show' : '')">
                 <div>
                     <div class="base only">
@@ -103,12 +103,12 @@
                             <font-awesome-icon style="margin-right: 5px;" :icon="['fas', 'angle-left']" />
                             {{ $t('群收纳盒') }}
                         </span>
-                        <a v-if="runtimeData.newMsgCount > 0">{{ runtimeData.newMsgCount }}</a>
+                        <a v-if="contactStore.newMsgCount > 0">{{ contactStore.newMsgCount }}</a>
                     </div>
                     <div class="small">
                         <span style="cursor: pointer;">
                             {{ $t('群收纳盒') }}
-                            <a v-if="runtimeData.newMsgCount > 0">{{ runtimeData.newMsgCount }}</a>
+                            <a v-if="contactStore.newMsgCount > 0">{{ contactStore.newMsgCount }}</a>
                         </span>
                         <div v-if="showGroupAssist"
                             style="margin-right: -5px;margin-left: 5px;"
@@ -124,11 +124,11 @@
                     id="group-assist-message-list-body"
                     name="onmsg"
                     tag="div"
-                    :class="runtimeData.tags.openSideBar ? ' open' : ''"
+                    :class="uiStore.openSideBar ? ' open' : ''"
                     style="overflow-x: hidden">
                     <!-- 其他消息 -->
                     <FriendBody
-                        v-for="item in runtimeData.groupAssistList"
+                        v-for="item in contactStore.groupAssistList"
                         :key="'inMessage-' + (item.user_id ? item.user_id : item.group_id)"
                         :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
                         :menu="menu.select && menu.select == item"
@@ -171,12 +171,12 @@
                 </li>
             </ul>
         </BcMenu>
-        <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
-            <div v-if="!loginInfo.status || runtimeData.chatInfo.show.id == 0" class="ss-card">
+        <div :class="'friend-list-space' + (uiStore.openSideBar ? ' open' : '')">
+            <div v-if="!loginInfo.status || chatStore.chatInfo.show.id == 0" class="ss-card">
                 <font-awesome-icon :icon="['fas', 'inbox']" />
                 <span>{{ $t('选择联系人开始聊天') }}</span>
             </div>
-            <div v-else-if="runtimeData.messageList.length > 0" class="ss-card cd">
+            <div v-else-if="chatStore.messageList.length > 0" class="ss-card cd">
                 <font-awesome-icon :icon="['fas', 'angles-right']" />
                 <span>(っ≧ω≦)っ</span>
                 <span>{{ $t('别划了别划了被看见了啦') }}</span>
@@ -193,7 +193,7 @@
     import Menu from 'vue3-bcui/packages/bc-menu/index'
     import Option from '@renderer/function/option'
 
-    import { runtimeData } from '@renderer/function/msg'
+    import { useSettingsStore } from '@renderer/state/settings'
     import {
         UserFriendElem,
         UserGroupElem,
@@ -217,11 +217,20 @@
     import { refreshFavicon } from '@renderer/function/favicon'
     import { backend } from '@renderer/runtime/backend'
     import History from '@renderer/components/History.vue'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useContactStore } from '@renderer/state/contact'
+    import { useChatStore } from '@renderer/state/chat'
 
     const $t = i18n.global.t
 
     defineOptions({ name: 'VueMessages' })
 
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const contactStore = useContactStore()
+    const chatStore = useChatStore()
+    const settingsStore = useSettingsStore()
     const props = defineProps<{ chat: any }>()
     const emit = defineEmits<{
         userClick: [data: any]
@@ -248,7 +257,7 @@
     function userClick(data: UserFriendElem & UserGroupElem) {
         const id = data.user_id ? data.user_id : data.group_id
         if (!trRead.value && id != props.chat.show.id) {
-            if (runtimeData.tags.openSideBar) {
+            if (uiStore.openSideBar) {
                 openLeftBar()
             }
             const back = {
@@ -265,7 +274,7 @@
                 // 更新聊天框
                 emit('userClick', back)
                 // 获取历史消息
-                if(!runtimeData.tags.nowGetHistory) {
+                if(!uiStore.nowGetHistory) {
                     emit('loadHistory', back)
                 }
                 // 重置消息面板
@@ -273,22 +282,22 @@
                 getOpt('chatview_name').then((chatViewName) => {
                     const getChatViewName = decodeURIComponent(chatViewName ?? '').
                         replaceAll('\\"', '')
-                    if (runtimeData.sysConfig.chatview_name != '' &&
-                            runtimeData.sysConfig.chatview_name != getChatViewName) {
-                        runtimeData.sysConfig.chatview_name = getChatViewName
+                    if (settingsStore.sysConfig.chatview_name != '' &&
+                            settingsStore.sysConfig.chatview_name != getChatViewName) {
+                        settingsStore.sysConfig.chatview_name = getChatViewName
                         runOpt('chatview_name', getChatViewName)
                     }
                 })
             }
             // 清除新消息标记
-            const item = runtimeData.baseOnMsgList.get(id)
+            const item = contactStore.baseOnMsgList.get(id)
             if(item) {
                 if(item.new_msg) {
                     item.new_msg = false
-                    runtimeData.newMsgCount--
+                    contactStore.newMsgCount--
                 }
                 item.highlight = undefined
-                runtimeData.baseOnMsgList.set(id, item)
+                contactStore.baseOnMsgList.set(id, item)
                 // 关闭所有通知
                 new Notify().closeAll((item.group_id ?? item.user_id).toString())
             }
@@ -318,7 +327,7 @@
      * 清空系统通知
      */
     function clearSystemNotices() {
-        runtimeData.systemNoticesList = []
+        contactStore.systemNoticesList = []
         new PopInfo().add(
             PopType.INFO,
             $t('已清空系统通知'),
@@ -329,7 +338,7 @@
      * 系统通知点击事件
      */
     function systemNoticeClick() {
-        if (runtimeData.tags.openSideBar) {
+        if (uiStore.openSideBar) {
             openLeftBar()
         }
         const back = {
@@ -338,7 +347,7 @@
             name: '系统消息',
         }
         emit('userClick', back)
-        runtimeData.sysConfig.chatview_name = 'SystemNotice'
+        settingsStore.sysConfig.chatview_name = 'SystemNotice'
         runOpt('chatview_name', 'SystemNotice')
     }
 
@@ -346,7 +355,7 @@
      * 侧边栏操作
      */
     function openLeftBar() {
-        runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
+        uiStore.openSideBar = !uiStore.openSideBar
     }
 
     /**
@@ -354,14 +363,14 @@
      */
     function readMsg(data: UserFriendElem & UserGroupElem) {
         const id = data.group_id ? data.group_id : data.user_id
-        const item = runtimeData.baseOnMsgList.get(id)
+        const item = contactStore.baseOnMsgList.get(id)
         if(item) {
             if(item.new_msg) {
                 item.new_msg = false
-                runtimeData.newMsgCount--
+                contactStore.newMsgCount--
             }
             item.highlight = undefined
-            runtimeData.baseOnMsgList.set(id, item)
+            contactStore.baseOnMsgList.set(id, item)
         }
         // 标记消息已读
         const type = data.group_id ? 'group' : 'user'
@@ -378,20 +387,20 @@
      */
     function cleanList() {
         // 刷新置顶列表
-        const info = runtimeData.sysConfig.top_info as {
+        const info = settingsStore.sysConfig.top_info as {
             [key: string]: number[]
         } | null
-        runtimeData.baseOnMsgList = new Map()
+        contactStore.baseOnMsgList = new Map()
         if (info != null) {
-            const topList = info[runtimeData.loginInfo.uin]
+            const topList = info[authStore.loginInfo.uin]
             if (topList !== undefined) {
-                runtimeData.userList.forEach((item) => {
+                contactStore.userList.forEach((item) => {
                     const id = Number(
                         item.user_id ? item.user_id : item.group_id,
                     )
                     if (topList.indexOf(id) >= 0) {
                         item.always_top = true
-                        runtimeData.baseOnMsgList.set(id, item)
+                        contactStore.baseOnMsgList.set(id, item)
                     }
                 })
             }
@@ -420,7 +429,7 @@
                 case 'read': {
                     if(!item.new_msg) {
                         item.new_msg = true
-                        runtimeData.newMsgCount++
+                        contactStore.newMsgCount++
                     }
                     break
                 }
@@ -431,7 +440,7 @@
                     break
                 case 'remove': {
                     const id = item.user_id ? item.user_id : item.group_id
-                    runtimeData.baseOnMsgList.delete(id)
+                    contactStore.baseOnMsgList.delete(id)
                     refreshFavicon()
                     break
                 }
@@ -464,10 +473,10 @@
      * @param value 是否置顶
      */
     function saveTop(item: any, value: boolean) {
-        const id = runtimeData.loginInfo.uin
+        const id = authStore.loginInfo.uin
         const upId = item.user_id ? item.user_id : item.group_id
         // 完整的设置 JSON
-        let topInfo = runtimeData.sysConfig.top_info as {
+        let topInfo = settingsStore.sysConfig.top_info as {
             [key: string]: number[]
         }
         if (topInfo == null || typeof topInfo !== 'object') {
@@ -497,7 +506,7 @@
         // 为消息列表内的对象刷新置顶标志
         item.always_top = value
         // 刷新群收纳盒
-        if(item.group_id && runtimeData.sysConfig.bubble_sort_user) {
+        if(item.group_id && settingsStore.sysConfig.bubble_sort_user) {
             if(value) {
                 showGroupAssist.value = false
             } else {
@@ -561,7 +570,7 @@
      * 显示群收纳盒
      */
     function showGroupAssistCheck() {
-        if(!showGroupAssist.value && runtimeData.chatInfo.show.id == 0 && backend.type != 'capacitor' ) {
+        if(!showGroupAssist.value && chatStore.chatInfo.show.id == 0 && backend.type != 'capacitor' ) {
             // 如果没有打开聊天框，打开收纳盒中的第一个群；这么做主要是为了防止动画穿帮
             const assistGroup = document.getElementById('group-assist-message-list-body')
             if(assistGroup && assistGroup.children.length > 0) {
@@ -611,7 +620,7 @@
             svg: 'clock-rotate-left',
             title: $t('历史记录')
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 </script>
 

@@ -241,7 +241,10 @@ import { Connector } from '@renderer/function/connect'
 import { PopInfo, PopType } from '@renderer/function/base'
 import { toRaw, ref, nextTick } from 'vue'
 import { delay, getTrueLang } from '@renderer/function/utils/systemUtil'
-import { runtimeData } from '@renderer/function/msg'
+import { useAuthStore } from '@renderer/state/auth'
+import { useContactStore } from '@renderer/state/contact'
+import { useChatStore } from '@renderer/state/chat'
+import { useUIStore } from '@renderer/state/ui'
 import {
     UserFriendElem,
     UserGroupElem,
@@ -249,6 +252,11 @@ import {
 import { qqLevelToEmoji } from '@renderer/function/utils/msgUtil'
 
 defineOptions({ name: 'ViewInfo' })
+
+const authStore = useAuthStore()
+const contactStore = useContactStore()
+const chatStore = useChatStore()
+const uiStore = useUIStore()
 
 const props = defineProps<{
     tags: any
@@ -291,28 +299,28 @@ function removeUser(nickname: string, group_id: number, user_id: number) {
                         },
                         'setGroupKick',
                     )
-                    runtimeData.popBoxList.shift()
+                    uiStore.popBoxList.shift()
                     showUserConfig.value = {}
                     const popInfo = {
                         title: $t('操作'),
                         html: `<span>${$t('正在确认操作……')}</span>`
                     }
-                    runtimeData.popBoxList.push(popInfo)
+                    uiStore.popBoxList.push(popInfo)
                     // 稍微等一下再刷新成员列表
                     delay(1000).then(() => {
                         Connector.send(
                             'get_group_member_list',
-                            { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                            { group_id: chatStore.chatInfo.show.id, no_cache: true },
                             'getGroupMemberList',
                         )
                         return delay(1000)
                     }).then(() => {
                         Connector.send(
                             'get_group_member_list',
-                            { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                            { group_id: chatStore.chatInfo.show.id, no_cache: true },
                             'getGroupMemberList',
                         )
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     })
                 },
             },
@@ -320,12 +328,12 @@ function removeUser(nickname: string, group_id: number, user_id: number) {
                 text: $t('取消'),
                 master: true,
                 fun: () => {
-                    runtimeData.popBoxList.shift()
+                    uiStore.popBoxList.shift()
                 },
             },
         ],
     }
-    runtimeData.popBoxList.push(popInfo)
+    uiStore.popBoxList.push(popInfo)
 }
 
 function copyText(text: any) {
@@ -352,14 +360,14 @@ function banMumber(event: Event, info: any) {
                     {
                         text: $t('确认'),
                         fun: () => {
-                            const name = runtimeData.jsonMap.ban_mumber?.name
+                            const name = authStore.jsonMap.ban_mumber?.name
                             if (name)
                                 Connector.send(name, {
-                                    group_id: runtimeData.chatInfo.show.id,
+                                    group_id: chatStore.chatInfo.show.id,
                                     user_id: info.user_id,
                                     duration: num * 60,
                                 }, 'banMumber')
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                             closeChatInfoPan()
                         },
                     },
@@ -368,12 +376,12 @@ function banMumber(event: Event, info: any) {
                         master: true,
                         fun: () => {
                             showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                 ],
             }
-            runtimeData.popBoxList.push(popInfo)
+            uiStore.popBoxList.push(popInfo)
         }
     }
 }
@@ -388,14 +396,14 @@ function updateMumberCard(event: Event, info: any) {
                 {
                     text: $t('确认'),
                     fun: () => {
-                        const name = runtimeData.jsonMap.set_group_nickname?.name
+                        const name = authStore.jsonMap.set_group_nickname?.name
                         if(name)
                             Connector.send(name, {
-                                group_id: runtimeData.chatInfo.show.id,
+                                group_id: chatStore.chatInfo.show.id,
                                 user_id: info.user_id,
                                 card: value,
                             }, 'updateGroupMemberInfo')
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                         closeChatInfoPan()
                     },
                 },
@@ -404,12 +412,12 @@ function updateMumberCard(event: Event, info: any) {
                     master: true,
                     fun: () => {
                         showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 }
 
@@ -423,14 +431,14 @@ function updateMumberTitle(event: Event, info: any) {
                 {
                     text: $t('确认'),
                     fun: () => {
-                        const name = runtimeData.jsonMap.set_group_title?.name
+                        const name = authStore.jsonMap.set_group_title?.name
                         if(name)
                             Connector.send(name, {
-                                group_id: runtimeData.chatInfo.show.id,
+                                group_id: chatStore.chatInfo.show.id,
                                 user_id: info.user_id,
                                 special_title: value,
                             }, 'updateGroupMemberInfo')
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                         closeChatInfoPan()
                     },
                 },
@@ -439,12 +447,12 @@ function updateMumberTitle(event: Event, info: any) {
                     master: true,
                     fun: () => {
                         showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 }
 
@@ -487,10 +495,10 @@ function closeChatInfoPan() {
  */
 function startChat(info: any) {
     // 如果是自己的话就忽略
-    if (info.user_id != runtimeData.loginInfo.uin) {
+    if (info.user_id != authStore.loginInfo.uin) {
 
         // 检查这个人是不是好友
-        let chat = runtimeData.userList.find(
+        let chat = contactStore.userList.find(
             (item: UserFriendElem & UserGroupElem) => {
                 return item.user_id == info.user_id
             },
@@ -508,7 +516,7 @@ function startChat(info: any) {
             } as UserFriendElem & UserGroupElem
             chat = user
         }
-        runtimeData.baseOnMsgList.set(Number(info.user_id), chat)
+        contactStore.baseOnMsgList.set(Number(info.user_id), chat)
         // 切换到这个聊天
         nextTick(() => {
             if (chat) {

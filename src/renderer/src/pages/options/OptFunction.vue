@@ -18,7 +18,7 @@
                     <span>{{ $t('好嘛 …… 不烦你 ……') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.close_notice"
+                    <input v-model="settingsStore.sysConfig.close_notice"
                         type="checkbox" name="close_notice" @change="save">
                     <div>
                         <div />
@@ -33,14 +33,14 @@
                     <span>{{ $t('全都放出来！全都放出来！') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.bubble_sort_user"
+                    <input v-model="settingsStore.sysConfig.bubble_sort_user"
                         type="checkbox" name="bubble_sort_user" @change="save">
                     <div>
                         <div />
                     </div>
                 </label>
             </div>
-            <div v-if="!runtimeData.sysConfig.bubble_sort_user" class="opt-item">
+            <div v-if="!settingsStore.sysConfig.bubble_sort_user" class="opt-item">
                 <div :class="checkDefault('group_notice_type')" />
                 <font-awesome-icon :icon="['fas', 'user-group']" />
                 <div>
@@ -48,7 +48,7 @@
                     <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
                 </div>
                 <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.group_notice_type"
+                    <select v-model="settingsStore.sysConfig.group_notice_type"
                         name="group_notice_type" title="group_notice_type" @change="save">
                         <option value="none">
                             {{ $t('不通知（默认）') }}
@@ -89,7 +89,7 @@
                     <span>{{ $t('小尾巴') }}</span>
                     <span>{{ $t('只会追加在最后一段话后面') }}</span>
                 </div>
-                <input v-model="runtimeData.sysConfig.msg_taill"
+                <input v-model="settingsStore.sysConfig.msg_taill"
                     class="ss-input" style="width: 150px"
                     type="text" name="msg_taill" @keyup="save">
             </div>
@@ -103,7 +103,7 @@
                     }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.send_face"
+                    <input v-model="settingsStore.sysConfig.send_face"
                         type="checkbox" name="send_face" @change="save">
                     <div>
                         <div />
@@ -118,14 +118,14 @@
                     <span>{{ $t('I have a shift I have an enter ...') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.use_breakline" type="checkbox"
+                    <input v-model="settingsStore.sysConfig.use_breakline" type="checkbox"
                         name="use_breakline" @change="breakLineTip($event);save($event)">
                     <div>
                         <div />
                     </div>
                 </label>
             </div>
-            <div v-if="runtimeData.sysConfig.use_breakline" class="opt-item">
+            <div v-if="settingsStore.sysConfig.use_breakline" class="opt-item">
                 <div :class="checkDefault('send_key')" />
                 <font-awesome-icon :icon="['fas', 'keyboard']" />
                 <div>
@@ -133,7 +133,7 @@
                     <span>{{ $t('你可以使用其他组合键来换行') }}</span>
                 </div>
                 <div class="select-wrapper">
-                    <select v-if="backend.platform === 'darwin' || backend.platform === 'ios'" v-model="runtimeData.sysConfig.send_key"
+                    <select v-if="backend.platform === 'darwin' || backend.platform === 'ios'" v-model="settingsStore.sysConfig.send_key"
                         name="send_key" title="send_key" @change="save">
                         <option value="none">
                             Enter
@@ -151,7 +151,7 @@
                             Command + Enter (⌘)
                         </option>
                     </select>
-                    <select v-else v-model="runtimeData.sysConfig.send_key"
+                    <select v-else v-model="settingsStore.sysConfig.send_key"
                         name="send_key" title="send_key" @change="save">
                         <option value="none">
                             Enter
@@ -180,7 +180,7 @@
                 </div>
                 <div class="select-wrapper">
                     <select
-                        v-model="runtimeData.sysConfig.record_recent_emoji"
+                        v-model="settingsStore.sysConfig.record_recent_emoji"
                         name="record_recent_emoji"
                         title="record_recent_emoji">
                         <option value="none">
@@ -211,7 +211,7 @@
                     }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.close_respond"
+                    <input v-model="settingsStore.sysConfig.close_respond"
                         type="checkbox" name="close_respond" @change="save">
                     <div>
                         <div />
@@ -228,7 +228,7 @@
                     }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.use_super_face"
+                    <input v-model="settingsStore.sysConfig.use_super_face"
                         type="checkbox" name="use_super_face" @change="save">
                     <div>
                         <div />
@@ -247,7 +247,7 @@
                     }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.opt_always_top"
+                    <input v-model="settingsStore.sysConfig.opt_always_top"
                         type="checkbox" name="opt_always_top" @change="save">
                     <div>
                         <div />
@@ -259,7 +259,7 @@
             <header>{{ $t('消息存储') }}</header>
             <div
                 class="opt-item"
-                :style="{ 'background': runtimeData.sysConfig.enable_local_history ? 'var(--color-card-1)' : 'none' }">
+                :style="{ 'background': settingsStore.sysConfig.enable_local_history ? 'var(--color-card-1)' : 'none' }">
                 <div :class="checkDefault('enable_local_history')" />
                 <font-awesome-icon :icon="['fas', 'database']" />
                 <div>
@@ -267,19 +267,19 @@
                     <span>{{ $t('保存消息记录何尝不是一种囤囤鼠') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.enable_local_history"
+                    <input v-model="settingsStore.sysConfig.enable_local_history"
                         type="checkbox" name="enable_local_history" @change="save">
                     <div>
                         <div />
                     </div>
                 </label>
             </div>
-            <div v-if="runtimeData.sysConfig.enable_local_history" class="tip">
+            <div v-if="settingsStore.sysConfig.enable_local_history" class="tip">
                 {{
                     $t('Stapxs QQ Lite 支持将消息缓存至本地，消息将以加密数据库的方式安全的保存。')
                 }}
             </div>
-            <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
+            <div v-if="settingsStore.sysConfig.enable_local_history" class="opt-item">
                 <div :class="checkDefault('mixed_load_messages')" />
                 <font-awesome-icon :icon="['fas', 'shuffle']" />
                 <div>
@@ -287,7 +287,7 @@
                     <span>{{ $t('优先加载本地缓存的消息以取得更快的加载速度') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.mixed_load_messages"
+                    <input v-model="settingsStore.sysConfig.mixed_load_messages"
                         type="checkbox"
                         name="mixed_load_messages"
                         @change="save">
@@ -296,7 +296,7 @@
                     </div>
                 </label>
             </div>
-            <div v-if="runtimeData.sysConfig.enable_local_history" class="opt-item">
+            <div v-if="settingsStore.sysConfig.enable_local_history" class="opt-item">
                 <div :class="checkDefault('disable_local_history_image_cache')" />
                 <font-awesome-icon :icon="['fas', 'image']" />
                 <div>
@@ -304,7 +304,7 @@
                     <span>{{ $t('开启后将删除已缓存图片，仅保留消息文本') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.disable_local_history_image_cache"
+                    <input v-model="settingsStore.sysConfig.disable_local_history_image_cache"
                         type="checkbox"
                         name="disable_local_history_image_cache"
                         @change="toggleLocalHistoryImageCache">
@@ -313,7 +313,7 @@
                     </div>
                 </label>
             </div>
-            <div v-if="runtimeData.sysConfig.enable_local_history && dbStats != null" class="db-stats-cards">
+            <div v-if="settingsStore.sysConfig.enable_local_history && dbStats != null" class="db-stats-cards">
                 <div class="db-stat-card">
                     <font-awesome-icon :icon="['fas', 'message']" />
                     <span class="db-stat-value">{{ dbStats.totalMessages.toLocaleString() }}</span>
@@ -335,7 +335,7 @@
             <header>{{ $t('分析信息') }}</header>
             <div
                 class="opt-item"
-                :style="{ 'background': runtimeData.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
+                :style="{ 'background': settingsStore.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
                 <div :class="checkDefault('close_ga')" />
                 <font-awesome-icon :icon="['fas', 'cloud']" />
                 <div>
@@ -343,7 +343,7 @@
                     <span>{{ $t('真的不让看吗（小声') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.close_ga" type="checkbox"
+                    <input v-model="settingsStore.sysConfig.close_ga" type="checkbox"
                         name="close_ga" @change="save">
                     <div style="background: var(--color-card-2)">
                         <div />
@@ -351,13 +351,13 @@
                 </label>
             </div>
             <div
-                v-if="runtimeData.sysConfig.close_ga !== true"
+                v-if="settingsStore.sysConfig.close_ga !== true"
                 class="tip">
                 {{
                     $t('我们使用 Umami 对应用的使用情况进行分析，它将不会上传精确到用户的信息；你也可以在这儿控制分析功能的开关和额外分析项。')
                 }}
             </div>
-            <div v-if="runtimeData.sysConfig.close_ga !== true" class="opt-item">
+            <div v-if="settingsStore.sysConfig.close_ga !== true" class="opt-item">
                 <font-awesome-icon :icon="['fas', 'file-invoice']" />
                 <div>
                     <span>{{ $t('分析统计信息') }}</span>
@@ -368,7 +368,7 @@
                     {{ $t('查看') }}
                 </button>
             </div>
-            <div v-if="runtimeData.sysConfig.close_ga !== true"
+            <div v-if="settingsStore.sysConfig.close_ga !== true"
                 class="opt-item">
                 <div :class="checkDefault('open_ga_bot')" />
                 <font-awesome-icon :icon="['fas', 'dice']" />
@@ -377,7 +377,7 @@
                     <span>{{ $t('在连接后上传所使用的 bot 的类型分析') }}</span>
                 </div>
                 <label class="ss-switch">
-                    <input v-model="runtimeData.sysConfig.open_ga_bot" type="checkbox"
+                    <input v-model="settingsStore.sysConfig.open_ga_bot" type="checkbox"
                         name="open_ga_bot" @change="save">
                     <div>
                         <div />
@@ -392,13 +392,18 @@
     import { ref, watch, markRaw } from 'vue'
     import { PopInfo, PopType } from '@renderer/function/base'
     import { runASWEvent as save, checkDefault, runAS } from '@renderer/function/option'
-    import { runtimeData } from '@renderer/function/msg'
     import { i18n } from '@renderer/main'
 
     import UmamiInfoPan from '@renderer/components/UmamiInfoPan.vue'
     import { backend } from '@renderer/runtime/backend'
     import { dbClearImages, dbGetStats } from '@renderer/function/utils/localHistoryUtil'
+    import { useSettingsStore } from '@renderer/state/settings'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useUIStore } from '@renderer/state/ui'
 
+    const settingsStore = useSettingsStore()
+    const authStore = useAuthStore()
+    const uiStore = useUIStore()
     const $t = i18n.global.t
 
     defineOptions({ name: 'ViewOptFunction' })
@@ -408,21 +413,21 @@
     const ndt = ref(0)
     const ndv = ref(false)
 
-    watch(() => runtimeData.loginInfo.uin, (uin) => {
-        if (uin && runtimeData.sysConfig.enable_local_history) {
+    watch(() => authStore.loginInfo.uin, (uin) => {
+        if (uin && settingsStore.sysConfig.enable_local_history) {
             loadDbStats()
         }
     }, { immediate: true })
 
-    watch(() => runtimeData.sysConfig.enable_local_history, (enabled) => {
-        if (enabled && runtimeData.loginInfo.uin) {
+    watch(() => settingsStore.sysConfig.enable_local_history, (enabled) => {
+        if (enabled && authStore.loginInfo.uin) {
             loadDbStats()
         }
     }, { immediate: true })
 
     async function loadDbStats() {
-        if (runtimeData.loginInfo?.uin) {
-            dbStats.value = await dbGetStats(runtimeData.loginInfo.uin)
+        if (authStore.loginInfo?.uin) {
+            dbStats.value = await dbGetStats(authStore.loginInfo.uin)
         }
     }
 
@@ -440,7 +445,7 @@
             full: true,
             allowQuickClose: false
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function msgND() {
@@ -461,12 +466,12 @@
                         text: $t('知道了'),
                         master: true,
                         fun: () => {
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                 ],
             }
-            runtimeData.popBoxList.push(popInfo)
+            uiStore.popBoxList.push(popInfo)
         }
     }
 
@@ -476,7 +481,7 @@
         const sender = event.target as HTMLInputElement
         if (!sender.checked) return
 
-        const selfId = runtimeData.loginInfo?.uin
+        const selfId = authStore.loginInfo?.uin
         if (!selfId) {
             new PopInfo().add(PopType.INFO, $t('请连接后在进行操作'))
             return
@@ -489,7 +494,7 @@
                 {
                     text: $t('确认'),
                     fun: async() =>  {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
 
                         const progressPop = {
                             title: $t('提醒'),
@@ -498,7 +503,7 @@
                         }
 
                         clearImageProgressText.value = $t('正在清理图片缓存 0/0（0%）')
-                        runtimeData.popBoxList.push(progressPop)
+                        uiStore.popBoxList.push(progressPop)
 
                         const result = await dbClearImages(selfId, (progress) => {
                             const text = $t('正在清理图片缓存 {deleted}/{total}（{percent}%）', {
@@ -510,8 +515,8 @@
                             progressPop.html = `<span>${text}</span>`
                         })
 
-                        if (runtimeData.popBoxList.length > 0) {
-                            runtimeData.popBoxList.shift()
+                        if (uiStore.popBoxList.length > 0) {
+                            uiStore.popBoxList.shift()
                         }
 
                         new PopInfo().add(
@@ -530,12 +535,12 @@
                     master: true,
                     fun: () => {
                         runAS('disable_local_history_image_cache', false)
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 }
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 </script>
 <style>

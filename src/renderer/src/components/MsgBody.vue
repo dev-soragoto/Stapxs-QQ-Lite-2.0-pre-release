@@ -18,7 +18,7 @@
             (data.revoke ? ' revoke' : '') +
             (isMe ? ' me' : '') +
             (selected ? ' selected' : '') +
-            (runtimeData.sysConfig.opt_ind_message === true ? ' right' : '')"
+            (settingsStore.sysConfig.opt_ind_message === true ? ' right' : '')"
         :data-raw="getMsgRawTxt(data)"
         :data-sender="data.sender.user_id"
         :data-time="data.time"
@@ -35,7 +35,7 @@
         </div>
         <div :class="msgBodyClass">
             <header>
-                <template v-if="runtimeData.chatInfo.show.type == 'group'">
+                <template v-if="chatStore.chatInfo.show.type == 'group'">
                     <span v-if="senderInfo && isRobot(senderInfo.user_id)" class="robot">{{ $t('机器人') }}</span>
                     <span v-if="senderInfo?.role == 'owner'" class="owner">{{ $t('群主') }}</span>
                     <span v-else-if="senderInfo?.role == 'admin'" class="admin">{{ $t('管理员') }}</span>
@@ -48,7 +48,7 @@
                     {{ data.sender.card ? data.sender.card : data.sender.nickname }}
                 </a>
                 <a v-else>
-                    {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
+                    {{ isMe ? authStore.loginInfo.nickname : chatStore.chatInfo.show.name }}
                 </a>
                 <a v-if="selected" class="time">
                     {{ Intl.DateTimeFormat(trueLang, {
@@ -132,7 +132,7 @@
                                 <div>
                                     <a>
                                         <font-awesome-icon :icon="['fas', 'file']" />
-                                        {{ runtimeData.chatInfo.show.type == 'group' ? $t('群文件') : $t('离线文件') }}
+                                        {{ chatStore.chatInfo.show.type == 'group' ? $t('群文件') : $t('离线文件') }}
                                     </a>
                                     <p>{{ loadFileBase( item, item.name ?? item.file_name, data.message_id) }}</p>
                                 </div>
@@ -335,7 +335,7 @@
                 <TransitionGroup name="emoji-like">
                     <template v-for="info, id in data.emojis" :key="'respond-' + data.message_id + '-' + id">
                         <div :class="{
-                            'me-send': info.includes(runtimeData.loginInfo.uin),
+                            'me-send': info.includes(authStore.loginInfo.uin),
                         }">
                             <EmojiFace :emoji="Emoji.get(Number(id))!" />
                             <span>{{ info.length }}</span>
@@ -355,7 +355,7 @@ import markdownit from 'markdown-it'
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
 import { watch, onMounted, nextTick, provide, inject, useTemplateRef, ref } from 'vue'
 import { Connector } from '@renderer/function/connect'
-import { runtimeData } from '@renderer/function/msg'
+import { useSettingsStore } from '@renderer/state/settings'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
 import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
@@ -377,6 +377,16 @@ import { linkView } from '@renderer/function/utils/linkViewUtil'
 import { MenuEventData, MergeStackData } from '@renderer/function/elements/information'
 import { backend } from '@renderer/runtime/backend'
 import { i18n } from '@renderer/main'
+import { useUIStore } from '@renderer/state/ui'
+import { useAuthStore } from '@renderer/state/auth'
+import { useContactStore } from '@renderer/state/contact'
+import { useChatStore } from '@renderer/state/chat'
+
+const uiStore = useUIStore()
+const authStore = useAuthStore()
+const contactStore = useContactStore()
+const chatStore = useChatStore()
+const settingsStore = useSettingsStore()
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
@@ -407,7 +417,7 @@ const {
 
 provide('message-content', data)
 
-const viewer = inject<any>('viewer')
+const { viewer: viewerRef } = inject<{ viewer: any }>('viewer', { viewer: null })
 
 const emit = defineEmits<{
     scrollToMsg: [...args: any[]]
@@ -432,16 +442,16 @@ const moveOptions: VMoveOptions<HTMLDivElement> = {
         target.style.transition = 'all 0.3'
     },
     leftLimit: {
-        value: runtimeData.inch * 0.75,
+        value: uiStore.inch * 0.75,
         type: 'px'
     },
     rightLimit: {
-        value: runtimeData.inch * 0.75,
+        value: uiStore.inch * 0.75,
         type: 'px'
     },
     moveCondition: {
         minMove: {
-            value: runtimeData.inch * 0.5,
+            value: uiStore.inch * 0.5,
             type: 'px'
         }
     }
@@ -474,13 +484,13 @@ function getAtMember(id: number): IUser | number {
     return re
 }
 function getUserById(id: number): IUser | undefined {
-    if (runtimeData.chatInfo.show.type === 'group') {
-        if (!runtimeData.chatInfo.info.group_members) return id
-        const user = runtimeData.chatInfo.info.group_members.find((item: IUser) => item.user_id == id)
+    if (chatStore.chatInfo.show.type === 'group') {
+        if (!chatStore.chatInfo.info.group_members) return id
+        const user = chatStore.chatInfo.info.group_members.find((item: IUser) => item.user_id == id)
         if (user) return user
         else return id
     }else {
-        const user = runtimeData.userList.find((item: IUser) => item.user_id === id)
+        const user = contactStore.userList.find((item: IUser) => item.user_id === id)
         if (user) return user
         else return id
     }
@@ -491,7 +501,7 @@ function getUserById(id: number): IUser | undefined {
 //#region == 方法函数 ================================================================
 
 async function loadCachedImages() {
-    const selfId = runtimeData.loginInfo?.uin
+    const selfId = authStore.loginInfo?.uin
     if (!selfId) return
     for (const seg of data.message) {
         if (seg.type !== 'image' || !seg.url) continue
@@ -513,7 +523,7 @@ function getAtClass(who: number | string) {
     if (isMe.value && type != 'merge') {
         back += ' me'
     }
-    if (runtimeData.loginInfo.uin == who || who == 'all') {
+    if (authStore.loginInfo.uin == who || who == 'all') {
         back += ' atme'
     }
     return back
@@ -526,8 +536,8 @@ function getAtName(item: { [key: string]: any }) {
     if (item.text != undefined) {
         return item.text
     } else {
-        for (let i = 0; i < runtimeData.chatInfo.info.group_members.length; i++) {
-            const user = runtimeData.chatInfo.info.group_members[i]
+        for (let i = 0; i < chatStore.chatInfo.info.group_members.length; i++) {
+            const user = chatStore.chatInfo.info.group_members[i]
             if (user.user_id == Number(item.qq)) {
                 return ('@' + (user.card != '' && user.card != null? user.card: user.nickname))
             }
@@ -558,14 +568,14 @@ function imgStyle(length: number, at: number, isFace: boolean) {
 }
 
 function imgClick(url: string) {
-    if (viewer && imageListHeader) {
-        viewer.openBySrc(imageListHeader, url)
+    if (viewerRef?.value && imageListHeader) {
+        viewerRef.value.openBySrc(imageListHeader, url)
     }
 }
 
 function preImgClick(img: string) {
-    if (viewer) {
-        viewer.open(new Img(img))
+    if (viewerRef?.value) {
+        viewerRef.value.open(new Img(img))
     }
 }
 
@@ -768,13 +778,13 @@ function linkViewPicErr() {
 }
 
 function hiddenUserInfo() {
-    if (runtimeData.chatInfo.info.now_member_info !== undefined) {
-        runtimeData.chatInfo.info.now_member_info = undefined
+    if (chatStore.chatInfo.info.now_member_info !== undefined) {
+        chatStore.chatInfo.info.now_member_info = undefined
     }
 }
 
 function getRepMsg(message_id: string) {
-    const list = runtimeData.messageList.filter((item) => {
+    const list = chatStore.messageList.filter((item) => {
         return item.message_id == message_id
     })
     if (list.length === 1) {
@@ -786,13 +796,13 @@ function getRepMsg(message_id: string) {
 }
 
 function downloadFile(fileData: any, message_id: string) {
-    let name = runtimeData.jsonMap.file_download?.private_name
-    if(runtimeData.chatInfo.show.type == 'group') {
-        name = runtimeData.jsonMap.file_download?.name
+    let name = authStore.jsonMap.file_download?.private_name
+    if(chatStore.chatInfo.show.type == 'group') {
+        name = authStore.jsonMap.file_download?.name
     }
     Connector.send(name, {
         file_id: fileData.file_id,
-        group_id: runtimeData.chatInfo.show.type == 'group' ? runtimeData.chatInfo.show.id : undefined,
+        group_id: chatStore.chatInfo.show.type == 'group' ? chatStore.chatInfo.show.id : undefined,
     },
         'downloadFile_' + message_id + '_' + btoa(encodeURIComponent(fileData.name ?? fileData.file_name)),
     )
@@ -812,7 +822,7 @@ function loadFileBase(
     message_id: StringifyOptions,
 ) {
     const ext = name.split('.').pop()
-    const msg = runtimeData.messageList.find(
+    const msg = chatStore.messageList.find(
         (item) => item.message_id === message_id,
     )
     if (ext && msg?.fileView == undefined) {
@@ -823,14 +833,14 @@ function loadFileBase(
         ]
         if (list.includes(ext)) {
             msg.fileView = {}
-            let dlName = runtimeData.jsonMap.file_download?.private_name
-            if(runtimeData.chatInfo.show.type == 'group') {
-                dlName = runtimeData.jsonMap.file_download?.name
+            let dlName = authStore.jsonMap.file_download?.private_name
+            if(chatStore.chatInfo.show.type == 'group') {
+                dlName = authStore.jsonMap.file_download?.name
             }
             if(dlName) {
                 Connector.send(dlName, {
                     file_id: fileData.file_id,
-                    group_id: runtimeData.chatInfo.show.type == 'group' ? runtimeData.chatInfo.show.id : undefined,
+                    group_id: chatStore.chatInfo.show.type == 'group' ? chatStore.chatInfo.show.id : undefined,
                 },
                     'loadFileBase_' + data.message_id + '_' + ext,
                 )
@@ -880,7 +890,7 @@ function sendPoke() {
 
 async function showPock() {
     if (data.message_id ==
-        runtimeData.messageList[runtimeData.messageList.length - 1].message_id &&
+        chatStore.messageList[chatStore.messageList.length - 1].message_id &&
         (new Date().getTime() - getViewTime(data.time)) / 1000 < 5) {
         let windowInfo = null as {
             x: number
@@ -903,7 +913,7 @@ async function showPock() {
 }
 
 function isSuperFaceMsg() {
-    if (runtimeData.sysConfig.use_super_face === false) return false
+    if (settingsStore.sysConfig.use_super_face === false) return false
     if (data.message.length !== 1) return false
     const seg = data.message.at(0)
     if (seg.type !== 'face') return
@@ -988,7 +998,7 @@ function openMerge(){
     })
     mergeData.imageList = imgList
 
-    runtimeData.mergeMsgStack.push(mergeData)
+    chatStore.mergeMsgStack.push(mergeData)
 }
 
 function isFace(item: any) {
@@ -1006,20 +1016,20 @@ function isFace(item: any) {
 
 onMounted(() => {
     isMe.value =
-        Number(runtimeData.loginInfo.uin) ===
+        Number(authStore.loginInfo.uin) ===
         Number(data.sender.user_id)
     watch(
-        () => runtimeData.chatInfo.info.group_members.length,
+        () => chatStore.chatInfo.info.group_members.length,
         () => {
             senderInfo.value =
-                runtimeData.chatInfo.info.group_members.filter(
+                chatStore.chatInfo.info.group_members.filter(
                     (item: any) => {
                         return item.user_id == data.sender.user_id
                     },
                 )[0]
         },
     )
-    senderInfo.value = runtimeData.chatInfo.info.group_members.filter(
+    senderInfo.value = chatStore.chatInfo.info.group_members.filter(
         (item: any) => {
             return item.user_id == data.sender.user_id
         },
@@ -1039,7 +1049,7 @@ onMounted(() => {
     if(isSuperFaceMsg()) {
         msgBodyClass.value += ' super-face'
     }
-    if(runtimeData.sysConfig.opt_ind_message === true) {
+    if(settingsStore.sysConfig.opt_ind_message === true) {
         msgBodyClass.value += ' right'
     }
 })

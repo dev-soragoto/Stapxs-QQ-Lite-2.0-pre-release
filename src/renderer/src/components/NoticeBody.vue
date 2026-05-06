@@ -57,7 +57,8 @@
 <script setup lang="ts">
     import { ref, onMounted } from 'vue'
     import { i18n } from '@renderer/main'
-    import { runtimeData } from '@renderer/function/msg'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useChatStore } from '@renderer/state/chat'
     import {
         getTimeConfig,
         getTrueLang,
@@ -66,6 +67,9 @@
     import { backend } from '@renderer/runtime/backend'
 
     const $t = i18n.global.t
+
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
 
     defineOptions({ name: 'NoticeBody' })
 
@@ -76,11 +80,11 @@
     const info = ref(props.data) as { [key: string]: any }
 
     function isMe(id: number) {
-        return runtimeData.loginInfo.uin === id
+        return authStore.loginInfo.uin === id
     }
 
     function getName(id: number) {
-        const back = runtimeData.chatInfo.info.group_members.filter(
+        const back = chatStore.chatInfo.info.group_members.filter(
             (item) => {
                 return item.user_id === id
             },
@@ -127,12 +131,12 @@
             info.value.notice_type &&
             info.value.notice_type.indexOf('recall') >= 0
         ) {
-            if (runtimeData.chatInfo.show.type === 'group') {
+            if (chatStore.chatInfo.show.type === 'group') {
                 const id = info.value.operator_id
                 // 寻找群成员信息
-                if (runtimeData.chatInfo.info.group_members !== undefined) {
+                if (chatStore.chatInfo.info.group_members !== undefined) {
                     const back =
-                        runtimeData.chatInfo.info.group_members.filter(
+                        chatStore.chatInfo.info.group_members.filter(
                             (item) => {
                                 return item.user_id === Number(id)
                             },
@@ -147,13 +151,13 @@
                     info.value.name = id
                 }
             } else {
-                info.value.name = runtimeData.chatInfo.show.name
+                info.value.name = chatStore.chatInfo.show.name
             }
         }
         // poke 通知创建对应的动画
         // PS：只有最后一条 poke 通知会触发动画，避免反复触发动画
         if (info.value.sub_type === 'poke' && info.value.pokeMe &&
-            info.value == runtimeData.messageList[runtimeData.messageList.length - 1]) {
+            info.value == chatStore.messageList[chatStore.messageList.length - 1]) {
                 let item = document.getElementById('app')
                 if (backend.isDesktop()) {
                     item = document.getElementById('notice-' + props.id)?.getElementsByClassName('space')[0] as HTMLElement

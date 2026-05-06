@@ -57,7 +57,6 @@
 </template>
 
 <script lang="ts">
-    import { runtimeData } from '@renderer/function/msg'
     import { PopInfo, PopType } from '@renderer/function/base'
 
     type LyricLine = { [key: number]: string }
@@ -188,6 +187,9 @@
     import { computed, onMounted, ref } from 'vue'
     import { backend } from '@renderer/runtime/backend'
     import { registerExtraOptionCard, registerExtraOptionItem } from '@renderer/function/option'
+    import { useSettingsStore } from '@renderer/state/settings'
+
+    const settingsStore = useSettingsStore()
 
     const audio = audoState
 
@@ -300,7 +302,7 @@
                     const translatedLyric = parseLyric(data.tlyric?.lyric || '')
                     // 默认展示"翻译 + 原文"合并结果：同时间点优先使用翻译歌词
                     // 当用户开启"显示原歌词"时，仅展示原文歌词。
-                    const final = runtimeData.sysConfig.original_lyrics ? originalLyric : mergeLyric(originalLyric, translatedLyric)
+                    const final = settingsStore.sysConfig.original_lyrics ? originalLyric : mergeLyric(originalLyric, translatedLyric)
 
                     if (currentMusic.value === musicRef) {
                         musicRef.lyric = final
@@ -358,7 +360,7 @@
                     nowLyric.value = undefined
                 }
 
-                if(runtimeData.sysConfig.glabal_lyric == true) {
+                if(settingsStore.sysConfig.glabal_lyric == true) {
                     emit('update-lyric', nowLyric.value?.text ?? currentMusic.value.title)
                 } else {
                     emit('update-lyric', '')

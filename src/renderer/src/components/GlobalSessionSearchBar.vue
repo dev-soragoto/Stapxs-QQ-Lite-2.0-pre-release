@@ -39,7 +39,7 @@
                                     :session="session"
                                     from="global-search" />
                                 <span v-if="
-                                    (session.group_id ?? session.user_id) === runtimeData.chatInfo.show.id">
+                                    (session.group_id ?? session.user_id) === chatStore.chatInfo.show.id">
                                     {{ $t('当前会话') }}
                                 </span>
                             </div>
@@ -62,11 +62,13 @@ import {
 } from 'vue'
 import TinySessionBody from './TinySessionBody.vue'
 import { vSearch, useEventListener } from '@renderer/function/utils/appUtil'
-import { runtimeData } from '@renderer/function/msg'
 import { UserFriendElem, UserGroupElem } from '@renderer/function/elements/information'
 import { login } from '@renderer/function/connect'
 import { backend } from '@renderer/runtime/backend'
 import { matchPinyin } from '@renderer/function/utils/pinyin'
+import { useUIStore } from '@renderer/state/ui'
+import { useContactStore } from '@renderer/state/contact'
+import { useChatStore } from '@renderer/state/chat'
 
 //#region == 移植相关 ====================================================================
 /**
@@ -79,9 +81,9 @@ type Session = UserGroupElem & UserFriendElem
  */
 function changeSession(session: Session) {
     const id = session.user_id ?? session.group_id
-    if (id === runtimeData.chatInfo.show.id) return
+    if (id === chatStore.chatInfo.show.id) return
 
-    runtimeData.baseOnMsgList.set(Number(session.user_id ?? session.group_id), session)
+    contactStore.baseOnMsgList.set(Number(session.user_id ?? session.group_id), session)
     // 切换到这个聊天
     nextTick(() => {
         const item = document.getElementById(
@@ -112,11 +114,14 @@ function sessionSearchMatch(session: Session, query: string): boolean {
  * 判断有没有弹窗
  */
 function hasPopBox() {
-    return runtimeData.popBoxList.length > 0
+    return uiStore.popBoxList.length > 0
 }
 //#endregion
 
 //#region == 常量声明 ====================================================================
+const uiStore = useUIStore()
+const contactStore = useContactStore()
+const chatStore = useChatStore()
 const show = ref<boolean>(false)
 const input = useTemplateRef<HTMLInputElement>('input')
 const sessionList = useTemplateRef<HTMLElement>('sessionList')
@@ -174,8 +179,8 @@ function close() {
 function init() {
     // 主要列表
     const mainList: Session[] = []
-    for (const session of runtimeData.userList) {
-        if (runtimeData.onMsgList.find(
+    for (const session of contactStore.userList) {
+        if (contactStore.onMsgList.find(
             s => (
                 s.user_id && s.user_id === session.user_id
             ) || (
@@ -185,7 +190,7 @@ function init() {
         mainList.push(session)
     }
 
-    searchInfo.originList = shallowReactive([...runtimeData.onMsgList, ...mainList])
+    searchInfo.originList = shallowReactive([...contactStore.onMsgList, ...mainList])
 
     searchInfo.query = shallowReactive([])
     searchInfo.isSearch = false
@@ -197,7 +202,7 @@ function init() {
  * @param session 被选择的会话
  */
 function choiceSession(session: Session) {
-    runtimeData.tags.openSideBar = false
+    uiStore.openSideBar = false
 
     changeSession(session)
     close()

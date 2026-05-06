@@ -1,5 +1,5 @@
 <template>
-    <div :class="'merge-pan' + (runtimeData.mergeMsgStack.length > 0 ? ' show' : '')">
+    <div :class="'merge-pan' + (chatStore.mergeMsgStack.length > 0 ? ' show' : '')">
         <div @click="closeMergeMsg" />
         <div class="ss-card">
             <div>
@@ -11,7 +11,7 @@
             <div v-if="nowData === undefined">
                 <!-- 无内容 -->
             </div>
-            <TransitionGroup v-else :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
+            <TransitionGroup v-else :name="settingsStore.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
                 <template v-for="(msgIndex, index) in nowData.messageList" :key="'merge-' + nowData.forwardMsg.message[0].id + '-' + index">
                     <NoticeBody v-if=" isShowTime( nowData.messageList[index - 1] ?
                                     nowData.messageList[index - 1].time : undefined, msgIndex.time, index == 0)"
@@ -39,15 +39,18 @@
     import NoticeBody from '@renderer/components/NoticeBody.vue'
 
     import { i18n } from '@renderer/main'
-    import { runtimeData } from '@renderer/function/msg'
+    import { useSettingsStore } from '@renderer/state/settings'
     import { type MergeStackData } from '@renderer/function/elements/information'
     import { isDeleteMsg, isShowTime } from '@renderer/function/utils/msgUtil'
+    import { useChatStore } from '@renderer/state/chat'
 
     defineOptions({ name: 'MergePan' })
 
     const $t = i18n.global.t
 
-    const stack = runtimeData.mergeMsgStack
+    const chatStore = useChatStore()
+    const settingsStore = useSettingsStore()
+    const stack = chatStore.mergeMsgStack
     const nowData = ref<MergeStackData | undefined>()
 
     /**
@@ -72,12 +75,12 @@
 
     onMounted(() => {
         watch(
-            () => runtimeData.mergeMsgStack.length,
+            () => chatStore.mergeMsgStack.length,
             () => {
                 // 最后一个保留下来做展开关闭动画
                 if (stack.length === 0) {
                     // 清理下垃圾
-                    runtimeData.mergeMessageImgList = undefined
+                    chatStore.mergeMessageImgList = undefined
                 }
                 else nowData.value = stack.at(-1)
             }
@@ -85,8 +88,8 @@
         watch(
             () => nowData.value?.imageList,
             () => {
-                if (runtimeData.mergeMsgStack.length === 0 || nowData.value?.imageList === undefined) return
-                runtimeData.mergeMessageImgList = nowData.value.imageList
+                if (chatStore.mergeMsgStack.length === 0 || nowData.value?.imageList === undefined) return
+                chatStore.mergeMessageImgList = nowData.value.imageList
             }
         )
     })

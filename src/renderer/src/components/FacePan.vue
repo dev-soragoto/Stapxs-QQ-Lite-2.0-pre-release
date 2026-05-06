@@ -90,13 +90,13 @@
                             @click="reloadRoamingStamp" />
                     </div>
                     <div class="face">
-                        <div v-if="runtimeData.stickerCache && runtimeData.stickerCache.length <= 0"
+                        <div v-if="stickerStore.stickerCache && stickerStore.stickerCache.length <= 0"
                             class="ss-card">
                             <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                             <span>{{ $t('一无所有') }}</span>
                         </div>
-                        <template v-else-if="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
-                            <span v-for="(url, index) in runtimeData.stickerCache" :key="'stickers-' + index">
+                        <template v-else-if="stickerStore.stickerCache && stickerStore.stickerCache.length > 0">
+                            <span v-for="(url, index) in stickerStore.stickerCache" :key="'stickers-' + index">
                                 <img
                                     v-show="url != 'end'"
                                     v-tooltip="customFaceTooltip(url)"
@@ -133,23 +133,23 @@
                             :title="$t('选择文件夹')"
                             @click="selectLocalEmojiFolder" />
                         <font-awesome-icon
-                            v-if="runtimeData.sysConfig.local_emoji_folder"
+                            v-if="settingsStore.sysConfig.local_emoji_folder"
                             :icon="['fas', 'fa-rotate-right']"
                             :title="$t('重新加载')"
                             @click="reloadLocalEmojis" />
                     </div>
                     <div class="face">
-                        <div v-if="!runtimeData.sysConfig.local_emoji_folder"
+                        <div v-if="!settingsStore.sysConfig.local_emoji_folder"
                             class="ss-card">
                             <font-awesome-icon :icon="['fas', 'folder-open']" />
                             <span>{{ $t('选择文件夹') }}</span>
                         </div>
-                        <div v-else-if="runtimeData.sysConfig.local_emoji_folder && localEmojis.length <= 0"
+                        <div v-else-if="settingsStore.sysConfig.local_emoji_folder && localEmojis.length <= 0"
                             class="ss-card">
                             <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                             <span>{{ $t('暂无图片') }}</span>
                         </div>
-                        <template v-else-if="runtimeData.stickerCache && runtimeData.stickerCache.length > 0">
+                        <template v-else-if="stickerStore.stickerCache && stickerStore.stickerCache.length > 0">
                             <span v-for="(emoji, index) in localEmojis" :key="index">
                                 <img
                                     v-tooltip="customFaceTooltip(emoji.url)"
@@ -172,7 +172,6 @@ import {
     SQCodeElem,
 } from '@renderer/function/elements/information'
 import { computed, ComputedRef, Ref, ShallowRef, shallowRef } from 'vue'
-import { runtimeData } from '@renderer/function/msg'
 import { Connector } from '@renderer/function/connect'
 import { backend } from '@renderer/runtime/backend'
 import Option from '@renderer/function/option'
@@ -184,6 +183,9 @@ import { VueCompData } from '@renderer/function/elements/vueComp'
 import CustomFaceTooltip from './tooltip/CustomFaceTooltip.vue'
 import { useLocalStorage, vTooltip } from '@renderer/function/utils/appUtil'
 import app from '@renderer/main'
+import { useStickerStore } from '@renderer/state/sticker'
+import { useSettingsStore } from '@renderer/state/settings'
+import { useAuthStore } from '@renderer/state/auth'
 
 const { recordList: recentEmojisId, showList: recentEmojisList } =
     getRecentEmojiRecord<number>('recent-emojis-id')
@@ -209,6 +211,9 @@ interface LocalEmoji {
 }
 
 const popInfo = new PopInfo()
+const stickerStore = useStickerStore()
+const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
 
 const stickerPage = shallowRef(1)
 const localEmojis = shallowRef<LocalEmoji[]>([])
@@ -220,13 +225,13 @@ const emit = defineEmits<{
 
 // 加载漫游表情
 if (
-    runtimeData.stickerCache === undefined &&
-    runtimeData.jsonMap.roaming_stamp
+    stickerStore.stickerCache === undefined &&
+    authStore.jsonMap.roaming_stamp
 ) {
     reloadRoamingStamp()
 }
 // 加载本地表情
-if (backend.isDesktop() && runtimeData.sysConfig.local_emoji_folder) {
+if (backend.isDesktop() && settingsStore.sysConfig.local_emoji_folder) {
     reloadLocalEmojis()
 }
 
@@ -246,18 +251,18 @@ function addBaseFace(id: number) {
 
 //#region == 漫游表情相关函数 ===========
 function reloadRoamingStamp() {
-    runtimeData.stickerCache = undefined
-    if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full') {
+    stickerStore.stickerCache = undefined
+    if (authStore.jsonMap.roaming_stamp.pagerType == 'full') {
         // 全量分页，返回所有内容
         Connector.send(
-            runtimeData.jsonMap.roaming_stamp.name,
+            authStore.jsonMap.roaming_stamp.name,
             { count: 48 },
             'getRoamingStamp_48',
         )
     } else {
         // 默认不分页，返回所有内容
         Connector.send(
-            runtimeData.jsonMap.roaming_stamp.name,
+            authStore.jsonMap.roaming_stamp.name,
             {},
             'getRoamingStamp',
         )
@@ -270,13 +275,13 @@ function stickersScroll(e: Event) {
         target.scrollHeight - target.scrollTop <
         target.clientHeight + 0.5
     ) {
-        if (runtimeData.stickerCache) {
-            if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full' &&
-                runtimeData.stickerCache[runtimeData.stickerCache.length - 1] != 'end') {
+        if (stickerStore.stickerCache) {
+            if (authStore.jsonMap.roaming_stamp.pagerType == 'full' &&
+                stickerStore.stickerCache[stickerStore.stickerCache.length - 1] != 'end') {
                 const count = 48 + 48 * stickerPage.value
                 // 全量分页，返回所有内容（napcat 行为）
                 Connector.send(
-                    runtimeData.jsonMap.roaming_stamp.name,
+                    authStore.jsonMap.roaming_stamp.name,
                     { count: count },
                     'getRoamingStamp_' + count,
                 )
@@ -292,7 +297,7 @@ function addImgFace(url: string) {
         true,
     )
     // 直接发送表情
-    if(runtimeData.sysConfig.send_face == true) {
+    if(settingsStore.sysConfig.send_face == true) {
         emit('sendMsg')
     }
 }
@@ -329,7 +334,7 @@ async function selectLocalEmojiFolder() {
  */
 async function reloadLocalEmojis() {
     try {
-        const folderPath = runtimeData.sysConfig.local_emoji_folder
+        const folderPath = settingsStore.sysConfig.local_emoji_folder
         if (!folderPath) {
             localEmojis.value = []
             return
@@ -388,7 +393,7 @@ async function addLocalEmoji(emoji: LocalEmoji) {
             true,
         )
         // 如果设置了直接发送表情
-        if(runtimeData.sysConfig.send_face == true) {
+        if(settingsStore.sysConfig.send_face == true) {
             emit('sendMsg')
         }
     } catch (error) {
@@ -405,9 +410,9 @@ function getRecentEmojiRecord<T>(storeId: string): {
 } {
     const recordList = useLocalStorage<T[]>(storeId, [])
     const showList = computed(() => {
-        if (runtimeData.sysConfig.record_recent_emoji === 'none') {
+        if (settingsStore.sysConfig.record_recent_emoji === 'none') {
             return []
-        } else if (runtimeData.sysConfig.record_recent_emoji === 'order') {
+        } else if (settingsStore.sysConfig.record_recent_emoji === 'order') {
             return recordList.value.slice(0, 30)
         } else {
             const timesMap = new Map<T, number>()
@@ -428,9 +433,9 @@ function getRecentEmojiRecord<T>(storeId: string): {
 }
 
 function recordRecentEmoji<T>(recordList: ShallowRef<T[]>, id: T) {
-    if (runtimeData.sysConfig.record_recent_emoji === 'none') return
+    if (settingsStore.sysConfig.record_recent_emoji === 'none') return
     let limit: number
-    switch (runtimeData.sysConfig.record_recent_emoji) {
+    switch (settingsStore.sysConfig.record_recent_emoji) {
         case 'order':
             limit = 30
             break
@@ -444,7 +449,7 @@ function recordRecentEmoji<T>(recordList: ShallowRef<T[]>, id: T) {
             throw new Error('Invalid recent emoji record setting')
     }
     const list = recordList.value
-    if (runtimeData.sysConfig.record_recent_emoji === 'order') {
+    if (settingsStore.sysConfig.record_recent_emoji === 'order') {
         const index = list.indexOf(id)
         if (index !== -1) {
             list.splice(index, 1)

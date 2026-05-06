@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { shallowRef } from 'vue'
+import { ref } from 'vue'
 
 export const useStickerStore = defineStore('sticker', () => {
-    const stickerCache = shallowRef<any[]>([])
+    const stickerCache = ref<any[]>([])
 
     return {
         stickerCache,

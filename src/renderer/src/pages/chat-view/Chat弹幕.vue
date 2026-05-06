@@ -12,7 +12,7 @@
         id="chat-pan"
         :class="
             'chat-pan' +
-                (runtimeData.tags.openSideBar ? ' open' : '') +
+                (uiStore.openSideBar ? ' open' : '') +
                 (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')
         ">
         <div class="danmu-pan">
@@ -87,7 +87,7 @@
                         :class="
                             'danmu' +
                                 (index == 0 ? ' new' : '') +
-                                (runtimeData.loginInfo.uin == danmu.id
+                                (authStore.loginInfo.uin == danmu.id
                                     ? ' me'
                                     : '') +
                                 (parseIndex != index && parseIndex != -1
@@ -298,7 +298,7 @@
                         </defs>
                     </svg>
                     <span class="name">{{
-                        runtimeData.chatInfo.show.name
+                        chatStore.chatInfo.show.name
                     }}</span>
                     <div class="info">
                         <span class="time">
@@ -331,7 +331,6 @@
 
     import { Connector } from '@renderer/function/connect'
     import { ref, onMounted, watch, useTemplateRef, nextTick } from 'vue'
-    import { runtimeData } from '@renderer/function/msg'
     import { getMsgRawTxt, sendMsgRaw } from '@renderer/function/utils/msgUtil'
     import { parseMsg } from '@renderer/function/sender'
     import {
@@ -342,9 +341,15 @@
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
     import { i18n } from '@renderer/main'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useChatStore } from '@renderer/state/chat'
 
     defineOptions({ name: 'ChatDan' })
 
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
     const $t = i18n.global.t
 
     const props = defineProps<{
@@ -384,7 +389,7 @@
     })
 
     function openLeftBar() {
-        runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
+        uiStore.openSideBar = !uiStore.openSideBar
     }
 
     function pause(index: number) {
@@ -495,20 +500,20 @@
         if (opt.value.loop) {
             // 如果弹幕列表长度是 20，请求更多消息
             if (props.list.length == 20) {
-                const type = runtimeData.chatInfo.show.type
-                const id = runtimeData.chatInfo.show.id
+                const type = chatStore.chatInfo.show.type
+                const id = chatStore.chatInfo.show.id
                 const firstMsgId = props.list[0].message_id ?? 0
                 let name
                 const fullPage =
-                    runtimeData.jsonMap.message_list?.pagerType ==
+                    authStore.jsonMap.message_list?.pagerType ==
                     'full'
                 if (
-                    runtimeData.jsonMap.message_list &&
+                    authStore.jsonMap.message_list &&
                     type != 'group'
                 ) {
-                    name = runtimeData.jsonMap.message_list.private_name
+                    name = authStore.jsonMap.message_list.private_name
                 } else {
-                    name = runtimeData.jsonMap.message_list.name
+                    name = authStore.jsonMap.message_list.name
                 }
                 Connector.send(
                     name ?? 'get_chat_history',
@@ -516,7 +521,7 @@
                         group_id: type == 'group' ? id : undefined,
                         user_id: type != 'group' ? id : undefined,
                         message_id: firstMsgId,
-                        count: fullPage? runtimeData.messageList.length + 10: 10,
+                        count: fullPage? chatStore.messageList.length + 10: 10,
                     },
                     'getChatHistory',
                 )

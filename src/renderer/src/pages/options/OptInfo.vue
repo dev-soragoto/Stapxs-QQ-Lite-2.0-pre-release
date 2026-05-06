@@ -12,15 +12,15 @@
         <!-- 公用设置 -->
         <!-- 群设置 -->
         <template v-if="type == 'group'">
-            <div v-if="runtimeData.chatInfo.info.me_info.role == 'owner' ||
-                     runtimeData.chatInfo.info.me_info.role == 'admin'"
+            <div v-if="chatStore.chatInfo.info.me_info.role == 'owner' ||
+                     chatStore.chatInfo.info.me_info.role == 'admin'"
                 class="opt-item">
                 <font-awesome-icon :icon="['fas', 'pen']" />
                 <div>
                     <span>{{ $t('群聊名称') }}</span>
                     <span>{{ $t('"你们真是害人不浅呐你们这个群"') }}</span>
                 </div>
-                <input v-model="runtimeData.chatInfo.show.name" class="ss-input"
+                <input v-model="chatStore.chatInfo.show.name" class="ss-input"
                     style="width: 150px" type="text" @keyup="setGroupName">
             </div>
             <div class="opt-item">
@@ -29,7 +29,7 @@
                     <span>{{ $t('我的群昵称') }}</span>
                     <span>{{ $t('￡爺↘僞ηι慹著彡') }}</span>
                 </div>
-                <input v-model="runtimeData.chatInfo.info.me_info.card" class="ss-input"
+                <input v-model="chatStore.chatInfo.info.me_info.card" class="ss-input"
                     style="width: 150px" type="text" @change="setGroupCard">
             </div>
             <div class="opt-item">
@@ -57,7 +57,10 @@
 </template>
 
 <script lang="ts" setup>
-    import { runtimeData } from '@renderer/function/msg'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useContactStore } from '@renderer/state/contact'
+    import { useChatStore } from '@renderer/state/chat'
     import { Connector } from '@renderer/function/connect'
     import { changeGroupNotice, reloadUsers } from '@renderer/function/utils/appUtil'
     import { canGroupNotice } from '@renderer/function/utils/msgUtil'
@@ -65,6 +68,10 @@
 
     defineOptions({ name: 'ViewOptInfo' })
 
+    const authStore = useAuthStore()
+    const contactStore = useContactStore()
+    const chatStore = useChatStore()
+    const uiStore = useUIStore()
     const $t = i18n.global.t
 
     const props = defineProps<{
@@ -90,7 +97,7 @@
      * @param event 按键事件
      */
     function setGroupCard(event: Event) {
-        emit('update_mumber_card', event, runtimeData.chatInfo.info.me_info)
+        emit('update_mumber_card', event, chatStore.chatInfo.info.me_info)
     }
 
     /**
@@ -100,13 +107,13 @@
     function setGroupName(event: KeyboardEvent) {
         if (
             event.key === 'Enter' &&
-            runtimeData.chatInfo.show.name != ''
+            chatStore.chatInfo.show.name != ''
         ) {
             Connector.send(
                 'set_group_name',
                 {
                     group_id: props.chat.show.id,
-                    group_name: runtimeData.chatInfo.show.name,
+                    group_name: chatStore.chatInfo.show.name,
                 },
                 'setGroupName',
             )
@@ -123,30 +130,30 @@
                 {
                     text: $t('确定'),
                     fun: () => {
-                        if (runtimeData.jsonMap.leave_group?.name) {
-                            Connector.send(runtimeData.jsonMap.leave_group?.name,
+                        if (authStore.jsonMap.leave_group?.name) {
+                            Connector.send(authStore.jsonMap.leave_group?.name,
                                 { group_id: props.chat.show.id },
                                 'leaveGroup')
                         }
                         // 从消息列表中删除该群聊
-                        runtimeData.baseOnMsgList.delete(props.chat.show.id)
+                        contactStore.baseOnMsgList.delete(props.chat.show.id)
                         // 关闭群聊窗口
-                        runtimeData.chatInfo.show.id = 0
+                        chatStore.chatInfo.show.id = 0
                         // 刷新好友/群列表
                         reloadUsers()
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
                 {
                     text: $t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 </script>
 

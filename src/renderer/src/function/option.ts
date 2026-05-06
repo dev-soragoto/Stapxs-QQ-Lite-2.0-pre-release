@@ -16,9 +16,9 @@ import languageConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import { i18n } from '@renderer/main'
 import { markRaw, defineAsyncComponent, reactive } from 'vue'
 import { Logger, LogType, PopInfo, PopType } from './base'
-import { runtimeData } from './msg'
 import { useSettingsStore } from '@renderer/state/settings'
 import { useUIStore } from '@renderer/state/ui'
+import { useChatStore } from '@renderer/state/chat'
 import {
     loadWinColor,
     sendStatEvent,
@@ -228,7 +228,8 @@ export function registerExtraOptionItem(cardId: string, item: ExtraOptionItem) {
 
 function updateChatPan() {
     const uiStore = useUIStore()
-    runtimeData.chatInfo.show.id = 0
+    const chatStore = useChatStore()
+    chatStore.chatInfo.show.id = 0
     uiStore.openSideBar = true
 }
 

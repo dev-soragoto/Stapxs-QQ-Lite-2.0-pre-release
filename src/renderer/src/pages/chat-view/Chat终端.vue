@@ -15,12 +15,12 @@
 <template>
     <div
         id="chat-pan"
-        :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open' : '') + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '') ">
-        <span v-if="tags.fullscreen" class="shell-pan-title">admin@{{ new URL(runtimeData.sysConfig.address).hostname }}:/Volumes/Contacts/{{ runtimeData.chatInfo.show.id }}</span>
+        :class="'chat-pan' + (uiStore.openSideBar ? ' open' : '') + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '') ">
+        <span v-if="tags.fullscreen" class="shell-pan-title">admin@{{ new URL(settingsStore.sysConfig.address).hostname }}:/Volumes/Contacts/{{ chatStore.chatInfo.show.id }}</span>
         <div id="shell-pan" class="shell-pan">
             <div>
                 <template
-                    v-for="(msgItem, index) in runtimeData.messageList"
+                    v-for="(msgItem, index) in chatStore.messageList"
                     :key="msgItem.message_id">
                     <div
                         v-if="msgItem.post_type == 'message'
@@ -35,7 +35,7 @@
                             :class="
                                 'sname s' +
                                     msgItem.sender.role +
-                                    (runtimeData.loginInfo.uin == msgItem.sender.user_id
+                                    (authStore.loginInfo.uin == msgItem.sender.user_id
                                         ? ' smine'
                                         : '')
                             "
@@ -47,10 +47,10 @@
                             }}{{ hasReply(msg) ?? ''
                             }}{{
                                 msgItem.sub_type == 'friend'
-                                    ? runtimeData.loginInfo.uin ==
+                                    ? authStore.loginInfo.uin ==
                                         msgItem.sender.user_id
-                                        ? runtimeData.loginInfo.nickname
-                                        : runtimeData.chatInfo.show.name
+                                        ? authStore.loginInfo.nickname
+                                        : chatStore.chatInfo.show.name
                                     : ''
                             }}{{ msgItem.sender.user_id == 0 ? '' : ': ' }}
                         </span>
@@ -78,12 +78,12 @@
                                 <span>
                                     <font-awesome-icon
                                         :icon="['fas', 'folder-open']" />
-                                    {{ runtimeData.chatInfo.show.name }}
+                                    {{ chatStore.chatInfo.show.name }}
                                 </span>
                                 <span style="color: var(--color-main-0)">
                                     <font-awesome-icon
                                         :icon="['fas', 'plug']" />
-                                    {{ runtimeData.sysConfig.address }}
+                                    {{ settingsStore.sysConfig.address }}
                                 </span>
                             </div>
                             <div style="flex: 1" />
@@ -119,12 +119,12 @@
                         <span>
                             <font-awesome-icon
                                 :icon="['fas', 'folder-open']" />
-                            {{ runtimeData.chatInfo.show.name }}
+                            {{ chatStore.chatInfo.show.name }}
                             {{ tags.replyName ? ' -> ' + tags.replyName : '' }}
                         </span>
                         <span style="color: var(--color-main-0)">
                             <font-awesome-icon :icon="['fas', 'plug']" />{{
-                                runtimeData.sysConfig.address
+                                settingsStore.sysConfig.address
                             }}
                         </span>
                     </div>
@@ -165,7 +165,7 @@
 
     import { nextTick, ref, watch, onMounted, markRaw } from 'vue'
     import { Connector } from '@renderer/function/connect'
-    import { runtimeData } from '@renderer/function/msg'
+    import { useSettingsStore } from '@renderer/state/settings'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import {
         MsgItemElem,
@@ -182,9 +182,18 @@
     } from '@renderer/function/base'
     import { sendMsgRaw, getMsgRawTxt, getShowName } from '@renderer/function/utils/msgUtil'
     import { backend } from '@renderer/runtime/backend'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useContactStore } from '@renderer/state/contact'
+    import { useChatStore } from '@renderer/state/chat'
 
     defineOptions({ name: 'ChatShell' })
 
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const contactStore = useContactStore()
+    const chatStore = useChatStore()
+    const settingsStore = useSettingsStore()
     const $t = i18n.global.t
     const { URL } = globalThis
 
@@ -226,7 +235,7 @@
                 return item.type == 'reply'
             })
             if (repItem[0]) {
-                const repMsg = runtimeData.messageList.filter(
+                const repMsg = chatStore.messageList.filter(
                     (item) => {
                         return item.message_id == repItem[0].id
                     },
@@ -272,8 +281,8 @@
             tags.value.fistget = false
             addCommandOutF(':: joining chat ..', 'yellow')
             addCommandLineF(
-                'screen ' + runtimeData.chatInfo.show.id,
-                runtimeData.chatInfo.show.type,
+                'screen ' + chatStore.chatInfo.show.id,
+                chatStore.chatInfo.show.type,
             )
             addCommandLineF('[screen is terminating]')
             addCommandOutF(
@@ -281,7 +290,7 @@
                 'var(--color-font)',
             )
             addCommandOutF(
-                `  => 当前存在 ${runtimeData.onMsgList.length} 个活跃会话\n\n`,
+                `  => 当前存在 ${contactStore.onMsgList.length} 个活跃会话\n\n`,
                 'var(--color-font)',
             )
             addCommandOutF(
@@ -308,7 +317,7 @@
         color = 'var(--color-font-2)',
         html = undefined as unknown,
     ) {
-        runtimeData.messageList.push({
+        chatStore.messageList.push({
             commandOut: true,
             color: color,
             str: raw,
@@ -321,7 +330,7 @@
         color = 'var(--color-font-2)',
         html = undefined as unknown,
     ) {
-        runtimeData.messageList.unshift({
+        chatStore.messageList.unshift({
             commandOut: true,
             color: color,
             str: raw,
@@ -331,10 +340,10 @@
 
     function addCommandLine(
         str: string,
-        dir = runtimeData.chatInfo.show.name,
+        dir = chatStore.chatInfo.show.name,
         appendData: { [key: string]: any } = {},
     ) {
-        runtimeData.messageList.push({
+        chatStore.messageList.push({
             dir: dir,
             commandLine: true,
             str: str,
@@ -349,8 +358,8 @@
         })
     }
 
-    function addCommandLineF(str: string, dir = runtimeData.chatInfo.show.name) {
-        runtimeData.messageList.unshift({
+    function addCommandLineF(str: string, dir = chatStore.chatInfo.show.name) {
+        chatStore.messageList.unshift({
             dir: dir,
             commandLine: true,
             str: str,
@@ -370,7 +379,7 @@
         if (event.keyCode === 13) {
             addCommandLine(
                 msg.value,
-                runtimeData.chatInfo.show.name,
+                chatStore.chatInfo.show.name,
                 tags.value.cmdTags,
             )
             if (msg.value == '') return
@@ -452,11 +461,11 @@
     function getRecallName(id: number) {
         let backName = id.toString()
         // 补全撤回者信息
-        if (runtimeData.chatInfo.show.type === 'group') {
+        if (chatStore.chatInfo.show.type === 'group') {
             // 寻找群成员信息
-            if (runtimeData.chatInfo.info.group_members !== undefined) {
+            if (chatStore.chatInfo.info.group_members !== undefined) {
                 const back =
-                    runtimeData.chatInfo.info.group_members.filter(
+                    chatStore.chatInfo.info.group_members.filter(
                         (item) => {
                             return item.user_id === Number(id)
                         },
@@ -467,7 +476,7 @@
                 }
             }
         } else {
-            backName = runtimeData.chatInfo.show.name
+            backName = chatStore.chatInfo.show.name
         }
         return backName
     }
@@ -538,11 +547,11 @@
             ls: {
                 info: 'List all contacts in the current message queue.',
                 fun: () => {
-                    searchListCache.value = [...runtimeData.onMsgList.values()]
+                    searchListCache.value = [...contactStore.onMsgList.values()]
                     let str =
                         '  total ' + searchListCache.value.length + '\n'
                     let hasMsg = false
-                    Array.from(runtimeData.onMsgList).forEach((item, index) => {
+                    Array.from(contactStore.onMsgList).forEach((item, index) => {
                         if (item.new_msg == true) {
                             str += '• '
                             hasMsg = true
@@ -598,7 +607,7 @@
                         case 'list': {
                             const value = item[2]
                             searchListCache.value =
-                                runtimeData.userList.filter(
+                                contactStore.userList.filter(
                                     (
                                         item: UserFriendElem &
                                             UserGroupElem,
@@ -639,7 +648,7 @@
                             )
                             if (item[2] && item[2] != 'clear') {
                                 // 根据 item[2] 寻找这条消息 的名字
-                                const replyMsg = runtimeData.messageList.filter(
+                                const replyMsg = chatStore.messageList.filter(
                                     (msg) => {
                                         return msg.message_id == item[2]
                                     },
@@ -674,32 +683,32 @@
                         // 加载历史记录
                         case 'history': {
                             // 移除顶部的首次加载提示
-                            if (runtimeData.messageList[0].commandOut) {
-                                runtimeData.messageList.shift()
-                                runtimeData.messageList.shift()
-                                runtimeData.messageList.shift()
-                                runtimeData.messageList.shift()
+                            if (chatStore.messageList[0].commandOut) {
+                                chatStore.messageList.shift()
+                                chatStore.messageList.shift()
+                                chatStore.messageList.shift()
+                                chatStore.messageList.shift()
                             }
                             // 加载历史消息
                             // 获取列表第一条消息 ID
                             const firstMsgId =
-                                runtimeData.messageList[0].message_id ?? 0
+                                chatStore.messageList[0].message_id ?? 0
                             // 发起获取历史消息请求
-                            const type = runtimeData.chatInfo.show.type
-                            const id = runtimeData.chatInfo.show.id
+                            const type = chatStore.chatInfo.show.type
+                            const id = chatStore.chatInfo.show.id
                             let name
                             const fullPage =
-                                runtimeData.jsonMap.message_list
+                                authStore.jsonMap.message_list
                                     ?.pagerType == 'full'
                             if (
-                                runtimeData.jsonMap.message_list &&
+                                authStore.jsonMap.message_list &&
                                 type != 'group'
                             ) {
                                 name =
-                                    runtimeData.jsonMap.message_list
+                                    authStore.jsonMap.message_list
                                         .private_name
                             } else {
-                                name = runtimeData.jsonMap.message_list.name
+                                name = authStore.jsonMap.message_list.name
                             }
                             Connector.send(
                                 name ?? 'get_chat_history',
@@ -709,7 +718,7 @@
                                     user_id:
                                         type != 'group' ? id : undefined,
                                     message_id: firstMsgId,
-                                    count: fullPage? runtimeData.messageList.length +
+                                    count: fullPage? chatStore.messageList.length +
                                           20: 20,
                                 },
                                 'getChatHistory',
@@ -766,14 +775,14 @@
                     addCommandOut(
                         '',
                         '',
-                        `<div class="shell-fastfetch"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>&nbsp;*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;************<br>&nbsp;************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***********<br>&nbsp;***********,**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*.***********<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;&nbsp;&nbsp;***********************************&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***</span><div><span>${runtimeData.loginInfo.nickname}<span>@</span>ssqq-vue</span><a>-----------------</a>${info}<div><div style="background:black"></div><div style="background:red"></div><div style="background:green"></div><div style="background:yellow"></div><div style="background:blue"></div><div style="background:violet"></div></div></div></div>`,
+                        `<div class="shell-fastfetch"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**************&nbsp;&nbsp;<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;**************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>&nbsp;*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************<br>*************,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;************<br>&nbsp;************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***********<br>&nbsp;***********,**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*.***********<br>&nbsp;&nbsp;*************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*************&nbsp;<br>&nbsp;&nbsp;&nbsp;***********************************&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************************&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***************************&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*******************<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;***</span><div><span>${authStore.loginInfo.nickname}<span>@</span>ssqq-vue</span><a>-----------------</a>${info}<div><div style="background:black"></div><div style="background:red"></div><div style="background:green"></div><div style="background:yellow"></div><div style="background:blue"></div><div style="background:violet"></div></div></div></div>`,
                     )
                 },
             },
             clear: {
                 info: 'clear message list.',
                 fun: () => {
-                    runtimeData.messageList = []
+                    chatStore.messageList = []
                     // PS：让消息列表不是空的防止输出首次进入信息
                     addCommandOut('')
                 },
@@ -796,7 +805,7 @@
                             if (pan) {
                                 tags.value.fullscreen = false
                                 pan.classList.remove('full')
-                                runtimeData.chatInfo.show.id = 0
+                                chatStore.chatInfo.show.id = 0
                             }
                             return
                         }
@@ -818,15 +827,15 @@
                         }
                     }
                     // 从缓存列表里寻找这个 ID
-                    for (let i = 0; i < runtimeData.userList.length; i++) {
-                        const item = runtimeData.userList[i]
+                    for (let i = 0; i < contactStore.userList.length; i++) {
+                        const item = contactStore.userList[i]
                         const gid =
                             item.user_id !== undefined? item.user_id: item.group_id
                         if (String(gid) === id) {
                             // 检查显示列表里有没有它
                             if (!document.getElementById('user-' + id)) {
                                 // 把它插入到显示列表
-                                runtimeData.baseOnMsgList?.set(Number(id), item)
+                                contactStore.baseOnMsgList?.set(Number(id), item)
                             }
                             nextTick(() => {
                                 const bodyNext = document.getElementById(
@@ -862,7 +871,7 @@
                 second: 'numeric',
             }).format(new Date())
             // 刷新新消息数
-            tags.value.newMsg = [...runtimeData.onMsgList.values()].filter((item) => {
+            tags.value.newMsg = [...contactStore.onMsgList.values()].filter((item) => {
                 return item.new_msg == true
             }).length
         }, 1000)

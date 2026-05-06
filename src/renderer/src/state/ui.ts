@@ -1,7 +1,7 @@
 import { BotMsgType } from '@renderer/function/elements/information'
 import { getInch } from '@renderer/function/utils/systemUtil'
 import { defineStore } from 'pinia'
-import { shallowRef, ref, markRaw, defineAsyncComponent } from 'vue'
+import { ref, markRaw, defineAsyncComponent } from 'vue'
 
 export const useUIStore = defineStore('ui', () => {
     const openSideBar = ref(true)
@@ -11,7 +11,7 @@ export const useUIStore = defineStore('ui', () => {
     const historyBeforeTime = ref<number | undefined>(undefined)
     const msgType = ref(BotMsgType.Array)
 
-    const popBoxList = shallowRef<{
+    const popBoxList = ref<{
         svg?: string
         title?: string
         html?: string

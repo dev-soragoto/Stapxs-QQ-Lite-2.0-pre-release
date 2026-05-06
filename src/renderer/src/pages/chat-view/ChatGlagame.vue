@@ -46,12 +46,13 @@ import z from 'zod'
 import { v4 as uuid } from 'uuid'
 import { streamText, tool } from 'ai'
 import { ref, toRaw, watch, onMounted } from 'vue'
-import { runtimeData } from '@renderer/function/msg'
 import { get, optDefault } from '@renderer/function/option'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { getViewTime } from '@renderer/function/utils/systemUtil'
 import { getMsgRawTxt } from '@renderer/function/utils/msgUtil'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { useAuthStore } from '@renderer/state/auth'
+import { useChatStore } from '@renderer/state/chat'
 import {
   registerExtraOptionCard,
   registerExtraOptionItem,
@@ -60,6 +61,9 @@ import {
 import Chat from '../Chat.vue'
 
 defineOptions({ name: 'ChatGlagame' })
+
+const authStore = useAuthStore()
+const chatStore = useChatStore()
 
 const props = defineProps<{
     chat: any
@@ -77,7 +81,7 @@ const sessionMessageList = ref<{[key: number]: { role: 'user' | 'assistant' | 's
 const sessionTokenUsage = ref<{[key: number]: number}>({})
 
 function getCurrentMessages() {
-    const chatId = runtimeData.chatInfo.show.id
+    const chatId = chatStore.chatInfo.show.id
     if (!sessionMessageList.value[chatId]) {
         sessionMessageList.value[chatId] = []
     }
@@ -113,12 +117,12 @@ async function initChat() {
         // 获取账号信息
         getCurrentMessages().push({
             role: 'system',
-            content: `当前账号信息：ID ${runtimeData.loginInfo.uin}，昵称 ${runtimeData.loginInfo.nickname}`,
+            content: `当前账号信息：ID ${authStore.loginInfo.uin}，昵称 ${authStore.loginInfo.nickname}`,
         })
         // 获取会话信息
         getCurrentMessages().push({
             role: 'system',
-            content: `当前会话基本信息：会话 ID ${runtimeData.chatInfo.show.id}，会话名称 ${runtimeData.chatInfo.show.name}，会话类型 ${runtimeData.chatInfo.show.type}`,
+            content: `当前会话基本信息：会话 ID ${chatStore.chatInfo.show.id}，会话名称 ${chatStore.chatInfo.show.name}，会话类型 ${chatStore.chatInfo.show.type}`,
         })
         if (props.list.length > 0) {
             // 获取 20 条历史消息
@@ -159,7 +163,7 @@ async function compactMessagesIfNeeded(messages: { role: 'user' | 'assistant' | 
 
     if (currentTokens <= maxTokens) return
 
-    const chatId = runtimeData.chatInfo.show.id
+    const chatId = chatStore.chatInfo.show.id
 
     const systemMessages = messages.filter(msg => msg.role === 'system')
     const otherMessages = messages.filter(msg => msg.role !== 'system')
@@ -194,7 +198,7 @@ async function compactMessagesIfNeeded(messages: { role: 'user' | 'assistant' | 
 
 async function summarizeMessages(messages: { role: 'user' | 'assistant' | 'system', content: string }[]) {
     const openaiCompatible = createOpenAICompatible({
-        name: 'glagame summarize: ' + runtimeData.chatInfo.show.name,
+        name: 'glagame summarize: ' + chatStore.chatInfo.show.name,
         baseURL: get('openai_api') || '',
         headers: {
             Authorization: `Bearer ${get('openai_token') || ''}`,
@@ -303,13 +307,13 @@ async function sendMessage() {
     chatHistory.value = ''
 
     // 会话压缩（优先使用上一次请求的实际 token 统计）
-    const chatId = runtimeData.chatInfo.show.id
+    const chatId = chatStore.chatInfo.show.id
     const lastTokens = sessionTokenUsage.value[chatId]
     await compactMessagesIfNeeded(getCurrentMessages(), lastTokens)
 
     // 初始化 Provider
     const openaiCompatible = createOpenAICompatible({
-        name: 'glagame chat: ' + runtimeData.chatInfo.show.name,
+        name: 'glagame chat: ' + chatStore.chatInfo.show.name,
         baseURL: get('openai_api') || '',
         headers: {
             Authorization: `Bearer ${get('openai_token') || ''}`,

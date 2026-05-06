@@ -163,7 +163,7 @@
                                     </label>
                                     <div style="flex: 1" />
                                     <label class="default" style="justify-content: flex-end">
-                                        <input v-model="runtimeData.sysConfig.auto_connect" type="checkbox"
+                                        <input v-model="settingsStore.sysConfig.auto_connect" type="checkbox"
                                             name="auto_connect" @click="saveAutoConnect">
                                         <a>{{ $t('自动连接') }}</a>
                                     </label>
@@ -200,26 +200,26 @@
                     </div>
                 </div>
                 <div v-if="tags.page == 'Messages'" id="messageTab">
-                    <Messages :chat="runtimeData.chatInfo" @user-click="changeChat" @load-history="loadHistory" />
+                    <Messages :chat="chatStore.chatInfo" @user-click="changeChat" @load-history="loadHistory" />
                 </div>
                 <div v-if="tags.page == 'Friends'" id="friendTab">
-                    <Friends :list="runtimeData.userList" @load-history="loadHistory" @user-click="changeChat" />
+                    <Friends :list="contactStore.userList" @load-history="loadHistory" @user-click="changeChat" />
                 </div>
                 <div class="opt-main-tab" style="opacity: 0">
                     <Options :show="tags.page == 'Options'" :class="tags.page == 'Options' ? 'active' : ''"
-                        :config="runtimeData.sysConfig" />
+                        :config="settingsStore.sysConfig" />
                 </div>
             </div>
         </div>
-        <component :is="runtimeData.pageView.chatView" v-if="
+        <component :is="uiStore.pageView.chatView" v-if="
             loginInfo.status &&
-                runtimeData.chatInfo &&
-                runtimeData.chatInfo.show.id != 0"
+                chatStore.chatInfo &&
+                chatStore.chatInfo.show.id != 0"
             v-show="tags.showChat"
-            ref="chat" :mumber-info="runtimeData.chatInfo.info.now_member_info == undefined ?
-                {} : runtimeData.chatInfo.info.now_member_info"
-            :merge-list="runtimeData.mergeMessageList"
-            :list="runtimeData.messageList" :chat="runtimeData.chatInfo"
+            ref="chat" :mumber-info="chatStore.chatInfo.info.now_member_info == undefined ?
+                {} : chatStore.chatInfo.info.now_member_info"
+            :merge-list="chatStore.mergeMessageList"
+            :list="chatStore.messageList" :chat="chatStore.chatInfo"
             @user-click="changeChat" />
         <TransitionGroup class="app-msg" name="appmsg" tag="div">
             <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
@@ -244,51 +244,51 @@
             </div>
         </Transition>
         <Transition name="modal">
-            <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
+            <div v-if="uiStore.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
-                         (runtimeData.popBoxList[0].full ? ' full' : '') +
+                         (uiStore.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
                     :style="{ 'margin-bottom': get('fs_adaptation') > 0 ? `${40 + Number(get('fs_adaptation'))}px` : '' }">
-                    <header v-show="runtimeData.popBoxList[0].title != undefined">
-                        <div v-if="runtimeData.popBoxList[0].svg != undefined">
-                            <font-awesome-icon :icon="['fas', runtimeData.popBoxList[0].svg]" />
+                    <header v-show="uiStore.popBoxList[0].title != undefined">
+                        <div v-if="uiStore.popBoxList[0].svg != undefined">
+                            <font-awesome-icon :icon="['fas', uiStore.popBoxList[0].svg]" />
                         </div>
-                        <a>{{ runtimeData.popBoxList[0].title }}</a>
-                        <font-awesome-icon v-if="runtimeData.popBoxList[0].allowClose != false"
+                        <a>{{ uiStore.popBoxList[0].title }}</a>
+                        <font-awesome-icon v-if="uiStore.popBoxList[0].allowClose != false"
                             :icon="['fas', 'xmark']" @click="removePopBox" />
                     </header>
-                    <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html" />
-                    <component :is="runtimeData.popBoxList[0].template" v-else :data="runtimeData.popBoxList[0].data"
-                        v-bind="runtimeData.popBoxList[0].templateValue" />
-                    <div v-show="runtimeData.popBoxList[0].button" class="button">
-                        <button v-for="(button, index) in runtimeData.popBoxList[0].button"
+                    <div v-if="uiStore.popBoxList[0].html" v-html="uiStore.popBoxList[0].html" />
+                    <component :is="uiStore.popBoxList[0].template" v-else :data="uiStore.popBoxList[0].data"
+                        v-bind="uiStore.popBoxList[0].templateValue" />
+                    <div v-show="uiStore.popBoxList[0].button" class="button">
+                        <button v-for="(button, index) in uiStore.popBoxList[0].button"
                             :key="'pop-box-btn' + index" :class="'ss-button' + (button.master == true ? ' master' : '')"
                             @click="button.fun">
                             {{ button.text }}
                         </button>
                     </div>
                     <div class="pop-box-more">
-                        <div v-for="index in runtimeData.popBoxList.length" :key="'pop-more-' + index" :data-id="index"
-                            :class="index > runtimeData.popBoxList.length - 1 ? 'hid' : '' "
+                        <div v-for="index in uiStore.popBoxList.length" :key="'pop-more-' + index" :data-id="index"
+                            :class="index > uiStore.popBoxList.length - 1 ? 'hid' : '' "
                             :style="{ 'margin': `-${2 * (index - 1)}px ${(20 * index - 1 - 2 * (index - 1))}px 0 ${(20 * index - 1 - 2 * (index - 1))}px` }" />
                     </div>
                 </div>
-                <div @click="popQuickClose(runtimeData.popBoxList[0].allowQuickClose != false && runtimeData.popBoxList[0].allowClose != false)" />
+                <div @click="popQuickClose(uiStore.popBoxList[0].allowQuickClose != false && uiStore.popBoxList[0].allowClose != false)" />
             </div>
         </Transition>
         <!-- 全局搜索栏 -->
         <GlobalSessionSearchBar />
-        <NtViewer ref="nt-viewer" />
+        <NtViewer ref="ntViewer" />
         <!-- 提示工具 -->
         <Tooltips />
         <div id="mobile-css" />
     </div>
     <div class="main-bg"
         :style="{
-            'background-image': `url(${runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})`,
-            'background-position': runtimeData.sysConfig.chat_background_align ?? 'center',
-            'background-size': runtimeData.sysConfig.chat_background_fit ?? 'cover',
-            'opacity': 1 - Number(runtimeData.sysConfig.chat_background_blur) / 100 }" />
+            'background-image': `url(${settingsStore.sysConfig.chat_more_blur ? settingsStore.sysConfig.chat_background : ''})`,
+            'background-position': settingsStore.sysConfig.chat_background_align ?? 'center',
+            'background-size': settingsStore.sysConfig.chat_background_fit ?? 'cover',
+            'opacity': 1 - Number(settingsStore.sysConfig.chat_background_blur) / 100 }" />
 </template>
 
 <script setup lang="ts">
@@ -299,11 +299,17 @@ import * as App from './function/utils/appUtil'
 import anime from 'animejs'
 import packageInfo from '../../../package.json'
 
-import { watch, onMounted, onUnmounted, shallowReactive, shallowRef, useTemplateRef, provide } from 'vue'
+import { watch, onMounted, onUnmounted, shallowReactive, shallowRef, provide } from 'vue'
 import { Connector, login as loginInfo, loadConnectionHistory, loadConnectionFromHistory, deleteConnectionHistory } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
-import { runtimeData } from '@renderer/function/msg'
+import { setLoginWaveTimer } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
+import { useConnectionStore } from '@renderer/state/connection'
+import { useUIStore } from '@renderer/state/ui'
+import { useSettingsStore } from '@renderer/state/settings'
+import { useChatStore } from '@renderer/state/chat'
+import { useContactStore } from '@renderer/state/contact'
+import { useAuthStore } from '@renderer/state/auth'
 import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
 import { getDeviceType, getForegroundToneFromImageUrl } from './function/utils/systemUtil'
@@ -320,8 +326,8 @@ import NtViewer from './components/ViewerCom.vue'
 import Tooltips from './components/tooltip/Tooltips.vue'
 
 // 注册组件实例
-const ntViewer = useTemplateRef<InstanceType<typeof NtViewer>>('nt-viewer')
-provide('viewer', ntViewer)
+const ntViewer = shallowRef<InstanceType<typeof NtViewer> | null>(null)
+provide('viewer', { viewer: ntViewer })
 
 defineOptions({ name: 'App' })
 
@@ -339,6 +345,12 @@ const appMsgs = popList
 const loadHistory = App.loadHistory
 
 // 响应式状态
+const connectionStore = useConnectionStore()
+const uiStore = useUIStore()
+const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
+const contactStore = useContactStore()
+const chatStore = useChatStore()
 let musicSyncTimer = -1
 const tags = shallowReactive({
     page: 'Home',
@@ -407,6 +419,7 @@ async function refreshCurrentMusic() {
         coverLight
     }
 }
+
 function updateNapcatColor(token: string) {
     const logger = new Logger()
     // api/base/Theme 获取主题配置信息
@@ -640,7 +653,7 @@ function rafLoop() {
  */
 function changeChat(data: BaseChatInfoElem) {
     // 设置聊天信息
-    runtimeData.chatInfo = {
+    chatStore.chatInfo = {
         show: data,
         info: {
             group_info: {},
@@ -655,16 +668,16 @@ function changeChat(data: BaseChatInfoElem) {
             },
         },
     }
-    runtimeData.mergeMessageList = undefined // 清空合并转发缓存
-    runtimeData.tags.canLoadHistory = true // 重置终止加载标志
-    runtimeData.tags.loadHistoryFail = false // 重置加载失败标志
+    chatStore.mergeMessageList = undefined // 清空合并转发缓存
+    uiStore.canLoadHistory = true // 重置终止加载标志
+    uiStore.loadHistoryFail = false // 重置加载失败标志
     if (data.type == 'group') {
         // 获取自己在群内的资料
         Connector.send(
             'get_group_member_info',
             {
                 group_id: data.id,
-                user_id: runtimeData.loginInfo.uin,
+                user_id: authStore.loginInfo.uin,
             },
             'getUserInfoInGroup',
         )
@@ -685,7 +698,7 @@ function changeChat(data: BaseChatInfoElem) {
  * 移除当前的全局弹窗
  */
 function removePopBox() {
-    runtimeData.popBoxList.shift()
+    uiStore.popBoxList.shift()
 }
 
 /**
@@ -706,12 +719,12 @@ function savePassword(event: Event) {
                     text: $t('知道了'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     } else {
         Option.remove('save_password')
     }
@@ -724,7 +737,7 @@ function savePassword(event: Event) {
 function saveAutoConnect(event: Event) {
     Option.runASWEvent(event)
     // 如果自动保存密码没开，那也需要开
-    if (!runtimeData.sysConfig.save_password) {
+    if (!settingsStore.sysConfig.save_password) {
         savePassword(event)
     }
 }
@@ -735,7 +748,7 @@ function saveAutoConnect(event: Event) {
  */
 function popQuickClose(allow: boolean | undefined) {
     if (allow != false) {
-        runtimeData.popBoxList.shift()
+        uiStore.popBoxList.shift()
     } else {
         const animeBody = document.getElementById('pop-box')
         const timeLine = anime.timeline({ targets: animeBody })
@@ -817,9 +830,9 @@ onMounted(() => {
             console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
         }
         // 初始化波浪动画
-        runtimeData.tags.loginWaveTimer = waveAnimation(
+        setLoginWaveTimer(waveAnimation(
             document.getElementById('login-wave'),
-        )
+        ))
         // AMAP：初始化高德地图
         window._AMapSecurityConfig = import.meta.env.VITE_APP_AMAP_SECRET
         // =============================================================
@@ -835,14 +848,14 @@ onMounted(() => {
             rafLoop()
         }
         // 加载设置项
-        runtimeData.sysConfig = await Option.load()
+        settingsStore.sysConfig = await Option.load()
         if(dev) {
             logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
             logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
         } else {
             logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
         }
-        logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
+        logger.add(LogType.DEBUG, '系统配置', settingsStore.sysConfig)
         // PS：重新再应用部分需要加载完成后才能应用的设置
         Option.run('opt_dark', Option.get('opt_dark'))
         Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
@@ -886,20 +899,20 @@ onMounted(() => {
             }
         }
         // 加载密码保存和自动连接
-        loginInfo.address = runtimeData.sysConfig.address
+        loginInfo.address = settingsStore.sysConfig.address
         // 加载连接历史
         loginInfo.connectionHistory = loadConnectionHistory()
         if (
-            runtimeData.sysConfig.save_password !== undefined &&
-            runtimeData.sysConfig.save_password !== true
+            settingsStore.sysConfig.save_password !== undefined &&
+            settingsStore.sysConfig.save_password !== true
         ) {
-            loginInfo.token = runtimeData.sysConfig.save_password
+            loginInfo.token = settingsStore.sysConfig.save_password
             tags.savePassword = true
         }
-        if (runtimeData.sysConfig.auto_connect == true) {
+        if (settingsStore.sysConfig.auto_connect == true) {
             connect()
         }
-        if(import.meta.env.VITE_NAPCAT) {
+        if(napcat) {
             logger.info('Stapxs QQ Lite 处于 Napcat 模式 ……')
             const token = localStorage.getItem('token')
             if(token) {
@@ -940,7 +953,7 @@ onMounted(() => {
         // 创建 popstate
         if(backend.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
             window.addEventListener('popstate', () => {
-                if(!loginInfo.status || runtimeData.tags.openSideBar) {
+                if(!loginInfo.status || uiStore.openSideBar) {
                     // 离开提醒
                     const popInfo = {
                         title: $t('提醒'),
@@ -949,7 +962,7 @@ onMounted(() => {
                             {
                                 text: $t('取消'),
                                 fun: () => {
-                                    runtimeData.popBoxList.shift()
+                                    uiStore.popBoxList.shift()
                                     history.pushState('ssqqweb', '', location.href)
                                 },
                             },
@@ -957,16 +970,16 @@ onMounted(() => {
                                 text: $t('离开'),
                                 master: true,
                                 fun: () => {
-                                    runtimeData.popBoxList.shift()
+                                    uiStore.popBoxList.shift()
                                     history.back()
                                 },
                             },
                         ],
                     }
-                    runtimeData.popBoxList.push(popInfo)
+                    uiStore.popBoxList.push(popInfo)
                 } else {
                     // 内部的页面返回处理，此处使用 watch backTimes 监听
-                    runtimeData.watch.backTimes += 1
+                    connectionStore.backTimes += 1
                     history.pushState('ssqqweb', '', location.href)
                 }
             });
@@ -1004,12 +1017,12 @@ onMounted(() => {
             document.getElementById('connect_btn')?.classList.add('afd')
         }
         // 其他状态监听
-        watch(() => runtimeData.baseOnMsgList, () => {
+        watch(() => contactStore.baseOnMsgList, () => {
             // macOS：刷新 Touch Bar 列表
             if (backend.isDesktop()) {
                 const list = [] as
                     { id: number, name: string, image?: string }[]
-                runtimeData.baseOnMsgList.forEach((item) => {
+                contactStore.baseOnMsgList.forEach((item) => {
                     list.push({
                         id: item.user_id ? item.user_id : item.group_id,
                         name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',

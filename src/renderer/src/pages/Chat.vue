@@ -13,12 +13,12 @@
     <div id="chat-pan"
         v-move="chatMoveOptions"
         :class="'chat-pan' +
-            (runtimeData.tags.openSideBar ? ' open' : '') +
+            (uiStore.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="{
-            'background-image': `url(${!runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig.chat_background : ''})`,
-            'background-position': runtimeData.sysConfig.chat_background_align ?? 'center',
-            'background-size': runtimeData.sysConfig.chat_background_fit ?? 'cover'
+            'background-image': `url(${!settingsStore.sysConfig.chat_more_blur ? settingsStore.sysConfig.chat_background : ''})`,
+            'background-position': settingsStore.sysConfig.chat_background_align ?? 'center',
+            'background-size': settingsStore.sysConfig.chat_background_fit ?? 'cover'
         }"
         @v-move-right.prevent="exitWin()">
         <slot name="chat-extra" />
@@ -30,9 +30,9 @@
                 <p>
                     {{ chat.show.name }}
                     <template
-                        v-if="runtimeData.chatInfo.show.type == 'group'">
+                        v-if="chat.show.type == 'group'">
                         ({{
-                            runtimeData.chatInfo.info.group_members.length
+                            chat.info.group_members.length
                         }})
                     </template>
                 </p>
@@ -62,7 +62,7 @@
             </div>
         </div>
         <!-- 加载中指示器 -->
-        <div :class=" 'loading' + (runtimeData.tags.nowGetHistory && runtimeData.tags.canLoadHistory ? ' show' : '')">
+        <div :class=" 'loading' + (uiStore.nowGetHistory && uiStore.canLoadHistory ? ' show' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
             <span>{{ $t('加载中') }}</span>
         </div>
@@ -71,18 +71,18 @@
             style="scroll-behavior: smooth"
             @scroll="chatScroll($event, details[3].open)">
             <template v-if="!details[3].open">
-                <div v-if="!runtimeData.tags.canLoadHistory" class="note note-nomsg">
+                <div v-if="!uiStore.canLoadHistory" class="note note-nomsg">
                     <hr>
                     <a>{{ $t('没有更多消息了') }}</a>
                 </div>
-                <div v-if="runtimeData.tags.loadHistoryFail" class="note note-nomsg">
+                <div v-if="uiStore.loadHistoryFail" class="note note-nomsg">
                     <hr>
                     <a>{{ $t('获取历史记录失败') }}</a>
                 </div>
                 <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
-                <NoticeBody v-if="runtimeData.tags.nowGetHistory && list.length > 0"
+                <NoticeBody v-if="uiStore.nowGetHistory && list.length > 0"
                     :data="{ sub_type: 'time', time: list[0].time }" />
-                <TransitionGroup :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
+                <TransitionGroup :name="settingsStore.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
                     <template v-for="(msgIndex, index) in list">
                         <!-- 时间戳 -->
                         <NoticeBody
@@ -119,7 +119,7 @@
             <template v-else>
                 <!-- 搜索消息结果显示 -->
                 <TransitionGroup
-                    :name="runtimeData.sysConfig.opt_fast_animation ? '' : 'msglist'"
+                    :name="settingsStore.sysConfig.opt_fast_animation ? '' : 'msglist'"
                     tag="div">
                     <template v-for="(msgIndex, index) in tags.search.list">
                         <!-- 时间戳 -->
@@ -164,7 +164,7 @@
                     </Transition>
                     <!-- 精华消息 -->
                     <Transition name="pan">
-                        <div v-show="details[2].open && runtimeData.chatInfo.info.jin_info.list.length > 0"
+                        <div v-show="details[2].open && chat.info.jin_info.list.length > 0"
                             class="ss-card jin-pan">
                             <div>
                                 <font-awesome-icon :icon="['fas', 'message']" />
@@ -174,7 +174,7 @@
                             <div
                                 class="jin-pan-body"
                                 @scroll="jinScroll">
-                                <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info.list"
+                                <div v-for="(item, index) in chat.info.jin_info.list"
                                     :key="'jin-' + index">
                                     <div>
                                         <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
@@ -283,7 +283,7 @@
                 <!-- 搜索指示器 -->
                 <div :class="details[3].open ? 'search-tag show' : 'search-tag'">
                     <font-awesome-icon :icon="['fas', 'search']" />
-                    <span>{{ runtimeData.sysConfig.enable_local_history ? $t('搜索已保存的消息') : $t('搜索已加载的消息') }}</span>
+                    <span>{{ settingsStore.sysConfig.enable_local_history ? $t('搜索已保存的消息') : $t('搜索已加载的消息') }}</span>
                     <div @click="closeSearch">
                         <font-awesome-icon :icon="['fas', 'xmark']" />
                     </div>
@@ -293,7 +293,7 @@
                     <font-awesome-icon :icon="['fas', 'reply']" />
                     <span>{{
                         selectedMsg === null ?
-                            '' : selectedMsg.sender.nickname + ': ' + fun.getMsgRawTxt(selectedMsg)
+                            '' : selectedMsg.sender.nickname + ': ' + getMsgRawTxt(selectedMsg)
                     }}</span>
                     <div @click="cancelReply">
                         <font-awesome-icon :icon="['fas', 'xmark']" />
@@ -358,12 +358,12 @@
             <!-- 消息发送框 -->
             <div>
                 <div v-menu.prevent="_=>moreFunClick()"
-                    @click="moreFunClick(runtimeData.sysConfig.quick_send)">
+                    @click="moreFunClick(settingsStore.sysConfig.quick_send)">
                     <font-awesome-icon v-if="tags.showMoreDetail || details.find(item => item.open)" :icon="['fas', 'minus']" />
-                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'default'" :icon="['fas', 'plus']" />
-                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'img'" :icon="['fas', 'image']" />
-                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'file'" :icon="['fas', 'folder']" />
-                    <font-awesome-icon v-else-if="runtimeData.sysConfig.quick_send == 'face'" :icon="['fas', 'face-laugh']" />
+                    <font-awesome-icon v-else-if="settingsStore.sysConfig.quick_send == 'default'" :icon="['fas', 'plus']" />
+                    <font-awesome-icon v-else-if="settingsStore.sysConfig.quick_send == 'img'" :icon="['fas', 'image']" />
+                    <font-awesome-icon v-else-if="settingsStore.sysConfig.quick_send == 'file'" :icon="['fas', 'folder']" />
+                    <font-awesome-icon v-else-if="settingsStore.sysConfig.quick_send == 'face'" :icon="['fas', 'face-laugh']" />
                 </div>
                 <div>
                     <form @submit="mainSubmit">
@@ -372,7 +372,7 @@
                             v-model="msg"
                             type="text"
                             autocomplete="off"
-                            :disabled="runtimeData.tags.openSideBar || chat.info.me_info.shut_up_timestamp > 0"
+                            :disabled="uiStore.openSideBar || chat.info.me_info.shut_up_timestamp > 0"
                             :placeholder="
                                 chat.info.me_info.shut_up_timestamp > 0
                                     ? $t('已被禁言至：{time}', {
@@ -390,7 +390,7 @@
                         <textarea v-else id="main-input-ex"
                             v-model="msg"
                             type="text"
-                            :disabled="runtimeData.tags.openSideBar"
+                            :disabled="uiStore.openSideBar"
                             @paste="addImg"
                             @keydown="mainKey"
                             @keyup="mainKeyUp"
@@ -416,7 +416,7 @@
                 <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu" />
                 <div id="msgMenu" :class="tags.showMsgMenu ?
                     'ss-card msg-menu-body show' : 'ss-card msg-menu-body'">
-                    <div v-if="runtimeData.chatInfo.show.type == 'group'"
+                    <div v-if="chatStore.chatInfo.show.type == 'group'"
                         v-show="tags.menuDisplay.showRespond"
                         :class="'ss-card respond' + (tags.menuDisplay.respond ? ' open' : '')">
                         <template v-for="(num, index) in Emoji.responseId" :key="'respond-' + num">
@@ -538,7 +538,7 @@
             </div>
         </Transition>
         <div class="bg" :style="{
-            'backdrop-filter': `blur(${!runtimeData.sysConfig.chat_more_blur ? runtimeData.sysConfig .chat_background_blur : 0}px)`
+            'backdrop-filter': `blur(${!settingsStore.sysConfig.chat_more_blur ? settingsStore.sysConfig .chat_background_blur : 0}px)`
         }" />
     </div>
 </template>
@@ -592,7 +592,6 @@ import {
 } from '@renderer/function/utils/msgUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
-import { runtimeData } from '@renderer/function/msg'
 import {
     BaseChatInfoElem,
     MsgItemElem,
@@ -608,12 +607,18 @@ import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
 import { useSessionHistoryStore } from '@renderer/state/sessionHistory'
+import { useConnectionStore } from '@renderer/state/connection'
+import { useUIStore } from '@renderer/state/ui'
+import { useSettingsStore } from '@renderer/state/settings'
+import { useAuthStore } from '@renderer/state/auth'
+import { useChatStore } from '@renderer/state/chat'
+import { useContactStore } from '@renderer/state/contact'
 import { addUploadTask, failUploadTask } from '@renderer/components/FileManager.vue'
 
 defineOptions({ name: 'ViewChat' })
 
 const $t = i18n.global.t
-const viewer = inject<any>('viewer')
+const { viewer: viewerRef } = inject<{ viewer: any }>('viewer', { viewer: null })
 
 const { chat, list } = defineProps<{
     chat: any
@@ -621,6 +626,12 @@ const { chat, list } = defineProps<{
     imgView?: any
 }>()
 
+const connectionStore = useConnectionStore()
+const uiStore = useUIStore()
+const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
+const chatStore = useChatStore()
+const contactStore = useContactStore()
 const mergePan = useTemplateRef<InstanceType<typeof MergePan>>('mergePan')
 
 const multipleSelectList = ref<string[]>([])
@@ -686,7 +697,7 @@ const atScrollTimer = ref<NodeJS.Timeout | null>(null)
 const atScrollInterval = ref<NodeJS.Timeout | null>(null)
 const searchDebounceTimer = ref<NodeJS.Timeout | null>(null)
 const searchRequestId = ref(0)
-const forwardList = ref(runtimeData.userList)
+const forwardList = ref(contactStore.userList)
 let chatImg: any = undefined
 const trueLang = getTrueLang()
 const isDev = import.meta.env.DEV
@@ -725,10 +736,10 @@ const chatMoveOptions: VMoveOptions<HTMLDivElement> = {
     },
     speedCondition: {
         minMove: {
-            value: 0.5 * runtimeData.inch,
+            value: 0.5 * uiStore.inch,
             type: 'px',
         },
-        minSpeed: 5 * runtimeData.inch,
+        minSpeed: 5 * uiStore.inch,
     },
     moveCondition: {
         minMove: {
@@ -796,7 +807,7 @@ watch(() => chat, () => {
     })
     const history = useSessionHistoryStore()
     const sessionId = chat.show.id
-    const session = [...runtimeData.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
+    const session = [...contactStore.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
     if (session) history.add(session)
 })
 
@@ -812,7 +823,7 @@ watch(() => msg.value, (newMsg, oldMsgVal) => {
 onMounted(() => {
     const history = useSessionHistoryStore()
     const sessionId = chat.show.id
-    const session = [...runtimeData.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
+    const session = [...contactStore.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
     if (session) history.add(session)
 
     updateList(list.length, 0)
@@ -828,7 +839,7 @@ onMounted(() => {
             exitWin()
         })
     }
-    watch(() => runtimeData.watch.backTimes, () => {
+    watch(() => connectionStore.backTimes, () => {
         exitWin()
     })
     nextTick(() => {
@@ -898,47 +909,47 @@ function chatScroll(event: Event, pass: boolean) {
 
 async function loadMoreHistory() {
     if (
-        !runtimeData.tags.nowGetHistory &&
-        runtimeData.tags.canLoadHistory !== false
+        !uiStore.nowGetHistory &&
+        uiStore.canLoadHistory !== false
     ) {
         const firstMsgId = list[0].message_id
         const firstMsgTime = Number(list[0]?.time)
         const useMixedHistory =
-            runtimeData.sysConfig.enable_local_history &&
-            runtimeData.sysConfig.mixed_load_messages !== false
-        runtimeData.tags.nowGetHistory = true
+            settingsStore.sysConfig.enable_local_history &&
+            settingsStore.sysConfig.mixed_load_messages !== false
+        uiStore.nowGetHistory = true
         if (useMixedHistory && Number.isFinite(firstMsgTime)) {
-            runtimeData.tags.historyBeforeTime = firstMsgTime
+            uiStore.historyBeforeTime = firstMsgTime
         } else {
-            runtimeData.tags.historyBeforeTime = undefined
+            uiStore.historyBeforeTime = undefined
         }
-        runtimeData.tags.loadHistoryFail = false
+        uiStore.loadHistoryFail = false
 
         if (useMixedHistory) {
             let localMsgs = [] as any[]
             if (Number.isFinite(firstMsgTime)) {
                 localMsgs = await dbGetBeforeByTime(
-                    runtimeData.loginInfo.uin,
-                    runtimeData.chatInfo.show.id,
+                    authStore.loginInfo.uin,
+                    chatStore.chatInfo.show.id,
                     firstMsgTime,
                     20,
                 )
             } else {
                 localMsgs = await dbGetBefore(
-                    runtimeData.loginInfo.uin,
-                    runtimeData.chatInfo.show.id,
+                    authStore.loginInfo.uin,
+                    chatStore.chatInfo.show.id,
                     firstMsgId,
                     20,
                 )
             }
             if (localMsgs.length > 0) {
-                const existingIds = new Set(runtimeData.messageList.map((m) => String(m.message_id ?? '')))
+                const existingIds = new Set(chatStore.messageList.map((m) => String(m.message_id ?? '')))
                 const addList = localMsgs.filter((m) => {
                     const msgId = String(m?.message_id ?? '')
                     return msgId.length === 0 || !existingIds.has(msgId)
                 })
                 if (addList.length > 0) {
-                    runtimeData.messageList.splice(0, 0, ...addList)
+                    chatStore.messageList.splice(0, 0, ...addList)
                 }
                 const boundary = list[addList.length] ?? list[addList.length - 1]
                 const seqGapAnchors = detectSeqGaps([...addList, boundary])
@@ -949,14 +960,14 @@ async function loadMoreHistory() {
         }
 
         const fullPage =
-            runtimeData.jsonMap.message_list?.pagerType == 'full'
-        const type = runtimeData.chatInfo.show.type
-        const id = runtimeData.chatInfo.show.id
+            authStore.jsonMap.message_list?.pagerType == 'full'
+        const type = chatStore.chatInfo.show.type
+        const id = chatStore.chatInfo.show.id
         let name
-        if (runtimeData.jsonMap.message_list && type != 'group') {
-            name = runtimeData.jsonMap.message_list.private_name
+        if (authStore.jsonMap.message_list && type != 'group') {
+            name = authStore.jsonMap.message_list.private_name
         } else {
-            name = runtimeData.jsonMap.message_list.name
+            name = authStore.jsonMap.message_list.name
         }
         Connector.send(
             name ?? 'get_chat_history',
@@ -964,7 +975,7 @@ async function loadMoreHistory() {
                 group_id: type == 'group' ? id : undefined,
                 user_id: type != 'group' ? id : undefined,
                 message_id: firstMsgId,
-                count: fullPage? runtimeData.messageList.length + 20: 20,
+                count: fullPage? chatStore.messageList.length + 20: 20,
             },
             'getChatHistory',
         )
@@ -985,13 +996,13 @@ function detectSeqGaps(msgs: any[]): string[] {
 }
 
 function fillSeqGaps(anchorMsgIds: string[]) {
-    const type = runtimeData.chatInfo.show.type
-    const id = runtimeData.chatInfo.show.id
+    const type = chatStore.chatInfo.show.type
+    const id = chatStore.chatInfo.show.id
     let name: string
-    if (runtimeData.jsonMap.message_list && type != 'group') {
-        name = runtimeData.jsonMap.message_list.private_name
+    if (authStore.jsonMap.message_list && type != 'group') {
+        name = authStore.jsonMap.message_list.private_name
     } else {
-        name = runtimeData.jsonMap.message_list?.name
+        name = authStore.jsonMap.message_list?.name
     }
     for (const anchorMsgId of anchorMsgIds) {
         Connector.send(
@@ -1050,7 +1061,7 @@ function mainKey(event: KeyboardEvent) {
     if(tags.value.onAtFind) return
     if (event.key !== 'Enter') return
     let canSend = false
-    switch (runtimeData.sysConfig.send_key) {
+    switch (settingsStore.sysConfig.send_key) {
         case 'none':
             if (event.shiftKey) break
             if (event.ctrlKey) break
@@ -1173,8 +1184,8 @@ function mainKeyUp(event: KeyboardEvent) {
         if (
             !tags.value.onAtFind &&
             lastInput == '@' &&
-            runtimeData.chatInfo.info.group_members.length > 0 &&
-            runtimeData.chatInfo.show.type == 'group'
+            chatStore.chatInfo.info.group_members.length > 0 &&
+            chatStore.chatInfo.show.type == 'group'
         ) {
             logger.add(LogType.UI, '开始匹配群成员列表 ……')
             tags.value.onAtFind = true
@@ -1190,7 +1201,7 @@ function mainKeyUp(event: KeyboardEvent) {
                 const atInfo = msg.value
                     .substring(msg.value.lastIndexOf('@') + 1)
                     .toLowerCase()
-                atFindList.value = runtimeData.chatInfo.info.group_members
+                atFindList.value = chatStore.chatInfo.info.group_members
                         .filter((item) => { return (
                                 (item.card != '' && item.card != null && item.card.toLowerCase().indexOf(atInfo) >=0) ||
                                 item.nickname.toLowerCase().indexOf(atInfo) >= 0 ||
@@ -1199,7 +1210,7 @@ function mainKeyUp(event: KeyboardEvent) {
                         },
                     )
                 if (atFindList.value.length == 0) {
-                    atFindList.value = runtimeData.chatInfo.info.group_members
+                    atFindList.value = chatStore.chatInfo.info.group_members
                 }
                 atSelectedIndex.value = 0
             }
@@ -1300,10 +1311,10 @@ function showMsgMeun(event: MenuEventData, data: any) {
     const select = event.target as HTMLElement
     let selectUserType = 'member'
     if (
-        runtimeData.chatInfo.show.type == 'group' &&
-        runtimeData.chatInfo.info.group_members
+        chatStore.chatInfo.show.type == 'group' &&
+        chatStore.chatInfo.info.group_members
     ) {
-        runtimeData.chatInfo.info.group_members.forEach(
+        chatStore.chatInfo.info.group_members.forEach(
             (item: any) => {
                 if (item.user_id == data.sender.user_id) {
                     selectUserType = item.role
@@ -1330,31 +1341,31 @@ function showMsgMeun(event: MenuEventData, data: any) {
             tags.value.menuDisplay.poke = true
             tags.value.menuDisplay.remove = true
             if (
-                runtimeData.chatInfo.show.type != 'group' ||
-                data.sender.user_id === runtimeData.loginInfo.uin ||
-                runtimeData.chatInfo.info.me_info.role === 'member' ||
+                chatStore.chatInfo.show.type != 'group' ||
+                data.sender.user_id === authStore.loginInfo.uin ||
+                chatStore.chatInfo.info.me_info.role === 'member' ||
                 selectUserType == 'owner' ||
-                (selectUserType == 'admin' && runtimeData.chatInfo.info.me_info.role != 'owner')
+                (selectUserType == 'admin' && chatStore.chatInfo.info.me_info.role != 'owner')
             ) {
                 tags.value.menuDisplay.remove = false
             }
-            if (data.sender.user_id === runtimeData.loginInfo.uin) {
+            if (data.sender.user_id === authStore.loginInfo.uin) {
                 tags.value.menuDisplay.at = false
             }
-            if(runtimeData.chatInfo.show.type == 'group' &&
-            runtimeData.chatInfo.info.me_info.role != 'member') {
+            if(chatStore.chatInfo.show.type == 'group' &&
+            chatStore.chatInfo.info.me_info.role != 'member') {
                 tags.value.menuDisplay.config = true
             }
         } else {
             if (
-                data.sender.user_id === runtimeData.loginInfo.uin ||
-                runtimeData.chatInfo.info.me_info.role ===
+                data.sender.user_id === authStore.loginInfo.uin ||
+                chatStore.chatInfo.info.me_info.role ===
                     'admin' ||
-                runtimeData.chatInfo.info.me_info.role === 'owner'
+                chatStore.chatInfo.info.me_info.role === 'owner'
             ) {
                 tags.value.menuDisplay.revoke = true
             }
-            tags.value.menuDisplay.reedit = tags.value.menuDisplay.revoke && data.sender.user_id === runtimeData.loginInfo.uin
+            tags.value.menuDisplay.reedit = tags.value.menuDisplay.revoke && data.sender.user_id === authStore.loginInfo.uin
             if (data.revoke === true) {
                 tags.value.menuDisplay.relpy = false
                 tags.value.menuDisplay.forward = false
@@ -1501,14 +1512,14 @@ function consoleLogMsg() {
 }
 
 function cancelForward() {
-    forwardList.value = runtimeData.userList
+    forwardList.value = contactStore.userList
     tags.value.showForwardPan = false
     closeMsgMenu()
 }
 
 function searchForward(event: Event) {
     const value = (event.target as HTMLInputElement).value
-    forwardList.value = runtimeData.userList.filter(
+    forwardList.value = contactStore.userList.filter(
         (item: UserFriendElem & UserGroupElem) => {
             const name = (
                 item.user_id? item.nickname + item.remark: item.group_name
@@ -1524,7 +1535,7 @@ function searchForward(event: Event) {
 
 function showForWard() {
     tags.value.showForwardPan = true
-    const showList = Object.assign(runtimeData.onMsgList).reverse()
+    const showList = Object.assign(contactStore.onMsgList).reverse()
     showList.forEach((item: any) => {
         const index = forwardList.value.indexOf(item)
         if (index > -1) {
@@ -1559,7 +1570,7 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
     const msgData = selectedMsg.value
     const id = data.group_id ? data.group_id : data.user_id
     if (multipleSelectList.value.length > 0 && msgData) {
-        const msgList = runtimeData.messageList.filter((item) => {
+        const msgList = chatStore.messageList.filter((item) => {
             return multipleSelectList.value.indexOf(item.message_id) >= 0
         })
         const jsonMsg = {
@@ -1590,8 +1601,8 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                 { type: 'json', data: JSON.stringify(jsonMsg), id: '' },
             ],
             sender: {
-                user_id: runtimeData.loginInfo.uin,
-                nickname: runtimeData.loginInfo.nickname,
+                user_id: authStore.loginInfo.uin,
+                nickname: authStore.loginInfo.nickname,
             }
         }
         const popInfo = {
@@ -1602,7 +1613,7 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                 {
                     text: $t('取消'),
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
                 {
@@ -1624,12 +1635,12 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                             msgBody,
                             true,
                         )
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     } else if (selectedMsg.value && msgData) {
         const popInfo = {
             title: $t('转发消息'),
@@ -1639,7 +1650,7 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                 {
                     text: $t('取消'),
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
                 {
@@ -1652,16 +1663,16 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                             msgData.message,
                             true,
                         )
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
     cancelForward()
-    if(runtimeData.baseOnMsgList.get(id) == undefined) {
-        runtimeData.baseOnMsgList.set(id, data)
+    if(contactStore.baseOnMsgList.get(id) == undefined) {
+        contactStore.baseOnMsgList.set(id, data)
     }
     nextTick(() => {
         const user = document.getElementById('user-' + id)
@@ -1676,7 +1687,7 @@ function sendRespond(num: number) {
     if (msgData !== null) {
         const msgId = msgData.message_id
         Connector.send(
-            runtimeData.jsonMap.send_respond.name,
+            authStore.jsonMap.send_respond.name,
             {
                 group_id: chat.show.id,
                 message_id: msgId,
@@ -1798,14 +1809,14 @@ function removeUser() {
                                 'set_group_kick',
                                 {
                                     group_id:
-                                        runtimeData.chatInfo.show
-                                            .id,
+                                                    chatStore.chatInfo.show
+                                                        .id,
                                     user_id: msgData.sender.user_id,
                                 },
                                 'setGroupKick',
                             )
                             closeMsgMenu()
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         }
                     },
                 },
@@ -1813,12 +1824,12 @@ function removeUser() {
                     text: $t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 }
 
@@ -1837,7 +1848,7 @@ function openChatInfoPan() {
             chat.show.type === 'group' &&
             chat.info.group_info.gc !== chat.show.id
         ) {
-            const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${chat.show.id}&bkn=${runtimeData.loginInfo.bkn}`
+            const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${chat.show.id}&bkn=${authStore.loginInfo.bkn}`
             Connector.send(
                 'http_proxy',
                 { url: url },
@@ -1847,7 +1858,7 @@ function openChatInfoPan() {
             chat.show.type === 'user' &&
             chat.info.user_info.uin !== chat.show.id
         ) {
-            const userInfo = runtimeData.jsonMap.friend_info.name
+            const userInfo = authStore.jsonMap.friend_info.name
             if(userInfo != undefined) {
                 Connector.send(
                     userInfo,
@@ -1856,7 +1867,7 @@ function openChatInfoPan() {
                 )
             }
         }
-        const noticeName = runtimeData.jsonMap.group_notices.name
+        const noticeName = authStore.jsonMap.group_notices.name
         if (
             chat.show.type === 'group' &&
             (chat.info.group_notices === undefined ||
@@ -1872,7 +1883,7 @@ function openChatInfoPan() {
             }
         }
         if (chat.show.type === 'group' && Object.keys(chat.info.group_files).length === 0) {
-            const name = runtimeData.jsonMap.group_files?.name
+            const name = authStore.jsonMap.group_files?.name
             if(name) {
                 Connector.send(name, {
                     group_id: chat.show.id
@@ -1897,8 +1908,8 @@ function deleteImg(index: number) {
 async function editImg(key: number) {
     const img = imgCache.value.get(key)
     if (!img) return
-    if (!viewer) return
-    const dataurl = await (viewer as any).edit(img)
+    if (!viewerRef?.value) return
+    const dataurl = await viewerRef.value.edit(img)
     imgCache.value.set(key, dataurl)
 }
 
@@ -1988,19 +1999,19 @@ function selectFile(event: Event) {
                     {
                         text: $t('发送'),
                         fun: () => {
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                     {
                         text: $t('取消'),
                         master: true,
                         fun: () => {
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                 ],
             }
-            runtimeData.popBoxList.push(popInfo)
+            uiStore.popBoxList.push(popInfo)
         } else {
             sendFile(file, fileName)
         }
@@ -2161,12 +2172,12 @@ function sendMsg(echo = 'sendMsgBack') {
 function updateList(newLength: number, oldLength: number) {
     if (oldLength == 0 && newLength > 0) {
         const name =
-            runtimeData.jsonMap.set_message_read?.name ?? undefined
+            authStore.jsonMap.set_message_read?.name ?? undefined
         let private_name =
-            runtimeData.jsonMap.set_message_read?.private_name ??
+            authStore.jsonMap.set_message_read?.private_name ??
             name
         if (!private_name) private_name = name
-        if (runtimeData.chatInfo.show.type == 'group') {
+        if (chatStore.chatInfo.show.type == 'group') {
             Connector.send(
                 name,
                 {
@@ -2194,7 +2205,7 @@ function updateList(newLength: number, oldLength: number) {
 
     if (
         tags.value.showBottomButton &&
-        !runtimeData.tags.nowGetHistory &&
+        !uiStore.nowGetHistory &&
         oldLength > 0
     ) {
         if (NewMsgNum.value !== 0) {
@@ -2206,10 +2217,10 @@ function updateList(newLength: number, oldLength: number) {
     }
     if (
         list.length > 200 &&
-        !runtimeData.tags.nowGetHistory &&
+        !uiStore.nowGetHistory &&
         !tags.value.showBottomButton
     ) {
-        runtimeData.messageList = []
+        chatStore.messageList = []
         const info = {
             type: chat.show.type,
             id: chat.show.id,
@@ -2218,7 +2229,7 @@ function updateList(newLength: number, oldLength: number) {
             jump: chat.show.jump,
         } as BaseChatInfoElem
         loadHistoryFirst(info)
-        runtimeData.tags.nowGetHistory = true
+        uiStore.nowGetHistory = true
     }
 
     const pan = document.getElementById('msgPan')
@@ -2227,13 +2238,13 @@ function updateList(newLength: number, oldLength: number) {
         nextTick(() => {
             const newPan = document.getElementById('msgPan')
             if (newPan !== null) {
-                if (runtimeData.tags.nowGetHistory) {
+                if (uiStore.nowGetHistory) {
                     scrollTo(
                         newPan.scrollHeight - height,
                         false,
                     )
                 }
-                if (!runtimeData.tags.nowGetHistory) {
+                if (!uiStore.nowGetHistory) {
                     if (!tags.value.showBottomButton) {
                         scrollTo(newPan.scrollHeight)
                     }
@@ -2241,7 +2252,7 @@ function updateList(newLength: number, oldLength: number) {
                         scrollTo(newPan.scrollHeight, false)
                     }
                 }
-                runtimeData.tags.nowGetHistory = false
+                uiStore.nowGetHistory = false
             }
             const getImgList = [] as string[]
             list.forEach((item: any) => {
@@ -2258,17 +2269,17 @@ function updateList(newLength: number, oldLength: number) {
             })
             chatImg = Img.fromList(getImgList)
             if (
-                runtimeData.chatInfo.show &&
-                runtimeData.chatInfo.show.jump
+                chatStore.chatInfo.show &&
+                chatStore.chatInfo.show.jump
             ) {
                 new Logger().debug(
                     '进入跳转至消息：' +
-                        runtimeData.chatInfo.show.jump,
+                        chatStore.chatInfo.show.jump,
                 )
                 scrollToMsgLocal(
-                    'chat-' + runtimeData.chatInfo.show.jump,
+                    'chat-' + chatStore.chatInfo.show.jump,
                 )
-                runtimeData.chatInfo.show.jump = undefined
+                chatStore.chatInfo.show.jump = undefined
             }
         })
     }
@@ -2350,9 +2361,9 @@ async function recallMsgs() {
 
 function showJin() {
     details.value[2].open = !details.value[2].open
-    if (runtimeData.chatInfo.info.jin_info.list.length == 0) {
+    if (chatStore.chatInfo.info.jin_info.list.length == 0) {
         const name =
-            runtimeData.jsonMap.group_essence.name ??
+            authStore.jsonMap.group_essence.name ??
             'get_essence_msg_list'
         Connector.send(
             name,
@@ -2398,12 +2409,12 @@ async function handleInput(event: Event) {
         if (value.length == 0) {
             searchRequestId.value++
             tags.value.search.list = reactive(list)
-        } else if (runtimeData.sysConfig.enable_local_history) {
+        } else if (settingsStore.sysConfig.enable_local_history) {
             const requestId = ++searchRequestId.value
             searchDebounceTimer.value = setTimeout(async () => {
                 const results = await dbSearchMessages(
-                    runtimeData.loginInfo.uin,
-                    runtimeData.chatInfo.show.id,
+                    authStore.loginInfo.uin,
+                    chatStore.chatInfo.show.id,
                     value,
                 )
                 if (requestId !== searchRequestId.value || !details.value[3].open) return
@@ -2441,13 +2452,13 @@ function closeSearch() {
 }
 
 function sendPoke(userId: number) {
-    if (runtimeData.jsonMap.poke) {
-        let name = runtimeData.jsonMap.poke.name
+    if (authStore.jsonMap.poke) {
+        let name = authStore.jsonMap.poke.name
         if (
             chat.show.type == 'user' &&
-            runtimeData.jsonMap.poke.private_name
+            authStore.jsonMap.poke.private_name
         ) {
-            name = runtimeData.jsonMap.poke.private_name
+            name = authStore.jsonMap.poke.private_name
         }
         Connector.send(
             name,
@@ -2494,7 +2505,7 @@ function jinScroll(event: Event) {
         if (chat.info.jin_info.is_end == false) {
             tags.value.isJinLoading = true
             const name =
-                runtimeData.jsonMap.group_essence.name ??
+                authStore.jsonMap.group_essence.name ??
                 'get_essence_msg_list'
             Connector.send(
                 name,
@@ -2509,8 +2520,8 @@ function jinScroll(event: Event) {
 }
 
 function viewerEssImg(url: string) {
-    if (!viewer) return
-    (viewer as any).open(new Img(url))
+    if (!viewerRef?.value) return
+    viewerRef.value.open(new Img(url))
 }
 
 function moreFunClick(type = 'default') {
@@ -2557,8 +2568,8 @@ function exitWin() {
             }
         }, 500)
     } else {
-        runtimeData.chatInfo.show.id = 0
-        runtimeData.tags.openSideBar = true
+        chatStore.chatInfo.show.id = 0
+        uiStore.openSideBar = true
         new Logger().add(LogType.UI, '右滑打开侧边栏触发完成')
     }
 }

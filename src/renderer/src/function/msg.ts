@@ -28,7 +28,6 @@ import {
 } from '@renderer/function/utils/msgUtil'
 import {
     delay,
-    getInch,
     getViewTime,
     randomNum,
 } from '@renderer/function/utils/systemUtil'
@@ -40,7 +39,7 @@ import {
     sendIdentifyData,
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
-import { reactive, markRaw, defineAsyncComponent, nextTick } from 'vue'
+import { reactive, markRaw, nextTick } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login, saveConnectionToHistory } from './connect'
 import {
@@ -50,8 +49,6 @@ import {
     UserFriendElem,
     UserGroupElem,
     MsgItemElem,
-    RunTimeDataElem,
-    BotMsgType,
 } from './elements/information'
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
@@ -66,6 +63,8 @@ import { useContactStore } from '@renderer/state/contact'
 import { useChatStore } from '@renderer/state/chat'
 import { useConnectionStore } from '@renderer/state/connection'
 import { useStickerStore } from '@renderer/state/sticker'
+import { useUIStore } from '@renderer/state/ui'
+import { useSettingsStore } from '@renderer/state/settings'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -83,6 +82,18 @@ let listLoadTimes = 0
 const logger = new Logger()
 let firstHeartbeatTime = -1
 let heartbeatTime = -1
+let loginWaveTimer: any = null
+
+export function setLoginWaveTimer(timer: any) {
+    loginWaveTimer = timer
+}
+
+export function clearLoginWaveTimer() {
+    if (loginWaveTimer !== null) {
+        clearInterval(loginWaveTimer)
+        loginWaveTimer = null
+    }
+}
 
 export function dispatch(raw: string | { [k: string]: any }, echo?: string) {
     let msg: any;
@@ -121,17 +132,14 @@ const noticeFunctions = {
      * 心跳包
      */
     meta_event: (_: string, msg: { [key: string]: any }) => {
+        const connectionStore = useConnectionStore()
         if (firstHeartbeatTime == -1) {
             firstHeartbeatTime = 0
-            runtimeData.watch.heartbeatTime = 0
-            const connectionStore = useConnectionStore()
             connectionStore.heartbeatTime = 0
             return
         }
         if (firstHeartbeatTime == 0) {
             firstHeartbeatTime = msg.time
-            runtimeData.watch.lastHeartbeatTime = msg.time
-            const connectionStore = useConnectionStore()
             connectionStore.lastHeartbeatTime = msg.time
             return
         }
@@ -141,11 +149,6 @@ const noticeFunctions = {
         }
         // 记录心跳状态
         if (heartbeatTime != -1) {
-            runtimeData.watch.heartbeatTime = heartbeatTime
-            runtimeData.watch.oldHeartbeatTime =
-                runtimeData.watch.lastHeartbeatTime
-            runtimeData.watch.lastHeartbeatTime = msg.time
-            const connectionStore = useConnectionStore()
             connectionStore.heartbeatTime = heartbeatTime
             connectionStore.oldHeartbeatTime = connectionStore.lastHeartbeatTime
             connectionStore.lastHeartbeatTime = msg.time
@@ -162,11 +165,6 @@ const noticeFunctions = {
      * 请求
      */
     request: (_: string, msg: { [key: string]: any }) => {
-        if (runtimeData.systemNoticesList) {
-            runtimeData.systemNoticesList.push(msg)
-        } else {
-            runtimeData.systemNoticesList = [msg]
-        }
         const contactStore = useContactStore()
         if (contactStore.systemNoticesList) {
             contactStore.systemNoticesList.push(msg)
@@ -219,12 +217,13 @@ const noticeFunctions = {
      * 表情回应
      */
     group_msg_emoji_like: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const msgId = msg.message_id
         const emojiList = msg.likes
         // 寻找消息
-        runtimeData.messageList.forEach((item, index) => {
+        chatStore.messageList.forEach((item, index) => {
             if (item.message_id === msgId) {
-                runtimeData.messageList[index].emoji_like = emojiList
+                chatStore.messageList[index].emoji_like = emojiList
             }
         })
     },
@@ -233,6 +232,8 @@ const noticeFunctions = {
      * 群禁言
      */
     group_ban: (_: string, msg: { [key: string]: any }) => {
+        const authStore = useAuthStore()
+        const chatStore = useChatStore()
         const groupId = msg.group_id
         const userId = msg.user_id
         const status = msg.sub_type === 'ban' ? true : false
@@ -240,38 +241,39 @@ const noticeFunctions = {
 
         // 如果是自己，更新禁言时间
         if (
-            userId == runtimeData.loginInfo.uin &&
-            groupId == runtimeData.chatInfo.show.id
+            userId == authStore.loginInfo.uin &&
+            groupId == chatStore.chatInfo.show.id
         ) {
             if (status)
-                runtimeData.chatInfo.info.me_info.shut_up_timestamp =
+                chatStore.chatInfo.info.me_info.shut_up_timestamp =
                     (new Date().getTime() + duration * 1000) / 1000
-            else runtimeData.chatInfo.info.me_info.shut_up_timestamp = 0
+            else chatStore.chatInfo.info.me_info.shut_up_timestamp = 0
         }
 
         // 只有在当前群才会显示
-        if (groupId == runtimeData.chatInfo.show.id)
-            runtimeData.messageList.push(msg)
+        if (groupId == chatStore.chatInfo.show.id)
+            chatStore.messageList.push(msg)
     },
 
     /**
      * 踢人
      */
     kick: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const groupId = msg.group_id
-        if (groupId == runtimeData.chatInfo.show.id) {
+        if (groupId == chatStore.chatInfo.show.id) {
             // 稍微等一下再刷新成员列表
             delay(1000).then(() => {
                 Connector.send(
                     'get_group_member_list',
-                    { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                    { group_id: chatStore.chatInfo.show.id, no_cache: true },
                     'getGroupMemberList',
                 )
                 return delay(1000)
             }).then(() => {
                 Connector.send(
                     'get_group_member_list',
-                    { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                    { group_id: chatStore.chatInfo.show.id, no_cache: true },
                     'getGroupMemberList',
                 )
             })
@@ -283,25 +285,27 @@ const noticeFunctions = {
      */
     poke: (_: string, msg: { [key: string]: any }) => {
         const { $t } = app.config.globalProperties
+        const authStore = useAuthStore()
+        const chatStore = useChatStore()
 
         const groupId = msg.group_id
         const userIds = [msg.user_id, msg.target_id]
         const info = msg.raw_info
 
         // 如果的当前打开的会话
-        if (groupId == runtimeData.chatInfo.show.id) {
+        if (groupId == chatStore.chatInfo.show.id) {
             let str = ''
             const userInfo = [] as { txt: string; isMe: boolean }[]
             // 用户列表
             userIds.forEach((id) => {
-                if (id == runtimeData.loginInfo.uin) {
+                if (id == authStore.loginInfo.uin) {
                     userInfo.push({
                         txt: $t('你'),
                         isMe: true,
                     })
                 } else {
                     // 到群成员列表中去找这个人
-                    const user = runtimeData.chatInfo.info.group_members.find(
+                    const user = chatStore.chatInfo.info.group_members.find(
                         (item) => {
                             return item.user_id == id
                         },
@@ -332,18 +336,19 @@ const noticeFunctions = {
             // 插入系统消息
             msg.str = str
             msg.pokeMe = userInfo[1].isMe
-            runtimeData.messageList.push(msg)
+            chatStore.messageList.push(msg)
         }
     },
 
     approve: (_: string, msg: { [key: string]: any }) => {
         const { $t } = app.config.globalProperties
+        const chatStore = useChatStore()
 
         const groupId = msg.group_id
         const userId = msg.user_id
 
         // 如果的当前打开的会话
-        if (groupId == runtimeData.chatInfo.show.id) {
+        if (groupId == chatStore.chatInfo.show.id) {
             // 刷新群成员列表
             Connector.send(
                 'get_group_member_list',
@@ -351,7 +356,7 @@ const noticeFunctions = {
                 'getGroupMemberList',
             )
             // 获取到用户信息
-            const user = runtimeData.chatInfo.info.group_members.find(
+            const user = chatStore.chatInfo.info.group_members.find(
                 (item) => {
                     return item.user_id == userId
                 },
@@ -362,18 +367,19 @@ const noticeFunctions = {
                     name: user.nickname,
                 })
                 msg.str = str
-                runtimeData.messageList.push(msg)
+                chatStore.messageList.push(msg)
             }
         }
     },
 
     input_status: (_: string, msg: { [key: string]: any }) => {
         const { $t } = app.config.globalProperties
+        const chatStore = useChatStore()
         const sender = msg.user_id
-        if (runtimeData.chatInfo.show.id == sender) {
-            runtimeData.chatInfo.show.appendInfo = $t('对方正在输入……')
+        if (chatStore.chatInfo.show.id == sender) {
+            chatStore.chatInfo.show.appendInfo = $t('对方正在输入……')
             setTimeout(() => {
-                runtimeData.chatInfo.show.appendInfo = undefined
+                chatStore.chatInfo.show.appendInfo = undefined
             }, 10000)
         }
     },
@@ -385,26 +391,28 @@ const msgFunctions = {
      */
     updateGroupMemberInfo: () => {
         const { $t } = app.config.globalProperties
+        const uiStore = useUIStore()
+        const chatStore = useChatStore()
         const popInfo = {
             title: $t('操作'),
             html: `<span>${$t('正在确认操作……')}</span>`
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
         // 稍微等一下再刷新成员列表
         delay(1000).then(() => {
             Connector.send(
                 'get_group_member_list',
-                { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                { group_id: chatStore.chatInfo.show.id, no_cache: true },
                 'getGroupMemberList',
             )
             return delay(1000)
         }).then(() => {
             Connector.send(
                 'get_group_member_list',
-                { group_id: runtimeData.chatInfo.show.id, no_cache: true },
+                { group_id: chatStore.chatInfo.show.id, no_cache: true },
                 'getGroupMemberList',
             )
-            runtimeData.popBoxList.shift()
+            uiStore.popBoxList.shift()
         })
     },
 
@@ -416,13 +424,12 @@ const msgFunctions = {
 
         if (data) {
             // 如果 runtime 存在（即不是第一次连接），且 app_name 不同，重置 runtime
+            const authStore = useAuthStore()
             resetRimtime(
-                runtimeData.botInfo.app_name != data.app_name && !login.status,
+                authStore.botInfo.app_name != data.app_name && !login.status,
             )
 
-            runtimeData.botInfo = data
-            const authStore = useAuthStore()
-            Object.assign(authStore.botInfo, data)
+            authStore.botInfo = data
             if (Option.get('open_ga_bot') !== false) {
                 const appVersion = data.app_version ? ',' + data.app_version : ''
                 const appInfo = data.app_name ? data.app_name + appVersion : '（未知）'
@@ -449,14 +456,13 @@ const msgFunctions = {
         const msgBody = getMsgData('login_info', msg, msgPath.login_info)
         if (msgBody) {
             const data = msgBody[0]
+            const authStore = useAuthStore()
 
             // 如果 runtime 存在（即不是第一次连接），且 uin 不同，重置 runtime
-            resetRimtime(runtimeData.loginInfo.uin != data.uin && !login.status)
+            resetRimtime(authStore.loginInfo.uin != data.uin && !login.status)
 
             // 完成登陆初始化
-            runtimeData.loginInfo = data
-            const authStore = useAuthStore()
-            Object.assign(authStore.loginInfo, data)
+            authStore.loginInfo = data
             login.status = true
 
             // 保存用户信息到连接历史
@@ -477,7 +483,7 @@ const msgFunctions = {
                 backend.call(undefined, 'win:setTitle', false, title)
             }
             // 结束登录页面的水波动画
-            clearInterval(runtimeData.tags.loginWaveTimer)
+            clearLoginWaveTimer()
             // 跳转标签卡
             const barMsg = document.getElementById('bar-msg')
             if (barMsg != null) barMsg.click()
@@ -492,7 +498,8 @@ const msgFunctions = {
      * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
     getMoreLoginInfo: (_: string, msg: { [key: string]: any }) => {
-        runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]
+        const authStore = useAuthStore()
+        authStore.loginInfo.info = msg.data.data.result.buddy.info_list[0]
     },
 
     /**
@@ -509,6 +516,7 @@ const msgFunctions = {
      * 保存分组信息（独立保存）
      */
     getFriendCategory: (_: string, msg: { [key: string]: any }) => {
+        const contactStore = useContactStore()
         const list = getMsgData(
             'friend_category',
             msg,
@@ -525,7 +533,7 @@ const msgFunctions = {
         // 刷新用户列表的分类信息
         list.forEach((item) => {
             item.users.forEach((id) => {
-                runtimeData.userList.forEach((user) => {
+                contactStore.userList.forEach((user) => {
                     if (user.user_id == id && user.class_id == undefined) {
                         user.class_id = item.class_id
                         user.class_name = item.class_name
@@ -539,6 +547,7 @@ const msgFunctions = {
      * 获取群成员信息
      */
     getUserInfoInGroup: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const data = getMsgData(
             'group_member_info',
             msg,
@@ -550,7 +559,7 @@ const msgFunctions = {
             if (info.shut_up_timestamp * 1000 < Date.now()) {
                 info.shut_up_timestamp = 0
             }
-            runtimeData.chatInfo.info.me_info = info
+            chatStore.chatInfo.info.me_info = info
         }
     },
 
@@ -558,6 +567,7 @@ const msgFunctions = {
      * 保存群成员列表
      */
     getGroupMemberList: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const data = msg.data as GroupMemberInfoElem[]
         data.forEach((item: any) => {
             let name: string
@@ -602,19 +612,20 @@ const msgFunctions = {
         })
         // 拼接列表
         const back = createrList.concat(adminList.concat(memberList))
-        runtimeData.chatInfo.info.group_members = back
+        chatStore.chatInfo.info.group_members = back
     },
 
     /**
      * 保存聊天记录
      */
     getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
+        const uiStore = useUIStore()
         if (msg.data === null) {
             new PopInfo().add(
                 PopType.ERR,
                 app.config.globalProperties.$t('获取历史记录失败'),
             )
-            runtimeData.tags.loadHistoryFail = true
+            uiStore.loadHistoryFail = true
             return
         }
         // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
@@ -625,6 +636,8 @@ const msgFunctions = {
         msg: { [key: string]: any },
         metaArgs?: string[],
     ) => {
+        const authStore = useAuthStore()
+        const chatStore = useChatStore()
         // echo 格式：getChatHistoryGapFill_<anchorMsgId>
         // anchorMsgId 是 gap 之后第一条消息的 message_id（插入点）
         const anchorMsgId = metaArgs?.[1]
@@ -634,26 +647,27 @@ const msgFunctions = {
             .then((list) => {
                 if (!list || list.length === 0) return
                 const inserted = insertHistorySegmentAtAnchor(
-                    runtimeData.messageList,
+                    chatStore.messageList,
                     anchorMsgId,
                     list,
                 )
-                if (inserted.length === runtimeData.messageList.length) return
+                if (inserted.length === chatStore.messageList.length) return
                 replaceMessageListInPlace(inserted)
                 // 同步存入本地 DB，以便下次直接从本地加载
-                saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
+                saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
             })
             .catch(() => {})
     },
     getChatHistory: (_: string, msg: { [key: string]: any }) => {
+        const uiStore = useUIStore()
         if (msg.data === null) {
             new PopInfo().add(
                 PopType.ERR,
                 app.config.globalProperties.$t('获取历史记录失败'),
             )
-            runtimeData.tags.loadHistoryFail = true
-            runtimeData.tags.historyBeforeTime = undefined
-            runtimeData.tags.nowGetHistory = false
+            uiStore.loadHistoryFail = true
+            uiStore.historyBeforeTime = undefined
+            uiStore.nowGetHistory = false
             return
         }
         const pan = document.getElementById('msgPan')
@@ -692,11 +706,11 @@ const msgFunctions = {
                     const raw = getMsgRawTxt(list[0])
                     const { time } = list[0]
                     // 更新消息列表
-                    const onmsg = runtimeData.baseOnMsgList.get(Number(id))
+                    const onmsg = contactStore.baseOnMsgList.get(Number(id))
                     if (onmsg) {
                         onmsg.raw_msg = raw
                         onmsg.time = getViewTime(Number(time))
-                        runtimeData.baseOnMsgList.set(id, onmsg)
+                        contactStore.baseOnMsgList.set(id, onmsg)
                     }
                 }
             } catch (e) {
@@ -713,6 +727,7 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
+        const authStore = useAuthStore()
         if (msg.message_id == undefined) {
             msg.message_id = msg.data.message_id
         }
@@ -725,7 +740,7 @@ const msgFunctions = {
         } else if (echoList[1] == 'uuid') {
             const messageId = echoList[2]
             // 去 messagelist 里找到这条消息
-            runtimeData.messageList.forEach((item) => {
+            chatStore.messageList.forEach((item) => {
                 if (item.message_id == messageId) {
                     item.message_id = msg.message_id
                     item.fake_msg = false
@@ -736,7 +751,7 @@ const msgFunctions = {
             // PS：其实有消息通知的情况下不需要再去主动获取了
             // 但是为了兼容没有开启自身消息通知的情况，还是保留了这个功能
             Connector.send(
-                runtimeData.jsonMap.get_message.name ?? 'get_msg',
+                authStore.jsonMap.get_message.name ?? 'get_msg',
                 { message_id: msg.message_id },
                 'getSendMsg_' + msg.message_id,
             )
@@ -764,25 +779,25 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
+        const authStore = useAuthStore()
         const getCount = Number(echoList[1])
         const data = msg.data
         if (msgPath.roaming_stamp.reverse) {
             data.reverse()
         }
-        if (runtimeData.stickerCache == undefined) {
-            runtimeData.stickerCache = data
-        } else if (runtimeData.jsonMap.roaming_stamp.pagerType == 'full') {
+        const stickerStore = useStickerStore()
+        if (stickerStore.stickerCache.length == 0) {
+            stickerStore.stickerCache = data
+        } else if (authStore.jsonMap.roaming_stamp.pagerType == 'full') {
             // 全量分页模式下不追加
-            if (getCount > runtimeData.stickerCache.length + 48) {
+            if (getCount > stickerStore.stickerCache.length + 48) {
                 // 已经获取到所有内容了
                 data.push('end')
             }
-            runtimeData.stickerCache = data
+            stickerStore.stickerCache = data
         } else {
-            runtimeData.stickerCache = runtimeData.stickerCache.concat(data)
+            stickerStore.stickerCache = stickerStore.stickerCache.concat(data)
         }
-        const stickerStore = useStickerStore()
-        stickerStore.stickerCache = runtimeData.stickerCache ?? []
     },
 
     /**
@@ -790,7 +805,8 @@ const msgFunctions = {
      * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
     getMoreGroupInfo: (_: string, msg: { [key: string]: any }) => {
-        runtimeData.chatInfo.info.group_info = msg.data.data
+        const chatStore = useChatStore()
+        chatStore.chatInfo.info.group_info = msg.data.data
     },
 
     /**
@@ -798,12 +814,13 @@ const msgFunctions = {
      * @deprecated 功能在后期更新中未被重构检查，可能存在问题
      */
     getMoreUserInfo: (_: string, msg: { [key: string]: any }) => {
-        // runtimeData.chatInfo.info.user_info =
+        const chatStore = useChatStore()
+        // chatStore.chatInfo.info.user_info =
         //     msg.data.data.result.buddy.info_list[0]
         const data = getMsgData('friend_info', msg, msgPath.friend_info)[0]
         data.regTime = new Date(data.reg_time).getTime()
         if (data) {
-            runtimeData.chatInfo.info.user_info = data
+            chatStore.chatInfo.info.user_info = data
         }
     },
 
@@ -811,6 +828,7 @@ const msgFunctions = {
      * 获取群通知
      */
     getGroupNotices: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const list = getMsgData('group_notices', msg, msgPath.group_notices)
         if (!list) return
 
@@ -825,13 +843,14 @@ const msgFunctions = {
             notice.img = img
             lastImg = img
         }
-        runtimeData.chatInfo.info.group_notices = list
+        chatStore.chatInfo.info.group_notices = list
     },
 
     /**
      * 获取群文件列表
      */
     getGroupFiles: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const list = getMsgData('group_files', msg, msgPath.group_files) as (GroupFileElem & GroupFileFolderElem)[]
         // 排序；文件夹在前，文件在后
         const folderList = list.filter((item) => {
@@ -848,13 +867,14 @@ const msgFunctions = {
             return b.upload_time - a.upload_time
         })
         // 合并
-        runtimeData.chatInfo.info.group_files = folderList.concat(fileList)
+        chatStore.chatInfo.info.group_files = folderList.concat(fileList)
     },
 
     /**
      * 获取群文件文件夹文件
      */
     getGroupDirFiles: (_: string, msg: { [key: string]: any }, echoList: string[]) => {
+        const chatStore = useChatStore()
         // TODO: 有分页
 
         // 默认使用主目录相同的结构，如果存在子目录结构的定义则使用子目录的结构
@@ -879,7 +899,7 @@ const msgFunctions = {
         })
         // 寻找 item
         const folderId = echoList[1]
-        const folder = runtimeData.chatInfo.info.group_files.find((item) => {
+        const folder = chatStore.chatInfo.info.group_files.find((item) => {
             return item.folder_id == folderId
         })
         if (folder) {
@@ -933,13 +953,14 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
+        const chatStore = useChatStore()
         const data = getMsgData('file_download', msg, msgPath.file_download)[0]
         let url = data.file_url
         const msgId = echoList[1]
         const ext = echoList[2]
         if (url) {
             // 寻找消息
-            const msg = runtimeData.messageList.find((item) => {
+            const msg = chatStore.messageList.find((item) => {
                 return item.message_id == msgId
             })
             if (msg) {
@@ -960,6 +981,7 @@ const msgFunctions = {
      * 保存精华消息
      */
     getJin: (_: string, msg: { [key: string]: any }) => {
+        const chatStore = useChatStore()
         const jinList = getMsgData('group_essence', msg, msgPath.group_essence)
         const is_end = getMsgData(
             'is_end',
@@ -967,16 +989,16 @@ const msgFunctions = {
             msgPath.group_essence.is_end,
         ) ?? [true]
         if (jinList && is_end) {
-            if (runtimeData.chatInfo.info.jin_info.list.length == 0) {
-                runtimeData.chatInfo.info.jin_info.list = jinList
+            if (chatStore.chatInfo.info.jin_info.list.length == 0) {
+                chatStore.chatInfo.info.jin_info.list = jinList
             } else {
-                const now_page = runtimeData.chatInfo.info.jin_info.pages ?? 0
+                const now_page = chatStore.chatInfo.info.jin_info.pages ?? 0
 
-                runtimeData.chatInfo.info.jin_info.list =
-                    runtimeData.chatInfo.info.jin_info.list.concat(jinList)
-                runtimeData.chatInfo.info.jin_info.pages = now_page + 1
+                chatStore.chatInfo.info.jin_info.list =
+                    chatStore.chatInfo.info.jin_info.list.concat(jinList)
+                chatStore.chatInfo.info.jin_info.pages = now_page + 1
             }
-            runtimeData.chatInfo.info.jin_info.is_end = is_end[0]
+            chatStore.chatInfo.info.jin_info.is_end = is_end[0]
         }
     },
 
@@ -989,6 +1011,8 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
+        const authStore = useAuthStore()
+        const chatStore = useChatStore()
         const msgInfo = getMsgData('message_info', msg.data, msgPath.message_info)
         if (msgInfo) {
             const info = msgInfo[0]
@@ -996,7 +1020,7 @@ const msgFunctions = {
                 // 返回的不是这条消息，重新请求
                 setTimeout(() => {
                     Connector.send(
-                        runtimeData.jsonMap.get_message.name ?? 'get_msg',
+                        authStore.jsonMap.get_message.name ?? 'get_msg',
                         { message_id: echoList[1] },
                         'getSendMsg_' + echoList[1]
                     )
@@ -1004,9 +1028,9 @@ const msgFunctions = {
             } else {
                 // 列表内最近的一条 fake_msg（倒序查找）
                 let fakeMsg = null as any
-                for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
-                    const msg = runtimeData.messageList[i]
-                    if (msg.fake_msg != undefined && info.sender == runtimeData.loginInfo.uin) {
+                for (let i = chatStore.messageList.length - 1; i > 0; i--) {
+                    const msg = chatStore.messageList[i]
+                    if (msg.fake_msg != undefined && info.sender == authStore.loginInfo.uin) {
                         fakeMsg = msg
                         break
                     }
@@ -1038,9 +1062,10 @@ const msgFunctions = {
      * 设置消息已读
      */
     readMemberMessage: (_: string, msg: { [key: string]: any }) => {
+        const authStore = useAuthStore()
         const data = msg.data[0]
-        const msgName = runtimeData.jsonMap.set_message_read.private_name
-        let private_name = runtimeData.jsonMap.set_message_read.private_name
+        const msgName = authStore.jsonMap.set_message_read.private_name
+        let private_name = authStore.jsonMap.set_message_read.private_name
         if (!private_name) private_name = msgName
         if (data.group_id != undefined) {
             Connector.send(
@@ -1075,6 +1100,9 @@ const msgFunctions = {
      * 获取会话历史
      */
     getRecentContact: (_: string, data: any) => {
+        const authStore = useAuthStore()
+        const contactStore = useContactStore()
+        const settingsStore = useSettingsStore()
         const list = getMsgData('recent_contact', data, msgPath.recent_contact)
         if (list != undefined) {
             // user_id: /peerUin
@@ -1085,11 +1113,11 @@ const msgFunctions = {
                 return item.chat_type == 1 || item.chat_type == 2
             })
             // 排除掉在置顶列表里的
-            const topList = runtimeData.sysConfig.top_info as {
+            const topList = settingsStore.sysConfig.top_info as {
                 [key: string]: number[]
             } | null
             if (topList != null) {
-                const top = topList[runtimeData.loginInfo.uin]
+                const top = topList[authStore.loginInfo.uin]
                 if (top != undefined) {
                     back = back.filter((item) => {
                         return top.indexOf(Number(item.user_id)) == -1
@@ -1106,11 +1134,11 @@ const msgFunctions = {
             })
             back.forEach((item) => {
                 // 去消息列表里找一下它
-                const user = runtimeData.userList.find((user) => {
+                const user = contactStore.userList.find((user) => {
                     return user.user_id == item.user_id || user.group_id == item.user_id
                 })
                 if (user) {
-                    runtimeData.baseOnMsgList.set(Number(item.user_id), user)
+                    contactStore.baseOnMsgList.set(Number(item.user_id), user)
                     updateLastestHistory(user)
                 }
             })
@@ -1125,15 +1153,16 @@ const msgFunctions = {
         __: { [key: string]: any },
         echoList: string[],
     ) => {
+        const chatStore = useChatStore()
         const msgId = echoList[1]
         const id = Number(echoList[2])
         // 从消息列表中找到这条消息
-        runtimeData.messageList.forEach((item, index) => {
+        chatStore.messageList.forEach((item, index) => {
             if (item.message_id === msgId) {
-                if (runtimeData.messageList[index].emoji_like) {
+                if (chatStore.messageList[index].emoji_like) {
                     // 寻找有没有 emoji_id 相同的
                     let hasAdd = false
-                    runtimeData.messageList[index].emoji_like.forEach(
+                    chatStore.messageList[index].emoji_like.forEach(
                         (item: { emoji_id: number; count: number }) => {
                             if (item.emoji_id == id) {
                                 item.count++
@@ -1142,13 +1171,13 @@ const msgFunctions = {
                         },
                     )
                     if (!hasAdd) {
-                        runtimeData.messageList[index].emoji_like.push({
+                        chatStore.messageList[index].emoji_like.push({
                             emoji_id: id,
                             count: 1,
                         })
                     }
                 } else {
-                    runtimeData.messageList[index].emoji_like = [
+                    chatStore.messageList[index].emoji_like = [
                         { emoji_id: id, count: 1 },
                     ]
                 }
@@ -1165,6 +1194,7 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
+        const authStore = useAuthStore()
         // 拆分 cookie
         const cookieObject = {} as { [key: string]: string }
         msg.data.cookies.split('; ').forEach((item: string) => {
@@ -1181,11 +1211,11 @@ const msgFunctions = {
         }
         // 保存 cookie 和 bkn
         const domain = echoList[1]
-        if (!runtimeData.loginInfo.webapi) runtimeData.loginInfo.webapi = {}
-        if (!runtimeData.loginInfo.webapi[domain])
-            runtimeData.loginInfo.webapi[domain] = {}
-        runtimeData.loginInfo.webapi[domain].cookie = cookieObject
-        runtimeData.loginInfo.webapi[domain].bkn = (
+        if (!authStore.loginInfo.webapi) authStore.loginInfo.webapi = {}
+        if (!authStore.loginInfo.webapi[domain])
+            authStore.loginInfo.webapi[domain] = {}
+        authStore.loginInfo.webapi[domain].cookie = cookieObject
+        authStore.loginInfo.webapi[domain].bkn = (
             hash & 0x7fffffff
         ).toString()
     },
@@ -1218,6 +1248,9 @@ const handlers: Record<string, (payload: any, metaArgs?: string[]) => void> = {
 // ==========================================
 
 function saveUser(msg: { [key: string]: any }, type: string) {
+    const authStore = useAuthStore()
+    const contactStore = useContactStore()
+    const settingsStore = useSettingsStore()
     listLoadTimes++
     let list: any[] | undefined
     if (msgPath.user_list)
@@ -1307,15 +1340,13 @@ function saveUser(msg: { [key: string]: any }, type: string) {
             }
             return 0
         })
-        runtimeData.userList = runtimeData.userList.concat(list)
-        const contactStore = useContactStore()
-        contactStore.userList = runtimeData.userList
+        contactStore.userList = contactStore.userList.concat(list)
         // 刷新置顶列表
-        const info = runtimeData.sysConfig.top_info as {
+        const info = settingsStore.sysConfig.top_info as {
             [key: string]: number[]
         } | null
         if (info != null) {
-            const topList = info[runtimeData.loginInfo.uin]
+            const topList = info[authStore.loginInfo.uin]
             if (topList !== undefined) {
                 list.forEach((item) => {
                     const id = Number(
@@ -1324,11 +1355,11 @@ function saveUser(msg: { [key: string]: any }, type: string) {
                     if (topList.indexOf(id) >= 0) {
                         item.always_top = true
                         // 判断它在不在消息列表里
-                        if (runtimeData.baseOnMsgList.get(id) == undefined) {
-                            runtimeData.baseOnMsgList.set(id, item)
+                        if (contactStore.baseOnMsgList.get(id) == undefined) {
+                            contactStore.baseOnMsgList.set(id, item)
                             // 给它获取一下最新的一条消息
                             // 给置顶的用户刷新最新一条的消息用于显示
-                            runtimeData.userList.forEach((item) => {
+                            contactStore.userList.forEach((item) => {
                                 if (item.always_top) {
                                     updateLastestHistory(item)
                                 }
@@ -1344,24 +1375,24 @@ function saveUser(msg: { [key: string]: any }, type: string) {
             id: 'userList',
             action: 'label',
             value: app.config.globalProperties.$t('用户列表（{count}）', {
-                count: runtimeData.userList.length,
+                count: contactStore.userList.length,
             }),
         })
     }
     // 如果获取次数大于 0 并且是双数，刷新一下历史会话
     if (listLoadTimes > 0 && listLoadTimes % 2 == 0) {
         // 获取最近的会话
-        if (runtimeData.jsonMap.recent_contact)
+        if (authStore.jsonMap.recent_contact)
             Connector.send(
-                runtimeData.jsonMap.recent_contact.name,
+                authStore.jsonMap.recent_contact.name,
                 {},
                 'getRecentContact',
             )
     }
     // 如果是分离式的好友列表，继续获取分类信息
-    if (type == 'friend' && runtimeData.jsonMap.friend_category) {
+    if (type == 'friend' && authStore.jsonMap.friend_category) {
         Connector.send(
-            runtimeData.jsonMap.friend_category.name,
+            authStore.jsonMap.friend_category.name,
             {},
             'getFriendCategory',
         )
@@ -1371,6 +1402,7 @@ function saveUser(msg: { [key: string]: any }, type: string) {
 function saveClassInfo(
     list: { class_id: number; class_name: string; sort_id?: number }[],
 ) {
+    const settingsStore = useSettingsStore()
     if (list[0].sort_id != undefined) {
         // 如果有 sort_id，按 sort_id 排序，从小到大
         list.sort((a, b) => {
@@ -1384,13 +1416,18 @@ function saveClassInfo(
         })
     }
 
-    runtimeData.tags.classes = list
+    settingsStore.classes = list
 }
 
 async function saveMsg(msg: any, append = undefined as undefined | string) {
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+    const contactStore = useContactStore()
+    const settingsStore = useSettingsStore()
     let list = await normalizeMessagesFromPayload(msg)
     if (list != undefined) {
-        const historyBeforeTime = Number(runtimeData.tags.historyBeforeTime)
+        const historyBeforeTime = Number(uiStore.historyBeforeTime)
         const hasHistoryBeforeTime = Number.isFinite(historyBeforeTime)
 
         // 检查消息是否是当前聊天的消息
@@ -1403,7 +1440,7 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         if (infoList != undefined) {
             const info = infoList[0]
             const id = info.group_id ?? info.private_id
-            if (id != undefined && id != runtimeData.chatInfo.show.id) {
+            if (id != undefined && id != chatStore.chatInfo.show.id) {
                 return
             }
         }
@@ -1422,17 +1459,17 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
 
         // 处于上拉边界过滤时，若结果为空则保留当前列表，避免误清空。
         if (hasHistoryBeforeTime && append === 'top' && list.length < 1) {
-            runtimeData.tags.historyBeforeTime = undefined
-            runtimeData.tags.nowGetHistory = false
+            uiStore.historyBeforeTime = undefined
+            uiStore.nowGetHistory = false
             return
         }
 
         // 保存到本地历史
-        saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
+        saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
         // 如果分页不是增量的，就不使用追加
         if (
             append == 'top' &&
-            runtimeData.jsonMap.message_list?.pagerType == 'full'
+            authStore.jsonMap.message_list?.pagerType == 'full'
         ) {
             append = undefined
         }
@@ -1440,18 +1477,18 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         if (append != undefined) {
             // 没有更旧的消息能加载了，禁用允许加载标志
             if (list.length < 1) {
-                runtimeData.tags.canLoadHistory = false
-                runtimeData.tags.historyBeforeTime = undefined
+                uiStore.canLoadHistory = false
+                uiStore.historyBeforeTime = undefined
                 return
             }
-            const merged = mergeMessagesByIdAndTime(runtimeData.messageList, list)
+            const merged = mergeMessagesByIdAndTime(chatStore.messageList, list)
             replaceMessageListInPlace(merged)
         } else {
             if (
-                runtimeData.sysConfig.enable_local_history &&
-                runtimeData.sysConfig.mixed_load_messages !== false
+                settingsStore.sysConfig.enable_local_history &&
+                settingsStore.sysConfig.mixed_load_messages !== false
             ) {
-                const merged = mergeMessagesByIdAndTime(runtimeData.messageList, list)
+                const merged = mergeMessagesByIdAndTime(chatStore.messageList, list)
                 replaceMessageListInPlace(merged)
             } else {
                 replaceMessageListInPlace(list)
@@ -1459,21 +1496,21 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         }
         // 消息后处理
         // PS: 部分消息类型可能需要获取附加内容，在此处进行处理
-        runtimeData.messageList.forEach((item) => {
+        chatStore.messageList.forEach((item) => {
             sendMsgAppendInfo(item)
         })
         // 将消息列表的最后一条 raw_message 保存到用户列表中
         const lastMsg =
-            runtimeData.messageList[runtimeData.messageList.length - 1]
+            chatStore.messageList[chatStore.messageList.length - 1]
         if (lastMsg) {
-            const user = runtimeData.userList.find((item) => {
+            const user = contactStore.userList.find((item) => {
                 return (
-                    item.group_id == runtimeData.chatInfo.show.id ||
-                    item.user_id == runtimeData.chatInfo.show.id
+                    item.group_id == chatStore.chatInfo.show.id ||
+                    item.user_id == chatStore.chatInfo.show.id
                 )
             })
             if (user) {
-                if (runtimeData.chatInfo.show.type == 'group') {
+                if (chatStore.chatInfo.show.type == 'group') {
                     user.raw_msg =
                         lastMsg.sender.nickname + ': ' + getMsgRawTxt(lastMsg)
                 } else {
@@ -1484,7 +1521,7 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         }
 
         if (hasHistoryBeforeTime) {
-            runtimeData.tags.historyBeforeTime = undefined
+            uiStore.historyBeforeTime = undefined
         }
     }
 }
@@ -1591,7 +1628,7 @@ function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
     if (existing?._from_local_db !== true) return false
 
     // 关闭本地图片缓存时，在线同 id 图片消息应覆盖本地消息。
-    if (runtimeData.sysConfig.disable_local_history_image_cache === true) {
+    if (settingsStore.sysConfig.disable_local_history_image_cache === true) {
         return true
     }
 
@@ -1650,7 +1687,8 @@ function mergeMessagesByIdAndTime(current: any[], incoming: any[]): any[] {
 }
 
 function replaceMessageListInPlace(next: any[]) {
-    runtimeData.messageList.splice(0, runtimeData.messageList.length, ...next)
+    const chatStore = useChatStore()
+    chatStore.messageList.splice(0, chatStore.messageList.length, ...next)
 }
 
 export async function getMessageList(list: any[] | undefined) {
@@ -1731,18 +1769,20 @@ async function msgPreprocess(msg: any): Promise<any> {
 }
 
 function revokeMsg(_: string, msg: any) {
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
     // 清除通知
     const chatId = msg.notice_type.includes('group') ? msg.group_id : msg.user_id
     new Notify().closeAll(chatId)
 
     // 在本地 DB 中标记撤回
     const msgId = msg.message_id
-    dbRevokeMessage(runtimeData.loginInfo.uin, String(msgId))
+    dbRevokeMessage(authStore.loginInfo.uin, String(msgId))
 
     // 寻找消息
     let msgGet = null as { [key: string]: any } | null
     let msgIndex!: number
-    for (const [index, msg] of runtimeData.messageList.entries()) {
+    for (const [index, msg] of chatStore.messageList.entries()) {
         if (msg.message_id === msgId) {
             msgGet = msg
             msgIndex = index
@@ -1755,19 +1795,24 @@ function revokeMsg(_: string, msg: any) {
     }
 
     // 移除消息
-    runtimeData.messageList.splice(msgIndex, 1)
+    chatStore.messageList.splice(msgIndex, 1)
 
-    if (msgGet.sender.user_id === runtimeData.loginInfo.uin)
+    if (msgGet.sender.user_id === authStore.loginInfo.uin)
         msg.originMsg = msgGet
 
     // 显示撤回提示
-    const list = runtimeData.messageList
+    const list = chatStore.messageList
     list.splice(msgIndex + 1, 0, msg)
 }
 
 let qed_try_times = 0
 function newMsg(_: string, data: any) {
     const { $t } = app.config.globalProperties
+    const authStore = useAuthStore()
+    const uiStore = useUIStore()
+    const chatStore = useChatStore()
+    const contactStore = useContactStore()
+    const settingsStore = useSettingsStore()
     // 没有对频道的支持计划
     if (data.detail_type == 'guild') {
         return
@@ -1778,11 +1823,11 @@ function newMsg(_: string, data: any) {
         // 消息基础信息 ============================================
         const info = infoList[0]
         const id = info.group_id ?? info.private_id
-        const loginId = runtimeData.loginInfo.uin
-        const showId = runtimeData.chatInfo.show.id
+        const loginId = authStore.loginInfo.uin
+        const showId = chatStore.chatInfo.show.id
         const sender = info.sender
         // 在好友列表里找一下他
-        const senderInfo = runtimeData.userList.find((item) => {
+        const senderInfo = contactStore.userList.find((item) => {
             return item.user_id == sender
         })
         const isImportant = senderInfo?.class_id == 9999
@@ -1790,8 +1835,8 @@ function newMsg(_: string, data: any) {
         // 预发送消息填充 ============================================
         // 列表内最近的一条 fake_msg（倒序查找）
         let fakeMsg = null as any
-        for (let i = runtimeData.messageList.length - 1; i > 0; i--) {
-            const msg = runtimeData.messageList[i]
+        for (let i = chatStore.messageList.length - 1; i > 0; i--) {
+            const msg = chatStore.messageList[i]
             if (msg.fake_msg != undefined && sender == loginId) {
                 fakeMsg = msg
                 break
@@ -1816,7 +1861,7 @@ function newMsg(_: string, data: any) {
                 }
             })
             // 移除最顶端的一条消息以被动刷新整个列表
-            runtimeData.messageList.shift()
+            chatStore.messageList.shift()
             return
         }
 
@@ -1830,14 +1875,14 @@ function newMsg(_: string, data: any) {
 
         if (list.length > 0) {
             // 保存到本地历史
-            saveMessagesWithSideEffects(runtimeData.loginInfo.uin, list)
+            saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
             data = list[0]
         }
 
         // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
             // 如果有正在输入的提示，清除它
-            runtimeData.chatInfo.show.appendInfo = undefined
+            chatStore.chatInfo.show.appendInfo = undefined
             // 保存消息
             saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
@@ -1857,12 +1902,12 @@ function newMsg(_: string, data: any) {
                         {
                             text: '确定(O)',
                             fun: () => {
-                                runtimeData.popBoxList.shift()
+                                uiStore.popBoxList.shift()
                             },
                         },
                     ],
                 }
-                runtimeData.popBoxList.push(popInfo)
+                uiStore.popBoxList.push(popInfo)
                 Umami.trackEvent('show_qed', { times: qed_try_times })
             }
             qed_try_times++
@@ -1885,19 +1930,19 @@ function newMsg(_: string, data: any) {
         let isGroupNotice = false
         if (data.message_type === 'group') {
             const noticeInfo = Option.get('notice_group') ?? {}
-            const list = noticeInfo[runtimeData.loginInfo.uin]
+            const list = noticeInfo[authStore.loginInfo.uin]
             if (list) {
                 isGroupNotice = list.indexOf(id) >= 0
             }
         }
 
         // 群收纳箱 ============================================
-        if (runtimeData.sysConfig.bubble_sort_user) {
+        if (settingsStore.sysConfig.bubble_sort_user) {
             // 刷新群收纳箱列表
-            let getGroup = runtimeData.baseOnMsgList.get(Number(id))
+            let getGroup = contactStore.baseOnMsgList.get(Number(id))
             // ( 如果 是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群收纳盒中
             if (!getGroup) {
-                const getList = runtimeData.userList.filter((item) => {
+                const getList = contactStore.userList.filter((item) => {
                     return item.group_id === id
                 })
                 getGroup = getList[0]
@@ -1908,11 +1953,11 @@ function newMsg(_: string, data: any) {
                 getGroup.raw_msg = name + ': ' + getMsgRawTxt(data)
                 getGroup.raw_msg_base = getMsgRawTxt(data)
                 getGroup.time = getViewTime(Number(data.time))
-                runtimeData.baseOnMsgList.set(Number(id), getGroup)
+                contactStore.baseOnMsgList.set(Number(id), getGroup)
             }
         }
 
-        const get = [...runtimeData.baseOnMsgList.keys()].filter((item) => {
+        const get = [...contactStore.baseOnMsgList.keys()].filter((item) => {
             return (
                 Number(id) === item || Number(info.target_id) === item
             )
@@ -1927,7 +1972,7 @@ function newMsg(_: string, data: any) {
             sender != 0 &&
             (isImportant ||
                 data.message_type !== 'group' ||
-                runtimeData.sysConfig.group_notice_type != 'none' ||
+                settingsStore.sysConfig.group_notice_type != 'none' ||
                 data.atme ||
                 data.atall ||
                 isGroupNotice)
@@ -1940,7 +1985,7 @@ function newMsg(_: string, data: any) {
             })
             // (发送者没有被打开 || 窗口没有焦点 || 窗口被最小化 || 在特别关心列表里) 这些情况需要进行消息通知
             if (
-                runtimeData.sysConfig.group_notice_type == 'all' ||
+                settingsStore.sysConfig.group_notice_type == 'all' ||
                 id !== showId ||
                 !document.hasFocus() ||
                 document.hidden ||
@@ -1952,7 +1997,7 @@ function newMsg(_: string, data: any) {
                 logger.add(LogType.INFO, '新消息通知：' + raw, undefined, true)
                 if (data.group_name === undefined) {
                     // 检查消息内是否有群名，去列表里寻找
-                    runtimeData.userList.forEach((item) => {
+                    contactStore.userList.forEach((item) => {
                         if (item.group_id == data.group_id) {
                             data.group_name = item.group_name
                         }
@@ -1999,26 +2044,26 @@ function newMsg(_: string, data: any) {
                         group_id: data.sender.group_id,
                         group_name: '',
                     } as UserFriendElem & UserGroupElem
-                    runtimeData.baseOnMsgList.set(Number(sender), user)
+                    contactStore.baseOnMsgList.set(Number(sender), user)
                 } else {
-                    const getList = runtimeData.userList.filter((item) => {
+                    const getList = contactStore.userList.filter((item) => {
                         return item.user_id === id || item.group_id === id
                     })
 
                     const showUser = getList[0]
                     const formatted = formatMessageData(data, data.message_type === 'group')
                     Object.assign(showUser, formatted)
-                    runtimeData.baseOnMsgList.set(Number(id), showUser)
+                    contactStore.baseOnMsgList.set(Number(id), showUser)
                 }
             }
             if (id !== showId) {
-                const user = runtimeData.baseOnMsgList.get(id)
+                const user = contactStore.baseOnMsgList.get(id)
                 if (user) {
                     if (!user.new_msg) {
                         user.new_msg = true
-                        runtimeData.newMsgCount++
+                        contactStore.newMsgCount++
                     }
-                    runtimeData.baseOnMsgList.set(id, user)
+                    contactStore.baseOnMsgList.set(id, user)
                 }
             }
         }
@@ -2027,20 +2072,20 @@ function newMsg(_: string, data: any) {
 
         // 消息列表 ============================================
         // 刷新消息列表
-        if (!runtimeData.sysConfig.bubble_sort_user && data.message_type === 'group') {
-            const getList = runtimeData.userList.filter((item) => {
+        if (!settingsStore.sysConfig.bubble_sort_user && data.message_type === 'group') {
+            const getList = contactStore.userList.filter((item) => {
                 return item.group_id === id
             })
             if (getList.length === 1) {
                 const showGroup = getList[0]
                 const formatted = formatMessageData(data, true)
                 Object.assign(showGroup, formatted)
-                runtimeData.baseOnMsgList.set(Number(id), showGroup)
+                contactStore.baseOnMsgList.set(Number(id), showGroup)
             }
         }
         // 刷新消息
         if (get) {
-            const item = runtimeData.baseOnMsgList.get(Number(id))
+            const item = contactStore.baseOnMsgList.get(Number(id))
             if (item) {
                 item.message_id = data.message_id
                 if (data.message_type === 'group') {
@@ -2056,7 +2101,7 @@ function newMsg(_: string, data: any) {
                     if (data.atall) { item.highlight = $t('[@全体]') }
                     if (isImportant) { item.highlight = $t('[特別关心]') }
                 }
-                runtimeData.baseOnMsgList.set(Number(id), item)
+                contactStore.baseOnMsgList.set(Number(id), item)
             }
         }
     }
@@ -2070,14 +2115,15 @@ function updateSysInfo(
     __: { [key: string]: any },
     echoList: string[],
 ) {
+    const contactStore = useContactStore()
     const flag = echoList[1]
     // 从系统通知列表里删除这条消息
     if (flag !== undefined) {
-        const index = runtimeData.systemNoticesList?.findIndex((item: any) => {
+        const index = contactStore.systemNoticesList?.findIndex((item: any) => {
             return item.flag == flag
         })
         if (index !== -1) {
-            runtimeData.systemNoticesList?.splice(index, 1)
+            contactStore.systemNoticesList?.splice(index, 1)
         }
     }
 }
@@ -2095,100 +2141,37 @@ function formatMessageData(data: any, isGroup: boolean) {
     }
 }
 
-const baseRuntime = {
-    plantform: {} as any,
-    tags: {
-        firstLoad: false,
-        nowGetHistory: false,
-        canLoadHistory: true,
-        loadHistoryFail: false,
-        historyBeforeTime: undefined as number | undefined,
-        openSideBar: true,
-        viewer: { index: 0 },
-        msgType: BotMsgType.Array,
-        isElectron: false,
-        isCapacitor: false,
-        connectSsl: false,
-        classes: [],
-        darkMode: false,
-    },
-    watch: {
-        backTimes: 0,
-    },
-    chatInfo: {
-        show: { type: '', id: 0, name: '', avatar: '' },
-        info: {
-            group_info: {},
-            user_info: {},
-            me_info: {},
-            group_members: [],
-            group_files: {},
-            group_sub_files: {},
-            jin_info: {
-                list: [] as { [key: string]: any }[],
-                pages: 0,
-            },
-        },
-    },
-    pageView: {
-        chatView: markRaw(
-            defineAsyncComponent(() => import('@renderer/pages/Chat.vue')),
-        ),
-        msgView: markRaw(
-            defineAsyncComponent(
-                () => import('@renderer/components/MsgBody.vue'),
-            ),
-        ),
-    },
-    userList: [],
-    showList: [],
-    systemNoticesList: undefined,
-    baseOnMsgList: new Map<number, UserFriendElem & UserGroupElem>(),
-    newMsgCount: 0,
-    onMsgList: [],
-    groupAssistList: [],
-    loginInfo: {},
-    botInfo: {},
-    sysConfig: {},
-    messageList: [],
-    popBoxList: [],
-    mergeMsgStack: [],
-    inch: getInch(),
-}
-
-export const runtimeData: RunTimeDataElem = reactive(baseRuntime)
-
 // 重置 Runtime，但是保留应用设置之类已经加载好的应用内容
 export function resetRimtime(resetAll = false) {
-    runtimeData.botInfo = reactive([])
-    runtimeData.watch = reactive(baseRuntime.watch)
     firstHeartbeatTime = -1
     heartbeatTime = -1
     if (resetAll) {
-        runtimeData.chatInfo = reactive(baseRuntime.chatInfo)
-        runtimeData.userList = reactive([])
-        runtimeData.showList = reactive([])
-        runtimeData.systemNoticesList = reactive([])
-        runtimeData.baseOnMsgList = reactive(new Map())
-        runtimeData.onMsgList = reactive([])
-        runtimeData.groupAssistList = reactive([])
-        runtimeData.loginInfo = reactive([])
-        runtimeData.messageList = reactive([])
         // Reset auth store
         const authStore = useAuthStore()
-        Object.assign(authStore.loginInfo, {})
-        Object.assign(authStore.botInfo, {})
+        authStore.loginInfo = reactive({})
+        authStore.botInfo = reactive({})
         // Reset contact store
         const contactStore = useContactStore()
-        contactStore.userList = []
-        contactStore.showList = []
-        contactStore.systemNoticesList = undefined
-        contactStore.baseOnMsgList.clear()
-        contactStore.onMsgList = []
-        contactStore.groupAssistList = []
+        contactStore.userList = reactive([])
+        contactStore.showList = reactive([])
+        contactStore.systemNoticesList = reactive([])
+        contactStore.baseOnMsgList = reactive(new Map())
+        contactStore.onMsgList = reactive([])
+        contactStore.groupAssistList = reactive([])
         // Reset chat store
         const chatStore = useChatStore()
-        chatStore.chatInfo = reactive(baseRuntime.chatInfo)
+        chatStore.chatInfo = reactive({
+            show: { type: '', id: 0, name: '', avatar: '' },
+            info: {
+                group_info: {},
+                user_info: {},
+                me_info: {},
+                group_members: [],
+                group_files: {},
+                group_sub_files: {},
+                jin_info: { list: [] as { [key: string]: any }[], pages: 0 },
+            },
+        })
         chatStore.messageList = []
         // Reset connection store
         const connectionStore = useConnectionStore()

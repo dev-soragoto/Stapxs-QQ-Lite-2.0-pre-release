@@ -101,17 +101,18 @@
     import { openLink, sendStatEvent, showReleaseHistory } from '@renderer/function/utils/appUtil'
     import { ContributorElem } from '@renderer/function/elements/system'
 
-    import { runtimeData } from '@renderer/function/msg'
     import { getTrueLang, getViewTime } from '@renderer/function/utils/systemUtil'
 
     import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.vue'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons'
     import { i18n } from '@renderer/main'
+    import { useUIStore } from '@renderer/state/ui'
 
     defineOptions({ name: 'AboutPan' })
 
     const $t = i18n.global.t
+    const uiStore = useUIStore()
 
     defineProps<{
         showUI: boolean
@@ -129,12 +130,12 @@
     }[]>([])
 
     function dependencies() {
-        runtimeData.popBoxList = []
+        uiStore.popBoxList = []
         const popInfo = {
             title: $t('更多信息'),
             template: markRaw(DepPan)
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     function goGithub() {
@@ -163,12 +164,12 @@
                     master: true,
                     fun: () => {
                         openLink(import.meta.env.VITE_APP_SPONSORS_URL)
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 }
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 
     onMounted(() => {

@@ -9,18 +9,18 @@
 
 <template>
     <div class="opt-page">
-        <template v-if="Object.keys(runtimeData.loginInfo).length > 0">
+        <template v-if="Object.keys(authStore.loginInfo).length > 0">
             <div class="ss-card account-info">
-                <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + runtimeData.loginInfo.uin">
+                <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + authStore.loginInfo.uin">
                 <div>
                     <div>
-                        <span>{{ runtimeData.loginInfo.nickname }}</span>
-                        <span>{{ runtimeData.loginInfo.uin }}</span>
+                        <span>{{ authStore.loginInfo.nickname }}</span>
+                        <span>{{ authStore.loginInfo.uin }}</span>
                     </div>
                     <span>{{
-                        runtimeData.loginInfo.info &&
-                            Object.keys(runtimeData.loginInfo.info).length > 0
-                            ? runtimeData.loginInfo.info.lnick : ''
+                        authStore.loginInfo.info &&
+                            Object.keys(authStore.loginInfo.info).length > 0
+                            ? authStore.loginInfo.info.lnick : ''
                     }}</span>
                 </div>
                 <font-awesome-icon v-if="!sse && !napcat" :icon="['fas', 'right-from-bracket']" @click="exitConnect" />
@@ -33,20 +33,20 @@
                         <span>{{ $t('昵称') }}</span>
                         <span>{{ $t('就只是个名字而已 ……') }}</span>
                     </div>
-                    <input v-model="runtimeData.loginInfo.nickname"
+                    <input v-model="authStore.loginInfo.nickname"
                         class="ss-input"
                         style="width: 150px"
                         type="text"
                         @keyup="setNick">
                 </div>
-                <div v-if="runtimeData.loginInfo.info && Object.keys(runtimeData.loginInfo.info).length > 0"
+                <div v-if="authStore.loginInfo.info && Object.keys(authStore.loginInfo.info).length > 0"
                     class="opt-item">
                     <font-awesome-icon :icon="['fas', 'pen']" />
                     <div>
                         <span>{{ $t('签名') }}</span>
                         <span>{{ $t('啊吧啊吧（智慧的眼神）') }}</span>
                     </div>
-                    <input v-model="runtimeData.loginInfo.info.lnick"
+                    <input v-model="authStore.loginInfo.info.lnick"
                         class="ss-input"
                         style="width: 150px"
                         type="text"
@@ -63,17 +63,17 @@
                 </button>
             </div>
         </template>
-        <div v-if="Object.keys(runtimeData.botInfo).length > 0 && !napcat"
+        <div v-if="Object.keys(authStore.botInfo).length > 0 && !napcat"
             class="ss-card">
             <header>{{ $t('后端信息') }}</header>
             <div class="l10n-info">
                 <font-awesome-icon :icon="['fas', 'robot']" />
                 <div>
-                    <span>{{ runtimeData.botInfo.app_name
+                    <span>{{ authStore.botInfo.app_name
                     }}<a>{{
-                        runtimeData.botInfo.app_version !== undefined
-                            ? runtimeData.botInfo.app_version
-                            : runtimeData.botInfo.version
+                        authStore.botInfo.app_version !== undefined
+                            ? authStore.botInfo.app_version
+                            : authStore.botInfo.version
                     }}</a></span>
                     <span>{{ $t('这是你连接的 QQ Bot 的相关信息') }}</span>
                 </div>
@@ -83,29 +83,29 @@
                 <div />
                 <span>{{
                     $t('连接_' + getRunStatus(), {
-                        step: runtimeData.watch.heartbeatTime,
+                        step: connectionStore.heartbeatTime,
                         timeout:
-                            (runtimeData.watch.lastHeartbeatTime ?? 0) -
-                            (runtimeData.watch.oldHeartbeatTime ?? 0),
+                            (connectionStore.lastHeartbeatTime ?? 0) -
+                            (connectionStore.oldHeartbeatTime ?? 0),
                     })
                 }}</span>
             </div>
             <div class="bot-info">
-                <div v-for="key in Object.keys(runtimeData.botInfo)"
+                <div v-for="key in Object.keys(authStore.botInfo)"
                     :key="'botinfo-' + key">
                     <span
                         v-if="key !== 'app_name' &&
                             key !== 'app_version' &&
                             key !== 'version'">
                         <span>{{ key + ': ' }}</span>
-                        <span v-if="typeof runtimeData.botInfo[key] !== 'object'">
-                            {{ paseBotInfo(key, runtimeData.botInfo[key]) }}
+                        <span v-if="typeof authStore.botInfo[key] !== 'object'">
+                            {{ paseBotInfo(key, authStore.botInfo[key]) }}
                         </span>
-                        <span v-for="item in Object.keys(runtimeData.botInfo[key])"
-                            v-else v-show="typeof runtimeData.botInfo[key][item] !== 'object'"
+                        <span v-for="item in Object.keys(authStore.botInfo[key])"
+                            v-else v-show="typeof authStore.botInfo[key][item] !== 'object'"
                             :key="'botinfo-' + key + item">
                             {{
-                                item + ': ' + paseBotInfo(item, runtimeData.botInfo[key][item])
+                                item + ': ' + paseBotInfo(item, authStore.botInfo[key][item])
                             }}
                         </span>
                     </span>
@@ -117,14 +117,17 @@
 
 <script setup lang="ts">
 import { runASWEvent as saveR, remove } from '@renderer/function/option'
-import { runtimeData } from '@renderer/function/msg'
 import { Connector } from '@renderer/function/connect'
+import { useConnectionStore } from '@renderer/state/connection'
+import { useAuthStore } from '@renderer/state/auth'
 import { getTrueLang } from '@renderer/function/utils/systemUtil'
 import { i18n } from '@renderer/main'
 
 defineOptions({ name: 'ViewOptAccount' })
 
 const $t = i18n.global.t
+const connectionStore = useConnectionStore()
+const authStore = useAuthStore()
 
 const _save = saveR
 const sse = import.meta.env.VITE_APP_SSE_MODE == 'true'
@@ -175,10 +178,10 @@ function goLogin() {
  */
 function setNick(event: KeyboardEvent) {
     // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-    if (event.key === 'Enter' && runtimeData.loginInfo.nickname !== '') {
+    if (event.key === 'Enter' && authStore.loginInfo.nickname !== '') {
         Connector.send(
             'set_nickname',
-            { nickname: runtimeData.loginInfo.nickname },
+            { nickname: authStore.loginInfo.nickname },
             'setNickname',
         )
     }
@@ -190,19 +193,19 @@ function setNick(event: KeyboardEvent) {
  */
 function setLNick(event: KeyboardEvent) {
     // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-    if (event.key === 'Enter' && runtimeData.loginInfo.info.lnick !== '') {
+    if (event.key === 'Enter' && authStore.loginInfo.info.lnick !== '') {
         Connector.send(
             'set_signature',
-            { signature: runtimeData.loginInfo.info.lnick },
+            { signature: authStore.loginInfo.info.lnick },
             'setSignature',
         )
     }
 }
 
 function getRunStatus() {
-    const step = runtimeData.watch.heartbeatTime
-    const old = runtimeData.watch.oldHeartbeatTime
-    const last = runtimeData.watch.lastHeartbeatTime
+    const step = connectionStore.heartbeatTime
+    const old = connectionStore.oldHeartbeatTime
+    const last = connectionStore.lastHeartbeatTime
 
     if (step && old && last) {
         if (last - old == step) {

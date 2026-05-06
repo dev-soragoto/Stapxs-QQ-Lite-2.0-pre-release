@@ -16,7 +16,8 @@
 // https://docs.go-cqhttp.org/cqcode/#%E8%BD%AC%E4%B9%89
 
 import { BotMsgType, MsgItemElem } from './elements/information'
-import { runtimeData } from './msg'
+import { useUIStore } from '@renderer/state/ui'
+import { useSettingsStore } from '@renderer/state/settings'
 
 /**
  * 反序列化消息
@@ -26,6 +27,7 @@ import { runtimeData } from './msg'
  * @returns 用于发送的纯文本消息（根据 Bot 类型可能是 CQ 码或者 JSON 对象等）
  */
 export function parseMsg(msg: string, cache: MsgItemElem[], img: string[]) {
+    const uiStore = useUIStore()
     // 如果消息发送框功能是启用的，则先将 cache 的图片插入到最前面
     // 将图片插入 cache 列表并在消息文本前插入 SQCode
     if (img.length > 0) {
@@ -41,9 +43,9 @@ export function parseMsg(msg: string, cache: MsgItemElem[], img: string[]) {
     }
     // 处理消息
     let back = undefined as any
-    if (runtimeData.tags.msgType == BotMsgType.Array) {
+    if (uiStore.msgType == BotMsgType.Array) {
         back = parseMsgToJSON(msg, cache)
-    } else if (runtimeData.tags.msgType == BotMsgType.CQCode) {
+    } else if (uiStore.msgType == BotMsgType.CQCode) {
         back = parseMsgToCQ(msg, cache)
     }
     return back
@@ -73,6 +75,7 @@ export default {
  * @returns
  */
 function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
+    const settingsStore = useSettingsStore()
     // 处理消息文本
     const back = parserSqToMsg(msg, cache)
 
@@ -86,8 +89,8 @@ function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
         }
     })
     // 插入小尾巴
-    if (runtimeData.sysConfig.msg_taill) {
-        const taill = (runtimeData.sysConfig.msg_taill as string).replaceAll(
+    if (settingsStore.sysConfig.msg_taill) {
+        const taill = (settingsStore.sysConfig.msg_taill as string).replaceAll(
             '\\n',
             '\n',
         )
@@ -105,6 +108,7 @@ function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
 }
 
 function parseMsgToCQ(msg: string, cache: MsgItemElem[]) {
+    const settingsStore = useSettingsStore()
     let back = ''
     // 处理消息文本
     const specialList = getSQList(msg)
@@ -141,10 +145,10 @@ function parseMsgToCQ(msg: string, cache: MsgItemElem[]) {
         back += msg
     }
     // 插入小尾巴
-    if (runtimeData.sysConfig.msg_taill) {
+    if (settingsStore.sysConfig.msg_taill) {
         back =
             back +
-            (runtimeData.sysConfig.msg_taill as string).replaceAll('\\n', '\n')
+            (settingsStore.sysConfig.msg_taill as string).replaceAll('\\n', '\n')
     }
     // 返回
     return back

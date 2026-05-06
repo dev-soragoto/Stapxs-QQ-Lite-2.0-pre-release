@@ -37,7 +37,7 @@
         <div class="info">
             <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender">
             <a>{{
-                runtimeData.chatInfo.info.group_members.filter((item) => {
+                chatStore.chatInfo.info.group_members.filter((item) => {
                     return Number(item.user_id) === Number(data.sender)
                 })[0].nickname
             }}</a>
@@ -55,22 +55,23 @@
 <script lang="ts" setup>
     import xss from 'xss'
     import { ref, onMounted, nextTick, inject } from 'vue'
-    import { runtimeData } from '@renderer/function/msg'
     import { openLink } from '@renderer/function/utils/appUtil'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { i18n } from '@renderer/main'
     import { Img } from '@renderer/function/model/img'
+    import { useChatStore } from '@renderer/state/chat'
 
     defineOptions({ name: 'BulletinBody' })
 
     const $t = i18n.global.t
+    const chatStore = useChatStore()
 
     const props = defineProps<{
         data: any
         index: number
     }>()
 
-    const viewer = inject<any>('viewer')
+    const { viewer: viewerRef } = inject<{ viewer: any }>('viewer', { viewer: null })
 
     const trueLang = getTrueLang()
     const showAll = ref(false)
@@ -117,7 +118,7 @@
     }
 
     function _getSenderName(): string {
-        const result = runtimeData.chatInfo.info.group_members.filter((item) => {
+        const result = chatStore.chatInfo.info.group_members.filter((item) => {
             return Number(item.user_id) === Number(props.data.sender)
         }).at(0)?.nickname
         return result ?? $t('已退群( {userId} )', { userId: Number(props.data.sender) })
@@ -128,8 +129,8 @@
      * @param img
      */
     function imgClick(img: Img) {
-        if (viewer) {
-            (viewer as any).open(img)
+        if (viewerRef?.value) {
+            viewerRef.value.open(img)
         }
     }
 </script>
