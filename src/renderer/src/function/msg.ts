@@ -95,6 +95,33 @@ export function clearLoginWaveTimer() {
     }
 }
 
+function clearMetaEventWatchdog() {
+    const connectionStore = useConnectionStore()
+    if (connectionStore.metaEventWatchTimer) {
+        clearTimeout(connectionStore.metaEventWatchTimer)
+        connectionStore.metaEventWatchTimer = undefined
+    }
+    connectionStore.metaEventTimeoutTriggered = false
+}
+
+function refreshMetaEventWatchdog(interval: number) {
+    if (interval <= 0) return
+
+    const connectionStore = useConnectionStore()
+    if (connectionStore.metaEventWatchTimer) {
+        clearTimeout(connectionStore.metaEventWatchTimer)
+    }
+
+    connectionStore.metaEventTimeoutTriggered = false
+    connectionStore.metaEventWatchTimer = setTimeout(() => {
+        if (connectionStore.metaEventTimeoutTriggered) return
+        connectionStore.metaEventTimeoutTriggered = true
+        connectionStore.metaEventWatchTimer = undefined
+        logger.add(LogType.WS, 'meta_event 超时，连续两个心跳周期未收到心跳，准备断开连接')
+        Connector.forceDisconnect('meta_event timeout')
+    }, interval * 2000)
+}
+
 export function dispatch(raw: string | { [k: string]: any }, echo?: string) {
     let msg: any;
 
@@ -136,11 +163,13 @@ const noticeFunctions = {
         if (firstHeartbeatTime == -1) {
             firstHeartbeatTime = 0
             connectionStore.heartbeatTime = 0
+            clearMetaEventWatchdog()
             return
         }
         if (firstHeartbeatTime == 0) {
             firstHeartbeatTime = msg.time
             connectionStore.lastHeartbeatTime = msg.time
+            clearMetaEventWatchdog()
             return
         }
         if (firstHeartbeatTime != -1 && heartbeatTime == -1) {
@@ -152,6 +181,7 @@ const noticeFunctions = {
             connectionStore.heartbeatTime = heartbeatTime
             connectionStore.oldHeartbeatTime = connectionStore.lastHeartbeatTime
             connectionStore.lastHeartbeatTime = msg.time
+            refreshMetaEventWatchdog(heartbeatTime)
         }
     },
 
@@ -692,6 +722,7 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
+        const contactStore = useContactStore()
         const id = Number(echoList[1])
         if (id) {
             try {
@@ -728,6 +759,7 @@ const msgFunctions = {
         echoList: string[],
     ) => {
         const authStore = useAuthStore()
+        const chatStore = useChatStore()
         if (msg.message_id == undefined) {
             msg.message_id = msg.data.message_id
         }
@@ -786,17 +818,18 @@ const msgFunctions = {
             data.reverse()
         }
         const stickerStore = useStickerStore()
-        if (stickerStore.stickerCache.length == 0) {
+        const stickerCache = stickerStore.stickerCache ?? []
+        if (stickerCache.length == 0) {
             stickerStore.stickerCache = data
         } else if (authStore.jsonMap.roaming_stamp.pagerType == 'full') {
             // 全量分页模式下不追加
-            if (getCount > stickerStore.stickerCache.length + 48) {
+            if (getCount > stickerCache.length + 48) {
                 // 已经获取到所有内容了
                 data.push('end')
             }
             stickerStore.stickerCache = data
         } else {
-            stickerStore.stickerCache = stickerStore.stickerCache.concat(data)
+            stickerStore.stickerCache = stickerCache.concat(data)
         }
     },
 
@@ -1624,6 +1657,7 @@ function hasResolvableImageSource(msg: any): boolean {
 }
 
 function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
+    const settingsStore = useSettingsStore()
     if (!hasImageMessage(incoming)) return false
     if (existing?._from_local_db !== true) return false
 
@@ -2145,6 +2179,7 @@ function formatMessageData(data: any, isGroup: boolean) {
 export function resetRimtime(resetAll = false) {
     firstHeartbeatTime = -1
     heartbeatTime = -1
+    clearMetaEventWatchdog()
     if (resetAll) {
         // Reset auth store
         const authStore = useAuthStore()

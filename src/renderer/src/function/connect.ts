@@ -21,11 +21,13 @@ import { getMsgData } from './utils/msgUtil'
 import { backend } from '@renderer/runtime/backend'
 import { useSettingsStore } from '@renderer/state/settings'
 import { useAuthStore } from '@renderer/state/auth'
+import { useConnectionStore } from '@renderer/state/connection'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
 
 let retry = 0
+let forceCloseReason: string | undefined = undefined
 
 export let websocket: WebSocket | undefined = undefined
 
@@ -139,7 +141,9 @@ export class Connector {
             }
             websocket.onclose = (e) => {
                 login.creating = false
-                this.onclose(e.code, e.reason, address, token)
+                const reason = forceCloseReason ?? e.reason
+                forceCloseReason = undefined
+                this.onclose(e.code, reason, address, token)
             }
             websocket.onerror = (e) => {
                 login.creating = false
@@ -235,7 +239,13 @@ export class Connector {
         token: string | undefined,
     ) {
         const { $t } = app.config.globalProperties
+        const connectionStore = useConnectionStore()
 
+        if (connectionStore.metaEventWatchTimer) {
+            clearTimeout(connectionStore.metaEventWatchTimer)
+            connectionStore.metaEventWatchTimer = undefined
+        }
+        connectionStore.metaEventTimeoutTriggered = false
         websocket = undefined
         updateMenu({ parent: 'account', id: 'logout', action: 'visible', value: 'false' })
         updateMenu({ parent: 'account', id: 'userName', action: 'label', value: $t('连接') })
@@ -279,6 +289,14 @@ export class Connector {
      * 正常断开 Websocket 连接
      */
     static close() {
+        const connectionStore = useConnectionStore()
+        if (connectionStore.metaEventWatchTimer) {
+            clearTimeout(connectionStore.metaEventWatchTimer)
+            connectionStore.metaEventWatchTimer = undefined
+        }
+        connectionStore.metaEventTimeoutTriggered = false
+        forceCloseReason = undefined
+
         if(!backend.isWeb()) {
             backend.call('Onebot', 'onebot:close', false)
         } else {
@@ -288,6 +306,29 @@ export class Connector {
             )
             if (websocket) websocket.close(1000)
         }
+    }
+
+    static forceDisconnect(reason: string) {
+        const connectionStore = useConnectionStore()
+        if (connectionStore.metaEventWatchTimer) {
+            clearTimeout(connectionStore.metaEventWatchTimer)
+            connectionStore.metaEventWatchTimer = undefined
+        }
+        if (connectionStore.metaEventTimeoutTriggered && forceCloseReason === reason) {
+            return
+        }
+        connectionStore.metaEventTimeoutTriggered = true
+        forceCloseReason = reason
+
+        if(!backend.isWeb()) {
+            this.onclose(1006, reason, login.address, login.token)
+            return
+        }
+        if (websocket) {
+            websocket.close(4000, reason)
+            return
+        }
+        this.onclose(1006, reason, login.address, login.token)
     }
 
     /**
