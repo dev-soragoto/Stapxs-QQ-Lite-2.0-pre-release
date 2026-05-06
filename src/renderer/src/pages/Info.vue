@@ -98,7 +98,7 @@
                 class="chat-info-tab">
                 <div :name="$t('成员')">
                     <div class="search-view">
-                        <input :placeholder="$t('搜索 ……')" @input="searchList">
+                        <input :placeholder="$t('搜索 ……')" @input="(e: Event) => searchList(e)">
                     </div>
                     <RecycleScroller
                         v-slot="{ item }"
@@ -119,7 +119,7 @@
                             <!-- 在手机端戳 id 就能触发 -->
                             <span @click="moreConfig(item)">{{ item.user_id }}</span>
                             <font-awesome-icon v-if="canEditMember(item.role)" :icon="['fas', 'wrench']" @click="moreConfig(item)" />
-                            <font-awesome-icon v-else :icon="['fas', 'copy']" @click="moreConfig(item.user_id)" />
+                            <font-awesome-icon v-else :icon="['fas', 'copy']" @click="copyText(item.user_id)" />
                         </div>
                     </RecycleScroller>
                 </div>
@@ -228,344 +228,348 @@
     </div>
 </template>
 
-<script lang="ts">
-    import app from '@renderer/main'
-    import BulletinBody from '@renderer/components/BulletinBody.vue'
-    import FileBody from '@renderer/components/FileBody.vue'
-    import OptInfo from './options/OptInfo.vue'
-    import BcTab from 'vue3-bcui/packages/bc-tab'
-    import { RecycleScroller } from 'vue-virtual-scroller'
-    import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+<script setup lang="ts">
+import app, { i18n } from '@renderer/main'
+import BulletinBody from '@renderer/components/BulletinBody.vue'
+import FileBody from '@renderer/components/FileBody.vue'
+import OptInfo from './options/OptInfo.vue'
+import BcTab from 'vue3-bcui/packages/bc-tab'
+import { RecycleScroller } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
-    import { Connector } from '@renderer/function/connect'
-    import { PopInfo, PopType } from '@renderer/function/base'
-    import { defineComponent, toRaw } from 'vue'
-    import { delay, getTrueLang } from '@renderer/function/utils/systemUtil'
-    import { runtimeData } from '@renderer/function/msg'
-    import {
-        UserFriendElem,
-        UserGroupElem,
-    } from '@renderer/function/elements/information'
-    import { qqLevelToEmoji } from '@renderer/function/utils/msgUtil'
+import { Connector } from '@renderer/function/connect'
+import { PopInfo, PopType } from '@renderer/function/base'
+import { toRaw, ref, nextTick } from 'vue'
+import { delay, getTrueLang } from '@renderer/function/utils/systemUtil'
+import { useAuthStore } from '@renderer/state/auth'
+import { useContactStore } from '@renderer/state/contact'
+import { useChatStore } from '@renderer/state/chat'
+import { useUIStore } from '@renderer/state/ui'
+import {
+    UserFriendElem,
+    UserGroupElem,
+} from '@renderer/function/elements/information'
+import { qqLevelToEmoji } from '@renderer/function/utils/msgUtil'
 
-    export default defineComponent({
-        name: 'ViewInfo',
-        components: { BulletinBody, FileBody, OptInfo, BcTab, RecycleScroller },
-        props: ['tags', 'chat'],
-        emits: ['close'],
-        data() {
-            return {
-                qqLevelToEmoji,
-                runtimeData: runtimeData,
-                trueLang: getTrueLang(),
-                isTop: false,
-                number_cache: [] as any[],
-                showUserConfig: {} as any,
-                showUserConfigRaw: {} as any,
-                mumberInfo: {
-                    banMin: 0,
-                }
-            }
-        },
-        methods: {
-            /**
-             * 移出群聊
-             */
-            removeUser(nickname: string, group_id: number, user_id: number) {
-                const popInfo = {
-                    title: this.$t('提醒'),
-                    html: `<span>${this.$t('真的要将 {user} 移出群聊吗', { user: nickname })}</span>`,
-                    button: [
+defineOptions({ name: 'ViewInfo' })
+
+const authStore = useAuthStore()
+const contactStore = useContactStore()
+const chatStore = useChatStore()
+const uiStore = useUIStore()
+
+const props = defineProps<{
+    tags: any
+    chat: any
+}>()
+
+const emit = defineEmits<{
+    close: []
+}>()
+
+const { t: $t } = i18n.global
+
+// Constants
+const trueLang = getTrueLang()
+
+// Reactive state
+const number_cache = ref<any[]>([])
+const showUserConfig = ref<any>({})
+const showUserConfigRaw = ref<any>({})
+const mumberInfo = ref({
+    banMin: 0,
+})
+
+/**
+ * 移出群聊
+ */
+function removeUser(nickname: string, group_id: number, user_id: number) {
+    const popInfo = {
+        title: $t('提醒'),
+        html: `<span>${$t('真的要将 {user} 移出群聊吗', { user: nickname })}</span>`,
+        button: [
+            {
+                text: $t('确定'),
+                fun: () => {
+                    Connector.send(
+                        'set_group_kick',
                         {
-                            text: app.config.globalProperties.$t('确定'),
-                            fun: () => {
-                                Connector.send(
-                                    'set_group_kick',
-                                    {
-                                        group_id: group_id,
-                                        user_id: user_id,
-                                    },
-                                    'setGroupKick',
-                                )
-                                runtimeData.popBoxList.shift()
-                                this.showUserConfig = {}
-                                const popInfo = {
-                                    title: this.$t('操作'),
-                                    html: `<span>${this.$t('正在确认操作……')}</span>`
-                                }
-                                runtimeData.popBoxList.push(popInfo)
-                                // 稍微等一下再刷新成员列表
-                                delay(1000).then(() => {
-                                    Connector.send(
-                                        'get_group_member_list',
-                                        { group_id: runtimeData.chatInfo.show.id, no_cache: true },
-                                        'getGroupMemberList',
-                                    )
-                                    return delay(1000)
-                                }).then(() => {
-                                    Connector.send(
-                                        'get_group_member_list',
-                                        { group_id: runtimeData.chatInfo.show.id, no_cache: true },
-                                        'getGroupMemberList',
-                                    )
-                                    runtimeData.popBoxList.shift()
-                                })
-                            },
+                            group_id: group_id,
+                            user_id: user_id,
                         },
-                        {
-                            text: app.config.globalProperties.$t('取消'),
-                            master: true,
-                            fun: () => {
-                                runtimeData.popBoxList.shift()
-                            },
-                        },
-                    ],
-                }
-                runtimeData.popBoxList.push(popInfo)
-            },
-
-            copyText(text: any) {
-                const popInfo = new PopInfo()
-                app.config.globalProperties.$copyText(String(text)).then(
-                    () => {
-                        popInfo.add(PopType.INFO, this.$t('复制成功'), true)
-                    },
-                    () => {
-                        popInfo.add(PopType.ERR, this.$t('复制失败'), true)
-                    },
-                )
-            },
-
-            banMumber(event: Event, info: any) {
-                const value = (event.target as HTMLInputElement).value
-                if (value !== '') {
-                    const num = parseInt(value)
-                    if (num > 0) {
-                        const popInfo = {
-                            title: this.$t('操作'),
-                            html: `<span>${this.$t('确认禁言？')}</span>`,
-                            button: [
-                                {
-                                    text: this.$t('确认'),
-                                    fun: () => {
-                                        const name = runtimeData.jsonMap.ban_mumber?.name
-                                        if (name)
-                                            Connector.send(name, {
-                                                group_id: runtimeData.chatInfo.show.id,
-                                                user_id: info.user_id,
-                                                duration: num * 60,
-                                            }, 'banMumber')
-                                        runtimeData.popBoxList.shift()
-                                        this.closeChatInfoPan()
-                                    },
-                                },
-                                {
-                                    text: this.$t('取消'),
-                                    master: true,
-                                    fun: () => {
-                                        this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
-                                        runtimeData.popBoxList.shift()
-                                    },
-                                },
-                            ],
-                        }
-                        runtimeData.popBoxList.push(popInfo)
-                    }
-                }
-            },
-
-            updateMumberCard(event: Event, info: any) {
-                const value = (event.target as HTMLInputElement).value
-                if (this.showUserConfig.card !== value) {
-                    const popInfo = {
-                        title: this.$t('操作'),
-                        html: `<span>${this.$t('确认修改昵称？')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('确认'),
-                                fun: () => {
-                                    const name = runtimeData.jsonMap.set_group_nickname?.name
-                                        if(name)
-                                        Connector.send(name, {
-                                            group_id: runtimeData.chatInfo.show.id,
-                                            user_id: info.user_id,
-                                            card: value,
-                                        }, 'updateGroupMemberInfo')
-                                    runtimeData.popBoxList.shift()
-                                    this.closeChatInfoPan()
-                                },
-                            },
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
-                                    runtimeData.popBoxList.shift()
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                }
-            },
-
-            updateMumberTitle(event: Event, info: any) {
-                const value = (event.target as HTMLInputElement).value
-                if (this.showUserConfig.card !== value) {
-                    const popInfo = {
-                        title: this.$t('操作'),
-                        html: `<span>${this.$t('确认修改头衔？')}</span>`,
-                        button: [
-                            {
-                                text: this.$t('确认'),
-                                fun: () => {
-                                    const name = runtimeData.jsonMap.set_group_title?.name
-                                        if(name)
-                                        Connector.send(name, {
-                                            group_id: runtimeData.chatInfo.show.id,
-                                            user_id: info.user_id,
-                                            special_title: value,
-                                        }, 'updateGroupMemberInfo')
-                                    runtimeData.popBoxList.shift()
-                                    this.closeChatInfoPan()
-                                },
-                            },
-                            {
-                                text: this.$t('取消'),
-                                master: true,
-                                fun: () => {
-                                    this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
-                                    runtimeData.popBoxList.shift()
-                                },
-                            },
-                        ],
-                    }
-                    runtimeData.popBoxList.push(popInfo)
-                }
-            },
-
-            getBanTimeMin(endTime: number) {
-                // endTime 可能是精确到秒的时间戳
-                if(endTime < 10000000000) {
-                    endTime *= 1000
-                }
-                const now = new Date().getTime()
-                const time = endTime - now
-                if (time > 0) {
-                    return Math.floor(time / 1000 / 60)
-                } else {
-                    return 0
-                }
-            },
-
-            checkNumber(event: Event) {
-                const value = (event.target as HTMLInputElement).value
-                if (value !== '') {
-                    const num = parseInt(value)
-                    if (isNaN(num)) {
-                        (event.target as HTMLInputElement).value = ''
-                    } else if (num < 0) {
-                        (event.target as HTMLInputElement).value = '0'
-                    }
-                }
-            },
-
-            /**
-             * 关闭面板
-             */
-            closeChatInfoPan() {
-                this.showUserConfig = {}
-                this.$emit('close', null)
-            },
-
-            /**
-             * 发起聊天
-             */
-            startChat(info: any) {
-                // 如果是自己的话就忽略
-                if (info.user_id != runtimeData.loginInfo.uin) {
-
-                    // 检查这个人是不是好友
-                    let chat = runtimeData.userList.find(
-                        (item: UserFriendElem & UserGroupElem) => {
-                            return item.user_id == info.user_id
-                        },
+                        'setGroupKick',
                     )
-                    if (!chat) {
-                        // 创建一个临时聊天
-                        const user = {
-                            user_id: info.user_id,
-                            // 因为临时消息没有返回昵称
-                            nickname:
-                                app.config.globalProperties.$t('临时会话'),
-                            remark: info.user_id,
-                            group_id: info.group_id,
-                            group_name: '',
-                        } as UserFriendElem & UserGroupElem
-                        chat = user
+                    uiStore.popBoxList.shift()
+                    showUserConfig.value = {}
+                    const popInfo = {
+                        title: $t('操作'),
+                        html: `<span>${$t('正在确认操作……')}</span>`
                     }
-                    runtimeData.baseOnMsgList.set(Number(info.user_id), chat)
-                    // 切换到这个聊天
-                    this.$nextTick(() => {
-                        if (chat) {
-                            const item = document.getElementById(
-                                'user-' + chat.user_id,
-                            )
-                            if (item) {
-                                item.click()
-                            }
-                        }
-                    })
-                }
-            },
-
-            openMoreConfig(id: number) {
-                const info = this.chat.info.group_members.find(
-                    (item) => item.user_id === id,
-                )
-                if(info) this.moreConfig(info)
-            },
-            moreConfig(info: any) {
-                if(this.canEditMember(info.role)) {
-                    this.showUserConfig = info
-                    this.showUserConfigRaw = JSON.parse(JSON.stringify(info))
-                    // 初始化一些内容
-                    this.mumberInfo.banMin = this.getBanTimeMin(info.shut_up_timestamp)
-                } else {
-                    this.copyText(info.user_id)
-                }
-            },
-
-            searchList(event: Event) {
-                const value = (event.target as HTMLInputElement).value
-                if (value !== '') {
-                    this.number_cache = toRaw(this.chat.info.group_members)
-                    this.number_cache = this.number_cache.filter((item) => {
-                        const name =
-                            item.card.toLowerCase() +
-                            '(' +
-                            item.nickname.toLowerCase() +
-                            ')'
-                        const id = item.user_id
-                        return (
-                            name.indexOf(value.toLowerCase()) != -1 ||
-                            id.toString() === value
+                    uiStore.popBoxList.push(popInfo)
+                    // 稍微等一下再刷新成员列表
+                    delay(1000).then(() => {
+                        Connector.send(
+                            'get_group_member_list',
+                            { group_id: chatStore.chatInfo.show.id, no_cache: true },
+                            'getGroupMemberList',
                         )
+                        return delay(1000)
+                    }).then(() => {
+                        Connector.send(
+                            'get_group_member_list',
+                            { group_id: chatStore.chatInfo.show.id, no_cache: true },
+                            'getGroupMemberList',
+                        )
+                        uiStore.popBoxList.shift()
                     })
-                } else {
-                    this.number_cache = [] as any[]
-                }
+                },
             },
+            {
+                text: $t('取消'),
+                master: true,
+                fun: () => {
+                    uiStore.popBoxList.shift()
+                },
+            },
+        ],
+    }
+    uiStore.popBoxList.push(popInfo)
+}
 
-            canEditMember(role: string) {
-                return (
-                    this.chat.info.me_info.role === 'owner' ||
-                    (this.chat.info.me_info.role === 'admin'
-                     && role !== 'owner') // 管理员不能编辑群主
-                )
-            }
+function copyText(text: any) {
+    const popInfo = new PopInfo()
+    app.config.globalProperties.$copyText(String(text)).then(
+        () => {
+            popInfo.add(PopType.INFO, $t('复制成功'), true)
         },
-    })
+        () => {
+            popInfo.add(PopType.ERR, $t('复制失败'), true)
+        },
+    )
+}
+
+function banMumber(event: Event, info: any) {
+    const value = (event.target as HTMLInputElement).value
+    if (value !== '') {
+        const num = parseInt(value)
+        if (num > 0) {
+            const popInfo = {
+                title: $t('操作'),
+                html: `<span>${$t('确认禁言？')}</span>`,
+                button: [
+                    {
+                        text: $t('确认'),
+                        fun: () => {
+                            const name = authStore.jsonMap.ban_mumber?.name
+                            if (name)
+                                Connector.send(name, {
+                                    group_id: chatStore.chatInfo.show.id,
+                                    user_id: info.user_id,
+                                    duration: num * 60,
+                                }, 'banMumber')
+                            uiStore.popBoxList.shift()
+                            closeChatInfoPan()
+                        },
+                    },
+                    {
+                        text: $t('取消'),
+                        master: true,
+                        fun: () => {
+                            showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
+                            uiStore.popBoxList.shift()
+                        },
+                    },
+                ],
+            }
+            uiStore.popBoxList.push(popInfo)
+        }
+    }
+}
+
+function updateMumberCard(event: Event, info: any) {
+    const value = (event.target as HTMLInputElement).value
+    if (showUserConfig.value.card !== value) {
+        const popInfo = {
+            title: $t('操作'),
+            html: `<span>${$t('确认修改昵称？')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: () => {
+                        const name = authStore.jsonMap.set_group_nickname?.name
+                        if(name)
+                            Connector.send(name, {
+                                group_id: chatStore.chatInfo.show.id,
+                                user_id: info.user_id,
+                                card: value,
+                            }, 'updateGroupMemberInfo')
+                        uiStore.popBoxList.shift()
+                        closeChatInfoPan()
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
+                        uiStore.popBoxList.shift()
+                    },
+                },
+            ],
+        }
+        uiStore.popBoxList.push(popInfo)
+    }
+}
+
+function updateMumberTitle(event: Event, info: any) {
+    const value = (event.target as HTMLInputElement).value
+    if (showUserConfig.value.card !== value) {
+        const popInfo = {
+            title: $t('操作'),
+            html: `<span>${$t('确认修改头衔？')}</span>`,
+            button: [
+                {
+                    text: $t('确认'),
+                    fun: () => {
+                        const name = authStore.jsonMap.set_group_title?.name
+                        if(name)
+                            Connector.send(name, {
+                                group_id: chatStore.chatInfo.show.id,
+                                user_id: info.user_id,
+                                special_title: value,
+                            }, 'updateGroupMemberInfo')
+                        uiStore.popBoxList.shift()
+                        closeChatInfoPan()
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
+                        uiStore.popBoxList.shift()
+                    },
+                },
+            ],
+        }
+        uiStore.popBoxList.push(popInfo)
+    }
+}
+
+function getBanTimeMin(endTime: number) {
+    // endTime 可能是精确到秒的时间戳
+    if(endTime < 10000000000) {
+        endTime *= 1000
+    }
+    const now = new Date().getTime()
+    const time = endTime - now
+    if (time > 0) {
+        return Math.floor(time / 1000 / 60)
+    } else {
+        return 0
+    }
+}
+
+function checkNumber(event: Event) {
+    const value = (event.target as HTMLInputElement).value
+    if (value !== '') {
+        const num = parseInt(value)
+        if (isNaN(num)) {
+            (event.target as HTMLInputElement).value = ''
+        } else if (num < 0) {
+            (event.target as HTMLInputElement).value = '0'
+        }
+    }
+}
+
+/**
+ * 关闭面板
+ */
+function closeChatInfoPan() {
+    showUserConfig.value = {}
+    emit('close')
+}
+
+/**
+ * 发起聊天
+ */
+function startChat(info: any) {
+    // 如果是自己的话就忽略
+    if (info.user_id != authStore.loginInfo.uin) {
+
+        // 检查这个人是不是好友
+        let chat = contactStore.userList.find(
+            (item: UserFriendElem & UserGroupElem) => {
+                return item.user_id == info.user_id
+            },
+        )
+        if (!chat) {
+            // 创建一个临时聊天
+            const user = {
+                user_id: info.user_id,
+                // 因为临时消息没有返回昵称
+                nickname:
+                    $t('临时会话'),
+                remark: info.user_id,
+                group_id: info.group_id,
+                group_name: '',
+            } as UserFriendElem & UserGroupElem
+            chat = user
+        }
+        contactStore.baseOnMsgList.set(Number(info.user_id), chat)
+        // 切换到这个聊天
+        nextTick(() => {
+            if (chat) {
+                const item = document.getElementById(
+                    'user-' + chat.user_id,
+                )
+                if (item) {
+                    item.click()
+                }
+            }
+        })
+    }
+}
+
+function moreConfig(info: any) {
+    if(canEditMember(info.role)) {
+        showUserConfig.value = info
+        showUserConfigRaw.value = JSON.parse(JSON.stringify(info))
+        // 初始化一些内容
+        mumberInfo.value.banMin = getBanTimeMin(info.shut_up_timestamp)
+    } else {
+        copyText(info.user_id)
+    }
+}
+
+function searchList(event: Event) {
+    const value = (event.target as HTMLInputElement).value
+    if (value !== '') {
+        number_cache.value = toRaw(props.chat.info.group_members)
+        number_cache.value = number_cache.value.filter((item: any) => {
+            const name =
+                item.card.toLowerCase() +
+                '(' +
+                item.nickname.toLowerCase() +
+                ')'
+            const id = item.user_id
+            return (
+                name.indexOf(value.toLowerCase()) != -1 ||
+                id.toString() === value
+            )
+        })
+    } else {
+        number_cache.value = [] as any[]
+    }
+}
+
+function canEditMember(role: string) {
+    return (
+        props.chat.info.me_info.role === 'owner' ||
+        (props.chat.info.me_info.role === 'admin'
+         && role !== 'owner') // 管理员不能编辑群主
+    )
+}
 </script>
 
 <style scoped>

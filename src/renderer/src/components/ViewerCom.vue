@@ -179,7 +179,6 @@
 import { PopInfo, PopType } from '@renderer/function/base'
 import { mousemoveMask } from '@renderer/function/input'
 import { Img } from '@renderer/function/model/img'
-import { runtimeData } from '@renderer/function/msg'
 import { copyToClipboard } from '@renderer/function/utils/systemUtil'
 import {
 	downloadFile,
@@ -199,6 +198,9 @@ import {
     useTemplateRef,
 } from 'vue'
 import { backend } from '@renderer/runtime/backend'
+import { useUIStore } from '@renderer/state/ui'
+
+const uiStore = useUIStore()
 
 type EditToolType = 'hand' | 'pen' | 'rect'
 
@@ -1122,10 +1124,10 @@ const moveOptions: VMoveOptions<HTMLDivElement> = {
     },
     speedCondition: {
         minMove: {
-            value: 0.5 * runtimeData.inch,
+            value: 0.5 * uiStore.inch,
             type: 'px',
         },
-        minSpeed: 5 * runtimeData.inch,
+        minSpeed: 5 * uiStore.inch,
     },
     moveCondition: {
         minMove: {

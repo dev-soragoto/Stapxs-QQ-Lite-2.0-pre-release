@@ -13,8 +13,12 @@ import MealHungryPan from '@renderer/components/notice-component/MealHungryPan.v
 import { KeyboardInfo } from '@capacitor/keyboard'
 import { LogType, Logger, PopInfo, PopType } from '@renderer/function/base'
 import { Connector, login } from '@renderer/function/connect'
-import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem, MenuEventData } from '@renderer/function/elements/information'
+import { useAuthStore } from '@renderer/state/auth'
+import { useContactStore } from '@renderer/state/contact'
+import { useChatStore } from '@renderer/state/chat'
+import { useUIStore } from '@renderer/state/ui'
+import { useSettingsStore } from '@renderer/state/settings'
 import {
     hslToRgb,
     rgbToHsl,
@@ -102,19 +106,22 @@ export function openLink(url: string) {
  * @param info 聊天基本信息
  */
 export async function loadHistory(info: BaseChatInfoElem) {
-    runtimeData.messageList = []
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+    const settingsStore = useSettingsStore()
+    chatStore.messageList = []
     // 本地有数据时立即显示，同时仍发网络请求以获取最新消息（避免遗漏）
     if (
-        runtimeData.sysConfig.enable_local_history &&
-        runtimeData.sysConfig.mixed_load_messages !== false
+        settingsStore.sysConfig.enable_local_history &&
+        settingsStore.sysConfig.mixed_load_messages !== false
     ) {
         const localMsgs = await dbGetLatest(
-            runtimeData.loginInfo.uin,
+            authStore.loginInfo.uin,
             info.id,
             20,
         )
         if (localMsgs.length > 0) {
-            runtimeData.messageList = localMsgs
+            chatStore.messageList = localMsgs
         }
     }
     if (!loadHistoryMessage(info.id, info.type)) {
@@ -131,12 +138,14 @@ export function loadHistoryMessage(
     count = 20,
     echo = 'getChatHistoryFist',
 ) {
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
     let name: string
-    const fullPage = runtimeData.jsonMap.message_list?.pagerType == 'full'
-    if (runtimeData.jsonMap.message_list && type != 'group') {
-        name = runtimeData.jsonMap.message_list.private_name
+    const fullPage = authStore.jsonMap.message_list?.pagerType == 'full'
+    if (authStore.jsonMap.message_list && type != 'group') {
+        name = authStore.jsonMap.message_list.private_name
     } else {
-        name = runtimeData.jsonMap.message_list.name
+        name = authStore.jsonMap.message_list.name
     }
 
     Connector.send(
@@ -145,7 +154,7 @@ export function loadHistoryMessage(
             group_id: type == 'group' ? id : undefined,
             user_id: type != 'group' ? id : undefined,
             message_id: 0,
-            count: fullPage ? runtimeData.messageList.length + count : count,
+            count: fullPage ? chatStore.messageList.length + count : count,
         },
         echo,
     )
@@ -158,18 +167,20 @@ export function loadHistoryMessage(
 export function reloadUsers() {
     // 加载用户列表
     if (login.status) {
-        runtimeData.userList = []
+        const authStore = useAuthStore()
+        const contactStore = useContactStore()
+        contactStore.userList = []
         let friendName = 'get_friend_list'
         let groupName = 'get_group_list'
-        if (runtimeData.jsonMap.user_list?.name) {
-            friendName = runtimeData.jsonMap.user_list.name.split('|')[0]
-            groupName = runtimeData.jsonMap.user_list.name.split('|')[1]
+        if (authStore.jsonMap.user_list?.name) {
+            friendName = authStore.jsonMap.user_list.name.split('|')[0]
+            groupName = authStore.jsonMap.user_list.name.split('|')[1]
         } else if (
-            runtimeData.jsonMap.friend_list?.name &&
-            runtimeData.jsonMap.group_list?.name
+            authStore.jsonMap.friend_list?.name &&
+            authStore.jsonMap.group_list?.name
         ) {
-            friendName = runtimeData.jsonMap.friend_list.name
-            groupName = runtimeData.jsonMap.group_list.name
+            friendName = authStore.jsonMap.friend_list.name
+            groupName = authStore.jsonMap.group_list.name
         }
         Connector.send(friendName, {}, 'getFriendList')
         Connector.send(groupName, {}, 'getGroupList')
@@ -193,17 +204,19 @@ export function reloadCookies(domain = 'qun.qq.com') {
  * @param msgId
  */
 export function jumpToChat(userId: string, msgId: string) {
-    if (runtimeData.chatInfo.show.id != Number(userId)) {
+    const chatStore = useChatStore()
+    const contactStore = useContactStore()
+    if (chatStore.chatInfo.show.id != Number(userId)) {
         const body = document.getElementById('user-' + userId)
         if (body === null) {
             // 从缓存列表里寻找这个 ID
-            for (let i = 0; i < runtimeData.userList.length; i++) {
-                const item = runtimeData.userList[i]
+            for (let i = 0; i < contactStore.userList.length; i++) {
+                const item = contactStore.userList[i]
                 const id =
                     item.user_id !== undefined ? item.user_id : item.group_id
                 if (String(id) === userId) {
                     // 把它插入到显示列表的第一个
-                    runtimeData.showList?.unshift(item)
+                    contactStore.showList?.unshift(item)
                     nextTick(() => {
                         const bodyNext = document.getElementById(
                             'user-' + userId,
@@ -343,6 +356,7 @@ export async function loadWinColor() {
 */
 export function createMenu() {
     const { $t } = app.config.globalProperties
+    const contactStore = useContactStore()
     // MacOS：初始化菜单
     if (backend.isDesktop()) {
         // 初始化菜单
@@ -378,7 +392,7 @@ export function createMenu() {
         menuTitles.login = $t('连接')
         menuTitles.logout = $t('登出')
         menuTitles.userList = $t('用户列表（{count}）', {
-            count: runtimeData.userList.length,
+            count: contactStore.userList.length,
         })
         menuTitles.flushUser = $t('刷新列表…')
 
@@ -400,6 +414,8 @@ export function updateMenu(config: { parent: string, id: string; action: string;
 * Electron：注册系统 IPC
 */
 export function createIpc() {
+    const contactStore = useContactStore()
+    const uiStore = useUIStore()
     // 服务发现
     backend.addListener(undefined, 'sys:serviceFound', (event, data) => {
         const info = data ?? event.payload
@@ -419,14 +435,14 @@ export function createIpc() {
         sendMsgRaw(info.id, info.type,
             parseMsg(info.content, [{ type: 'reply', id: String(info.msg) }], []), true)
         // 去消息列表内寻找，去除新消息标记
-        const item = runtimeData.baseOnMsgList.get(info.id)
+        const item = contactStore.baseOnMsgList.get(info.id)
         if (item) {
             if (item.new_msg) {
                 item.new_msg = false
-                runtimeData.newMsgCount--
+                contactStore.newMsgCount--
             }
             item.highlight = undefined
-            runtimeData.baseOnMsgList.set(Number(info.id), item)
+            contactStore.baseOnMsgList.set(Number(info.id), item)
         }
     })
     // 应用功能
@@ -437,7 +453,7 @@ export function createIpc() {
             template: markRaw(AboutPan),
             allowQuickClose: false,
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     })
     backend.addListener(undefined, 'sys:handleUri', (event, data) => {
         logger.info(JSON.stringify(data ?? event.payload))
@@ -549,14 +565,14 @@ export async function loadMobile() {
                         true
                     )
                     // 去消息列表内寻找，去除新消息标记
-                    const item = runtimeData.baseOnMsgList.get(Number(notification.extra.userId))
+                    const item = contactStore.baseOnMsgList.get(Number(notification.extra.userId))
                     if (item) {
                         if (item.new_msg) {
                             item.new_msg = false
-                            runtimeData.newMsgCount--
+                            contactStore.newMsgCount--
                         }
                         item.highlight = undefined
-                        runtimeData.baseOnMsgList.set(Number(notification.extra.userId), item)
+                        contactStore.baseOnMsgList.set(Number(notification.extra.userId), item)
                     }
                 }
             })
@@ -828,7 +844,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
     const buttonGoUpdate = (!backend.isWeb()) ? [
         {
             text: $t('知道了'),
-            fun: () => runtimeData.popBoxList.shift(),
+            fun: () => uiStore.popBoxList.shift(),
         },
         {
             text: $t('下载更新…'),
@@ -858,12 +874,12 @@ function showReleaseLog(data: any, isUpdated: boolean) {
                 text: $t('知道了'),
                 master: true,
                 fun: () => {
-                    runtimeData.popBoxList.shift()
+                    uiStore.popBoxList.shift()
                 },
             },
         ] : buttonGoUpdate,
     }
-    runtimeData.popBoxList.push(popInfo)
+    uiStore.popBoxList.push(popInfo)
 }
 
 /**
@@ -914,12 +930,12 @@ export function showReleaseHistory() {
                             text: $t('关闭'),
                             master: true,
                             fun: () => {
-                                runtimeData.popBoxList.shift()
+                                uiStore.popBoxList.shift()
                             },
                         },
                     ],
                 }
-                runtimeData.popBoxList.push(popInfo)
+                uiStore.popBoxList.push(popInfo)
             })
         } else {
             new PopInfo().add(
@@ -965,7 +981,7 @@ export function checkOpenTimes() {
                     {
                         text: $t('不要'),
                         fun: () => {
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                     {
@@ -975,12 +991,12 @@ export function checkOpenTimes() {
                             openLink(
                                 `https://github.com/${repoName}`,
                             )
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                 ],
             }
-            runtimeData.popBoxList.push(popInfo)
+            uiStore.popBoxList.push(popInfo)
         }
         if (getTimes % 50 == 0 && import.meta.env.VITE_APP_SPONSORS_URL) {
             const popInfo = {
@@ -992,19 +1008,19 @@ export function checkOpenTimes() {
                         text: $t('打开…'),
                         fun: () => {
                             openLink(import.meta.env.VITE_APP_SPONSORS_URL)
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                     {
                         text: $t('好耶'),
                         master: true,
                         fun: () => {
-                            runtimeData.popBoxList.shift()
+                            uiStore.popBoxList.shift()
                         },
                     },
                 ],
             }
-            runtimeData.popBoxList.push(popInfo)
+            uiStore.popBoxList.push(popInfo)
         }
     } else {
         localStorage.setItem('times', '1')
@@ -1019,7 +1035,7 @@ export function checkOpenTimes() {
             allowClose: false,
             button: [],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
         localStorage.setItem('guide', guideVersion.toString())
     }
 }
@@ -1084,7 +1100,7 @@ export function checkNotice() {
                                             noticeShow.toString(),
                                         )
                                         // 关闭弹窗
-                                        runtimeData.popBoxList.shift()
+                                        uiStore.popBoxList.shift()
                                     },
                                 },
                             ]
@@ -1118,7 +1134,7 @@ export function checkNotice() {
                                 logger.error(null, '未知的公告类型')
                             }
                             if (popInfo) {
-                                runtimeData.popBoxList.push(popInfo)
+                                uiStore.popBoxList.push(popInfo)
                             }
                         }
                     }
@@ -1184,7 +1200,8 @@ export function loadJsonMap(name: string) {
                     logger.system('非常抱歉开发者，已帮阁下将映射表重定向加载为 ：' + msgPath?.name + ' （慌张）')
                 }
             }
-            runtimeData.jsonMap = msgPath
+            const authStore = useAuthStore()
+            authStore.jsonMap = msgPath
         } catch (ex) {
             logger.system('很抱歉开发者，映射表加载失败 ……' + ex)
         }
@@ -1219,13 +1236,14 @@ export function sendIdentifyData(data: { [key: string]: any }) {
 * @param open 是否开启通知
 */
 export function changeGroupNotice(group_id: number, open: boolean) {
+    const authStore = useAuthStore()
     const noticeInfo = option.get('notice_group') ?? {}
-    const list = noticeInfo[runtimeData.loginInfo.uin]
+    const list = noticeInfo[authStore.loginInfo.uin]
     if (open) {
         if (list) {
             list.push(group_id)
         } else {
-            noticeInfo[runtimeData.loginInfo.uin] = [group_id]
+            noticeInfo[authStore.loginInfo.uin] = [group_id]
         }
         option.save('notice_group', noticeInfo)
     } else {

@@ -17,7 +17,7 @@
 import ViewerCom from '@renderer/components/ViewerCom.vue';
 import { Logger } from '@renderer/function/base'
 import { Img } from '@renderer/function/model/img'
-import { inject, TemplateRef } from 'vue'
+import { inject, ShallowRef } from 'vue'
 import * as z from 'zod'
 
 const { data: jsonData, id } = defineProps<{
@@ -25,8 +25,7 @@ const { data: jsonData, id } = defineProps<{
     id: string,
 }>()
 
-const viewer: TemplateRef<undefined | InstanceType<typeof ViewerCom>> =
-    inject('viewer')!
+const viewer = inject<{ viewer: ShallowRef<InstanceType<typeof ViewerCom> | null> }>('viewer')
 
 const base64Code = z.base64().transform((str) => {
     const binary = atob(str)
@@ -86,8 +85,9 @@ if (!success) {
 }
 
 function viewImg(): void {
-    if (!viewer.value) return
-    viewer.value.open(new Img(parsedContent.img!.url))
+    const viewerInstance = viewer?.viewer.value
+    if (!viewerInstance) return
+    viewerInstance.open(new Img(parsedContent.img!.url))
 }
 </script>
 

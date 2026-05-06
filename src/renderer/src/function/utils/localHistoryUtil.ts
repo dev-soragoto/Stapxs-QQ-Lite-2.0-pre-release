@@ -8,7 +8,8 @@
 import { backend } from '@renderer/runtime/backend'
 import { getMsgRawTxt } from './msgUtil'
 import { Logger } from '../base'
-import { runtimeData } from '../msg'
+import { useSettingsStore } from '@renderer/state/settings'
+import { useAuthStore } from '@renderer/state/auth'
 
 const logger = new Logger()
 
@@ -38,7 +39,8 @@ export interface LocalMsgRecord {
 }
 
 function isTauriHistoryAvailable(): boolean {
-    return backend.type === 'tauri' && runtimeData.sysConfig.enable_local_history === true
+    const settingsStore = useSettingsStore()
+    return backend.type === 'tauri' && settingsStore.sysConfig.enable_local_history === true
 }
 
 async function callDbRecordList(
@@ -184,7 +186,7 @@ export function msgToRecord(msg: any): LocalMsgRecord | null {
  * 批量将消息保存到本地 SQLite（已有的 message_id 自动忽略，不覆盖）。
  *
  * @param selfId  当前登录账号 uin
- * @param msgs    已完成预处理的消息对象数组（来自 runtimeData.messageList 或 newMsg）
+ * @param msgs    已完成预处理的消息对象数组（来自 chatStore.messageList 或 newMsg）
  */
 export async function dbSaveMessages(selfId: string | number, msgs: any[]): Promise<void> {
     if (!isTauriHistoryAvailable()) return
@@ -210,9 +212,10 @@ export async function dbSaveMessages(selfId: string | number, msgs: any[]): Prom
 }
 
 export async function saveMessagesWithSideEffects(selfId: string | number, msgs: any[]): Promise<void> {
+    const settingsStore = useSettingsStore()
     const persistableMsgs = ensureChatIdOnMsgs(selfId, msgs)
     await dbSaveMessages(selfId, persistableMsgs)
-    if (runtimeData.sysConfig.disable_local_history_image_cache === true) return
+    if (settingsStore.sysConfig.disable_local_history_image_cache === true) return
     cacheImagesFromMsgs(selfId, persistableMsgs).catch(() => {})
 }
 
@@ -457,13 +460,14 @@ async function cacheSingleImage(selfId: string | number, url: string): Promise<v
 }
 
 /**
- * 将 DB 返回的 LocalMsgRecord 还原为与 runtimeData.messageList 兼容的消息对象。
+ * 将 DB 返回的 LocalMsgRecord 还原为与 chatStore.messageList 兼容的消息对象。
  */
 function deserializeRecord(record: LocalMsgRecord): any {
+    const authStore = useAuthStore()
     const message = deserializeMsgSegments(record.message)
 
     // 判断是否为自己发送的消息，还原 post_type
-    const isSelf = record.sender_id === Number(runtimeData.loginInfo.uin)
+    const isSelf = record.sender_id === Number(authStore.loginInfo.uin)
     const postType = isSelf ? 'message_sent' : 'message'
 
     // 群消息：sender_name 来自 card，私聊来自 nickname

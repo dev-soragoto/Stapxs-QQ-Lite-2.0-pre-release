@@ -37,7 +37,7 @@
         <div class="info">
             <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender">
             <a>{{
-                runtimeData.chatInfo.info.group_members.filter((item) => {
+                chatStore.chatInfo.info.group_members.filter((item) => {
                     return Number(item.user_id) === Number(data.sender)
                 })[0].nickname
             }}</a>
@@ -52,81 +52,85 @@
     </div>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
     import xss from 'xss'
-    import { defineComponent } from 'vue'
-    import { runtimeData } from '@renderer/function/msg'
+    import { ref, onMounted, nextTick, inject } from 'vue'
     import { openLink } from '@renderer/function/utils/appUtil'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
-    import app from '@renderer/main'
+    import { i18n } from '@renderer/main'
     import { Img } from '@renderer/function/model/img'
+    import { useChatStore } from '@renderer/state/chat'
 
-    export default defineComponent({
-        name: 'BulletinBody',
-        inject: ['viewer'],
-        props: ['data', 'index'],
-        data() {
-            return {
-                trueLang: getTrueLang(),
-                runtimeData: runtimeData,
-                showAll: false,
-                needShow: true,
-            }
-        },
-        mounted() {
-            this.$nextTick(() => {
-                const tab1 = document.getElementById('info-pan-notices')
-                const tab2 = document.getElementById('info-pan-mumber')
-                const pan = document.getElementById(
-                    'bulletins-msg-' + this.index,
+    defineOptions({ name: 'BulletinBody' })
+
+    const $t = i18n.global.t
+    const chatStore = useChatStore()
+
+    const props = defineProps<{
+        data: any
+        index: number
+    }>()
+
+    const { viewer: viewerRef } = inject<{ viewer: any }>('viewer', { viewer: null })
+
+    const trueLang = getTrueLang()
+    const showAll = ref(false)
+    const needShow = ref(true)
+
+    onMounted(() => {
+        nextTick(() => {
+            const tab1 = document.getElementById('info-pan-notices')
+            const tab2 = document.getElementById('info-pan-mumber')
+            const pan = document.getElementById(
+                'bulletins-msg-' + props.index,
+            )
+            if (pan && tab1 && tab2) {
+                // PS：display none 不渲染无法获取实际高度
+                tab1.click()
+                const maxHeight = Number(
+                    getComputedStyle(pan).maxHeight.replace('px', ''),
                 )
-                if (pan && tab1 && tab2) {
-                    // PS：display none 不渲染无法获取实际高度
-                    tab1.click()
-                    const maxHeight = Number(
-                        getComputedStyle(pan).maxHeight.replace('px', ''),
-                    )
-                    const height = pan.offsetHeight
-                    tab2.click()
-                    this.needShow = height == maxHeight
-                }
-            })
-        },
-        methods: {
-            parseText(text: string) {
-                text = text.replaceAll('\r', '\n')
-                    .replaceAll('\n\n', '\n')
-                    .replaceAll('&#10;', '\n')
-                text = xss(text, { whiteList: { a: ['href', 'target'] } })
-                // 匹配链接
-                const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
-                text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
-                return text
-            },
-            textClick(event: Event) {
-                const target = event.target as HTMLElement
-                if (target.dataset.link) {
-                    // 点击了链接
-                    const link = target.dataset.link
-                    openLink(link)
-                }
-            },
-            getSenderName(): string {
-                const { $t } = app.config.globalProperties
-                const result = runtimeData.chatInfo.info.group_members.filter((item) => {
-                    return Number(item.user_id) === Number(this.data.sender)
-                }).at(0)?.nickname
-                return result ?? $t('已退群( {userId} )', { userId: Number(this.data.sender) })
-            },
-            /**
-             * 图片点击
-             * @param img
-             */
-            imgClick(img: Img) {
-                if (this.viewer) {
-                    (this.viewer as any).open(img)
-                }
-            },
-        },
+                const height = pan.offsetHeight
+                tab2.click()
+                needShow.value = height == maxHeight
+            }
+        })
     })
+
+    function parseText(text: string) {
+        text = text.replaceAll('\r', '\n')
+            .replaceAll('\n\n', '\n')
+            .replaceAll('&#10;', '\n')
+        text = xss(text, { whiteList: { a: ['href', 'target'] } })
+        // 匹配链接
+        const reg = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/gi
+        text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
+        return text
+    }
+
+    function textClick(event: Event) {
+        const target = event.target as HTMLElement
+        if (target.dataset.link) {
+            // 点击了链接
+            const link = target.dataset.link
+            openLink(link)
+        }
+    }
+
+    function _getSenderName(): string {
+        const result = chatStore.chatInfo.info.group_members.filter((item) => {
+            return Number(item.user_id) === Number(props.data.sender)
+        }).at(0)?.nickname
+        return result ?? $t('已退群( {userId} )', { userId: Number(props.data.sender) })
+    }
+
+    /**
+     * 图片点击
+     * @param img
+     */
+    function imgClick(img: Img) {
+        if (viewerRef?.value) {
+            viewerRef.value.open(img)
+        }
+    }
 </script>

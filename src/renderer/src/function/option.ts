@@ -16,7 +16,9 @@ import languageConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import { i18n } from '@renderer/main'
 import { markRaw, defineAsyncComponent, reactive } from 'vue'
 import { Logger, LogType, PopInfo, PopType } from './base'
-import { runtimeData } from './msg'
+import { useSettingsStore } from '@renderer/state/settings'
+import { useUIStore } from '@renderer/state/ui'
+import { useChatStore } from '@renderer/state/chat'
 import {
     loadWinColor,
     sendStatEvent,
@@ -225,8 +227,10 @@ export function registerExtraOptionItem(cardId: string, item: ExtraOptionItem) {
 }
 
 function updateChatPan() {
-    runtimeData.chatInfo.show.id = 0
-    runtimeData.tags.openSideBar = true
+    const uiStore = useUIStore()
+    const chatStore = useChatStore()
+    chatStore.chatInfo.show.id = 0
+    uiStore.openSideBar = true
 }
 
 
@@ -301,7 +305,8 @@ function updateWinColorOpt(value: boolean) {
 
 function setMsgType(value: any) {
     if (value) {
-        runtimeData.tags.msgType = Number(value)
+        const uiStore = useUIStore()
+        uiStore.msgType = Number(value)
     }
 }
 
@@ -412,12 +417,13 @@ function setAutoDark(value: boolean) {
  * @param mode 颜色模式
  */
 function changeColorMode(mode: string) {
-    if (!runtimeData.tags.firstLoad) {
+    const settingsStore = useSettingsStore()
+    if (!settingsStore.firstLoad) {
         // 启用颜色渐变动画
         document.body.style.transition =
             'background, color, background-color .3s'
     } else {
-        runtimeData.tags.firstLoad = false
+        settingsStore.firstLoad = false
     }
     // 切换颜色
     const match_list = ['color-.*.css', 'prism-.*.css', 'append-.*.css']
@@ -476,7 +482,7 @@ function changeColorMode(mode: string) {
         ).getPropertyValue('--color-main')
     }
     // 记录
-    runtimeData.tags.darkMode = mode === 'dark'
+    settingsStore.darkMode = mode === 'dark'
     // Capacitor: 状态栏颜色（Android）
     if(backend.isMobile()) {
         backend.call('StatusBar', 'setStyle', false, { style: mode.toUpperCase() })
@@ -518,15 +524,16 @@ function changeTheme(id: number) {
  * @param name 文件名
  */
 function changeChatView(name: string | undefined) {
+    const uiStore = useUIStore()
     const safeName = (name || '').toString().replaceAll(/(^['"])|(['"]$)/g, '').trim()
     if (safeName) {
-        runtimeData.pageView.chatView = markRaw(
+        uiStore.pageView.chatView = markRaw(
             defineAsyncComponent(
                 () => import(`@renderer/pages/chat-view/${safeName}.vue`),
             ),
         )
     } else {
-        runtimeData.pageView.chatView = markRaw(
+        uiStore.pageView.chatView = markRaw(
             defineAsyncComponent(() => import('@renderer/pages/Chat.vue')),
         )
     }
@@ -800,6 +807,7 @@ export function runASWEvent(event: Event) {
             $t('此操作将在重启应用后生效，现在就要重启吗？') +
             '</span>'
 
+        const uiStore = useUIStore()
         const popInfo = {
             svg: 'trash-arrow-up',
             html: html,
@@ -819,12 +827,12 @@ export function runASWEvent(event: Event) {
                     text: app.config.globalProperties.$t('取消'),
                     master: true,
                     fun: () => {
-                        runtimeData.popBoxList.shift()
+                        uiStore.popBoxList.shift()
                     },
                 },
             ],
         }
-        runtimeData.popBoxList.push(popInfo)
+        uiStore.popBoxList.push(popInfo)
     }
 }
 
@@ -839,8 +847,9 @@ export function remove(name: string) {
 
 // ================ 工具方法 ================
 export function checkDefault(name: string) {
-    return (runtimeData.sysConfig[name] == undefined ||
-        runtimeData.sysConfig[name] == optDefault[name]) ? '' : 'changed'
+    const settingsStore = useSettingsStore()
+    return (settingsStore.sysConfig[name] == undefined ||
+        settingsStore.sysConfig[name] == optDefault[name]) ? '' : 'changed'
 }
 
 export default {

@@ -44,19 +44,18 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
-    import { getTrueLang } from '@renderer/function/utils/systemUtil'
-    import { getShowName } from '@renderer/function/utils/msgUtil'
+<script setup lang="ts">
+import { getTrueLang } from '@renderer/function/utils/systemUtil'
+import { getShowName } from '@renderer/function/utils/msgUtil'
 
-    export default defineComponent({
-        name: 'FriendBody',
-        props: ['data', 'select', 'menu', 'from'],
-        data() {
-            return {
-                getShowName: getShowName,
-                trueLang: getTrueLang(),
-            }
-        }
-    })
+defineOptions({ name: 'FriendBody' })
+
+defineProps<{
+    data: any
+    select?: boolean
+    menu?: boolean
+    from?: string
+}>()
+
+const trueLang = getTrueLang()
 </script>

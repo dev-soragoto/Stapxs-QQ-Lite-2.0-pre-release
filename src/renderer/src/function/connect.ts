@@ -11,7 +11,7 @@ import app from '@renderer/main'
 
 import { reactive } from 'vue'
 import { LogType, Logger, PopType, PopInfo } from './base'
-import { dispatch, runtimeData } from './msg'
+import { dispatch } from './msg'
 
 import { BotActionElem, LoginCacheElem, ConnectionHistoryItem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
@@ -19,6 +19,8 @@ import { updateMenu } from '@renderer/function/utils/appUtil'
 import { v4 as uuid } from 'uuid'
 import { getMsgData } from './utils/msgUtil'
 import { backend } from '@renderer/runtime/backend'
+import { useSettingsStore } from '@renderer/state/settings'
+import { useAuthStore } from '@renderer/state/auth'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -47,6 +49,7 @@ export class Connector {
         wss: boolean | undefined = undefined,
     ) {
         const { $t } = app.config.globalProperties
+        const settingsStore = useSettingsStore()
         login.creating = true
 
         // 设置连接超时保护
@@ -116,7 +119,7 @@ export class Connector {
                 // 判断连接类型
                 if (document.location.protocol == 'https:') {
                     // 判断连接 URL 的协议，https 优先尝试 wss
-                    runtimeData.tags.connectSsl = true
+                    settingsStore.connectSsl = true
                     url = `wss://${address}?access_token=${token}`
                 }
             } else {
@@ -152,13 +155,14 @@ export class Connector {
     // 连接事件 =====================================================
 
     static onopen(address: string, token: string | undefined) {
+        const settingsStore = useSettingsStore()
         logger.add(LogType.WS, '连接成功')
         // 保存登录信息
         Option.save('address', address)
         // 保存密钥
         if (
-            runtimeData.sysConfig.save_password &&
-            runtimeData.sysConfig.save_password != ''
+            settingsStore.sysConfig.save_password &&
+            settingsStore.sysConfig.save_password != ''
         ) {
             Option.save('save_password', token)
         }
@@ -296,9 +300,10 @@ export class Connector {
     static async callApi(api: string, args: {[key: string]: any}): Promise<any|undefined|null>{
         // 组建信息
         const echo = uuid()
-        const apiMap = runtimeData.jsonMap[api]
+        const authStore = useAuthStore()
+        const apiMap = authStore.jsonMap[api]
         if (!apiMap) {
-            logger.debug(`${runtimeData.jsonMap.name} 未适配 API ${api}`)
+            logger.debug(`${authStore.jsonMap.name} 未适配 API ${api}`)
             return undefined
         }
 
@@ -458,6 +463,7 @@ function saveConnectionHistory(history: ConnectionHistoryItem[]) {
  * 保存当前连接到历史
  */
 export function saveConnectionToHistory(address: string, token: string, uin?: string, nickname?: string) {
+    const settingsStore = useSettingsStore()
     // 确保 connectionHistory 已初始化
     if (!login.connectionHistory) {
         login.connectionHistory = []
@@ -471,8 +477,8 @@ export function saveConnectionToHistory(address: string, token: string, uin?: st
 
     const newItem: ConnectionHistoryItem = {
         address,
-        token: (runtimeData.sysConfig.save_password &&
-            runtimeData.sysConfig.save_password != '') ? token : '',
+        token: (settingsStore.sysConfig.save_password &&
+            settingsStore.sysConfig.save_password != '') ? token : '',
         uin,
         nickname,
         lastConnected: Date.now()

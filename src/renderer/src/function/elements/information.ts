@@ -1,73 +1,8 @@
-import { optDefault } from '../option'
 import { PinYinData } from '../utils/pinyin'
 
 export enum BotMsgType {
     CQCode,
     Array
-}
-
-export interface RunTimeDataElem {
-    sysConfig: Record<keyof typeof optDefault, any | null>
-    jsonMap?: any
-    botInfo: { [key: string]: any }
-    loginInfo: { [key: string]: any }
-    userList: (UserFriendElem & UserGroupElem)[]
-    showList: (UserFriendElem & UserGroupElem)[]
-    groupAssistList: (UserFriendElem & UserGroupElem)[]
-    baseOnMsgList: Map<number, (UserFriendElem & UserGroupElem)>
-    newMsgCount: number
-    onMsgList: (UserFriendElem & UserGroupElem)[]
-    systemNoticesList?: { [key: string]: any }
-    chatInfo: ChatInfoElem
-    pageView: {
-        chatView: any
-        msgView: any
-    }
-    tags: {
-        firstLoad: boolean
-        msgType: BotMsgType
-        nowGetHistory: boolean
-        canLoadHistory: boolean
-        loadHistoryFail: boolean
-        historyBeforeTime?: number
-        openSideBar: boolean
-        loginWaveTimer?: any
-        connectSsl: boolean
-        classes: any[]
-        sw?: boolean
-        darkMode: boolean
-    }
-    watch: {
-        // PS: 一些给监听器捕捉用的数据
-        heartbeatTime?: number
-        oldHeartbeatTime?: number
-        lastHeartbeatTime?: number
-        backTimes: number
-    }
-    inch: number
-    messageList: any[]
-    mergeMsgStack: MergeStackData[]
-    mergeMessageList?: any[] | undefined
-    mergeMessageImgList?: any[] | undefined
-    stickerCache?: any[]
-    popBoxList: {
-        // 通用弹窗
-        svg?: string // 弹窗图标
-        title?: string // 弹窗标题（缺省将没有标题栏和关闭按钮）
-        html?: string // 填充 html（和下面的模板必须有一个）
-        template?: any // 填充模板（如果都有，优先填充 html）
-        templateValue?: any // 模板 props
-        data?: any // 模板的附加传参，只有这一个
-        full?: boolean // 是否填充整个页面
-        button?: {
-            // 按钮
-            master?: boolean // 是否高亮（主按钮）
-            fun?: (value: any) => void // 按钮回调
-            text: string // 按钮文本
-        }[]
-        allowQuickClose?: boolean // 是否允许快速关闭
-        allowClose?: boolean // 是否允许关闭
-    }[]
 }
 
 export interface ChatInfoElem {

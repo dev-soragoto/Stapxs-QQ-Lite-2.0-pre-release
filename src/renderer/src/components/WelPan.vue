@@ -27,7 +27,7 @@
             <font-awesome-icon style="margin-right: 30px" :icon="['fas', 'language']" />
             <div style="overflow: hidden">
                 <div class="select-wrapper">
-                    <select v-model="runtimeData.sysConfig.language"
+                    <select v-model="settingsStore.sysConfig.language"
                         name="language"
                         title="language"
                         @change="save($event);gaLanguage($event)">
@@ -87,8 +87,8 @@
                         <label v-for="(name, index) in colors" :key="'color_id_' + index"
                             :title="name" class="ss-radio">
                             <input type="radio" name="theme_color" :data-id="index"
-                                :checked="runtimeData.sysConfig.theme_color === undefined ?
-                                    index === 0 : Number(runtimeData.sysConfig.theme_color) === index"
+                                :checked="settingsStore.sysConfig.theme_color === undefined ?
+                                    index === 0 : Number(settingsStore.sysConfig.theme_color) === index"
                                 @change="save($event)">
                             <div
                                 :style="{ 'background': `var(--color-main-${index})` }">
@@ -97,13 +97,13 @@
                         </label>
                     </div>
                 </div>
-                <div v-if="!runtimeData.sysConfig.opt_auto_dark" id="opt_view_dark" class="opt-item wel-opt-item">
+                <div v-if="!settingsStore.sysConfig.opt_auto_dark" id="opt_view_dark" class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('深色模式') }}</span>
                         <span>{{ $t('是五彩斑斓的黑色！') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input v-model="runtimeData.sysConfig.opt_dark"
+                        <input v-model="settingsStore.sysConfig.opt_dark"
                             type="checkbox" name="opt_dark" @change="save">
                         <div>
                             <div />
@@ -116,7 +116,7 @@
                         <span>{{ $t('Biubiu ——，自动变黑！') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input v-model="runtimeData.sysConfig.opt_auto_dark"
+                        <input v-model="settingsStore.sysConfig.opt_auto_dark"
                             type="checkbox" name="opt_auto_dark" @change="save">
                         <div>
                             <div />
@@ -150,20 +150,20 @@
                         <span>{{ $t('全都放出来！全都放出来！') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input v-model="runtimeData.sysConfig.bubble_sort_user"
+                        <input v-model="settingsStore.sysConfig.bubble_sort_user"
                             type="checkbox" name="bubble_sort_user" @change="save">
                         <div>
                             <div />
                         </div>
                     </label>
                 </div>
-                <div v-if="!runtimeData.sysConfig.bubble_sort_user" class="opt-item wel-opt-item">
+                <div v-if="!settingsStore.sysConfig.bubble_sort_user" class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('群消息通知方式') }}</span>
                         <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>
                     </div>
                     <div class="select-wrapper">
-                        <select v-model="runtimeData.sysConfig.group_notice_type" style="width: 100%;"
+                        <select v-model="settingsStore.sysConfig.group_notice_type" style="width: 100%;"
                             name="group_notice_type" title="group_notice_type" @change="save">
                             <option value="none">
                                 {{ $t('不通知（默认）') }}
@@ -242,14 +242,14 @@
                 <span>{{ $t('Stapxs QQ Lite 会将部分使用数据上传到自建的 umami 服务器中用于了解用户使用情况以及制作一些有趣的统计信息。') }}</span>
                 <span style="margin-bottom: 20px;">{{ $t('如果你并不希望上传这些数据，可以选择关闭它。') }}</span>
                 <div class="opt-item wel-opt-item"
-                    :style="{ 'background': runtimeData.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
+                    :style="{ 'background': settingsStore.sysConfig.close_ga !== true ? 'var(--color-card-1)' : 'none' }">
                     <font-awesome-icon :icon="['fas', 'cloud']" />
                     <div>
                         <span>{{ $t('关闭分析') }}</span>
                         <span>{{ $t('真的不让看吗（小声') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input v-model="runtimeData.sysConfig.close_ga" type="checkbox"
+                        <input v-model="settingsStore.sysConfig.close_ga" type="checkbox"
                             name="close_ga" @change="save">
                         <div style="background: var(--color-card-2)">
                             <div />
@@ -346,57 +346,61 @@
         <a>{{
             $t('该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。')
         }}</a>
-        <button class="ss-button wel-next-end" @click="runtimeData.popBoxList.shift()">
+        <button class="ss-button wel-next-end" @click="uiStore.popBoxList.shift()">
             {{ $t('关闭') }}
         </button>
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+    import { ref } from 'vue'
+    import { i18n } from '@renderer/main'
     import languages from '@renderer/assets/l10n/_l10nconfig.json'
-
-    import { defineComponent } from 'vue'
-    import { runtimeData } from '@renderer/function/msg'
     import { runASWEvent as save } from '@renderer/function/option'
     import { openLink, sendIdentifyData } from '@renderer/function/utils/appUtil'
+    import { useSettingsStore } from '@renderer/state/settings'
+    import { useUIStore } from '@renderer/state/ui'
 
-    export default defineComponent({
-        name: 'WelcomePan',
-        props: ['data'],
-        data() {
-            return {
-                napcat: import.meta.env.VITE_NAPCAT,
-                repoName: import.meta.env.VITE_APP_REPO_NAME,
-                languages: languages,
-                openLink: openLink,
-                runtimeData: runtimeData,
-                save: save,
-                show: 'home',
-                colors: [
-                    '林槐蓝',
-                    '墨竹青',
-                    '少女粉',
-                    '微软紫',
-                    '坏猫黄',
-                    '玄素黑',
-                ],
-            }
-        },
-        methods: {
-            changeView(name: string) {
-                if(this.show === name || this.show === 'license') return
-                this.show = name
-            },
-            gaLanguage(event: Event) {
-                const sender = event.target as HTMLInputElement
-                sendIdentifyData({ use_language: sender.value })
-                // TODO: 刷新菜单
-            },
-            setPage(name: string) {
-                this.show = name
-            },
-        },
+    const settingsStore = useSettingsStore()
+    const uiStore = useUIStore()
+
+    defineOptions({ name: 'WelcomePan' })
+
+    const $t = i18n.global.t
+
+    defineProps({
+        data: {
+            type: null,
+            default: undefined
+        }
     })
+
+    const napcat = import.meta.env.VITE_NAPCAT
+    const repoName = import.meta.env.VITE_APP_REPO_NAME
+    const show = ref('home')
+    const colors = [
+        '林槐蓝',
+        '墨竹青',
+        '少女粉',
+        '微软紫',
+        '坏猫黄',
+        '玄素黑',
+    ]
+
+    function changeView(name: string) {
+        if(show.value === name || show.value === 'license') return
+        show.value = name
+    }
+
+    function gaLanguage(event: Event) {
+        const sender = event.target as HTMLInputElement
+        sendIdentifyData({ use_language: sender.value })
+        // TODO: 刷新菜单
+    }
+
+    function setPage(name: string) {
+        show.value = name
+    }
 </script>
 
 <style scoped>

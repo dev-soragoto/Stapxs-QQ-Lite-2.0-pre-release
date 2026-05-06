@@ -1,11 +1,11 @@
-import app from '../main'
+import { i18n } from '../main'
 import VConsole from 'vconsole'
 
 import { IpcRenderer } from '@electron-toolkit/preload'
 import { InvokeArgs, InvokeOptions } from '@tauri-apps/api/core'
 import { CapacitorGlobal } from '@capacitor/core'
 import { Logger, LogType, PopInfo, PopType } from '../function/base'
-import { runtimeData } from '@renderer/function/msg'
+import { useSettingsStore } from '@renderer/state/settings'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -91,7 +91,7 @@ export const backend = {
      * @returns {Promise<void>}
      */
     async init() {
-        const { $t } = app.config.globalProperties
+        const $t = i18n.global.t
         if (window.electron != undefined) {
             this.type = 'electron';
             this.function = window.electron.ipcRenderer;
@@ -108,7 +108,7 @@ export const backend = {
                 capacitor: window.Capacitor,
                 plugins: window.Capacitor.Plugins,
                 vConsole: new VConsole({
-                    theme: runtimeData.tags.darkMode ? 'dark' : 'light',
+                    theme: useSettingsStore().darkMode ? 'dark' : 'light',
                 })
             }
             this.listener = (type: string, name: string, callBack: (...args: any[]) => void) => {

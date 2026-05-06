@@ -17,12 +17,15 @@
 
 <script setup lang="ts">
 import { Session } from '@renderer/function/elements/information';
-import { runtimeData } from '@renderer/function/msg';
+import { useChatStore } from '@renderer/state/chat';
 import { useSessionHistoryStore } from '@renderer/state/sessionHistory';
+import { useContactStore } from '@renderer/state/contact';
 import { nextTick } from 'vue';
 import TinySessionBody from './TinySessionBody.vue';
 
 const history = useSessionHistoryStore()
+const contactStore = useContactStore()
+const chatStore = useChatStore()
 
 /**
  * 切换会话
@@ -30,9 +33,9 @@ const history = useSessionHistoryStore()
  */
 function changeSession(session: Session) {
     const id = session.user_id ?? session.group_id
-    if (id === runtimeData.chatInfo.show.id) return
+    if (id === chatStore.chatInfo.show.id) return
 
-    runtimeData.baseOnMsgList.set(Number(session.user_id ?? session.group_id), session)
+    contactStore.baseOnMsgList.set(Number(session.user_id ?? session.group_id), session)
     // 切换到这个聊天
     nextTick(() => {
         const item = document.getElementById(

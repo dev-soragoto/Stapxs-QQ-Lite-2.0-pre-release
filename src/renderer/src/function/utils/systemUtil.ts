@@ -1,4 +1,4 @@
-import app, { i18n } from '@renderer/main'
+import { i18n } from '@renderer/main'
 
 import l10nConfig from '@renderer/assets/l10n/_l10nconfig.json'
 import PO from 'pofile'
@@ -37,8 +37,10 @@ export function getDeviceType() {
  */
 export function getTrueLang(): string {
     let back = 'zh-CN'
+    const locale = i18n.global.locale
+    const currentLocale = typeof locale === 'string' ? locale : locale.value
     l10nConfig.forEach((item) => {
-        if (item.value === app.config.globalProperties.$i18n.locale) {
+        if (item.value === currentLocale) {
             back = item.lang
         }
     })

@@ -36,14 +36,14 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { i18n } from '@renderer/main'
 
-    import { defineComponent } from 'vue'
+defineOptions({ name: 'MealHungryPan' })
 
-    export default defineComponent({
-        name: 'MealHungryPan',
-        props: ['times']
-    })
+defineProps<{ times?: number | string }>()
+
+const $t = i18n.global.t
 </script>
 
 <style>

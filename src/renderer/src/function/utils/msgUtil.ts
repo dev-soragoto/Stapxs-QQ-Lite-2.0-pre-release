@@ -4,7 +4,7 @@ import anime from 'animejs'
 import option from '@renderer/function/option'
 
 import { Logger, PopInfo, PopType } from '@renderer/function/base'
-import { runtimeData } from '@renderer/function/msg'
+import { useSettingsStore } from '@renderer/state/settings'
 import { v4 as uuid } from 'uuid'
 import { Connector } from '@renderer/function/connect'
 import {
@@ -14,6 +14,10 @@ import {
 } from '../elements/information'
 import { sendStatEvent } from './appUtil'
 import { backend } from '@renderer/runtime/backend'
+import { useContactStore } from '@renderer/state/contact'
+import { useUIStore } from '@renderer/state/ui'
+import { useAuthStore } from '@renderer/state/auth'
+import { useChatStore } from '@renderer/state/chat'
 
 const logger = new Logger()
 
@@ -101,7 +105,8 @@ export function getMsgData(
     return back
 }
 function replaceJPValue(jpStr: string) {
-    return jpStr.replaceAll('<uin>', runtimeData.loginInfo.uin)
+    const authStore = useAuthStore()
+    return jpStr.replaceAll('<uin>', authStore.loginInfo.uin)
 }
 
 /**
@@ -113,7 +118,8 @@ function replaceJPValue(jpStr: string) {
 export function buildMsgList(msgList: { [key: string]: any }): {
     [key: string]: any
 } {
-    const path = jp.parse(runtimeData.jsonMap.message_list.source)
+    const authStore = useAuthStore()
+    const path = jp.parse(authStore.jsonMap.message_list.source)
     const keys = [] as string[]
     path.forEach((item) => {
         if (item.expression.value != '*' && item.expression.value != '$') {
@@ -138,14 +144,16 @@ export function parseMsgList(
     map: string,
     valueMap: { [key: string]: any },
 ): any[] {
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
     // 判断消息类型
     if (typeof list[0].message == 'string') {
-        runtimeData.tags.msgType = BotMsgType.CQCode
+        uiStore.msgType = BotMsgType.CQCode
     } else {
-        runtimeData.tags.msgType = BotMsgType.Array
+        uiStore.msgType = BotMsgType.Array
     }
     // 消息类型的特殊处理
-    switch (runtimeData.tags.msgType) {
+    switch (uiStore.msgType) {
         case BotMsgType.CQCode: {
             // 这儿会默认处理成 oicq2 的格式，所以 CQCode 消息请使用 oicq2 配置文件修改
             for (let i = 0; i < list.length; i++) {
@@ -211,7 +219,7 @@ export function parseMsgList(
                 })
             })
             // 补充 infoList
-            const infoList = getMsgData('message_info', list[i], runtimeData.jsonMap.message_info)
+            const infoList = getMsgData('message_info', list[i], authStore.jsonMap.message_info)
             if (infoList != undefined) {
                 list[i].infoList = infoList[0]
             }
@@ -227,6 +235,7 @@ export function parseMsgList(
  */
 export function getMsgRawTxt(data: any): string {
     const { $t } = app.config.globalProperties
+    const chatStore = useChatStore()
 
     const message = data.message as [{ [key: string]: any }]
     const fromId = data.group_id ?? data.user_id
@@ -239,11 +248,11 @@ export function getMsgRawTxt(data: any): string {
                         // 群内才可以 at，如果 at 消息中没有 text 字段
                         // 尝试去群成员列表中找到对应的昵称，群成员列表只在当前打开的群才有
                         if (
-                            runtimeData.chatInfo.show.id == fromId &&
-                            runtimeData.chatInfo.info.group_members
+                            chatStore.chatInfo.show.id == fromId &&
+                            chatStore.chatInfo.info.group_members
                         ) {
                             const user =
-                                runtimeData.chatInfo.info.group_members.find(
+                                chatStore.chatInfo.info.group_members.find(
                                     (item) => item.user_id == message[i].qq,
                                 )
                             if (user) {
@@ -412,6 +421,9 @@ export function sendMsgRaw(
     preShow = false,
     echo = 'sendMsgBack',
 ) {
+    const chatStore = useChatStore()
+    const authStore = useAuthStore()
+    const uiStore = useUIStore()
     // 如果消息为空则不发送
     if (msg == undefined || msg == '' || (Array.isArray(msg) && msg.length == 0)) {
         return
@@ -437,26 +449,26 @@ export function sendMsgRaw(
             fake_msg: true,
             message_id: msgUUID,
             fake_message_id: msgUUID,       // 用来作为这条消息的唯一标识，防止 message_id 刷新导致的闪烁
-            message_type: runtimeData.chatInfo.show.type,
+            message_type: chatStore.chatInfo.show.type,
             time: parseInt(String(new Date().getTime() / 1000)),
             post_type: 'message',
             sender: {
-                user_id: runtimeData.loginInfo.uin,
-                nickname: runtimeData.loginInfo.nickname,
+                user_id: authStore.loginInfo.uin,
+                nickname: authStore.loginInfo.nickname,
             },
             message: preShowMsg,
         } as { [key: string]: any }
         showMsg.raw_message = getMsgRawTxt(showMsg)
 
         if (showMsg.message_type == 'group') {
-            showMsg.group_id = runtimeData.chatInfo.show.id
+            showMsg.group_id = chatStore.chatInfo.show.id
         } else {
-            showMsg.user_id = runtimeData.chatInfo.show.id
+            showMsg.user_id = chatStore.chatInfo.show.id
         }
-        runtimeData.messageList = runtimeData.messageList.concat([showMsg])
+        chatStore.messageList = chatStore.messageList.concat([showMsg])
     }
     // 检查消息体是否需要处理
-    if (runtimeData.tags.msgType == BotMsgType.Array) {
+    if (uiStore.msgType == BotMsgType.Array) {
         if (msg && typeof msg != 'string') {
             const newMsg = [] as any
             msg.forEach((item) => {
@@ -475,7 +487,7 @@ export function sendMsgRaw(
         }
     }
     if (msg !== undefined && msg.length > 0) {
-        if (runtimeData.jsonMap.name === 'Lagrange.OneBot') {
+        if (authStore.jsonMap.name === 'Lagrange.OneBot') {
             lgrSendMsg(id, msg, type, echo + '_uuid_' + msgUUID)
             sendStatEvent('send_msg', { type: type })
             return
@@ -483,7 +495,7 @@ export function sendMsgRaw(
         switch (type) {
             case 'group':
                 Connector.send(
-                    runtimeData.jsonMap.message_list.name_group_send ??
+                    authStore.jsonMap.message_list.name_group_send ??
                     'send_msg',
                     { group_id: id, message: msg },
                     echo + '_uuid_' + msgUUID,
@@ -492,7 +504,7 @@ export function sendMsgRaw(
             case 'user': {
                 if (String(id).indexOf('/') > 1) {
                     Connector.send(
-                        runtimeData.jsonMap.message_list.name_temp_send ??
+                        authStore.jsonMap.message_list.name_temp_send ??
                         'send_temp_msg',
                         {
                             user_id: id.split('/')[0],
@@ -503,7 +515,7 @@ export function sendMsgRaw(
                     )
                 } else {
                     Connector.send(
-                        runtimeData.jsonMap.message_list.name_user_send ??
+                        authStore.jsonMap.message_list.name_user_send ??
                         'send_msg',
                         { user_id: id, message: msg },
                         echo + '_uuid_' + msgUUID,
@@ -517,19 +529,20 @@ export function sendMsgRaw(
 }
 
 export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
+    const authStore = useAuthStore()
     // 发起获取历史消息请求
     const type = item.user_id ? 'user' : 'group'
     const id = item.user_id ? item.user_id : item.group_id
     let name
-    if (runtimeData.jsonMap.message_list && type != 'group') {
-        name = runtimeData.jsonMap.message_list.private_name
+    if (authStore.jsonMap.message_list && type != 'group') {
+        name = authStore.jsonMap.message_list.private_name
     } else {
-        name = runtimeData.jsonMap.message_list.name
+        name = authStore.jsonMap.message_list.name
     }
     Connector.send(
         name ?? 'get_chat_history',
         {
-            message_type: runtimeData.jsonMap.message_list.message_type[type],
+            message_type: authStore.jsonMap.message_list.message_type[type],
             group_id: id,
             user_id: id,
             message_seq: 0,
@@ -544,7 +557,9 @@ export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
  * 刷新消息列表排序
  */
 export function updateBaseOnMsgList() {
-    const allList = [...runtimeData.baseOnMsgList.values()]
+    const contactStore = useContactStore()
+    const settingsStore = useSettingsStore()
+    const allList = [...contactStore.baseOnMsgList.values()]
     // 先更具 item.always_top 是不是 true 拆为两个数组
     const topList = allList.filter((item) => item.always_top)
     const normalList = allList.filter((item) => !item.always_top)
@@ -568,7 +583,7 @@ export function updateBaseOnMsgList() {
 
     let onMsgList = [] as any[]
     let groupAssistList = [] as any[]
-    if (runtimeData.sysConfig.bubble_sort_user) {
+    if (settingsStore.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
         onMsgList = topList.concat(normalList.filter((item) => {
             return item.group_id && canGroupNotice(item.group_id) ||
@@ -581,8 +596,8 @@ export function updateBaseOnMsgList() {
         onMsgList = topList.concat(normalList)
     }
 
-    runtimeData.onMsgList = onMsgList
-    runtimeData.groupAssistList = groupAssistList
+    contactStore.onMsgList = onMsgList
+    contactStore.groupAssistList = groupAssistList
 }
 
 /**
@@ -591,8 +606,9 @@ export function updateBaseOnMsgList() {
  * @returns 是否可以通知
  */
 export function canGroupNotice(id: number) {
+    const authStore = useAuthStore()
     const noticeInfo = option.get('notice_group') ?? {}
-    const list = noticeInfo[runtimeData.loginInfo.uin]
+    const list = noticeInfo[authStore.loginInfo.uin]
     if (list) {
         return list.indexOf(id) >= 0
     }
@@ -806,8 +822,9 @@ export async function getImageUrlData(imageUrl: string): Promise<{ buffer: Uint8
  * @param msg
  */
 export function isDeleteMsg(msg: any): boolean {
+    const authStore = useAuthStore()
     if (!['message', 'message_sent'].includes(msg.post_type)) return false
-    if (msg.sender.user_id !== runtimeData.loginInfo.uin) return false
+    if (msg.sender.user_id !== authStore.loginInfo.uin) return false
     if (msg.raw_message !== '&#91;已删除&#93;') return false
     return true
 }

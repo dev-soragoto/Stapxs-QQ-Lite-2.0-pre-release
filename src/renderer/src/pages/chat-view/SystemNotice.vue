@@ -9,14 +9,14 @@
 <template>
     <div id="chat-pan"
         :class=" 'chat-pan sys-not-pan' +
-            (runtimeData.tags.openSideBar ? ' open' : '') +
+            (uiStore.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
         <div>
             <font-awesome-icon :icon="['fas', 'angle-left']" @click="exit" />
             <span>{{ $t('系统消息') }}</span>
         </div>
         <div class="sys-not-list">
-            <template v-for="(notice, index) in runtimeData.systemNoticesList"
+            <template v-for="(notice, index) in contactStore.systemNoticesList"
                 :key="'sysNot-' + index">
                 <div v-if="notice.request_type == 'friend'">
                     <div>
@@ -110,79 +110,62 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent } from 'vue'
-
-    import { runtimeData } from '@renderer/function/msg'
+<script lang="ts" setup>
     import { Connector } from '@renderer/function/connect'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
+    import { i18n } from '@renderer/main'
+    import { useUIStore } from '@renderer/state/ui'
+    import { useContactStore } from '@renderer/state/contact'
 
-    export default defineComponent({
-        name: 'ChatSystemNotice',
-        emits: ['userClick'],
-        data() {
-            return {
-                backend,
-                trueLang: getTrueLang(),
-                runtimeData: runtimeData,
-                dev: import.meta.env.DEV,
-            }
-        },
-        methods: {
-            /**
-             * 返回按钮
-             */
-            exit() {
-                this.$emit('userClick', { id: 0 })
-            },
+    defineOptions({ name: 'ChatSystemNotice' })
 
-            /**
-             * 处理好友申请
-             * @param notice 申请信息
-             * @param deal 同意 / 拒绝
-             */
-            dealFriend(notice: { flag: string }, deal: boolean) {
-                Connector.send(
-                    'set_friend_add_request',
-                    {
-                        flag: notice.flag,
-                        approve: deal,
-                    },
-                    'setFriendAdd_' + notice.flag,
-                )
-            },
+    const uiStore = useUIStore()
+    const contactStore = useContactStore()
+    const emit = defineEmits(['userClick'])
 
-            /**
-             * 处理入群申请
-             * @param notice 申请信息
-             * @param deal 同意 / 拒绝
-             */
-            dealGroupAdd(
-                notice: { flag: string; sub_type: string },
-                deal: boolean,
-            ) {
-                Connector.send(
-                    'set_group_add_request',
-                    {
-                        flag: notice.flag,
-                        approve: deal,
-                        sub_type: notice.sub_type,
-                    },
-                    'setGroupAdd_' + notice.flag,
-                )
-            },
+    const $t = i18n.global.t
+    const trueLang = getTrueLang()
+    const dev = import.meta.env.DEV
 
-            getName(id: number) {
-                const knowUser = runtimeData.userList.filter(
-                    (item) => item.user_id == id || item.group_id == id,
-                )
-                if (knowUser.length > 0) {
-                    return knowUser[0].nickname || knowUser[0].group_name
-                } else {
-                    return null
-                }
+    function exit() {
+        emit('userClick', { id: 0 })
+    }
+
+    function dealFriend(notice: { flag: string }, deal: boolean) {
+        Connector.send(
+            'set_friend_add_request',
+            {
+                flag: notice.flag,
+                approve: deal,
             },
-        },
-    })
+            'setFriendAdd_' + notice.flag,
+        )
+    }
+
+    function dealGroupAdd(
+        notice: { flag: string; sub_type: string },
+        deal: boolean,
+    ) {
+        Connector.send(
+            'set_group_add_request',
+            {
+                flag: notice.flag,
+                approve: deal,
+                sub_type: notice.sub_type,
+            },
+            'setGroupAdd_' + notice.flag,
+        )
+    }
+
+    function getName(id: number) {
+        const knowUser = contactStore.userList.filter(
+            (item) => item.user_id == id || item.group_id == id,
+        )
+        if (knowUser.length > 0) {
+            return knowUser[0].nickname || knowUser[0].group_name
+        } else {
+            return null
+        }
+    }
 </script>

@@ -1,4 +1,5 @@
-import { runtimeData } from './msg'
+import { useContactStore } from '@renderer/state/contact'
+import { useSettingsStore } from '@renderer/state/settings'
 
 let needRefreshFavicon = false
 
@@ -14,8 +15,9 @@ export function refreshFavicon() {
     setTimeout(() => {
         needRefreshFavicon = false
         let num = 0
-        if (runtimeData.sysConfig.use_favicon_notice === false) return main(0)
-        for (const session of runtimeData.onMsgList) {
+        if (useSettingsStore().sysConfig.use_favicon_notice === false) return main(0)
+        const contactStore = useContactStore()
+        for (const session of contactStore.onMsgList) {
             if (session.new_msg) num ++
         }
         main(num)

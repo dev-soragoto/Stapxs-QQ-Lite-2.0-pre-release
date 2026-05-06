@@ -54,9 +54,11 @@
     </div>
 </template>
 
-<script lang="ts">
-    import { defineComponent, ref } from 'vue'
-    import { runtimeData } from '@renderer/function/msg'
+<script setup lang="ts">
+    import { ref, onMounted } from 'vue'
+    import { i18n } from '@renderer/main'
+    import { useAuthStore } from '@renderer/state/auth'
+    import { useChatStore } from '@renderer/state/chat'
     import {
         getTimeConfig,
         getTrueLang,
@@ -64,101 +66,103 @@
     import { pokeAnime } from '@renderer/function/utils/msgUtil'
     import { backend } from '@renderer/runtime/backend'
 
-    export default defineComponent({
-        name: 'NoticeBody',
-        props: ['data', 'id'],
-        emits: ['reedit'],
-        data() {
-            return {
-                trueLang: getTrueLang(),
-                getTimeConfig,
-                info: ref(this.data) as { [key: string]: any },
-            }
-        },
-        async mounted() {
-            let windowInfo = null as {
-                x: number
-                y: number
-                width: number
-                height: number
-            } | null
-            windowInfo = await backend.call(undefined, 'win:getWindowInfo', true)
-            // 补全撤回者信息
-            if (
-                this.info.notice_type &&
-                this.info.notice_type.indexOf('recall') >= 0
-            ) {
-                if (runtimeData.chatInfo.show.type === 'group') {
-                    const id = this.info.operator_id
-                    // 寻找群成员信息
-                    if (runtimeData.chatInfo.info.group_members !== undefined) {
-                        const back =
-                            runtimeData.chatInfo.info.group_members.filter(
-                                (item) => {
-                                    return item.user_id === Number(id)
-                                },
-                            )
-                        if (back.length === 1) {
-                            this.info.name =
-                                back[0].card === '' || back[0].card == null? back[0].nickname: back[0].card
-                        } else {
-                            this.info.name = id
-                        }
+    const $t = i18n.global.t
+
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+
+    defineOptions({ name: 'NoticeBody' })
+
+    const props = defineProps(['data', 'id'])
+    defineEmits(['reedit'])
+
+    const trueLang = getTrueLang()
+    const info = ref(props.data) as { [key: string]: any }
+
+    function isMe(id: number) {
+        return authStore.loginInfo.uin === id
+    }
+
+    function getName(id: number) {
+        const back = chatStore.chatInfo.info.group_members.filter(
+            (item) => {
+                return item.user_id === id
+            },
+        )
+        if (back.length === 1) {
+            return back[0].card === '' || back[0].card == null? back[0].nickname: back[0].card
+        }
+        return id
+    }
+
+    function fTime(time: number) {
+        // 将秒数转换为可阅读的时间，最大单位天
+        const day = Math.floor(time / 86400)
+        const hour = Math.floor((time % 86400) / 3600)
+        const minute = Math.floor((time % 3600) / 60)
+        const second = time % 60
+
+        let back = ''
+        if (day > 0) {
+            back += `${day} ${$t('天')} `
+        }
+        if (hour > 0) {
+            back += `${hour} ${$t('小时')} `
+        }
+        if (minute > 0) {
+            back += `${minute} ${$t('分钟')} `
+        }
+        if (second > 0) {
+            back += `${second} ${$t('秒')} `
+        }
+        return back
+    }
+
+    onMounted(async () => {
+        let windowInfo = null as {
+            x: number
+            y: number
+            width: number
+            height: number
+        } | null
+        windowInfo = await backend.call(undefined, 'win:getWindowInfo', true)
+        // 补全撤回者信息
+        if (
+            info.value.notice_type &&
+            info.value.notice_type.indexOf('recall') >= 0
+        ) {
+            if (chatStore.chatInfo.show.type === 'group') {
+                const id = info.value.operator_id
+                // 寻找群成员信息
+                if (chatStore.chatInfo.info.group_members !== undefined) {
+                    const back =
+                        chatStore.chatInfo.info.group_members.filter(
+                            (item) => {
+                                return item.user_id === Number(id)
+                            },
+                        )
+                    if (back.length === 1) {
+                        info.value.name =
+                            back[0].card === '' || back[0].card == null? back[0].nickname: back[0].card
                     } else {
-                        this.info.name = id
+                        info.value.name = id
                     }
                 } else {
-                    this.info.name = runtimeData.chatInfo.show.name
+                    info.value.name = id
                 }
+            } else {
+                info.value.name = chatStore.chatInfo.show.name
             }
-            // poke 通知创建对应的动画
-            // PS：只有最后一条 poke 通知会触发动画，避免反复触发动画
-            if (this.info.sub_type === 'poke' && this.info.pokeMe &&
-                this.info == runtimeData.messageList[runtimeData.messageList.length - 1]) {
-                    let item = document.getElementById('app')
-                    if (backend.isDesktop()) {
-                        item = document.getElementById('notice-' + this.id)?.getElementsByClassName('space')[0] as HTMLElement
-                    }
-                    pokeAnime(item, windowInfo)
-            }
-        },
-        methods: {
-            isMe(id: number) {
-                return runtimeData.loginInfo.uin === id
-            },
-            getName(id: number) {
-                const back = runtimeData.chatInfo.info.group_members.filter(
-                    (item) => {
-                        return item.user_id === id
-                    },
-                )
-                if (back.length === 1) {
-                    return back[0].card === '' || back[0].card == null? back[0].nickname: back[0].card
+        }
+        // poke 通知创建对应的动画
+        // PS：只有最后一条 poke 通知会触发动画，避免反复触发动画
+        if (info.value.sub_type === 'poke' && info.value.pokeMe &&
+            info.value == chatStore.messageList[chatStore.messageList.length - 1]) {
+                let item = document.getElementById('app')
+                if (backend.isDesktop()) {
+                    item = document.getElementById('notice-' + props.id)?.getElementsByClassName('space')[0] as HTMLElement
                 }
-                return id
-            },
-            fTime(time: number) {
-                // 将秒数转换为可阅读的时间，最大单位天
-                const day = Math.floor(time / 86400)
-                const hour = Math.floor((time % 86400) / 3600)
-                const minute = Math.floor((time % 3600) / 60)
-                const second = time % 60
-
-                let back = ''
-                if (day > 0) {
-                    back += `${day} ${this.$t('天')} `
-                }
-                if (hour > 0) {
-                    back += `${hour} ${this.$t('小时')} `
-                }
-                if (minute > 0) {
-                    back += `${minute} ${this.$t('分钟')} `
-                }
-                if (second > 0) {
-                    back += `${second} ${this.$t('秒')} `
-                }
-                return back
-            },
-        },
+                pokeAnime(item, windowInfo)
+        }
     })
 </script>
