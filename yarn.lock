@@ -11223,7 +11223,7 @@ __metadata:
     vue-i18n: "npm:^10.0.4"
     vue-tsc: "npm:^2.0.22"
     vue-virtual-scroller: "npm:^2.0.0-beta.8"
-    vue3-bcui: "npm:^0.2.6"
+    vue3-bcui: "npm:^0.3.0"
     vue3-danmaku: "npm:^1.6.1"
     vue3-lottie: "npm:^3.3.1"
     ws: "npm:^8.18.0"
@@ -12655,9 +12655,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue3-bcui@npm:^0.2.6":
-  version: 0.2.6
-  resolution: "vue3-bcui@npm:0.2.6"
+"vue3-bcui@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "vue3-bcui@npm:0.3.0"
   dependencies:
     "@fortawesome/fontawesome-svg-core": "npm:^6.3.0"
     "@fortawesome/free-regular-svg-icons": "npm:^6.3.0"
@@ -12665,7 +12665,7 @@ __metadata:
     "@fortawesome/vue-fontawesome": "npm:^3.0.3"
     core-js: "npm:^3.8.3"
     vue: "npm:^3.2.13"
-  checksum: 10c0/94a92139c796bc9c29305c21688a4e6a92c86f5aa4459836bce2ced073cbd41a3e2c1bb9300de69a41036a2ab48294ab2b9ed715ea213e50956bad3d1bb9d093
+  checksum: 10c0/bb5c3ecc9d977be7181d5820b123af8b0fd75816c837d6cf14d8217c7ae5062cf94b3a41c9cafb32ed0893afa0f14f80245e8313d24206eab32546d85378e2c7
   languageName: node
   linkType: hard
 

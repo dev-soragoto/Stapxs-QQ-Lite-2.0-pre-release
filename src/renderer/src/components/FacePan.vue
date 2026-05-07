@@ -149,7 +149,7 @@
                             <font-awesome-icon :icon="['fas', 'face-dizzy']" />
                             <span>{{ $t('暂无图片') }}</span>
                         </div>
-                        <template v-else-if="stickerStore.stickerCache && stickerStore.stickerCache.length > 0">
+                        <template v-else-if="settingsStore.sysConfig.local_emoji_folder && localEmojis.length > 0">
                             <span v-for="(emoji, index) in localEmojis" :key="index">
                                 <img
                                     v-tooltip="customFaceTooltip(emoji.url)"

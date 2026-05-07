@@ -113,7 +113,7 @@
     "vue-echarts": "^7.0.3",
     "vue-i18n": "^10.0.4",
     "vue-tsc": "^2.0.22",
-    "vue3-bcui": "^0.2.6",
+    "vue3-bcui": "^0.3.0",
     "vue3-danmaku": "^1.6.1",
     "vue3-lottie": "^3.3.1",
     "xss": "^1.0.15",
