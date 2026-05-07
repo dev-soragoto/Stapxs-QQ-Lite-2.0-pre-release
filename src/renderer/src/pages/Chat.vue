@@ -698,7 +698,7 @@ const atScrollInterval = ref<NodeJS.Timeout | null>(null)
 const searchDebounceTimer = ref<NodeJS.Timeout | null>(null)
 const searchRequestId = ref(0)
 const forwardList = ref(contactStore.userList)
-let chatImg: any = undefined
+const chatImg = ref<any>(undefined)
 const trueLang = getTrueLang()
 const isDev = import.meta.env.DEV
 
@@ -2255,19 +2255,19 @@ function updateList(newLength: number, oldLength: number) {
                 uiStore.nowGetHistory = false
             }
             const getImgList = [] as string[]
-            list.forEach((item: any) => {
+            for(const item of list) {
                 if (item.message !== undefined) {
-                    item.message.forEach((msgItem: MsgItemElem) => {
+                    for(const msgItem of item.message) {
                         if (
                             msgItem.type === 'image' &&
                             msgItem.file != 'marketface'
                         ) {
                             getImgList.push(msgItem.url)
                         }
-                    })
+                    }
                 }
-            })
-            chatImg = Img.fromList(getImgList)
+            }
+            chatImg.value = Img.fromList(getImgList)
             if (
                 chatStore.chatInfo.show &&
                 chatStore.chatInfo.show.jump

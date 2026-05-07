@@ -461,13 +461,13 @@ const moveOptions: VMoveOptions<HTMLDivElement> = {
 
 //#region == 响应式状态 ================================================================
 
+const View = ViewFuns
 const md = markdownit({ breaks: true })
 const isMe = ref(false)
 const isDev = import.meta.env.DEV
 const msgBodyClass = ref('message-body')
 const isDebugMsg = Option.get('debug_msg')
 const linkViewStyle = ref('')
-const View = ViewFuns
 const pageViewInfo = ref(undefined as { [key: string]: any } | undefined)
 const gotLink = ref(false)
 const senderInfo = ref(null as any)
