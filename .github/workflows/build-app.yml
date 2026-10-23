@@ -1,6 +1,7 @@
 # 在主分支上构建
 name: build-app
 on:
+  workflow_dispatch:
   push: # push 触发
     branches:
       - pre-release
