@@ -1,36 +1,44 @@
 # 基础配置
 appId: cn.stapxs.qqweb
 productName: Stapxs QQ Lite
-copyright: Copyright © 2022-2025 Stapx Steve [林槐]
+copyright: Copyright © 2022-2026 Stapx Steve [林槐]
 directories:
     buildResources: build,
     output: dist_electron
 files:
-    - '!**/.vscode/*'
-    - '!src/*'
-    - '!electron.vite.config.{js,ts,mjs,cjs}'
-    - '!vite.config.{js,ts,mjs,cjs}'
-    - '!capacitor.config.{js,ts,mjs,cjs}'
-    - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md,README/*}'
-    - '!{.env,.env.*,.envrc,.gitmodules,.tool-versions,stats.html}'
-    - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-    - '!{dist*/*,build/*,scripts/*}'
-    - '!{scripts/*,dockerfile}'
-    - '!{ssqq.capacitor-onebot-connector,ssqq.npx-web-quick-start}/**/*'
+    - "!**/.vscode/*"
+    - "!src/*"
+    - "!electron.vite.config.{js,ts,mjs,cjs}"
+    - "!vite.config.{js,ts,mjs,cjs}"
+    - "!capacitor.config.{js,ts,mjs,cjs}"
+    - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md,README/*}"
+    - "!{.env,.env.*,.envrc,.gitmodules,.tool-versions,stats.html}"
+    - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+    - "!{dist*/*,build/*,scripts/*}"
+    - "!{scripts/*,dockerfile}"
+    - "!{ssqq.capacitor-onebot-connector,ssqq.npx-web-quick-start}/**/*"
+
 asarUnpack:
     - resources/**
 
 # Windows 配置
 win:
+    target:
+        - { target: portable, arch: x64 }
+        - { target: portable, arch: arm64 }
+        - { target: zip, arch: x64 }
+        - { target: zip, arch: arm64 }
     executableName: Stapxs QQ Lite
     icon: build/icon-client-others.png
-    legalTrademarks: Copyright © 2022-2025 Stapx Steve [林槐]
-    publisherName: stapxs
+    legalTrademarks: Copyright © 2022-2026 Stapx Steve [林槐]
+    signtoolOptions:
+        publisherName: stapxs
     artifactName: ${productName}.${version}-${arch}.${ext}
 
 # macOS 配置
 mac:
     target:
+        - { target: dmg, arch: arm64 }
         - { target: dmg, arch: x64 }
     entitlementsInherit: build/entitlements.mac.plist
     icon: build/icon-client-mac.icns
@@ -56,15 +64,16 @@ linux:
     vendor: Stapxs Steve Team
     synopsis: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
     category: Network
-    mimeTypes: [ application/x-stapxs-qq-lite ]
+    mimeTypes: [application/x-stapxs-qq-lite]
     desktop:
-        Type: Application
-        Name: Stapxs QQ Lite
-        GenericName: Stapxs QQ Lite Electron 客户端
-        Comment: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
-        Terminal: false
-        Category: Network
-        Icon: stapxs-qq-lite
+        entry:
+            Type: Application
+            Name: Stapxs QQ Lite
+            GenericName: Stapxs QQ Lite Electron 客户端
+            Comment: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
+            Terminal: "false"
+            Categories: Network;
+            Icon: stapxs-qq-lite
 
 # 其他配置
 npmRebuild: false
