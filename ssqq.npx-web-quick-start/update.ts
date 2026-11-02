@@ -13,7 +13,7 @@ logger.level = 'info'
 
 export function checkUpdate(nowVersion: string) {
     // 检查本体版本
-    fetch('https://api.github.com/repos/Stapxs/Stapxs-QQ-Lite-2.0/releases/latest')
+    fetch('https://api.github.com/repos/dev-soragoto/Stapxs-QQ-Lite-2.0-pre-release/releases/latest')
         .then(res => res.json())
         .then(json => {
             const version = json.tag_name.slice(1)
